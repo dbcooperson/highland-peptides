@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Highland Peptides</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div id="entryGate" class="entry-gate">
+  <div class="entry-gate-box">
+    <div class="brand" style="margin-bottom:10px;">Highland Peptides</div>
+    <h2>Research Use Only</h2>
+    <p>This site sells laboratory research compounds. They are not drugs, foods, cosmetics, or dietary supplements, and are not for human or veterinary use. By entering, you confirm:</p>
+    <ul>
+      <li>You are 21 years of age or older.</li>
+      <li>You are purchasing solely for laboratory / research purposes &mdash; not for human or animal consumption, injection, or administration.</li>
+      <li>You agree to our Research Use Only Terms.</li>
+    </ul>
+    <div class="entry-gate-actions">
+      <button id="entryAgreeBtn">I am 21+ and agree &mdash; Enter</button>
+      <button id="entryExitBtn" class="secondary">Exit</button>
+    </div>
+  </div>
+</div>
+
+<header class="topbar">
+  <div class="brand" id="siteName">Highland Peptides</div>
+  <nav id="authArea"></nav>
+</header>
+
+<div class="ruo-banner">
+  FOR LABORATORY / RESEARCH USE ONLY. NOT FOR HUMAN OR VETERINARY USE. NOT A DRUG, FOOD, OR COSMETIC.
+  Account required to purchase &mdash; every account is reviewed before it can order.
+</div>
+
+<main>
+  <section id="gate" class="panel" style="display:none;">
+    <h2>Account Required</h2>
+    <p>Every buyer must create an account and be manually approved before ordering. We do not offer guest checkout.</p>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="login">Log In</button>
+      <button class="tab-btn" data-tab="signup">Create Account</button>
+    </div>
+
+    <form id="loginForm" class="tab-panel">
+      <label>Email <input type="email" id="loginEmail" required placeholder="you@example.com"></label>
+      <label>Password <input type="password" id="loginPassword" required></label>
+      <button type="submit">Log In</button>
+      <p class="form-msg" id="loginMsg"></p>
+    </form>
+
+    <form id="signupForm" class="tab-panel" style="display:none;">
+      <label>Company / Institution Name <input type="text" id="suCompany" required></label>
+      <label>Contact Name <input type="text" id="suContact"></label>
+      <label>Email <input type="email" id="suEmail" required placeholder="you@example.com"></label>
+      <label>Password <input type="password" id="suPassword" required minlength="8"></label>
+
+      <div class="terms-box" id="termsBox">
+        <strong>Research Use Only &mdash; Terms You're Agreeing To</strong>
+        <ul>
+          <li>All products are sold strictly for laboratory / research use. Not drugs, foods, cosmetics, or medical devices; not evaluated or approved by the FDA for any human or veterinary use.</li>
+          <li>Not for human or animal consumption, injection, administration, diagnostic, or therapeutic use.</li>
+          <li>By checking the box below, you certify that you are purchasing solely for internal research purposes &mdash; not for resale or transfer for human or veterinary use.</li>
+          <li>We reserve the right to request documentation verifying your status, and to decline or terminate any account at our discretion.</li>
+        </ul>
+      </div>
+      <label class="checkbox-label">
+        <input type="checkbox" id="suAgree" required>
+        I have read and agree to the Research Use Only Terms above.
+      </label>
+
+      <button type="submit">Create Account</button>
+      <p class="form-msg" id="signupMsg"></p>
+    </form>
+  </section>
+
+  <section id="pendingNotice" class="panel" style="display:none;">
+    <h2>Account Pending Review</h2>
+    <p>Your account (<strong id="pendingCompany"></strong>) has been submitted and is awaiting manual approval. You'll be able to order once approved.</p>
+  </section>
+
+  <section id="catalogSection">
+    <h2>Catalog</h2>
+    <p class="hint">Prices shown include markup. Create and get an approved account to add items to cart and check out.</p>
+    <div id="catalogGrid" class="grid"></div>
+  </section>
+
+  <aside id="cartPanel" class="cart" style="display:none;">
+    <h3>Cart</h3>
+    <div id="cartItems"></div>
+    <div id="cartTotal"></div>
+    <button id="checkoutBtn">Submit Order</button>
+    <p class="form-msg" id="checkoutMsg"></p>
+  </aside>
+</main>
+
+<script src="/js/app.js"></script>
+</body>
+</html>

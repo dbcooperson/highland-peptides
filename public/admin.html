@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Admin — Highland Peptides</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">Admin Dashboard</div>
+  <nav><button id="adminLogoutBtn" style="display:none;">Log Out</button></nav>
+</header>
+
+<main style="display:block; max-width: 1000px;">
+  <section id="adminLogin" class="panel">
+    <h2>Admin Login</h2>
+    <form id="adminLoginForm">
+      <label>Password <input type="password" id="adminPassword" required></label>
+      <button type="submit">Log In</button>
+      <p class="form-msg" id="adminLoginMsg"></p>
+    </form>
+  </section>
+
+  <section id="adminPanels" style="display:none;">
+    <div class="panel" style="margin-bottom:20px;">
+      <h2>Pending Accounts <span class="hint">— review company name + business email domain before approving</span></h2>
+      <table id="pendingTable" style="width:100%; border-collapse: collapse;"></table>
+    </div>
+
+    <div class="panel" style="margin-bottom:20px;">
+      <h2>All Accounts</h2>
+      <table id="accountsTable" style="width:100%; border-collapse: collapse;"></table>
+    </div>
+
+    <div class="panel">
+      <h2>Orders</h2>
+      <table id="ordersTable" style="width:100%; border-collapse: collapse;"></table>
+    </div>
+  </section>
+</main>
+
+<script src="/js/admin.js"></script>
+</body>
+</html>
