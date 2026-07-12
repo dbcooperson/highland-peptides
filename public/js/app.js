@@ -68,11 +68,15 @@ function renderGateAndCatalogVisibility() {
   renderCatalog();
 }
 
+const VIAL_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2h6"/><path d="M10 2v5.2c0 .5-.2 1-.5 1.4L7 12.5c-.6.8-1 1.8-1 2.8V19a3 3 0 0 0 3 3h6a3 3 0 0 0 3-3v-3.7c0-1-.4-2-1-2.8l-2.5-3.9c-.3-.4-.5-.9-.5-1.4V2"/><path d="M6.5 15h11"/></svg>`;
+
 function renderCatalog() {
   const grid = document.getElementById('catalogGrid');
   const canBuy = currentAccount && currentAccount.status === 'approved';
   grid.innerHTML = catalog.map(p => `
     <div class="card">
+      <div class="card-media">${VIAL_ICON}</div>
+      <div class="group">${p.group || p.category}</div>
       <h4>${p.name}</h4>
       <div class="spec">${p.spec}</div>
       <div class="price">$${p.price.toFixed(2)}</div>
@@ -185,7 +189,16 @@ async function init() {
   document.getElementById('siteName').textContent = catalogData.siteName;
   document.title = catalogData.siteName;
   catalog = catalogData.products;
+  const statEl = document.getElementById('statCompoundCount');
+  if (statEl) statEl.textContent = `${catalog.length}+`;
   await loadMe();
+}
+
+const heroCatalogBtn = document.getElementById('heroCatalogBtn');
+if (heroCatalogBtn) {
+  heroCatalogBtn.onclick = () => {
+    document.getElementById('catalogSection').scrollIntoView({ behavior: 'smooth' });
+  };
 }
 
 init();

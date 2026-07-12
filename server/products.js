@@ -15,6 +15,7 @@ const catalog = raw.map(p => ({
   name: p.name,
   spec: p.spec,
   category: p.category,
+  group: p.group,
   price: round(p.cost * MARKUP_MULTIPLIER, PRICE_DECIMALS),
 }));
 

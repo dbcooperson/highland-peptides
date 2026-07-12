@@ -10,7 +10,7 @@
 
 <div id="entryGate" class="entry-gate">
   <div class="entry-gate-box">
-    <div class="brand" style="margin-bottom:10px;">Highland Peptides</div>
+    <div class="brand">Highland Peptides</div>
     <h2>Research Use Only</h2>
     <p>This site sells laboratory research compounds. They are not drugs, foods, cosmetics, or dietary supplements, and are not for human or veterinary use. By entering, you confirm:</p>
     <ul>
@@ -25,20 +25,49 @@
   </div>
 </div>
 
-<header class="topbar">
-  <div class="brand" id="siteName">Highland Peptides</div>
-  <nav id="authArea"></nav>
-</header>
+<div class="nav-wrap">
+  <header class="topbar">
+    <div class="brand" id="siteName">Highland Peptides</div>
+    <nav id="authArea"></nav>
+  </header>
+</div>
+
+<section class="hero">
+  <div class="eyebrow">Research Use Only &mdash; U.S. Supplier</div>
+  <h1 class="hero-title">Research-grade compounds,<br><em>California shipped.</em></h1>
+  <p class="hero-sub">Every account is manually reviewed before it can order &mdash; no guest checkout, ever. Certificates of Analysis are available for every batch on request.</p>
+  <button class="hero-cta" id="heroCatalogBtn">Browse the Catalog</button>
+
+  <div class="hero-stats">
+    <div class="stat">
+      <div class="stat-num" id="statCompoundCount">73+</div>
+      <div class="stat-label">Research Compounds</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">COA</div>
+      <div class="stat-label">Available on Request</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">CA</div>
+      <div class="stat-label">Ships From</div>
+    </div>
+  </div>
+</section>
+
+<div class="trust-bar">
+  <div class="trust-item">Manual Account Review</div>
+  <div class="trust-item">No Guest Checkout</div>
+  <div class="trust-item">Ships From California</div>
+</div>
 
 <div class="ruo-banner">
-  FOR LABORATORY / RESEARCH USE ONLY. NOT FOR HUMAN OR VETERINARY USE. NOT A DRUG, FOOD, OR COSMETIC.
-  Account required to purchase &mdash; every account is reviewed before it can order.
+  FOR LABORATORY / RESEARCH USE ONLY &mdash; NOT FOR HUMAN OR VETERINARY USE &mdash; NOT A DRUG, FOOD, OR COSMETIC
 </div>
 
 <main>
   <section id="gate" class="panel" style="display:none;">
     <h2>Account Required</h2>
-    <p>Every buyer must create an account and be manually approved before ordering. We do not offer guest checkout.</p>
+    <p class="hint">Every buyer must create an account and be manually approved before ordering. We do not offer guest checkout.</p>
     <div class="tabs">
       <button class="tab-btn active" data-tab="login">Log In</button>
       <button class="tab-btn" data-tab="signup">Create Account</button>
@@ -95,6 +124,11 @@
     <p class="form-msg" id="checkoutMsg"></p>
   </aside>
 </main>
+
+<footer class="site-footer">
+  Highland Peptides &mdash; for laboratory / research use only. Not for human or veterinary use, consumption, or administration of any kind.
+  Not evaluated by the FDA. See our Research Use Only Terms at signup for full terms.
+</footer>
 
 <script src="/js/app.js"></script>
 </body>
