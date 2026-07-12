@@ -72,6 +72,7 @@ body {
   color: var(--offwhite);
   display: flex;
   align-items: center;
+  gap: 12px;
 }
 /* The source PNG has two marks stacked in one file (a large seal + a small
    badge below it); this crops the display down to just the top seal since
@@ -274,14 +275,12 @@ main {
 .card-media.photo, .product-media.photo {
   background-image: url('/images/product-mockups/highland-vial-template.png');
   background-size: cover;
-  background-position: center 30%;
+  background-position: center 68%;
 }
 .vial-photo-label {
   position: absolute;
   left: 24%;
   right: 24%;
-  top: 45%;
-  height: 30%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -289,6 +288,10 @@ main {
   text-align: center;
   background: rgba(255,255,255,0.001); /* keeps click/tap target predictable, visually transparent */
 }
+/* Card view is short + wide, so cover-fit zooms in hard; label sits lower
+   in that zoomed crop than it does on the full square product-page image. */
+.card-media .vial-photo-label { top: 38%; height: 26%; }
+.product-media .vial-photo-label { top: 47%; height: 26%; }
 .vial-photo-label .vp-name { font-size: 10px; font-weight: 700; color: #1c1a17; line-height: 1.15; }
 .vial-photo-label .vp-spec { font-size: 8px; color: #4a463f; margin-top: 2px; }
 .product-media .vial-photo-label .vp-name { font-size: 15px; }
