@@ -7,7 +7,8 @@ let family = null;
 function variantButtonsHTML() {
   return family.variants.map(v => `
     <button class="variant-btn ${v.sku === selectedSku ? 'active' : ''}" data-sku="${v.sku}">
-      ${v.spec.replace(' x1 vial', '')} &middot; $${v.price.toFixed(2)}
+      <span class="variant-size">${v.spec.replace(' x1 vial', '')}</span>
+      <span class="variant-price">$${v.price.toFixed(2)}</span>
     </button>
   `).join('');
 }
@@ -26,18 +27,21 @@ function renderProduct() {
         <h1 style="margin:4px 0 10px; font-size:26px; letter-spacing:-0.01em;">${family.name}</h1>
         <p class="hint" style="font-size:14px; line-height:1.6; margin-bottom:20px;">${family.description}</p>
 
-        <div style="font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted-on-light); margin-bottom:8px;">Choose Size</div>
-        <div class="variant-chips" id="variantChips" style="margin-bottom:20px;">${variantButtonsHTML()}</div>
+        <div class="size-label">Choose Size</div>
+        <div class="variant-chips" id="variantChips">${variantButtonsHTML()}</div>
 
-        <div class="price" style="font-size:24px; margin-bottom:16px;">$${selected.price.toFixed(2)}</div>
+        <div class="price-block">
+          <span class="price-amount">$${selected.price.toFixed(2)}</span>
+          <span class="price-unit">per vial</span>
+        </div>
 
-        <div style="display:flex; gap:10px; align-items:center; margin-bottom:6px;">
+        <div class="purchase-row">
           <div class="qty-stepper">
             <button type="button" class="qty-btn" id="qtyDown" aria-label="Decrease quantity">&minus;</button>
             <input type="number" id="qtyInput" value="1" min="1">
             <button type="button" class="qty-btn" id="qtyUp" aria-label="Increase quantity">+</button>
           </div>
-          <button id="addToCartBtn" style="flex:1;">Add to Cart</button>
+          <button id="addToCartBtn" class="add-to-cart-btn">Add to Cart</button>
         </div>
         <p class="form-msg" id="addMsg" style="color:var(--success);"></p>
       </div>

@@ -49,6 +49,13 @@ function addToCart(sku, qty = 1) {
   return cart;
 }
 
+function removeFromCart(sku) {
+  const cart = getCart();
+  delete cart[sku];
+  saveCart(cart);
+  return cart;
+}
+
 function cartItemCount(cart) {
   return Object.values(cart).reduce((sum, q) => sum + q, 0);
 }
@@ -81,7 +88,7 @@ function vialPhotoLabelHTML(name, spec, baseSizes) {
   `;
 }
 
-// ---------- Cart sidebar + checkout modal (identical markup/IDs on every shoppable page) ----------
+// ---------- Cart modal + checkout modal (identical markup/IDs on every shoppable page) ----------
 // Pages set `window.siteCatalog` (full product list with name/price) before calling wireCart().
 
 function renderCart() {
@@ -108,9 +115,16 @@ function renderCart() {
     if (!p) return '';
     const lineTotal = p.price * cart[sku];
     subtotal += lineTotal;
-    return `<div class="cart-row"><span>${p.name} x${cart[sku]}</span><span>$${lineTotal.toFixed(2)}</span></div>`;
+    return `<div class="cart-row"><span>${p.name} x${cart[sku]}</span><span class="cart-row-right">$${lineTotal.toFixed(2)}<button type="button" class="cart-remove-btn" data-sku="${sku}" aria-label="Remove ${p.name} from cart">&times;</button></span></div>`;
   }).join('');
   totalEl.textContent = `Subtotal: $${subtotal.toFixed(2)} (+ packaging fee at checkout)`;
+
+  itemsEl.querySelectorAll('.cart-remove-btn').forEach(btn => {
+    btn.onclick = () => {
+      removeFromCart(btn.dataset.sku);
+      renderCart();
+    };
+  });
 }
 
 function cartSubtotal() {
@@ -132,6 +146,7 @@ function openCheckoutModal() {
     return `<div class="cart-row"><span>${p.name} x${cart[sku]}</span><span>$${(p.price * cart[sku]).toFixed(2)}</span></div>`;
   }).join('') + `<div class="order-summary-total cart-row"><span>Total (+ packaging fee)</span><span>$${subtotal.toFixed(2)}+</span></div>`;
 
+  closeCartModal();
   document.getElementById('checkoutModal').style.display = 'flex';
 }
 
@@ -139,7 +154,24 @@ function closeCheckoutModal() {
   document.getElementById('checkoutModal').style.display = 'none';
 }
 
+function openCartModal() {
+  renderCart();
+  document.getElementById('cartModal').style.display = 'flex';
+}
+
+function closeCartModal() {
+  document.getElementById('cartModal').style.display = 'none';
+}
+
 function wireCart() {
+  const cartNavBtn = document.getElementById('cartNavBtn');
+  if (cartNavBtn) cartNavBtn.addEventListener('click', openCartModal);
+
+  document.getElementById('cartCloseBtn').addEventListener('click', closeCartModal);
+  document.getElementById('cartModal').addEventListener('click', (e) => {
+    if (e.target.id === 'cartModal') closeCartModal();
+  });
+
   document.getElementById('checkoutBtn').addEventListener('click', () => {
     const cartMsg = document.getElementById('cartMsg');
     const skus = Object.keys(getCart()).filter(s => getCart()[s] > 0);

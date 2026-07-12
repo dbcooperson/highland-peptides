@@ -25,7 +25,6 @@ function wireAddButtons(container) {
 }
 
 let activeFilter = 'All';
-let searchQuery = '';
 
 function renderBestSellers() {
   const grid = document.getElementById('bestSellersGrid');
@@ -51,30 +50,76 @@ function renderFilterChips() {
 
 function renderCatalog() {
   const grid = document.getElementById('catalogGrid');
-  const filteredByGroup = activeFilter === 'All'
+  const items = activeFilter === 'All'
     ? catalog
     : catalog.filter(p => (p.group || p.category) === activeFilter);
-  const query = searchQuery.trim().toLowerCase();
-  const items = query
-    ? filteredByGroup.filter(p => [p.name, p.spec, p.sku, p.category, p.group]
-        .filter(Boolean)
-        .some(value => String(value).toLowerCase().includes(query)))
-    : filteredByGroup;
   grid.innerHTML = items.map(cardHTML).join('');
   wireAddButtons(grid);
-
-  const emptyEl = document.getElementById('catalogEmpty');
-  const countEl = document.getElementById('searchResultCount');
-  if (emptyEl) emptyEl.hidden = items.length !== 0;
-  if (countEl) countEl.textContent = query ? `${items.length} result${items.length === 1 ? '' : 's'}` : '';
 }
 
-function wireCatalogSearch() {
-  const input = document.getElementById('catalogSearch');
-  if (!input) return;
-  input.addEventListener('input', () => {
-    searchQuery = input.value;
-    renderCatalog();
+function searchResultHTML(p) {
+  return `
+    <a class="product-search-result" href="/product/${encodeURIComponent(p.slug)}">
+      <div class="product-search-result-media photo">
+        ${vialPhotoLabelHTML(p.name, p.spec, { name: 9, spec: 7 })}
+      </div>
+      <div class="product-search-result-copy">
+        <span class="product-search-result-group">${p.group || p.category}</span>
+        <strong>${p.name}</strong>
+        <span>${p.spec}</span>
+      </div>
+      <span class="product-search-result-arrow" aria-hidden="true">&rsaquo;</span>
+    </a>
+  `;
+}
+
+function wireProductSearch() {
+  const openButton = document.getElementById('openProductSearch');
+  const closeButton = document.getElementById('closeProductSearch');
+  const overlay = document.getElementById('productSearchOverlay');
+  const input = document.getElementById('productSearchInput');
+  const results = document.getElementById('productSearchResults');
+  const status = document.getElementById('productSearchStatus');
+  if (!openButton || !overlay || !input || !results || !status) return;
+
+  const renderResults = () => {
+    const query = input.value.trim().toLowerCase();
+    const matches = query
+      ? catalog.filter(p => [p.name, p.spec, p.sku, p.category, p.group]
+          .filter(Boolean)
+          .some(value => String(value).toLowerCase().includes(query)))
+      : catalog.filter(p => p.popular).slice(0, 8);
+
+    status.textContent = query
+      ? `${matches.length} result${matches.length === 1 ? '' : 's'}`
+      : 'Popular products';
+    results.innerHTML = matches.length
+      ? matches.slice(0, 24).map(searchResultHTML).join('')
+      : '<div class="product-search-empty"><strong>No products found</strong><span>Try another compound, SKU, category, or specification.</span></div>';
+  };
+
+  const openSearch = () => {
+    overlay.hidden = false;
+    document.body.classList.add('search-open');
+    input.value = '';
+    renderResults();
+    requestAnimationFrame(() => input.focus());
+  };
+
+  const closeSearch = () => {
+    overlay.hidden = true;
+    document.body.classList.remove('search-open');
+    openButton.focus();
+  };
+
+  openButton.addEventListener('click', openSearch);
+  closeButton.addEventListener('click', closeSearch);
+  input.addEventListener('input', renderResults);
+  overlay.addEventListener('click', event => {
+    if (event.target === overlay) closeSearch();
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && !overlay.hidden) closeSearch();
   });
 }
 
@@ -89,7 +134,7 @@ async function init() {
   if (statEl) statEl.textContent = `${catalog.length}+`;
   renderBestSellers();
   renderFilterChips();
-  wireCatalogSearch();
+  wireProductSearch();
   renderCatalog();
   renderCart();
 }
