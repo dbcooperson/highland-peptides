@@ -75,9 +75,8 @@ function vialLabelSVG(p) {
   </svg>`;
 }
 
-function renderCatalog() {
-  const grid = document.getElementById('catalogGrid');
-  grid.innerHTML = catalog.map(p => `
+function cardHTML(p) {
+  return `
     <div class="card">
       <div class="card-media">${vialLabelSVG(p)}</div>
       <div class="group">${p.group || p.category}</div>
@@ -86,14 +85,50 @@ function renderCatalog() {
       <div class="price">$${p.price.toFixed(2)}</div>
       <button data-sku="${p.sku}" class="addBtn">Add to Cart</button>
     </div>
-  `).join('');
-  document.querySelectorAll('.addBtn').forEach(btn => {
+  `;
+}
+
+function wireAddButtons(container) {
+  container.querySelectorAll('.addBtn').forEach(btn => {
     btn.onclick = () => {
       const sku = btn.dataset.sku;
       cart[sku] = (cart[sku] || 0) + 1;
       renderCart();
     };
   });
+}
+
+let activeFilter = 'All';
+
+function renderBestSellers() {
+  const grid = document.getElementById('bestSellersGrid');
+  const bestSellers = catalog.filter(p => p.popular);
+  grid.innerHTML = bestSellers.map(cardHTML).join('');
+  wireAddButtons(grid);
+}
+
+function renderFilterChips() {
+  const chipsEl = document.getElementById('filterChips');
+  const groups = ['All', ...new Set(catalog.map(p => p.group || p.category))];
+  chipsEl.innerHTML = groups.map(g =>
+    `<button class="filter-chip ${g === activeFilter ? 'active' : ''}" data-group="${g}">${g}</button>`
+  ).join('');
+  chipsEl.querySelectorAll('.filter-chip').forEach(btn => {
+    btn.onclick = () => {
+      activeFilter = btn.dataset.group;
+      renderFilterChips();
+      renderCatalog();
+    };
+  });
+}
+
+function renderCatalog() {
+  const grid = document.getElementById('catalogGrid');
+  const items = activeFilter === 'All'
+    ? catalog
+    : catalog.filter(p => (p.group || p.category) === activeFilter);
+  grid.innerHTML = items.map(cardHTML).join('');
+  wireAddButtons(grid);
 }
 
 function renderCart() {
@@ -214,6 +249,8 @@ async function init() {
   catalog = catalogData.products;
   const statEl = document.getElementById('statCompoundCount');
   if (statEl) statEl.textContent = `${catalog.length}+`;
+  renderBestSellers();
+  renderFilterChips();
   renderCatalog();
   renderCart();
 }

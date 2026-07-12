@@ -203,6 +203,20 @@ main {
 }
 #catalogSection .hint { color: var(--muted-on-dark); margin-bottom: 24px; }
 
+/* ---------- Filter chips ---------- */
+.filter-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+.filter-chip {
+  background: transparent;
+  border: 1px solid var(--border-on-dark);
+  color: var(--muted-on-dark);
+  padding: 7px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+}
+.filter-chip.active { background: var(--offwhite); color: var(--ink); border-color: var(--offwhite); }
+
 /* ---------- Catalog grid ---------- */
 .grid {
   display: grid;
