@@ -1,3 +1,5 @@
+const pathMatch = window.location.pathname.match(/^\/product\/([^/]+)$/);
+const slug = pathMatch ? decodeURIComponent(pathMatch[1]) : null;
 const sku = new URLSearchParams(window.location.search).get('sku');
 let selectedSku = sku;
 let family = null;
@@ -70,16 +72,18 @@ function renderProduct() {
 wireCart();
 
 async function init() {
-  if (!sku) {
+  if (!slug && !sku) {
     document.getElementById('productContent').innerHTML = '<p class="hint">Product not found.</p>';
     return;
   }
+  const query = slug ? `slug=${encodeURIComponent(slug)}` : `sku=${encodeURIComponent(sku)}`;
   const [catalogData, productData] = await Promise.all([
     api('/api/catalog'),
-    api(`/api/product?sku=${encodeURIComponent(sku)}`),
+    api(`/api/product?${query}`),
   ]);
   window.siteCatalog = catalogData.products;
   family = productData;
+  selectedSku = sku || family.variants[0].sku;
   renderProduct();
   renderCart();
 }

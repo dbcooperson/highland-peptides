@@ -3,7 +3,7 @@
 function cardHTML(p) {
   return `
     <div class="card">
-      <a class="card-link" href="/product.html?sku=${encodeURIComponent(p.sku)}">
+      <a class="card-link" href="/product/${encodeURIComponent(p.slug)}">
         <div class="card-media photo">${vialPhotoLabelHTML(p.name, p.spec, { name: 10, spec: 8 })}</div>
         <div class="group">${p.group || p.category}</div>
         <h4>${p.name}</h4>

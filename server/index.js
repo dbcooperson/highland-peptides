@@ -24,9 +24,15 @@ app.get('/api/catalog', (req, res) => {
 });
 
 app.get('/api/product', (req, res) => {
-  const family = getProductFamily(req.query.sku);
+  const family = getProductFamily({ sku: req.query.sku, slug: req.query.slug });
   if (!family) return res.status(404).json({ error: 'Product not found' });
   res.json({ siteName: config.SITE_NAME, ...family });
+});
+
+// Clean product URLs, e.g. /product/bpc-157 -- serves the same page as
+// product.html, which reads the slug from the URL to fetch the right product.
+app.get('/product/:slug', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'product.html'));
 });
 
 // ---------- Checkout (guest, no account) ----------

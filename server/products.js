@@ -10,6 +10,10 @@ function round(n, d) {
   return Math.round(n * f) / f;
 }
 
+function slugify(name) {
+  return name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+
 // Curated by general market popularity, not sales data (this business is new).
 // Sets both catalog order and which items appear in "Best Sellers".
 const POPULAR_SKUS = [
@@ -28,6 +32,7 @@ const catalog = raw
     spec: p.spec,
     category: p.category,
     group: p.group,
+    slug: slugify(p.name),
     popular: popularRank[p.sku] !== undefined,
     price: round(p.salePrice != null ? p.salePrice : p.cost * MARKUP_MULTIPLIER, PRICE_DECIMALS),
   }))
@@ -41,17 +46,20 @@ const catalog = raw
   });
 
 const bySku = Object.fromEntries(catalog.map(p => [p.sku, p]));
+const bySlug = Object.fromEntries(catalog.map(p => [p.slug, p]));
 
-// Resolves a SKU to its full product family (all spec variants sharing the same
-// name) for the product detail page, e.g. sku "ET10" -> the whole Epithalon family.
-function getProductFamily(sku) {
-  const product = bySku[sku];
+// Resolves a SKU or slug to its full product family (all spec variants sharing
+// the same name) for the product detail page, e.g. "ET10" / "epithalon" -> the
+// whole Epithalon family.
+function getProductFamily({ sku, slug }) {
+  const product = (sku && bySku[sku]) || (slug && bySlug[slug]);
   if (!product) return null;
   const variants = catalog
     .filter(p => p.name === product.name)
     .sort((a, b) => a.price - b.price);
   return {
     name: product.name,
+    slug: product.slug,
     description: descriptions[product.name] || '',
     category: product.category,
     group: product.group,
@@ -59,4 +67,4 @@ function getProductFamily(sku) {
   };
 }
 
-module.exports = { catalog, bySku, getProductFamily };
+module.exports = { catalog, bySku, bySlug, getProductFamily };
