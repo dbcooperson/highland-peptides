@@ -1586,3 +1586,117 @@ body.search-open { overflow: hidden; }
   .catalog-heading-row { align-items: flex-start; flex-direction: column; }
   .catalog-shell { padding: 18px; }
 }
+
+/* ---------- Dynamic vial label text ---------- */
+.card-media.photo,
+.product-media.photo,
+.product-search-result-media.photo,
+.showcase-vial.photo {
+  position: relative;
+}
+.vial-label-overlay {
+  position: absolute;
+  left: 50%;
+  top: 54%;
+  width: 38%;
+  min-width: 70px;
+  transform: translate(-50%, -50%);
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  color: #1c1a17;
+  text-align: center;
+  pointer-events: none;
+  text-transform: uppercase;
+}
+.vial-label-overlay span {
+  max-width: 100%;
+  overflow: hidden;
+  color: #3f5741;
+  font-size: clamp(5px, 0.58vw, 8px);
+  font-weight: 900;
+  letter-spacing: 0.07em;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.vial-label-overlay strong {
+  max-width: 100%;
+  overflow: hidden;
+  color: #1c1a17;
+  font-size: clamp(8px, 1.15vw, 15px);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  line-height: 0.98;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.vial-label-overlay em {
+  min-width: 36px;
+  padding: 2px 6px;
+  border: 1px solid #3f5741;
+  border-radius: 999px;
+  color: #3f5741;
+  font-size: clamp(6px, 0.72vw, 10px);
+  font-style: normal;
+  font-weight: 900;
+  line-height: 1;
+}
+.card-vial-label {
+  top: 58%;
+  width: 42%;
+}
+.card-vial-label strong {
+  font-size: clamp(8px, 0.88vw, 12px);
+}
+.search-vial-label {
+  top: 58%;
+  width: 48%;
+  gap: 1px;
+}
+.search-vial-label span {
+  display: none;
+}
+.search-vial-label strong {
+  font-size: 6px;
+  letter-spacing: -0.02em;
+}
+.search-vial-label em {
+  min-width: 22px;
+  padding: 1px 3px;
+  font-size: 5px;
+}
+.detail-vial-label {
+  top: 57%;
+  width: 42%;
+}
+.detail-vial-label span {
+  font-size: clamp(7px, 0.75vw, 10px);
+}
+.detail-vial-label strong {
+  font-size: clamp(14px, 1.8vw, 24px);
+}
+.detail-vial-label em {
+  min-width: 54px;
+  padding: 4px 10px;
+  font-size: clamp(10px, 1.1vw, 16px);
+}
+.showcase-vial-label {
+  top: 57%;
+  width: 41%;
+}
+.showcase-vial-label span {
+  font-size: 9px;
+}
+.showcase-vial-label strong {
+  font-size: 24px;
+}
+.showcase-vial-label em {
+  padding: 5px 14px;
+  font-size: 15px;
+}
+@media (max-width: 680px) {
+  .card-vial-label strong { font-size: 10px; }
+  .detail-vial-label strong { font-size: 18px; }
+  .showcase-vial-label strong { font-size: 18px; }
+}

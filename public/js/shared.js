@@ -1,4 +1,4 @@
-// Shared helpers used by every page (catalog, product detail, cart).
+﻿// Shared helpers used by every page (catalog, product detail, cart).
 
 // ---------- Entry gate (age + research-use certification, shown before anything else) ----------
 function initEntryGate() {
@@ -87,13 +87,39 @@ function updateCartBadge() {
 }
 
 
+
+function escapeHTML(value) {
+  return String(value || '').replace(/[&<>"']/g, char => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  }[char]));
+}
+
+function cleanVialSpec(spec) {
+  return String(spec || '').replace(/\s*x1\s*vial/i, '').replace(/\s+/g, ' ').trim();
+}
+
+function vialLabelHTML(name, spec, className = '') {
+  const productName = escapeHTML(name);
+  const strength = escapeHTML(cleanVialSpec(spec));
+  return `
+    <div class="vial-label-overlay ${className}">
+      <span>Highland Peptides</span>
+      <strong title="${productName}">${productName}</strong>
+      <em>${strength}</em>
+    </div>
+  `;
+}
 // ---------- Shared product search (used by every public page) ----------
 let productSearchCatalogPromise = null;
 
 function productSearchResultHTML(p) {
   return `
     <a class="product-search-result" href="/product/${encodeURIComponent(p.slug)}">
-      <div class="product-search-result-media photo"></div>
+      <div class="product-search-result-media photo">${vialLabelHTML(p.name, p.spec, 'search-vial-label')}</div>
       <div class="product-search-result-copy">
         <span class="product-search-result-group">${p.group || p.category}</span>
         <strong>${p.name}</strong>
@@ -372,6 +398,7 @@ function wireCheckout() {
     }
   });
 }
+
 
 
 

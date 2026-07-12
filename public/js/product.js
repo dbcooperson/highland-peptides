@@ -1,4 +1,4 @@
-const pathMatch = window.location.pathname.match(/^\/product\/([^/]+)$/);
+﻿const pathMatch = window.location.pathname.match(/^\/product\/([^/]+)$/);
 const slug = pathMatch ? decodeURIComponent(pathMatch[1]) : null;
 const sku = new URLSearchParams(window.location.search).get('sku');
 let selectedSku = sku;
@@ -21,7 +21,7 @@ function renderProduct() {
 
   document.getElementById('productContent').innerHTML = `
     <div class="product-layout">
-      <div class="product-media photo"></div>
+      <div class="product-media photo">${vialLabelHTML(family.name, selected.spec, 'detail-vial-label')}</div>
       <div class="product-info">
         <div class="product-kicker-row">
           <div class="group">${family.group || family.category}</div>
@@ -103,4 +103,5 @@ async function init() {
 init().catch(() => {
   document.getElementById('productContent').innerHTML = '<p class="hint">Product not found.</p>';
 });
+
 
