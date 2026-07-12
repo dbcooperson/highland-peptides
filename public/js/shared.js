@@ -3,14 +3,19 @@
 // ---------- Entry gate (age + research-use certification, shown before anything else) ----------
 function initEntryGate() {
   const gate = document.getElementById('entryGate');
+  if (!gate) return;
   const alreadyAgreed = localStorage.getItem('ruo_gate_agreed') === 'yes';
   gate.style.display = alreadyAgreed ? 'none' : 'flex';
 
-  document.getElementById('entryAgreeBtn').onclick = () => {
+  const agreeBtn = document.getElementById('entryAgreeBtn');
+  const exitBtn = document.getElementById('entryExitBtn');
+  if (!agreeBtn || !exitBtn) return;
+
+  agreeBtn.onclick = () => {
     localStorage.setItem('ruo_gate_agreed', 'yes');
     gate.style.display = 'none';
   };
-  document.getElementById('entryExitBtn').onclick = () => {
+  exitBtn.onclick = () => {
     window.location.href = 'https://www.google.com';
   };
 }
@@ -81,6 +86,127 @@ function updateCartBadge() {
   el.setAttribute('aria-label', `${count} item${count === 1 ? '' : 's'}`);
 }
 
+
+// ---------- Shared product search (used by every public page) ----------
+let productSearchCatalogPromise = null;
+
+function productSearchResultHTML(p) {
+  return `
+    <a class="product-search-result" href="/product/${encodeURIComponent(p.slug)}">
+      <div class="product-search-result-media photo"></div>
+      <div class="product-search-result-copy">
+        <span class="product-search-result-group">${p.group || p.category}</span>
+        <strong>${p.name}</strong>
+        <span>${p.spec}</span>
+      </div>
+      <span class="product-search-result-arrow" aria-hidden="true">&rsaquo;</span>
+    </a>
+  `;
+}
+
+function ensureProductSearchOverlay() {
+  let overlay = document.getElementById('productSearchOverlay');
+  if (overlay) return overlay;
+
+  overlay = document.createElement('div');
+  overlay.id = 'productSearchOverlay';
+  overlay.className = 'product-search-overlay';
+  overlay.hidden = true;
+  overlay.innerHTML = `
+    <section class="product-search-dialog" role="dialog" aria-modal="true" aria-labelledby="productSearchTitle">
+      <div class="product-search-header">
+        <div>
+          <div class="product-search-eyebrow">Product finder</div>
+          <h2 id="productSearchTitle">Search the catalog</h2>
+        </div>
+        <button id="closeProductSearch" class="product-search-close" type="button" aria-label="Close search">&times;</button>
+      </div>
+      <label for="productSearchInput" class="sr-only">Search products</label>
+      <div class="product-search-input-wrap">
+        <span class="nav-search-icon" aria-hidden="true"></span>
+        <input id="productSearchInput" type="search" placeholder="Search compounds, categories, SKUs, or specifications" autocomplete="off">
+      </div>
+      <div id="productSearchStatus" class="product-search-status" aria-live="polite"></div>
+      <div id="productSearchResults" class="product-search-results"></div>
+    </section>
+  `;
+  document.body.appendChild(overlay);
+  return overlay;
+}
+
+function getProductSearchCatalog() {
+  if (Array.isArray(window.siteCatalog) && window.siteCatalog.length) {
+    return Promise.resolve(window.siteCatalog);
+  }
+  if (!productSearchCatalogPromise) {
+    productSearchCatalogPromise = api('/api/catalog').then(data => {
+      window.siteCatalog = data.products;
+      window.siteFees = { packagingFee: data.packagingFee, shippingFee: data.shippingFee };
+      return data.products;
+    });
+  }
+  return productSearchCatalogPromise;
+}
+
+function initProductSearch() {
+  const openButton = document.getElementById('openProductSearch');
+  if (!openButton || openButton.dataset.searchWired === 'yes') return;
+  openButton.dataset.searchWired = 'yes';
+
+  const overlay = ensureProductSearchOverlay();
+  const closeButton = document.getElementById('closeProductSearch');
+  const input = document.getElementById('productSearchInput');
+  const results = document.getElementById('productSearchResults');
+  const status = document.getElementById('productSearchStatus');
+
+  const renderResults = async () => {
+    const catalog = await getProductSearchCatalog();
+    const query = input.value.trim().toLowerCase();
+    const matches = query
+      ? catalog.filter(p => [p.name, p.spec, p.sku, p.category, p.group]
+          .filter(Boolean)
+          .some(value => String(value).toLowerCase().includes(query)))
+      : catalog.filter(p => p.popular).slice(0, 8);
+
+    status.textContent = query
+      ? `${matches.length} result${matches.length === 1 ? '' : 's'}`
+      : 'Popular research products';
+    results.innerHTML = matches.length
+      ? matches.slice(0, 24).map(productSearchResultHTML).join('')
+      : '<div class="product-search-empty"><strong>No products found</strong><span>Try another compound, SKU, category, or specification.</span></div>';
+  };
+
+  const openSearch = () => {
+    overlay.hidden = false;
+    document.body.classList.add('search-open');
+    input.value = '';
+    status.textContent = 'Loading products';
+    results.innerHTML = '';
+    renderResults();
+    requestAnimationFrame(() => input.focus());
+  };
+
+  const closeSearch = () => {
+    overlay.hidden = true;
+    document.body.classList.remove('search-open');
+    openButton.focus();
+  };
+
+  openButton.addEventListener('click', openSearch);
+  closeButton.addEventListener('click', closeSearch);
+  input.addEventListener('input', renderResults);
+  overlay.addEventListener('click', event => {
+    if (event.target === overlay) closeSearch();
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && !overlay.hidden) closeSearch();
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initProductSearch();
+  updateCartBadge();
+});
 function cartSubtotal() {
   const cart = getCart();
   return Object.keys(cart).filter(s => cart[s] > 0).reduce((sum, sku) => {
@@ -246,3 +372,6 @@ function wireCheckout() {
     }
   });
 }
+
+
+

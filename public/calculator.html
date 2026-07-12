@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Peptide Calculator: Highland Peptides</title>
+<meta name="description" content="A research-use concentration calculator for neutral laboratory arithmetic. Not instructions for human or veterinary use.">
+<title>Research Calculator: Highland Peptides</title>
 <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
@@ -46,25 +47,34 @@
     <nav class="site-nav">
       <a href="/index.html#catalogSection">Shop</a>
       <a href="/about.html">About Us</a>
-      <a href="/calculator.html" class="active">Peptide Calculator</a>
+      <a href="/calculator.html" class="active">Research Calculator</a>
     </nav>
-    <nav><a href="/index.html" style="color:inherit; font-size:13px; font-weight:600; text-decoration:none;">Sign In</a></nav>
+    <div class="header-actions">
+      <button id="openProductSearch" class="nav-search-button" type="button" aria-label="Search products">
+        <span class="nav-search-icon" aria-hidden="true"></span>
+      </button>
+      <nav class="cart-nav">
+        <a href="/cart.html" class="cart-link" aria-label="View cart">
+          <span class="cart-icon" aria-hidden="true"></span>
+          <span class="cart-label">Cart</span>
+          <span id="cartCount" class="cart-count" aria-label="0 items">0</span>
+        </a>
+      </nav>
+    </div>
   </header>
-</div>
-
-<section class="hero" style="padding-bottom: 20px;">
-  <div class="eyebrow">Reconstitution &amp; Dosing Math</div>
-  <h1 class="hero-title">Peptide<br><em>calculator.</em></h1>
-  <p class="hero-sub">A reference tool for research reconstitution math only. Not instructions for human or veterinary use.</p>
+</div><section class="hero" style="padding-bottom: 20px;">
+  <div class="eyebrow">Research concentration math</div>
+  <h1 class="hero-title">Research<br><em>calculator.</em></h1>
+  <p class="hero-sub">A neutral arithmetic tool for laboratory concentration and volume calculations. Not instructions for human or veterinary use.</p>
 </section>
 
 <main class="calc-grid" style="max-width: 900px; padding-top:0;">
   <section class="panel">
-    <h2>1. Reconstitution</h2>
-    <label>Peptide amount in vial (mg)
+    <h2>1. Concentration</h2>
+    <label>Material amount in vial (mg)
       <input type="number" id="vialMg" min="0" step="any" placeholder="e.g. 10">
     </label>
-    <label>Bacteriostatic water to add (ml)
+    <label>Diluent volume added (ml)
       <input type="number" id="bacMl" min="0" step="any" placeholder="e.g. 2">
     </label>
     <div class="calc-result" id="concResult">
@@ -74,18 +84,18 @@
   </section>
 
   <section class="panel">
-    <h2>2. Draw Volume</h2>
-    <label>Target dose amount
+    <h2>2. Research volume</h2>
+    <label>Target research amount
       <input type="number" id="doseAmount" min="0" step="any" placeholder="e.g. 250">
     </label>
-    <label>Dose units
+    <label>Amount units
       <select id="doseUnit">
         <option value="mcg">mcg (micrograms)</option>
         <option value="mg">mg (milligrams)</option>
       </select>
     </label>
     <div class="calc-result" id="drawResult">
-      <div class="calc-result-label">Draw to this line on a U-100 syringe</div>
+      <div class="calc-result-label">Calculated volume</div>
       <div class="calc-result-value" id="drawValue">Enter values above</div>
     </div>
   </section>
@@ -93,10 +103,10 @@
 
 <section style="max-width: 900px; margin: 0 auto; padding: 0 24px 60px;">
   <div class="panel">
-    <h2>How this works</h2>
+    <h2>Calculation notes</h2>
     <p class="hint" style="font-size:13px; line-height:1.7;">
-      Concentration = vial amount (mg) &divide; bacteriostatic water added (ml). Draw volume = target dose &divide; concentration.
-      U-100 insulin syringe units = draw volume (ml) &times; 100. This is arithmetic only, it does not know your specific
+      Concentration = vial amount (mg) &divide; bacteriostatic water added (ml). Calculated volume = target amount &divide; concentration.
+      Volume = target amount &divide; concentration. This is arithmetic only; it does not know your specific
       vial's real fill amount, purity, or condition. All products on this site are sold for laboratory / research use
       only and none of this is guidance for human or veterinary administration.
     </p>
@@ -108,6 +118,7 @@
   Not evaluated by the FDA. See our Research Use Only Terms at signup for full terms.
 </footer>
 
+<script src="/js/shared.js"></script>
 <script>
 function calc() {
   const vialMg = parseFloat(document.getElementById('vialMg').value);
@@ -127,13 +138,12 @@ function calc() {
   concValue.textContent = `${concMgPerMl.toFixed(3)} mg/ml (${(concMgPerMl * 1000).toFixed(1)} mcg/ml)`;
 
   if (!doseAmount || doseAmount <= 0) {
-    drawValue.textContent = 'Enter a target dose';
+    drawValue.textContent = 'Enter a target research amount';
     return;
   }
   const doseMg = doseUnit === 'mcg' ? doseAmount / 1000 : doseAmount;
   const drawMl = doseMg / concMgPerMl;
-  const units = drawMl * 100;
-  drawValue.textContent = `${units.toFixed(1)} units (${drawMl.toFixed(3)} ml)`;
+  drawValue.textContent = `${drawMl.toFixed(3)} ml`;
 }
 
 ['vialMg', 'bacMl', 'doseAmount', 'doseUnit'].forEach(id => {
@@ -143,3 +153,7 @@ function calc() {
 </script>
 </body>
 </html>
+
+
+
+

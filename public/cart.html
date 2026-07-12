@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Review research-use-only catalog items in your Highland Peptides cart before continuing.">
 <title>Cart - Highland Peptides</title>
 <link rel="stylesheet" href="/css/style.css">
 </head>
@@ -63,19 +64,22 @@
     <nav class="site-nav">
       <a href="/index.html#catalogSection">Shop</a>
       <a href="/about.html">About Us</a>
-      <a href="/calculator.html">Peptide Calculator</a>
+      <a href="/calculator.html">Research Calculator</a>
     </nav>
-    <nav class="cart-nav">
-      <a href="/cart.html" class="cart-link active" aria-label="View cart">
-        <span class="cart-icon" aria-hidden="true"></span>
-        <span class="cart-label">Cart</span>
-        <span id="cartCount" class="cart-count" aria-label="0 items">0</span>
-      </a>
-    </nav>
+    <div class="header-actions">
+      <button id="openProductSearch" class="nav-search-button" type="button" aria-label="Search products">
+        <span class="nav-search-icon" aria-hidden="true"></span>
+      </button>
+      <nav class="cart-nav">
+        <a href="/cart.html" class="cart-link active" aria-label="View cart">
+          <span class="cart-icon" aria-hidden="true"></span>
+          <span class="cart-label">Cart</span>
+          <span id="cartCount" class="cart-count" aria-label="0 items">0</span>
+        </a>
+      </nav>
+    </div>
   </header>
-</div>
-
-<div class="ruo-banner">
+</div><div class="ruo-banner">
   FOR LABORATORY / RESEARCH USE ONLY. NOT FOR HUMAN OR VETERINARY USE. NOT A DRUG, FOOD, OR COSMETIC.
 </div>
 
@@ -134,3 +138,5 @@
 <script src="/js/cart.js"></script>
 </body>
 </html>
+
+

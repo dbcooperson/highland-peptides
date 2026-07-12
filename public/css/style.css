@@ -1,4 +1,4 @@
-﻿@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500;1,600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500;1,600&display=swap');
 
 :root {
   --card: #faf7f1;
@@ -1106,4 +1106,157 @@ body.search-open { overflow: hidden; }
   .product-search-results { grid-template-columns: 1fr; }
   .product-search-result { grid-template-columns: 68px 1fr 18px; }
   .product-search-result-media { width: 68px; height: 68px; }
+}
+
+/* ---------- Storefront polish ---------- */
+.product-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  padding: 14px;
+}
+.product-card .card-link {
+  flex: 1;
+}
+.product-card .card-media {
+  height: 168px;
+  background-color: #f6f1e8;
+  background-size: cover;
+  background-position: center 48%;
+  border: 1px solid rgba(28,26,23,0.06);
+  box-shadow: inset 0 -20px 34px rgba(28,26,23,0.06);
+}
+.product-card-badge,
+.ruo-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.product-card-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 5px 8px;
+  background: rgba(28,26,23,0.78);
+  color: var(--offwhite);
+}
+.product-card-meta,
+.product-card-foot,
+.product-kicker-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.product-card-meta { margin-bottom: 7px; }
+.product-card-spec {
+  color: var(--muted-on-light);
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.product-card h4 {
+  min-height: 38px;
+  margin-bottom: 10px;
+  font-size: 16px;
+  line-height: 1.18;
+}
+.product-card-note {
+  margin-bottom: 2px;
+  color: var(--success);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.product-card .price { margin: 0; }
+.product-card-arrow {
+  color: var(--muted-on-light);
+  font-size: 26px;
+  line-height: 1;
+}
+.product-card .addBtn {
+  margin-top: 14px;
+}
+.product-title {
+  margin: 5px 0 10px;
+  font-size: clamp(28px, 4vw, 42px);
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+.product-description {
+  max-width: 620px;
+  margin: 0 0 18px;
+  font-size: 14px;
+  line-height: 1.65;
+}
+.ruo-pill {
+  padding: 6px 10px;
+  border: 1px solid #d7ccb9;
+  color: var(--accent-ink);
+  background: #f4efe4;
+}
+.product-trust-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0 0 24px;
+}
+.product-trust-grid div {
+  padding: 12px;
+  border: 1px solid var(--border-on-light);
+  border-radius: var(--radius-sm);
+  background: #f4efe4;
+}
+.product-trust-grid strong,
+.product-trust-grid span {
+  display: block;
+}
+.product-trust-grid strong {
+  margin-bottom: 4px;
+  color: var(--ink);
+  font-size: 12px;
+}
+.product-trust-grid span {
+  color: var(--muted-on-light);
+  font-size: 11px;
+  line-height: 1.35;
+}
+.product-use-note {
+  margin: 8px 0 0;
+  color: var(--muted-on-light);
+  font-size: 12px;
+  line-height: 1.45;
+}
+.product-info-panel {
+  margin-top: 30px;
+  padding-top: 22px;
+  border-top: 1px solid var(--border-on-light);
+}
+.product-info-panel h4 {
+  margin: 0 0 10px;
+}
+.product-info-panel .hint {
+  margin: 0 0 18px;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.product-info-panel a {
+  color: var(--accent-ink);
+  font-weight: 700;
+}
+@media (min-width: 760px) {
+  .product-layout { grid-template-columns: 330px 1fr; }
+  .product-media { aspect-ratio: 4 / 5; }
+}
+@media (max-width: 680px) {
+  .product-card .card-media { height: 150px; }
+  .product-trust-grid { grid-template-columns: 1fr; }
+  .product-kicker-row { align-items: flex-start; flex-direction: column; }
 }

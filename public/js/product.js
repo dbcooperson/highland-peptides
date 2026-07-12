@@ -23,11 +23,19 @@ function renderProduct() {
     <div class="product-layout">
       <div class="product-media photo"></div>
       <div class="product-info">
-        <div class="group">${family.group || family.category}</div>
-        <h1 style="margin:4px 0 10px; font-size:26px; letter-spacing:-0.01em;">${family.name}</h1>
-        <p class="hint" style="font-size:14px; line-height:1.6; margin-bottom:20px;">${family.description}</p>
+        <div class="product-kicker-row">
+          <div class="group">${family.group || family.category}</div>
+          <span class="ruo-pill">Research Use Only</span>
+        </div>
+        <h1 class="product-title">${family.name}</h1>
+        <p class="hint product-description">${family.description}</p>
+        <div class="product-trust-grid">
+          <div><strong>COA</strong><span>Available on request</span></div>
+          <div><strong>Ships</strong><span>From California</span></div>
+          <div><strong>Use</strong><span>Laboratory research only</span></div>
+        </div>
 
-        <div class="size-label">Choose Size</div>
+        <div class="size-label">Choose vial size</div>
         <div class="variant-chips" id="variantChips">${variantButtonsHTML()}</div>
 
         <div class="price-block">
@@ -43,6 +51,7 @@ function renderProduct() {
           </div>
           <button id="addToCartBtn" class="add-to-cart-btn">Add to Cart</button>
         </div>
+        <p class="product-use-note">Not for human or veterinary use, consumption, injection, or administration.</p>
         <p class="form-msg" id="addMsg" style="color:var(--success);"></p>
       </div>
     </div>
@@ -94,3 +103,4 @@ async function init() {
 init().catch(() => {
   document.getElementById('productContent').innerHTML = '<p class="hint">Product not found.</p>';
 });
+

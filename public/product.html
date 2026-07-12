@@ -1,8 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Research-use-only product details from Highland Peptides, including vial sizes, COA availability, and California fulfillment.">
 <title>Highland Peptides</title>
 <link rel="stylesheet" href="/css/style.css">
 </head>
@@ -61,21 +62,24 @@
       Highland Peptides
     </a></div>
     <nav class="site-nav">
-      <a href="/index.html#catalogSection">Shop</a>
+      <a href="/index.html#catalogSection" class="active">Shop</a>
       <a href="/about.html">About Us</a>
-      <a href="/calculator.html">Peptide Calculator</a>
+      <a href="/calculator.html">Research Calculator</a>
     </nav>
-    <nav class="cart-nav">
-      <a href="/cart.html" class="cart-link" aria-label="View cart">
-        <span class="cart-icon" aria-hidden="true"></span>
-        <span class="cart-label">Cart</span>
-        <span id="cartCount" class="cart-count" aria-label="0 items">0</span>
-      </a>
-    </nav>
+    <div class="header-actions">
+      <button id="openProductSearch" class="nav-search-button" type="button" aria-label="Search products">
+        <span class="nav-search-icon" aria-hidden="true"></span>
+      </button>
+      <nav class="cart-nav">
+        <a href="/cart.html" class="cart-link" aria-label="View cart">
+          <span class="cart-icon" aria-hidden="true"></span>
+          <span class="cart-label">Cart</span>
+          <span id="cartCount" class="cart-count" aria-label="0 items">0</span>
+        </a>
+      </nav>
+    </div>
   </header>
-</div>
-
-<div class="ruo-banner">
+</div><div class="ruo-banner">
   FOR LABORATORY / RESEARCH USE ONLY. NOT FOR HUMAN OR VETERINARY USE. NOT A DRUG, FOOD, OR COSMETIC.
 </div>
 
@@ -85,19 +89,19 @@
   <section id="productSection" class="panel">
     <div id="productContent">Loading...</div>
 
-    <div style="margin-top:28px; padding-top:20px; border-top:1px solid var(--border-on-light);">
-      <h4 style="margin-bottom:10px;">Handling &amp; Reconstitution</h4>
-      <ul class="hint" style="font-size:13px; line-height:1.7; padding-left:18px; margin:0 0 18px;">
-        <li>Reconstitute using sterile bacteriostatic water.</li>
-        <li>Swirl gently, do not shake, until fully dissolved.</li>
-        <li>Handle only within a controlled laboratory environment by qualified personnel.</li>
-        <li>Use our <a href="/calculator.html" style="color:var(--accent-ink);">Peptide Calculator</a> for reconstitution math.</li>
+    <div class="product-info-panel">
+      <h4>Research handling notes</h4>
+      <ul class="hint">
+        <li>For laboratory and analytical research use only.</li>
+        <li>Handle only in a controlled research environment by qualified personnel.</li>
+        <li>COA documentation is available on request for current lots.</li>
+        <li>Use the <a href="/calculator.html">Research Calculator</a> only for concentration arithmetic.</li>
       </ul>
-      <h4 style="margin-bottom:10px;">Storage</h4>
-      <ul class="hint" style="font-size:13px; line-height:1.7; padding-left:18px; margin:0;">
-        <li>Store lyophilized peptide cool, dry, and protected from light.</li>
-        <li>Refrigerate reconstituted solutions.</li>
-        <li>Avoid repeated freeze-thaw cycles.</li>
+      <h4>Storage notes</h4>
+      <ul class="hint">
+        <li>Store lyophilized material cool, dry, and protected from light.</li>
+        <li>Follow your laboratory protocol after reconstitution.</li>
+        <li>Avoid repeated freeze-thaw cycles where applicable.</li>
       </ul>
     </div>
   </section>
@@ -112,3 +116,6 @@
 <script src="/js/product.js"></script>
 </body>
 </html>
+
+
+
