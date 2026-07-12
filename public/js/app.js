@@ -68,14 +68,59 @@ function renderGateAndCatalogVisibility() {
   renderCatalog();
 }
 
-const VIAL_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2h6"/><path d="M10 2v5.2c0 .5-.2 1-.5 1.4L7 12.5c-.6.8-1 1.8-1 2.8V19a3 3 0 0 0 3 3h6a3 3 0 0 0 3-3v-3.7c0-1-.4-2-1-2.8l-2.5-3.9c-.3-.4-.5-.9-.5-1.4V2"/><path d="M6.5 15h11"/></svg>`;
+// Best-by date is a placeholder convention (24 months out), not a real lot/COA date.
+function bestByLabel() {
+  const d = new Date();
+  d.setMonth(d.getMonth() + 24);
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  return `${mm}/${d.getFullYear()}`;
+}
+
+function escapeXml(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function nameLines(name) {
+  if (name.length <= 16) return { lines: [name], size: 12 };
+  if (name.length <= 28) {
+    const mid = Math.floor(name.length / 2);
+    const splitAt = name.lastIndexOf(' ', mid) > 0 ? name.lastIndexOf(' ', mid) : name.indexOf(' ', mid);
+    if (splitAt > 0) return { lines: [name.slice(0, splitAt), name.slice(splitAt + 1)], size: 10 };
+    return { lines: [name], size: 9 };
+  }
+  const words = name.split(' ');
+  const mid = Math.ceil(words.length / 2);
+  return { lines: [words.slice(0, mid).join(' '), words.slice(mid).join(' ')], size: 8.5 };
+}
+
+function vialLabelSVG(p) {
+  const { lines, size } = nameLines(p.name);
+  const nameTspans = lines.map((l, i) =>
+    `<tspan x="110" dy="${i === 0 ? 0 : size + 1}">${escapeXml(l)}</tspan>`
+  ).join('');
+  const nameY = lines.length > 1 ? 100 : 106;
+
+  return `<svg viewBox="0 0 220 200" xmlns="http://www.w3.org/2000/svg">
+    <rect x="88" y="4" width="44" height="16" rx="4" fill="#2b2925"/>
+    <rect x="95" y="16" width="30" height="18" fill="#c9cfd6"/>
+    <rect x="40" y="32" width="140" height="146" rx="16" fill="#eef0ef" stroke="#c9cfd6" stroke-width="1.5"/>
+    <rect x="42" y="68" width="136" height="92" fill="#fdfcf9" stroke="#d9d2c2" stroke-width="1"/>
+    <path d="M104,80 L110,70 L116,80 Z" fill="none" stroke="#1c1a17" stroke-width="1.3"/>
+    <text x="110" y="88" text-anchor="middle" font-family="Arial, sans-serif" font-size="5.5" letter-spacing="1" fill="#1c1a17">HIGHLAND PEPTIDES</text>
+    <text x="110" y="${nameY}" text-anchor="middle" font-family="Arial, sans-serif" font-size="${size}" font-weight="700" fill="#1c1a17">${nameTspans}</text>
+    <text x="110" y="128" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" fill="#756b5c">${escapeXml(p.spec)}</text>
+    <line x1="52" y1="136" x2="168" y2="136" stroke="#d9d2c2" stroke-width="1"/>
+    <text x="110" y="146" text-anchor="middle" font-family="Arial, sans-serif" font-size="5" letter-spacing="0.5" fill="#8a8272">RUO / NOT FOR HUMAN USE</text>
+    <text x="110" y="155" text-anchor="middle" font-family="Arial, sans-serif" font-size="6" font-weight="700" fill="#c1793a">BEST BY ${bestByLabel()}</text>
+  </svg>`;
+}
 
 function renderCatalog() {
   const grid = document.getElementById('catalogGrid');
   const canBuy = currentAccount && currentAccount.status === 'approved';
   grid.innerHTML = catalog.map(p => `
     <div class="card">
-      <div class="card-media">${VIAL_ICON}</div>
+      <div class="card-media">${vialLabelSVG(p)}</div>
       <div class="group">${p.group || p.category}</div>
       <h4>${p.name}</h4>
       <div class="spec">${p.spec}</div>
