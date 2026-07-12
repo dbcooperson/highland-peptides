@@ -5,7 +5,7 @@ const RUO_LINE = 'FOR LABORATORY / RESEARCH USE ONLY. NOT FOR HUMAN OR VETERINAR
 
 // Packing slip: standard 8.5x11 page, for your regular printer.
 // Lists exactly what was ordered and in what quantity, so you know what to pull and pack.
-function buildPackingSlip(order, items, account, res) {
+function buildPackingSlip(order, items, res) {
   const doc = new PDFDocument({ size: 'LETTER', margin: 50 });
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', `attachment; filename="packing-slip-order-${order.id}.pdf"`);
@@ -16,11 +16,13 @@ function buildPackingSlip(order, items, account, res) {
   doc.fontSize(10).fillColor('#555').text('Packing Slip', { align: 'left' });
   doc.moveDown();
 
+  const b = order.buyer || {};
   doc.fillColor('#000').fontSize(11);
   doc.text(`Order #: ${order.id}`);
   doc.text(`Date: ${order.created_at}`);
-  doc.text(`Account: ${account.company_name}`);
-  doc.text(`Contact: ${account.contact_name || ''}  (${account.email})`);
+  doc.text(`Ship to: ${b.name || ''}  (${b.email || ''})`);
+  doc.text(`${b.address1 || ''}${b.address2 ? ', ' + b.address2 : ''}`);
+  doc.text(`${b.city || ''}, ${b.state || ''} ${b.zip || ''}`);
   doc.moveDown();
 
   doc.fontSize(12).text('Items Ordered', { underline: true });
@@ -63,18 +65,19 @@ function buildPackingSlip(order, items, account, res) {
 // Compact 4x6 label content (for the Nimbot B1 or any 4x6 thermal/label printer).
 // Ship-to is left blank for you to fill in with your label software; this focuses
 // on exactly what's in the package, per your request.
-function buildContentsLabel(order, items, account, res) {
+function buildContentsLabel(order, items, res) {
   const doc = new PDFDocument({ size: [288, 432], margin: 10 }); // 4in x 6in at 72dpi
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', `attachment; filename="contents-label-order-${order.id}.pdf"`);
   doc.pipe(res);
 
+  const b = order.buyer || {};
   doc.fontSize(11).text(SITE_NAME, { align: 'center' });
   doc.fontSize(8).fillColor('#555').text('Package Contents', { align: 'center' });
   doc.moveDown(0.5);
   doc.fillColor('#000').fontSize(9);
   doc.text(`Order #${order.id}  -  ${order.created_at}`);
-  doc.text(`${account.company_name}`);
+  doc.text(`${b.name || ''}`);
   doc.moveDown(0.5);
   doc.moveTo(10, doc.y).lineTo(278, doc.y).strokeColor('#000').stroke();
   doc.moveDown(0.3);

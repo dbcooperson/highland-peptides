@@ -2,584 +2,584 @@
   {
     "sku": "ET10",
     "name": "Epithalon",
-    "spec": "10mg x10 vials",
-    "cost": 46,
+    "spec": "10mg x1 vial",
+    "cost": 4.6,
     "category": "Peptide",
     "group": "Longevity"
   },
   {
     "sku": "ET50",
     "name": "Epithalon",
-    "spec": "50mg x10 vials",
-    "cost": 120,
+    "spec": "50mg x1 vial",
+    "cost": 12,
     "category": "Peptide",
     "group": "Longevity"
   },
   {
     "sku": "DS5",
     "name": "DSIP",
-    "spec": "5mg x10 vials",
-    "cost": 32,
+    "spec": "5mg x1 vial",
+    "cost": 3.2,
     "category": "Peptide",
     "group": "Sleep"
   },
   {
     "sku": "DS10",
     "name": "DSIP",
-    "spec": "10mg x10 vials",
-    "cost": 58,
+    "spec": "10mg x1 vial",
+    "cost": 5.8,
     "category": "Peptide",
     "group": "Sleep"
   },
   {
     "sku": "DS15",
     "name": "DSIP",
-    "spec": "15mg x10 vials",
-    "cost": 75,
+    "spec": "15mg x1 vial",
+    "cost": 7.5,
     "category": "Peptide",
     "group": "Sleep"
   },
   {
     "sku": "SK5",
     "name": "Selank",
-    "spec": "5mg x10 vials",
-    "cost": 37,
+    "spec": "5mg x1 vial",
+    "cost": 3.7,
     "category": "Peptide",
     "group": "Nootropic"
   },
   {
     "sku": "SK10",
     "name": "Selank",
-    "spec": "10mg x10 vials",
-    "cost": 55,
+    "spec": "10mg x1 vial",
+    "cost": 5.5,
     "category": "Peptide",
     "group": "Nootropic"
   },
   {
     "sku": "PIN10",
     "name": "Pinealon",
-    "spec": "10mg x10 vials",
-    "cost": 43,
+    "spec": "10mg x1 vial",
+    "cost": 4.3,
     "category": "Peptide",
     "group": "Longevity"
   },
   {
     "sku": "PIN20",
     "name": "Pinealon",
-    "spec": "20mg x10 vials",
-    "cost": 65,
+    "spec": "20mg x1 vial",
+    "cost": 6.5,
     "category": "Peptide",
     "group": "Longevity"
   },
   {
     "sku": "XA5",
     "name": "Semax",
-    "spec": "5mg x10 vials",
-    "cost": 37,
+    "spec": "5mg x1 vial",
+    "cost": 3.7,
     "category": "Peptide",
     "group": "Nootropic"
   },
   {
     "sku": "XA10",
     "name": "Semax",
-    "spec": "10mg x10 vials",
-    "cost": 55,
+    "spec": "10mg x1 vial",
+    "cost": 5.5,
     "category": "Peptide",
     "group": "Nootropic"
   },
   {
     "sku": "2S10",
     "name": "SS-31",
-    "spec": "10mg x10 vials",
-    "cost": 65,
+    "spec": "10mg x1 vial",
+    "cost": 6.5,
     "category": "Peptide",
     "group": "Mitochondrial"
   },
   {
     "sku": "2S50",
     "name": "SS-31",
-    "spec": "50mg x10 vials",
-    "cost": 270,
+    "spec": "50mg x1 vial",
+    "cost": 27,
     "category": "Peptide",
     "group": "Mitochondrial"
   },
   {
     "sku": "G25",
     "name": "GHRP-2 Acetate",
-    "spec": "5mg x10 vials",
-    "cost": 30,
+    "spec": "5mg x1 vial",
+    "cost": 3,
     "category": "Peptide",
     "group": "Growth Hormone"
   },
   {
     "sku": "G210",
     "name": "GHRP-2 Acetate",
-    "spec": "10mg x10 vials",
-    "cost": 46,
+    "spec": "10mg x1 vial",
+    "cost": 4.6,
     "category": "Peptide",
     "group": "Growth Hormone"
   },
   {
     "sku": "G65",
     "name": "GHRP-6 Acetate",
-    "spec": "5mg x10 vials",
-    "cost": 30,
+    "spec": "5mg x1 vial",
+    "cost": 3,
     "category": "Peptide",
     "group": "Growth Hormone"
   },
   {
     "sku": "G610",
     "name": "GHRP-6 Acetate",
-    "spec": "10mg x10 vials",
-    "cost": 46,
+    "spec": "10mg x1 vial",
+    "cost": 4.6,
     "category": "Peptide",
     "group": "Growth Hormone"
   },
   {
     "sku": "CND2",
     "name": "CJC-1295 without DAC",
-    "spec": "2mg x10 vials",
-    "cost": 40,
+    "spec": "2mg x1 vial",
+    "cost": 4,
     "category": "Peptide",
     "group": "Growth Hormone"
   },
   {
     "sku": "CND5",
     "name": "CJC-1295 without DAC",
-    "spec": "5mg x10 vials",
-    "cost": 68,
+    "spec": "5mg x1 vial",
+    "cost": 6.8,
     "category": "Peptide",
     "group": "Growth Hormone"
   },
   {
     "sku": "CND10",
     "name": "CJC-1295 without DAC",
-    "spec": "10mg x10 vials",
-    "cost": 128,
+    "spec": "10mg x1 vial",
+    "cost": 12.8,
     "category": "Peptide",
     "group": "Growth Hormone"
   },
   {
     "sku": "CP10",
     "name": "CJC-1295 without DAC + Ipamorelin",
-    "spec": "5mg+5mg x10 vials",
-    "cost": 75,
+    "spec": "5mg+5mg x1 vial",
+    "cost": 7.5,
     "category": "Peptide",
     "group": "Growth Hormone"
   },
   {
     "sku": "CD2",
     "name": "CJC-1295 with DAC",
-    "spec": "2mg x10 vials",
-    "cost": 58,
+    "spec": "2mg x1 vial",
+    "cost": 5.8,
     "category": "Peptide",
     "group": "Growth Hormone"
   },
   {
     "sku": "CD5",
     "name": "CJC-1295 with DAC",
-    "spec": "5mg x10 vials",
-    "cost": 135,
+    "spec": "5mg x1 vial",
+    "cost": 13.5,
     "category": "Peptide",
     "group": "Growth Hormone"
   },
   {
     "sku": "SMO5",
     "name": "Sermorelin",
-    "spec": "5mg x10 vials",
-    "cost": 65,
+    "spec": "5mg x1 vial",
+    "cost": 6.5,
     "category": "Peptide",
     "group": "Growth Hormone"
   },
   {
     "sku": "SMO10",
     "name": "Sermorelin",
-    "spec": "10mg x10 vials",
-    "cost": 120,
+    "spec": "10mg x1 vial",
+    "cost": 12,
     "category": "Peptide",
     "group": "Growth Hormone"
   },
   {
     "sku": "HX5",
     "name": "Hexarelin Acetate",
-    "spec": "5mg x10 vials",
-    "cost": 65,
+    "spec": "5mg x1 vial",
+    "cost": 6.5,
     "category": "Peptide",
     "group": "Growth Hormone"
   },
   {
     "sku": "HGHFRAG",
     "name": "HGH Frag 176-191",
-    "spec": "5mg x10 vials",
-    "cost": 72,
+    "spec": "5mg x1 vial",
+    "cost": 7.2,
     "category": "Peptide",
     "group": "Metabolic"
   },
   {
     "sku": "IG01",
     "name": "IGF-1 LR3",
-    "spec": "0.1mg x10 vials",
-    "cost": 35,
+    "spec": "0.1mg x1 vial",
+    "cost": 3.5,
     "category": "Peptide",
     "group": "Growth Factor"
   },
   {
     "sku": "IG1",
     "name": "IGF-1 LR3",
-    "spec": "1mg x10 vials",
-    "cost": 170,
+    "spec": "1mg x1 vial",
+    "cost": 17,
     "category": "Peptide",
     "group": "Growth Factor"
   },
   {
     "sku": "IP5",
     "name": "Ipamorelin",
-    "spec": "5mg x10 vials",
-    "cost": 40,
+    "spec": "5mg x1 vial",
+    "cost": 4,
     "category": "Peptide",
     "group": "Growth Hormone"
   },
   {
     "sku": "IP10",
     "name": "Ipamorelin",
-    "spec": "10mg x10 vials",
-    "cost": 60,
+    "spec": "10mg x1 vial",
+    "cost": 6,
     "category": "Peptide",
     "group": "Growth Hormone"
   },
   {
     "sku": "CU",
     "name": "GHK-Cu",
-    "spec": "50mg x10 vials",
-    "cost": 32,
+    "spec": "50mg x1 vial",
+    "cost": 3.2,
     "category": "Peptide",
     "group": "Skin & Recovery"
   },
   {
     "sku": "CU100",
     "name": "GHK-Cu",
-    "spec": "100mg x10 vials",
-    "cost": 45,
+    "spec": "100mg x1 vial",
+    "cost": 4.5,
     "category": "Peptide",
     "group": "Skin & Recovery"
   },
   {
     "sku": "AU100",
     "name": "AHK-Cu",
-    "spec": "100mg x10 vials",
-    "cost": 50,
+    "spec": "100mg x1 vial",
+    "cost": 5,
     "category": "Peptide",
     "group": "Skin & Recovery"
   },
   {
     "sku": "KS5",
     "name": "Kisspeptin-10",
-    "spec": "5mg x10 vials",
-    "cost": 45,
+    "spec": "5mg x1 vial",
+    "cost": 4.5,
     "category": "Peptide",
     "group": "Hormone"
   },
   {
     "sku": "KS10",
     "name": "Kisspeptin-10",
-    "spec": "10mg x10 vials",
-    "cost": 70,
+    "spec": "10mg x1 vial",
+    "cost": 7,
     "category": "Peptide",
     "group": "Hormone"
   },
   {
     "sku": "TY10",
     "name": "Thymalin",
-    "spec": "10mg x10 vials",
-    "cost": 55,
+    "spec": "10mg x1 vial",
+    "cost": 5.5,
     "category": "Peptide",
     "group": "Immune"
   },
   {
     "sku": "TA2",
     "name": "Thymosin Alpha-1",
-    "spec": "2mg x10 vials",
-    "cost": 42,
+    "spec": "2mg x1 vial",
+    "cost": 4.2,
     "category": "Peptide",
     "group": "Immune"
   },
   {
     "sku": "TA5",
     "name": "Thymosin Alpha-1",
-    "spec": "5mg x10 vials",
-    "cost": 75,
+    "spec": "5mg x1 vial",
+    "cost": 7.5,
     "category": "Peptide",
     "group": "Immune"
   },
   {
     "sku": "TA10",
     "name": "Thymosin Alpha-1",
-    "spec": "10mg x10 vials",
-    "cost": 140,
+    "spec": "10mg x1 vial",
+    "cost": 14,
     "category": "Peptide",
     "group": "Immune"
   },
   {
     "sku": "MS10",
     "name": "MOTS-c",
-    "spec": "10mg x10 vials",
-    "cost": 50,
+    "spec": "10mg x1 vial",
+    "cost": 5,
     "category": "Peptide",
     "group": "Metabolic"
   },
   {
     "sku": "MS40",
     "name": "MOTS-c",
-    "spec": "40mg x10 vials",
-    "cost": 150,
+    "spec": "40mg x1 vial",
+    "cost": 15,
     "category": "Peptide",
     "group": "Metabolic"
   },
   {
     "sku": "GTT600",
     "name": "Glutathione",
-    "spec": "600mg x10 vials",
-    "cost": 38,
+    "spec": "600mg x1 vial",
+    "cost": 3.8,
     "category": "Peptide",
     "group": "Antioxidant"
   },
   {
     "sku": "F410",
     "name": "FOXO4-DRI",
-    "spec": "10mg x10 vials",
-    "cost": 210,
+    "spec": "10mg x1 vial",
+    "cost": 21,
     "category": "Peptide",
     "group": "Senolytic"
   },
   {
     "sku": "RA10",
     "name": "Ara-290",
-    "spec": "10mg x10 vials",
-    "cost": 48,
+    "spec": "10mg x1 vial",
+    "cost": 4.8,
     "category": "Peptide",
     "group": "Neuroprotective"
   },
   {
     "sku": "NP810",
     "name": "Snap-8",
-    "spec": "10mg x10 vials",
-    "cost": 40,
+    "spec": "10mg x1 vial",
+    "cost": 4,
     "category": "Peptide",
     "group": "Skin & Recovery"
   },
   {
     "sku": "NJ100",
     "name": "NAD+",
-    "spec": "100mg x10 vials",
-    "cost": 50,
+    "spec": "100mg x1 vial",
+    "cost": 5,
     "category": "Peptide",
     "group": "Metabolic"
   },
   {
     "sku": "NJ500",
     "name": "NAD+",
-    "spec": "500mg x10 vials",
-    "cost": 70,
+    "spec": "500mg x1 vial",
+    "cost": 7,
     "category": "Peptide",
     "group": "Metabolic"
   },
   {
     "sku": "NJ1000",
     "name": "NAD+",
-    "spec": "1000mg x10 vials",
-    "cost": 95,
+    "spec": "1000mg x1 vial",
+    "cost": 9.5,
     "category": "Peptide",
     "group": "Metabolic"
   },
   {
     "sku": "5AM",
     "name": "5-Amino-1MQ",
-    "spec": "5mg x10 vials",
-    "cost": 42,
+    "spec": "5mg x1 vial",
+    "cost": 4.2,
     "category": "Peptide",
     "group": "Metabolic"
   },
   {
     "sku": "10AM",
     "name": "5-Amino-1MQ",
-    "spec": "10mg x10 vials",
-    "cost": 56,
+    "spec": "10mg x1 vial",
+    "cost": 5.6,
     "category": "Peptide",
     "group": "Metabolic"
   },
   {
     "sku": "50AM",
     "name": "5-Amino-1MQ",
-    "spec": "50mg x10 vials",
-    "cost": 90,
+    "spec": "50mg x1 vial",
+    "cost": 9,
     "category": "Peptide",
     "group": "Metabolic"
   },
   {
     "sku": "LC216",
     "name": "Lipo-C",
-    "spec": "10ml x10 vials",
-    "cost": 75,
+    "spec": "10ml x1 vial",
+    "cost": 7.5,
     "category": "Peptide",
     "group": "Metabolic"
   },
   {
     "sku": "VIP5",
     "name": "VIP",
-    "spec": "5mg x10 vials",
-    "cost": 65,
+    "spec": "5mg x1 vial",
+    "cost": 6.5,
     "category": "Peptide",
     "group": "Hormone"
   },
   {
     "sku": "VIP10",
     "name": "VIP",
-    "spec": "10mg x10 vials",
-    "cost": 120,
+    "spec": "10mg x1 vial",
+    "cost": 12,
     "category": "Peptide",
     "group": "Hormone"
   },
   {
     "sku": "S332",
     "name": "SLU-PP-332",
-    "spec": "5mg x10 vials",
-    "cost": 95,
+    "spec": "5mg x1 vial",
+    "cost": 9.5,
     "category": "Peptide",
     "group": "Metabolic"
   },
   {
     "sku": "KPV5",
     "name": "KPV (Lys-Pro-Val)",
-    "spec": "5mg x10 vials",
-    "cost": 35,
+    "spec": "5mg x1 vial",
+    "cost": 3.5,
     "category": "Peptide",
     "group": "Immune"
   },
   {
     "sku": "KPV10",
     "name": "KPV (Lys-Pro-Val)",
-    "spec": "10mg x10 vials",
-    "cost": 48,
+    "spec": "10mg x1 vial",
+    "cost": 4.8,
     "category": "Peptide",
     "group": "Immune"
   },
   {
     "sku": "LL375",
     "name": "LL-37",
-    "spec": "5mg x10 vials",
-    "cost": 65,
+    "spec": "5mg x1 vial",
+    "cost": 6.5,
     "category": "Peptide",
     "group": "Antimicrobial"
   },
   {
     "sku": "LEMONB",
     "name": "Lemon Bottle",
-    "spec": "10mg x10 vials",
-    "cost": 55,
+    "spec": "10mg x1 vial",
+    "cost": 5.5,
     "category": "Peptide",
     "group": "Skin & Recovery"
   },
   {
     "sku": "OT5",
     "name": "Oxytocin Acetate",
-    "spec": "5mg x10 vials",
-    "cost": 38,
+    "spec": "5mg x1 vial",
+    "cost": 3.8,
     "category": "Peptide",
     "group": "Hormone"
   },
   {
     "sku": "OT10",
     "name": "Oxytocin Acetate",
-    "spec": "10mg x10 vials",
-    "cost": 52,
+    "spec": "10mg x1 vial",
+    "cost": 5.2,
     "category": "Peptide",
     "group": "Hormone"
   },
   {
     "sku": "WA3",
     "name": "Bacteriostatic Water",
-    "spec": "3ml x10 vials",
-    "cost": 10,
+    "spec": "3ml x1 vial",
+    "cost": 1,
     "category": "Supplies",
     "group": "Supplies"
   },
   {
     "sku": "WA10",
     "name": "Bacteriostatic Water",
-    "spec": "10ml x10 vials",
-    "cost": 13,
+    "spec": "10ml x1 vial",
+    "cost": 1.3,
     "category": "Supplies",
     "group": "Supplies"
   },
   {
     "sku": "5AD",
     "name": "AOD-9604",
-    "spec": "5mg x10 vials",
-    "cost": 80,
+    "spec": "5mg x1 vial",
+    "cost": 8,
     "category": "Peptide",
     "group": "Metabolic"
   },
   {
     "sku": "FM2",
     "name": "MGF",
-    "spec": "2ml x10 vials",
-    "cost": 40,
+    "spec": "2ml x1 vial",
+    "cost": 4,
     "category": "Peptide",
     "group": "Growth Factor"
   },
   {
     "sku": "PE10",
     "name": "PE 22-28",
-    "spec": "10ml x10 vials",
-    "cost": 60,
+    "spec": "10ml x1 vial",
+    "cost": 6,
     "category": "Peptide",
     "group": "Nootropic"
   },
   {
     "sku": "AE1",
     "name": "ACE-031",
-    "spec": "1ml x10 vials",
-    "cost": 67,
+    "spec": "1ml x1 vial",
+    "cost": 6.7,
     "category": "Peptide",
     "group": "Muscle"
   },
   {
     "sku": "NSK30",
     "name": "NA-Selank Amidate",
-    "spec": "30ml x10 vials",
-    "cost": 105,
+    "spec": "30ml x1 vial",
+    "cost": 10.5,
     "category": "Peptide",
     "group": "Nootropic"
   },
   {
     "sku": "CA20",
     "name": "Cardiogen",
-    "spec": "20ml x10 vials",
-    "cost": 93,
+    "spec": "20ml x1 vial",
+    "cost": 9.3,
     "category": "Peptide",
     "group": "Cardiovascular"
   },
   {
     "sku": "AD5",
     "name": "Adamax",
-    "spec": "5mg x10 vials",
-    "cost": 120,
+    "spec": "5mg x1 vial",
+    "cost": 12,
     "category": "Peptide",
     "group": "Metabolic"
   },
   {
     "sku": "XS10",
     "name": "Semax 5mg + Selank 5mg",
-    "spec": "10ml x10 vials",
-    "cost": 57,
+    "spec": "10ml x1 vial",
+    "cost": 5.7,
     "category": "Peptide",
     "group": "Nootropic"
   },
   {
     "sku": "XS20",
     "name": "Semax 10mg + Selank 10mg",
-    "spec": "20ml x10 vials",
-    "cost": 86,
+    "spec": "20ml x1 vial",
+    "cost": 8.6,
     "category": "Peptide",
     "group": "Nootropic"
   }

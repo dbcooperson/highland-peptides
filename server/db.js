@@ -8,7 +8,7 @@ const DB_PATH = path.join(__dirname, '..', 'data', 'db.json');
 
 function load() {
   if (!fs.existsSync(DB_PATH)) {
-    const initial = { accounts: [], orders: [], nextAccountId: 1, nextOrderId: 1 };
+    const initial = { orders: [], nextOrderId: 1 };
     fs.writeFileSync(DB_PATH, JSON.stringify(initial, null, 2));
     return initial;
   }
@@ -19,59 +19,14 @@ function save(data) {
   fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2));
 }
 
-// ---------- Accounts ----------
-function createAccount({ companyName, contactName, email, emailDomain, passwordHash, agreedToTerms, agreedAt }) {
-  const data = load();
-  const account = {
-    id: data.nextAccountId++,
-    company_name: companyName,
-    contact_name: contactName || null,
-    email: email.toLowerCase(),
-    email_domain: emailDomain,
-    password_hash: passwordHash,
-    status: 'pending',
-    agreed_to_terms: !!agreedToTerms,
-    agreed_at: agreedAt || null,
-    created_at: new Date().toISOString(),
-    reviewed_at: null,
-  };
-  data.accounts.push(account);
-  save(data);
-  return account;
-}
-
-function getAccountByEmail(email) {
-  const data = load();
-  return data.accounts.find(a => a.email === email.toLowerCase()) || null;
-}
-
-function getAccountById(id) {
-  const data = load();
-  return data.accounts.find(a => a.id === Number(id)) || null;
-}
-
-function getAllAccounts() {
-  const data = load();
-  return [...data.accounts].sort((a, b) => b.id - a.id);
-}
-
-function reviewAccount(id, decision) {
-  const data = load();
-  const account = data.accounts.find(a => a.id === Number(id));
-  if (!account) return null;
-  account.status = decision;
-  account.reviewed_at = new Date().toISOString();
-  save(data);
-  return account;
-}
-
-// ---------- Orders ----------
-function createOrder({ accountId, items, subtotal, packagingFee, total }) {
+// ---------- Orders (guest checkout, no accounts) ----------
+function createOrder({ buyer, certifiedAt, items, subtotal, packagingFee, total }) {
   const data = load();
   const order = {
     id: data.nextOrderId++,
-    account_id: accountId,
     status: 'pending_payment',
+    buyer,
+    certified_at: certifiedAt,
     items,
     subtotal,
     packaging_fee: packagingFee,
@@ -83,21 +38,9 @@ function createOrder({ accountId, items, subtotal, packagingFee, total }) {
   return order;
 }
 
-function getOrdersByAccount(accountId) {
-  const data = load();
-  return data.orders.filter(o => o.account_id === Number(accountId)).sort((a, b) => b.id - a.id);
-}
-
 function getAllOrders() {
   const data = load();
-  const accountsById = Object.fromEntries(data.accounts.map(a => [a.id, a]));
-  return [...data.orders]
-    .sort((a, b) => b.id - a.id)
-    .map(o => ({
-      ...o,
-      company_name: accountsById[o.account_id] ? accountsById[o.account_id].company_name : 'Unknown',
-      email: accountsById[o.account_id] ? accountsById[o.account_id].email : '',
-    }));
+  return [...data.orders].sort((a, b) => b.id - a.id);
 }
 
 function getOrderById(id) {
@@ -114,7 +57,4 @@ function updateOrderStatus(id, status) {
   return order;
 }
 
-module.exports = {
-  createAccount, getAccountByEmail, getAccountById, getAllAccounts, reviewAccount,
-  createOrder, getOrdersByAccount, getAllOrders, getOrderById, updateOrderStatus,
-};
+module.exports = { createOrder, getAllOrders, getOrderById, updateOrderStatus };
