@@ -20,7 +20,7 @@ function save(data) {
 }
 
 // ---------- Orders (guest checkout, no accounts) ----------
-function createOrder({ buyer, certifiedAt, items, subtotal, packagingFee, total }) {
+function createOrder({ buyer, certifiedAt, items, subtotal, packagingFee, shippingFee, discountCode, discountAmount, total }) {
   const data = load();
   const order = {
     id: data.nextOrderId++,
@@ -30,6 +30,9 @@ function createOrder({ buyer, certifiedAt, items, subtotal, packagingFee, total 
     items,
     subtotal,
     packaging_fee: packagingFee,
+    shipping_fee: shippingFee,
+    discount_code: discountCode || null,
+    discount_amount: discountAmount || 0,
     total,
     created_at: new Date().toISOString(),
   };

@@ -56,7 +56,7 @@ function renderCartPage() {
     subtotal += p.price * cart[sku];
     return cartLineHTML(sku, cart[sku], p);
   }).join('');
-  totalEl.textContent = `Subtotal: $${subtotal.toFixed(2)} (+ packaging fee at checkout)`;
+  totalEl.textContent = `Subtotal: $${subtotal.toFixed(2)} (+ shipping and packaging at checkout)`;
 
   itemsEl.querySelectorAll('.cart-qty-down').forEach(btn => {
     btn.onclick = () => {
@@ -86,6 +86,7 @@ wireCheckout();
 async function init() {
   const catalogData = await api('/api/catalog');
   window.siteCatalog = catalogData.products;
+  window.siteFees = { packagingFee: catalogData.packagingFee, shippingFee: catalogData.shippingFee };
   renderCartPage();
 }
 

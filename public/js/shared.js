@@ -89,24 +89,82 @@ function cartSubtotal() {
   }, 0);
 }
 
+function round2(n) {
+  return Math.round(n * 100) / 100;
+}
+
 // ---------- Checkout modal (lives on the cart page only) ----------
 
-function openCheckoutModal() {
+let appliedDiscount = null; // { code, percentOff } | null
+
+function renderCheckoutSummary() {
   const cart = getCart();
   const summaryEl = document.getElementById('modalOrderSummary');
   const skus = Object.keys(cart).filter(s => cart[s] > 0);
-  const subtotal = cartSubtotal();
-  summaryEl.innerHTML = skus.map(sku => {
+  const subtotal = round2(cartSubtotal());
+  const packagingFee = (window.siteFees && window.siteFees.packagingFee) || 0;
+  const shippingFee = (window.siteFees && window.siteFees.shippingFee) || 0;
+  const discountAmount = appliedDiscount ? round2(subtotal * appliedDiscount.percentOff / 100) : 0;
+  const total = round2(subtotal - discountAmount + packagingFee + shippingFee);
+
+  const lines = skus.map(sku => {
     const p = window.siteCatalog.find(x => x.sku === sku);
     if (!p) return '';
     return `<div class="cart-row"><span>${p.name} x${cart[sku]}</span><span>$${(p.price * cart[sku]).toFixed(2)}</span></div>`;
-  }).join('') + `<div class="order-summary-total cart-row"><span>Total (+ packaging fee)</span><span>$${subtotal.toFixed(2)}+</span></div>`;
+  }).join('');
 
+  const breakdown = [
+    `<div class="cart-row"><span>Subtotal</span><span>$${subtotal.toFixed(2)}</span></div>`,
+    appliedDiscount ? `<div class="cart-row"><span>Discount (${appliedDiscount.code})</span><span>-$${discountAmount.toFixed(2)}</span></div>` : '',
+    `<div class="cart-row"><span>Shipping</span><span>$${shippingFee.toFixed(2)}</span></div>`,
+    `<div class="cart-row"><span>Packaging</span><span>$${packagingFee.toFixed(2)}</span></div>`,
+    `<div class="order-summary-total cart-row"><span>Total</span><span>$${total.toFixed(2)}</span></div>`,
+  ].join('');
+
+  summaryEl.innerHTML = lines + '<div style="height:1px; background:var(--border-on-light); margin:10px 0;"></div>' + breakdown;
+}
+
+function openCheckoutModal() {
+  appliedDiscount = null;
+  const promoInput = document.getElementById('promoInput');
+  const promoMsg = document.getElementById('promoMsg');
+  if (promoInput) promoInput.value = '';
+  if (promoMsg) promoMsg.textContent = '';
+  renderCheckoutSummary();
   document.getElementById('checkoutModal').style.display = 'flex';
 }
 
 function closeCheckoutModal() {
   document.getElementById('checkoutModal').style.display = 'none';
+}
+
+async function applyPromoCode() {
+  const input = document.getElementById('promoInput');
+  const msgEl = document.getElementById('promoMsg');
+  const code = input.value.trim();
+  if (!code) {
+    appliedDiscount = null;
+    msgEl.textContent = '';
+    renderCheckoutSummary();
+    return;
+  }
+  try {
+    const result = await api(`/api/discount-code?code=${encodeURIComponent(code)}`);
+    if (result.valid) {
+      appliedDiscount = { code: result.code, percentOff: result.percentOff };
+      msgEl.style.color = 'var(--success)';
+      msgEl.textContent = `${result.percentOff}% off applied.`;
+    } else {
+      appliedDiscount = null;
+      msgEl.style.color = 'var(--danger)';
+      msgEl.textContent = 'Invalid code.';
+    }
+  } catch {
+    appliedDiscount = null;
+    msgEl.style.color = 'var(--danger)';
+    msgEl.textContent = 'Could not check that code, try again.';
+  }
+  renderCheckoutSummary();
 }
 
 function wireCheckout() {
@@ -126,6 +184,14 @@ function wireCheckout() {
   document.getElementById('checkoutModal').addEventListener('click', (e) => {
     if (e.target.id === 'checkoutModal') closeCheckoutModal();
   });
+
+  const promoApplyBtn = document.getElementById('promoApplyBtn');
+  if (promoApplyBtn) {
+    promoApplyBtn.addEventListener('click', applyPromoCode);
+    document.getElementById('promoInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); applyPromoCode(); }
+    });
+  }
 
   document.getElementById('checkoutForm').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -162,10 +228,14 @@ function wireCheckout() {
     }
 
     try {
-      const result = await api('/api/checkout', { method: 'POST', body: { items, buyer, certified } });
+      const result = await api('/api/checkout', {
+        method: 'POST',
+        body: { items, buyer, certified, discountCode: appliedDiscount ? appliedDiscount.code : null },
+      });
       msgEl.style.color = 'var(--success)';
       msgEl.textContent = `${result.message} (Order #${result.orderId}, total $${result.total.toFixed(2)})`;
       saveCart({});
+      appliedDiscount = null;
       updateCartBadge();
       document.dispatchEvent(new CustomEvent('cart:updated'));
       document.getElementById('checkoutForm').reset();

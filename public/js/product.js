@@ -84,6 +84,7 @@ async function init() {
     api(`/api/product?${query}`),
   ]);
   window.siteCatalog = catalogData.products;
+  window.siteFees = { packagingFee: catalogData.packagingFee, shippingFee: catalogData.shippingFee };
   family = productData;
   selectedSku = sku || family.variants[0].sku;
   renderProduct();

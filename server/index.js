@@ -20,7 +20,12 @@ app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // ---------- Public catalog ----------
 app.get('/api/catalog', (req, res) => {
-  res.json({ siteName: config.SITE_NAME, products: catalog });
+  res.json({
+    siteName: config.SITE_NAME,
+    products: catalog,
+    packagingFee: config.PACKAGING_FEE,
+    shippingFee: config.SHIPPING_FEE,
+  });
 });
 
 app.get('/api/product', (req, res) => {
@@ -35,9 +40,22 @@ app.get('/product/:slug', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'product.html'));
 });
 
+// Looks up a discount code without exposing the full code list to the client.
+function resolveDiscountCode(code) {
+  if (!code) return null;
+  const rate = config.DISCOUNT_CODES[String(code).trim().toUpperCase()];
+  return rate != null ? { code: String(code).trim().toUpperCase(), rate } : null;
+}
+
+app.get('/api/discount-code', (req, res) => {
+  const match = resolveDiscountCode(req.query.code);
+  if (!match) return res.json({ valid: false });
+  res.json({ valid: true, code: match.code, percentOff: Math.round(match.rate * 100) });
+});
+
 // ---------- Checkout (guest, no account) ----------
 app.post('/api/checkout', (req, res) => {
-  const { items: rawItems, buyer, certified } = req.body || {};
+  const { items: rawItems, buyer, certified, discountCode } = req.body || {};
 
   if (certified !== true) {
     return res.status(400).json({ error: 'You must certify research/business use to place an order.' });
@@ -61,8 +79,13 @@ app.post('/api/checkout', (req, res) => {
     resolved.push({ sku: product.sku, name: product.name, spec: product.spec, quantity: qty, unit_price: product.price });
   }
   subtotal = Math.round(subtotal * 100) / 100;
+
+  const discountMatch = resolveDiscountCode(discountCode);
+  const discountAmount = discountMatch ? Math.round(subtotal * discountMatch.rate * 100) / 100 : 0;
+
   const packagingFee = config.PACKAGING_FEE;
-  const total = Math.round((subtotal + packagingFee) * 100) / 100;
+  const shippingFee = config.SHIPPING_FEE;
+  const total = Math.round((subtotal - discountAmount + packagingFee + shippingFee) * 100) / 100;
 
   const order = db.createOrder({
     buyer: {
@@ -79,6 +102,9 @@ app.post('/api/checkout', (req, res) => {
     items: resolved,
     subtotal,
     packagingFee,
+    shippingFee,
+    discountCode: discountMatch ? discountMatch.code : null,
+    discountAmount,
     total,
   });
 

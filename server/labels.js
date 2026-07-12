@@ -53,7 +53,11 @@ function buildPackingSlip(order, items, res) {
   doc.moveDown(0.5);
   doc.fontSize(10);
   doc.text(`Subtotal: $${order.subtotal.toFixed(2)}`, { align: 'right' });
-  doc.text(`Packaging fee: $${order.packaging_fee.toFixed(2)}`, { align: 'right' });
+  if (order.discount_code) {
+    doc.text(`Discount (${order.discount_code}): -$${(order.discount_amount || 0).toFixed(2)}`, { align: 'right' });
+  }
+  doc.text(`Packaging fee: $${(order.packaging_fee || 0).toFixed(2)}`, { align: 'right' });
+  doc.text(`Shipping: $${(order.shipping_fee || 0).toFixed(2)}`, { align: 'right' });
   doc.fontSize(11).text(`Total: $${order.total.toFixed(2)}`, { align: 'right' });
 
   doc.moveDown(2);

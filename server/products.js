@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { MARKUP_MULTIPLIER, PRICE_DECIMALS } = require('./config');
+const { MARKUP_MULTIPLIER, PRICE_ADJUSTMENT, PRICE_DECIMALS } = require('./config');
 
 const raw = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'products.json'), 'utf8'));
 const descriptions = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'descriptions.json'), 'utf8'));
@@ -34,7 +34,7 @@ const catalog = raw
     group: p.group,
     slug: slugify(p.name),
     popular: popularRank[p.sku] !== undefined,
-    price: round(p.salePrice != null ? p.salePrice : p.cost * MARKUP_MULTIPLIER, PRICE_DECIMALS),
+    price: round((p.salePrice != null ? p.salePrice : p.cost * MARKUP_MULTIPLIER) * PRICE_ADJUSTMENT, PRICE_DECIMALS),
   }))
   .sort((a, b) => {
     const aRank = popularRank[a.sku];

@@ -651,6 +651,29 @@ form input:focus, form select:focus { outline: none; border-color: var(--accent)
 .order-summary .cart-row { margin-bottom: 4px; }
 .order-summary .order-summary-total { font-weight: 700; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border-on-light); }
 
+.promo-row { display: flex; gap: 8px; margin-bottom: 4px; }
+.promo-row input {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-on-light);
+  background: #faf9f7;
+  color: var(--ink);
+  font-size: 14px;
+  font-family: inherit;
+}
+.promo-row input:focus { outline: none; border-color: var(--accent); background: var(--card); }
+.promo-row button {
+  background: var(--ink);
+  color: var(--offwhite);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0 18px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+}
+
 @media (max-width: 480px) {
   .modal-row { grid-template-columns: 1fr; }
 }

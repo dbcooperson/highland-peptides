@@ -126,6 +126,7 @@ async function init() {
   document.title = catalogData.siteName;
   catalog = catalogData.products;
   window.siteCatalog = catalog;
+  window.siteFees = { packagingFee: catalogData.packagingFee, shippingFee: catalogData.shippingFee };
   const statEl = document.getElementById('statCompoundCount');
   if (statEl) statEl.textContent = `${catalog.length}+`;
   renderBestSellers();
