@@ -4,7 +4,7 @@ const session = require('express-session');
 
 const config = require('./config');
 const db = require('./db');
-const { catalog, bySku } = require('./products');
+const { catalog, bySku, getProductFamily } = require('./products');
 const { requireAdmin } = require('./auth');
 const { buildPackingSlip, buildContentsLabel } = require('./labels');
 
@@ -21,6 +21,12 @@ app.use(express.static(path.join(__dirname, '..', 'public')));
 // ---------- Public catalog ----------
 app.get('/api/catalog', (req, res) => {
   res.json({ siteName: config.SITE_NAME, products: catalog });
+});
+
+app.get('/api/product', (req, res) => {
+  const family = getProductFamily(req.query.sku);
+  if (!family) return res.status(404).json({ error: 'Product not found' });
+  res.json({ siteName: config.SITE_NAME, ...family });
 });
 
 // ---------- Checkout (guest, no account) ----------

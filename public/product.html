@@ -56,9 +56,9 @@
 
 <div class="nav-wrap">
   <header class="topbar">
-    <div class="brand" id="siteName">Highland Peptides</div>
+    <div class="brand">Highland Peptides</div>
     <nav class="site-nav">
-      <a href="/index.html#catalogSection" class="active">Shop</a>
+      <a href="/index.html#catalogSection">Shop</a>
       <a href="/about.html">About Us</a>
       <a href="/calculator.html">Peptide Calculator</a>
     </nav>
@@ -66,49 +66,31 @@
   </header>
 </div>
 
-<section class="hero">
-  <div class="eyebrow">Research Use Only, U.S. Supplier</div>
-  <h1 class="hero-title">Research-grade compounds,<br><em>California shipped.</em></h1>
-  <p class="hero-sub">Certify research/business use once, then shop immediately, no account needed. Certificates of Analysis are available for every batch on request.</p>
-  <button class="hero-cta" id="heroCatalogBtn">Browse the Catalog</button>
-
-  <div class="hero-stats">
-    <div class="stat">
-      <div class="stat-num" id="statCompoundCount">73+</div>
-      <div class="stat-label">Research Compounds</div>
-    </div>
-    <div class="stat">
-      <div class="stat-num">COA</div>
-      <div class="stat-label">Available on Request</div>
-    </div>
-    <div class="stat">
-      <div class="stat-num">CA</div>
-      <div class="stat-label">Ships From</div>
-    </div>
-  </div>
-</section>
-
-<div class="trust-bar">
-  <div class="trust-item">Research Use Certification Required</div>
-  <div class="trust-item">COA Available on Request</div>
-  <div class="trust-item">Ships From California</div>
-</div>
-
 <div class="ruo-banner">
   FOR LABORATORY / RESEARCH USE ONLY. NOT FOR HUMAN OR VETERINARY USE. NOT A DRUG, FOOD, OR COSMETIC.
 </div>
 
-<main>
-  <section id="bestSellers" style="grid-column:1; margin-bottom:8px;">
-    <h2>Best Sellers</h2>
-    <div id="bestSellersGrid" class="grid"></div>
-  </section>
+<div id="breadcrumb" style="max-width:1100px; margin:24px auto 0; padding:0 24px; font-size:12px; color:var(--muted-on-dark);"></div>
 
-  <section id="catalogSection">
-    <h2>Full Catalog</h2>
-    <p class="hint">Add items to your cart and check out below, no account required.</p>
-    <div id="filterChips" class="filter-chips"></div>
-    <div id="catalogGrid" class="grid"></div>
+<main>
+  <section id="productSection" class="panel">
+    <div id="productContent">Loading...</div>
+
+    <div style="margin-top:28px; padding-top:20px; border-top:1px solid var(--border-on-light);">
+      <h4 style="margin-bottom:10px;">Handling &amp; Reconstitution</h4>
+      <ul class="hint" style="font-size:13px; line-height:1.7; padding-left:18px; margin:0 0 18px;">
+        <li>Reconstitute using sterile bacteriostatic water.</li>
+        <li>Swirl gently, do not shake, until fully dissolved.</li>
+        <li>Handle only within a controlled laboratory environment by qualified personnel.</li>
+        <li>Use our <a href="/calculator.html" style="color:var(--accent-ink);">Peptide Calculator</a> for reconstitution math.</li>
+      </ul>
+      <h4 style="margin-bottom:10px;">Storage</h4>
+      <ul class="hint" style="font-size:13px; line-height:1.7; padding-left:18px; margin:0;">
+        <li>Store lyophilized peptide cool, dry, and protected from light.</li>
+        <li>Refrigerate reconstituted solutions.</li>
+        <li>Avoid repeated freeze-thaw cycles.</li>
+      </ul>
+    </div>
   </section>
 
   <aside id="cartPanel" class="cart">
@@ -150,52 +132,12 @@
   </div>
 </div>
 
-<section id="whyUs" style="max-width:1100px; margin:0 auto; padding: 20px 24px 60px;">
-  <h2 style="font-size:12px; letter-spacing:0.14em; text-transform:uppercase; color:var(--muted-on-dark); font-weight:700; margin-bottom:24px;">Why Highland</h2>
-  <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:20px;">
-    <div class="panel">
-      <h4 style="margin-top:0;">Sourcing</h4>
-      <p class="hint" style="font-size:13px; line-height:1.6;">Sourced from an established peptide manufacturer. A Certificate of Analysis is available for any lot before you order.</p>
-    </div>
-    <div class="panel">
-      <h4 style="margin-top:0;">Catalog Standards</h4>
-      <p class="hint" style="font-size:13px; line-height:1.6;">We keep prescription-only and FDA-flagged items off this catalog entirely. Our reasoning is available on request.</p>
-    </div>
-    <div class="panel">
-      <h4 style="margin-top:0;">Shipping</h4>
-      <p class="hint" style="font-size:13px; line-height:1.6;">Shipped from California via UPS, for laboratory / research use only.</p>
-    </div>
-  </div>
-</section>
-
-<section id="faq" style="max-width:800px; margin:0 auto; padding: 0 24px 60px;">
-  <h2 style="font-size:12px; letter-spacing:0.14em; text-transform:uppercase; color:var(--muted-on-dark); font-weight:700; margin-bottom:24px;">Frequently Asked</h2>
-  <div class="panel">
-    <details style="margin-bottom:14px;">
-      <summary style="cursor:pointer; font-weight:700;">Where do you ship from?</summary>
-      <p class="hint" style="font-size:13px; margin-top:8px;">California, via UPS. Labels are generated through PirateShip and orders ship in padded 9x3 envelopes.</p>
-    </details>
-    <details style="margin-bottom:14px;">
-      <summary style="cursor:pointer; font-weight:700;">Are these products tested?</summary>
-      <p class="hint" style="font-size:13px; margin-top:8px;">A Certificate of Analysis confirming identity and purity is available on request for any product lot before you order.</p>
-    </details>
-    <details style="margin-bottom:14px;">
-      <summary style="cursor:pointer; font-weight:700;">Who can order?</summary>
-      <p class="hint" style="font-size:13px; margin-top:8px;">Independent research companies and independent researchers purchasing solely for laboratory / research use. Not for human or veterinary consumption, injection, or administration of any kind.</p>
-    </details>
-    <details>
-      <summary style="cursor:pointer; font-weight:700;">What payment methods do you accept?</summary>
-      <p class="hint" style="font-size:13px; margin-top:8px;">Orders are recorded as pending payment; our team follows up directly with payment instructions after checkout.</p>
-    </details>
-  </div>
-</section>
-
 <footer class="site-footer">
   Highland Peptides: for laboratory / research use only. Not for human or veterinary use, consumption, or administration of any kind.
   Not evaluated by the FDA.
 </footer>
 
 <script src="/js/shared.js"></script>
-<script src="/js/app.js"></script>
+<script src="/js/product.js"></script>
 </body>
 </html>

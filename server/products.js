@@ -3,6 +3,7 @@ const path = require('path');
 const { MARKUP_MULTIPLIER, PRICE_DECIMALS } = require('./config');
 
 const raw = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'products.json'), 'utf8'));
+const descriptions = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'descriptions.json'), 'utf8'));
 
 function round(n, d) {
   const f = Math.pow(10, d);
@@ -41,4 +42,21 @@ const catalog = raw
 
 const bySku = Object.fromEntries(catalog.map(p => [p.sku, p]));
 
-module.exports = { catalog, bySku };
+// Resolves a SKU to its full product family (all spec variants sharing the same
+// name) for the product detail page, e.g. sku "ET10" -> the whole Epithalon family.
+function getProductFamily(sku) {
+  const product = bySku[sku];
+  if (!product) return null;
+  const variants = catalog
+    .filter(p => p.name === product.name)
+    .sort((a, b) => a.price - b.price);
+  return {
+    name: product.name,
+    description: descriptions[product.name] || '',
+    category: product.category,
+    group: product.group,
+    variants,
+  };
+}
+
+module.exports = { catalog, bySku, getProductFamily };
