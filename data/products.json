@@ -608,5 +608,396 @@
     "cost": 8.6,
     "category": "Peptide",
     "group": "Nootropic"
+  },
+  {
+    "sku": "TR5",
+    "name": "Tirzepatide",
+    "spec": "5mg x1 vial",
+    "cost": 4,
+    "category": "Peptide",
+    "group": "Metabolic"
+  },
+  {
+    "sku": "TR10",
+    "name": "Tirzepatide",
+    "spec": "10mg x1 vial",
+    "cost": 5,
+    "category": "Peptide",
+    "group": "Metabolic"
+  },
+  {
+    "sku": "TR15",
+    "name": "Tirzepatide",
+    "spec": "15mg x1 vial",
+    "cost": 6,
+    "category": "Peptide",
+    "group": "Metabolic"
+  },
+  {
+    "sku": "TR20",
+    "name": "Tirzepatide",
+    "spec": "20mg x1 vial",
+    "cost": 7,
+    "category": "Peptide",
+    "group": "Metabolic"
+  },
+  {
+    "sku": "TR30",
+    "name": "Tirzepatide",
+    "spec": "30mg x1 vial",
+    "cost": 8.6,
+    "category": "Peptide",
+    "group": "Metabolic",
+    "salePrice": 21
+  },
+  {
+    "sku": "TR40",
+    "name": "Tirzepatide",
+    "spec": "40mg x1 vial",
+    "cost": 11,
+    "category": "Peptide",
+    "group": "Metabolic"
+  },
+  {
+    "sku": "TR45",
+    "name": "Tirzepatide",
+    "spec": "45mg x1 vial",
+    "cost": 12,
+    "category": "Peptide",
+    "group": "Metabolic"
+  },
+  {
+    "sku": "TR50",
+    "name": "Tirzepatide",
+    "spec": "50mg x1 vial",
+    "cost": 13.5,
+    "category": "Peptide",
+    "group": "Metabolic"
+  },
+  {
+    "sku": "TR60",
+    "name": "Tirzepatide",
+    "spec": "60mg x1 vial",
+    "cost": 15.8,
+    "category": "Peptide",
+    "group": "Metabolic",
+    "salePrice": 31
+  },
+  {
+    "sku": "RT5",
+    "name": "Retatrutide",
+    "spec": "5mg x1 vial",
+    "cost": 5.5,
+    "category": "Peptide",
+    "group": "Metabolic"
+  },
+  {
+    "sku": "RT10",
+    "name": "Retatrutide",
+    "spec": "10mg x1 vial",
+    "cost": 8,
+    "category": "Peptide",
+    "group": "Metabolic",
+    "salePrice": 26
+  },
+  {
+    "sku": "RT15",
+    "name": "Retatrutide",
+    "spec": "15mg x1 vial",
+    "cost": 9.5,
+    "category": "Peptide",
+    "group": "Metabolic"
+  },
+  {
+    "sku": "RT20",
+    "name": "Retatrutide",
+    "spec": "20mg x1 vial",
+    "cost": 12,
+    "category": "Peptide",
+    "group": "Metabolic",
+    "salePrice": 36
+  },
+  {
+    "sku": "RT30",
+    "name": "Retatrutide",
+    "spec": "30mg x1 vial",
+    "cost": 15.7,
+    "category": "Peptide",
+    "group": "Metabolic",
+    "salePrice": 46
+  },
+  {
+    "sku": "RT40",
+    "name": "Retatrutide",
+    "spec": "40mg x1 vial",
+    "cost": 19.5,
+    "category": "Peptide",
+    "group": "Metabolic"
+  },
+  {
+    "sku": "RT50",
+    "name": "Retatrutide",
+    "spec": "50mg x1 vial",
+    "cost": 23,
+    "category": "Peptide",
+    "group": "Metabolic"
+  },
+  {
+    "sku": "RT60",
+    "name": "Retatrutide",
+    "spec": "60mg x1 vial",
+    "cost": 27,
+    "category": "Peptide",
+    "group": "Metabolic"
+  },
+  {
+    "sku": "SM2",
+    "name": "Semaglutide",
+    "spec": "2mg x1 vial",
+    "cost": 3,
+    "category": "Peptide",
+    "group": "Metabolic"
+  },
+  {
+    "sku": "SM5",
+    "name": "Semaglutide",
+    "spec": "5mg x1 vial",
+    "cost": 3.5,
+    "category": "Peptide",
+    "group": "Metabolic"
+  },
+  {
+    "sku": "SM10",
+    "name": "Semaglutide",
+    "spec": "10mg x1 vial",
+    "cost": 4.5,
+    "category": "Peptide",
+    "group": "Metabolic"
+  },
+  {
+    "sku": "SM15",
+    "name": "Semaglutide",
+    "spec": "15mg x1 vial",
+    "cost": 6,
+    "category": "Peptide",
+    "group": "Metabolic"
+  },
+  {
+    "sku": "SM20",
+    "name": "Semaglutide",
+    "spec": "20mg x1 vial",
+    "cost": 7,
+    "category": "Peptide",
+    "group": "Metabolic"
+  },
+  {
+    "sku": "SM30",
+    "name": "Semaglutide",
+    "spec": "30mg x1 vial",
+    "cost": 9,
+    "category": "Peptide",
+    "group": "Metabolic"
+  },
+  {
+    "sku": "MT1",
+    "name": "Melanotan I",
+    "spec": "10mg x1 vial",
+    "cost": 4,
+    "category": "Peptide",
+    "group": "Melanocortin",
+    "salePrice": 11
+  },
+  {
+    "sku": "ML10",
+    "name": "Melanotan II",
+    "spec": "10mg x1 vial",
+    "cost": 4,
+    "category": "Peptide",
+    "group": "Melanocortin",
+    "salePrice": 11
+  },
+  {
+    "sku": "P41",
+    "name": "PT-141",
+    "spec": "10mg x1 vial",
+    "cost": 5,
+    "category": "Peptide",
+    "group": "Hormone",
+    "salePrice": 16
+  },
+  {
+    "sku": "BC5",
+    "name": "BPC-157",
+    "spec": "5mg x1 vial",
+    "cost": 4,
+    "category": "Peptide",
+    "group": "Skin & Recovery"
+  },
+  {
+    "sku": "BC10",
+    "name": "BPC-157",
+    "spec": "10mg x1 vial",
+    "cost": 6,
+    "category": "Peptide",
+    "group": "Skin & Recovery",
+    "salePrice": 16
+  },
+  {
+    "sku": "BC15",
+    "name": "BPC-157",
+    "spec": "15mg x1 vial",
+    "cost": 7.5,
+    "category": "Peptide",
+    "group": "Skin & Recovery"
+  },
+  {
+    "sku": "BC20",
+    "name": "BPC-157",
+    "spec": "20mg x1 vial",
+    "cost": 9,
+    "category": "Peptide",
+    "group": "Skin & Recovery"
+  },
+  {
+    "sku": "BB10",
+    "name": "BPC-157 + TB-500 Blend",
+    "spec": "5mg+5mg x1 vial",
+    "cost": 7.5,
+    "category": "Peptide",
+    "group": "Skin & Recovery"
+  },
+  {
+    "sku": "BB20",
+    "name": "BPC-157 + TB-500 Blend",
+    "spec": "10mg+10mg x1 vial",
+    "cost": 14.5,
+    "category": "Peptide",
+    "group": "Skin & Recovery",
+    "salePrice": 26
+  },
+  {
+    "sku": "G10K",
+    "name": "HCG",
+    "spec": "10000IU x1 vial",
+    "cost": 11,
+    "category": "Peptide",
+    "group": "Hormone"
+  },
+  {
+    "sku": "G5K",
+    "name": "HCG",
+    "spec": "5000IU x1 vial",
+    "cost": 6,
+    "category": "Peptide",
+    "group": "Hormone"
+  },
+  {
+    "sku": "TSM5",
+    "name": "Tesamorelin",
+    "spec": "5mg x1 vial",
+    "cost": 8.5,
+    "category": "Peptide",
+    "group": "Growth Hormone"
+  },
+  {
+    "sku": "TSM10",
+    "name": "Tesamorelin",
+    "spec": "10mg x1 vial",
+    "cost": 15,
+    "category": "Peptide",
+    "group": "Growth Hormone"
+  },
+  {
+    "sku": "TSM20",
+    "name": "Tesamorelin",
+    "spec": "20mg x1 vial",
+    "cost": 24.5,
+    "category": "Peptide",
+    "group": "Growth Hormone"
+  },
+  {
+    "sku": "BT5",
+    "name": "TB-500",
+    "spec": "5mg x1 vial",
+    "cost": 6.8,
+    "category": "Peptide",
+    "group": "Skin & Recovery"
+  },
+  {
+    "sku": "BT10",
+    "name": "TB-500",
+    "spec": "10mg x1 vial",
+    "cost": 12,
+    "category": "Peptide",
+    "group": "Skin & Recovery",
+    "salePrice": 21
+  },
+  {
+    "sku": "CGL5",
+    "name": "Cagrilintide",
+    "spec": "5mg x1 vial",
+    "cost": 8.8,
+    "category": "Peptide",
+    "group": "Metabolic",
+    "salePrice": 21
+  },
+  {
+    "sku": "CGL10",
+    "name": "Cagrilintide",
+    "spec": "10mg x1 vial",
+    "cost": 14.5,
+    "category": "Peptide",
+    "group": "Metabolic"
+  },
+  {
+    "sku": "SUR10",
+    "name": "Survodutide",
+    "spec": "10mg x1 vial",
+    "cost": 18.5,
+    "category": "Peptide",
+    "group": "Metabolic"
+  },
+  {
+    "sku": "CS10",
+    "name": "Cagrilintide + Semaglutide",
+    "spec": "5mg+5mg x1 vial",
+    "cost": 13,
+    "category": "Peptide",
+    "group": "Metabolic",
+    "salePrice": 26
+  },
+  {
+    "sku": "BBG70",
+    "name": "BPC-157 + GHK-Cu + TB-500 Blend (Glow)",
+    "spec": "70mg x1 vial",
+    "cost": 16.3,
+    "category": "Peptide",
+    "group": "Skin & Recovery",
+    "salePrice": 31
+  },
+  {
+    "sku": "KLOW80",
+    "name": "BPC-157 + GHK-Cu + TB-500 + KPV Blend (Klow)",
+    "spec": "80mg x1 vial",
+    "cost": 19.5,
+    "category": "Peptide",
+    "group": "Skin & Recovery",
+    "salePrice": 36
+  },
+  {
+    "sku": "MTD5",
+    "name": "Mazdutide",
+    "spec": "5mg x1 vial",
+    "cost": 9,
+    "category": "Peptide",
+    "group": "Metabolic"
+  },
+  {
+    "sku": "MTD10",
+    "name": "Mazdutide",
+    "spec": "10mg x1 vial",
+    "cost": 16.5,
+    "category": "Peptide",
+    "group": "Metabolic"
   }
 ]
