@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Highland Peptides</title>
+<title>Cart - Highland Peptides</title>
 <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
@@ -66,7 +66,7 @@
       <a href="/calculator.html">Peptide Calculator</a>
     </nav>
     <nav class="cart-nav">
-      <a href="/cart.html" class="cart-link" aria-label="View cart">
+      <a href="/cart.html" class="cart-link active" aria-label="View cart">
         <span class="cart-icon" aria-hidden="true"></span>
         <span class="cart-label">Cart</span>
         <span id="cartCount" class="cart-count" aria-label="0 items">0</span>
@@ -79,29 +79,45 @@
   FOR LABORATORY / RESEARCH USE ONLY. NOT FOR HUMAN OR VETERINARY USE. NOT A DRUG, FOOD, OR COSMETIC.
 </div>
 
-<div id="breadcrumb" style="max-width:1100px; margin:24px auto 0; padding:0 24px; font-size:12px; color:var(--muted-on-dark);"></div>
-
 <main>
-  <section id="productSection" class="panel">
-    <div id="productContent">Loading...</div>
-
-    <div style="margin-top:28px; padding-top:20px; border-top:1px solid var(--border-on-light);">
-      <h4 style="margin-bottom:10px;">Handling &amp; Reconstitution</h4>
-      <ul class="hint" style="font-size:13px; line-height:1.7; padding-left:18px; margin:0 0 18px;">
-        <li>Reconstitute using sterile bacteriostatic water.</li>
-        <li>Swirl gently, do not shake, until fully dissolved.</li>
-        <li>Handle only within a controlled laboratory environment by qualified personnel.</li>
-        <li>Use our <a href="/calculator.html" style="color:var(--accent-ink);">Peptide Calculator</a> for reconstitution math.</li>
-      </ul>
-      <h4 style="margin-bottom:10px;">Storage</h4>
-      <ul class="hint" style="font-size:13px; line-height:1.7; padding-left:18px; margin:0;">
-        <li>Store lyophilized peptide cool, dry, and protected from light.</li>
-        <li>Refrigerate reconstituted solutions.</li>
-        <li>Avoid repeated freeze-thaw cycles.</li>
-      </ul>
-    </div>
+  <section id="cartSection" class="panel">
+    <h1 style="margin-top:0; font-size:24px; letter-spacing:-0.01em;">Your Cart</h1>
+    <div id="cartItemsPage"></div>
+    <div id="cartTotalPage"></div>
+    <button id="checkoutBtn">Checkout</button>
+    <p class="form-msg" id="cartMsg"></p>
   </section>
 </main>
+
+<div id="checkoutModal" class="modal-overlay" style="display:none;">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>Checkout</h3>
+      <button type="button" id="checkoutCloseBtn" class="modal-close" aria-label="Close">&times;</button>
+    </div>
+    <div id="modalOrderSummary" class="order-summary"></div>
+
+    <form id="checkoutForm">
+      <label>Full Name <input type="text" id="buyerName" required></label>
+      <label>Email <input type="email" id="buyerEmail" required placeholder="you@example.com"></label>
+      <label>Address Line 1 <input type="text" id="buyerAddress1" required></label>
+      <label>Address Line 2 (optional) <input type="text" id="buyerAddress2"></label>
+      <div class="modal-row">
+        <label>City <input type="text" id="buyerCity" required></label>
+        <label>State <input type="text" id="buyerState" required></label>
+        <label>ZIP <input type="text" id="buyerZip" required></label>
+      </div>
+
+      <label class="checkbox-label">
+        <input type="checkbox" id="checkoutCertify" required>
+        I certify I am an independent research company or independent researcher, purchasing solely for laboratory / research use, not for human or animal consumption, injection, or administration.
+      </label>
+
+      <button type="submit" id="placeOrderBtn">Place Order</button>
+      <p class="form-msg" id="checkoutMsg"></p>
+    </form>
+  </div>
+</div>
 
 <footer class="site-footer">
   Highland Peptides: for laboratory / research use only. Not for human or veterinary use, consumption, or administration of any kind.
@@ -109,6 +125,6 @@
 </footer>
 
 <script src="/js/shared.js"></script>
-<script src="/js/product.js"></script>
+<script src="/js/cart.js"></script>
 </body>
 </html>

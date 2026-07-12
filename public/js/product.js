@@ -21,7 +21,7 @@ function renderProduct() {
 
   document.getElementById('productContent').innerHTML = `
     <div class="product-layout">
-      <div class="product-media photo">${vialPhotoLabelHTML(family.name, selected.spec, { name: 15, spec: 11 })}</div>
+      <div class="product-media photo"></div>
       <div class="product-info">
         <div class="group">${family.group || family.category}</div>
         <h1 style="margin:4px 0 10px; font-size:26px; letter-spacing:-0.01em;">${family.name}</h1>
@@ -66,14 +66,12 @@ function renderProduct() {
   document.getElementById('addToCartBtn').onclick = () => {
     const qty = Math.max(1, parseInt(qtyInput.value, 10) || 1);
     addToCart(selectedSku, qty);
-    renderCart();
+    updateCartBadge();
     const msg = document.getElementById('addMsg');
     msg.textContent = 'Added to cart.';
     setTimeout(() => { msg.textContent = ''; }, 2000);
   };
 }
-
-wireCart();
 
 async function init() {
   if (!slug && !sku) {
@@ -89,7 +87,7 @@ async function init() {
   family = productData;
   selectedSku = sku || family.variants[0].sku;
   renderProduct();
-  renderCart();
+  updateCartBadge();
 }
 
 init().catch(() => {

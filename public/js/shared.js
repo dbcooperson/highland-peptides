@@ -1,4 +1,4 @@
-﻿// Shared helpers used by both the catalog page (app.js) and product detail page (product.js).
+// Shared helpers used by every page (catalog, product detail, cart).
 
 // ---------- Entry gate (age + research-use certification, shown before anything else) ----------
 function initEntryGate() {
@@ -56,75 +56,29 @@ function removeFromCart(sku) {
   return cart;
 }
 
+// Sets an exact quantity; deletes the line if qty drops to 0 or below.
+function setCartQty(sku, qty) {
+  const cart = getCart();
+  if (qty <= 0) {
+    delete cart[sku];
+  } else {
+    cart[sku] = qty;
+  }
+  saveCart(cart);
+  return cart;
+}
+
 function cartItemCount(cart) {
   return Object.values(cart).reduce((sum, q) => sum + q, 0);
 }
 
-// ---------- Vial photo label overlay (name/spec text on top of the vial photo) ----------
-
-function escapeHtml(s) {
-  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
-// The label's blank space is narrow, so long compound names need to shrink
-// to avoid overflowing off the vial. `base` is the normal font-size in px.
-function vpFontSize(name, base) {
-  const len = name.length;
-  if (len <= 14) return base;
-  if (len <= 24) return Math.round(base * 0.82);
-  if (len <= 36) return Math.round(base * 0.68);
-  return Math.round(base * 0.56);
-}
-
-// baseSizes: { name, spec } font-size in px for the normal (short-name) case.
-function vialPhotoLabelHTML(name, spec, baseSizes) {
-  const nameSize = vpFontSize(name, baseSizes.name);
-  const specSize = vpFontSize(name, baseSizes.spec);
-  return `
-    <div class="vial-photo-label">
-      <div class="vp-name" style="font-size:${nameSize}px;">${escapeHtml(name)}</div>
-      <div class="vp-spec" style="font-size:${specSize}px;">${escapeHtml(spec)}</div>
-    </div>
-  `;
-}
-
-// ---------- Cart modal + checkout modal (identical markup/IDs on every shoppable page) ----------
-// Pages set `window.siteCatalog` (full product list with name/price) before calling wireCart().
-
-function renderCart() {
-  const cart = getCart();
-  const itemsEl = document.getElementById('cartItems');
-  const totalEl = document.getElementById('cartTotal');
-  const cartCount = document.getElementById('cartCount');
-  const skus = Object.keys(cart).filter(s => cart[s] > 0);
-
-  if (cartCount) {
-    const count = cartItemCount(cart);
-    cartCount.textContent = count;
-    cartCount.setAttribute('aria-label', `${count} item${count === 1 ? '' : 's'}`);
-  }
-
-  if (skus.length === 0) {
-    itemsEl.innerHTML = '<p class="hint">Cart is empty.</p>';
-    totalEl.textContent = '';
-    return;
-  }
-  let subtotal = 0;
-  itemsEl.innerHTML = skus.map(sku => {
-    const p = window.siteCatalog.find(x => x.sku === sku);
-    if (!p) return '';
-    const lineTotal = p.price * cart[sku];
-    subtotal += lineTotal;
-    return `<div class="cart-row"><span>${p.name} x${cart[sku]}</span><span class="cart-row-right">$${lineTotal.toFixed(2)}<button type="button" class="cart-remove-btn" data-sku="${sku}" aria-label="Remove ${p.name} from cart">&times;</button></span></div>`;
-  }).join('');
-  totalEl.textContent = `Subtotal: $${subtotal.toFixed(2)} (+ packaging fee at checkout)`;
-
-  itemsEl.querySelectorAll('.cart-remove-btn').forEach(btn => {
-    btn.onclick = () => {
-      removeFromCart(btn.dataset.sku);
-      renderCart();
-    };
-  });
+// Updates the "Cart (N)" badge in the nav. Safe to call on pages without one.
+function updateCartBadge() {
+  const el = document.getElementById('cartCount');
+  if (!el) return;
+  const count = cartItemCount(getCart());
+  el.textContent = count;
+  el.setAttribute('aria-label', `${count} item${count === 1 ? '' : 's'}`);
 }
 
 function cartSubtotal() {
@@ -134,6 +88,8 @@ function cartSubtotal() {
     return p ? sum + p.price * cart[sku] : sum;
   }, 0);
 }
+
+// ---------- Checkout modal (lives on the cart page only) ----------
 
 function openCheckoutModal() {
   const cart = getCart();
@@ -146,7 +102,6 @@ function openCheckoutModal() {
     return `<div class="cart-row"><span>${p.name} x${cart[sku]}</span><span>$${(p.price * cart[sku]).toFixed(2)}</span></div>`;
   }).join('') + `<div class="order-summary-total cart-row"><span>Total (+ packaging fee)</span><span>$${subtotal.toFixed(2)}+</span></div>`;
 
-  closeCartModal();
   document.getElementById('checkoutModal').style.display = 'flex';
 }
 
@@ -154,24 +109,7 @@ function closeCheckoutModal() {
   document.getElementById('checkoutModal').style.display = 'none';
 }
 
-function openCartModal() {
-  renderCart();
-  document.getElementById('cartModal').style.display = 'flex';
-}
-
-function closeCartModal() {
-  document.getElementById('cartModal').style.display = 'none';
-}
-
-function wireCart() {
-  const cartNavBtn = document.getElementById('cartNavBtn');
-  if (cartNavBtn) cartNavBtn.addEventListener('click', openCartModal);
-
-  document.getElementById('cartCloseBtn').addEventListener('click', closeCartModal);
-  document.getElementById('cartModal').addEventListener('click', (e) => {
-    if (e.target.id === 'cartModal') closeCartModal();
-  });
-
+function wireCheckout() {
   document.getElementById('checkoutBtn').addEventListener('click', () => {
     const cartMsg = document.getElementById('cartMsg');
     const skus = Object.keys(getCart()).filter(s => getCart()[s] > 0);
@@ -228,7 +166,8 @@ function wireCart() {
       msgEl.style.color = 'var(--success)';
       msgEl.textContent = `${result.message} (Order #${result.orderId}, total $${result.total.toFixed(2)})`;
       saveCart({});
-      renderCart();
+      updateCartBadge();
+      document.dispatchEvent(new CustomEvent('cart:updated'));
       document.getElementById('checkoutForm').reset();
       setTimeout(closeCheckoutModal, 2500);
     } catch (err) {

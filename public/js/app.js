@@ -1,10 +1,10 @@
-﻿let catalog = [];
+let catalog = [];
 
 function cardHTML(p) {
   return `
     <div class="card">
       <a class="card-link" href="/product/${encodeURIComponent(p.slug)}">
-        <div class="card-media photo">${vialPhotoLabelHTML(p.name, p.spec, { name: 10, spec: 8 })}</div>
+        <div class="card-media photo"></div>
         <div class="group">${p.group || p.category}</div>
         <h4>${p.name}</h4>
         <div class="spec">${p.spec}</div>
@@ -19,7 +19,7 @@ function wireAddButtons(container) {
   container.querySelectorAll('.addBtn').forEach(btn => {
     btn.onclick = () => {
       addToCart(btn.dataset.sku);
-      renderCart();
+      updateCartBadge();
     };
   });
 }
@@ -60,9 +60,7 @@ function renderCatalog() {
 function searchResultHTML(p) {
   return `
     <a class="product-search-result" href="/product/${encodeURIComponent(p.slug)}">
-      <div class="product-search-result-media photo">
-        ${vialPhotoLabelHTML(p.name, p.spec, { name: 9, spec: 7 })}
-      </div>
+      <div class="product-search-result-media photo"></div>
       <div class="product-search-result-copy">
         <span class="product-search-result-group">${p.group || p.category}</span>
         <strong>${p.name}</strong>
@@ -123,8 +121,6 @@ function wireProductSearch() {
   });
 }
 
-wireCart();
-
 async function init() {
   const catalogData = await api('/api/catalog');
   document.title = catalogData.siteName;
@@ -136,7 +132,7 @@ async function init() {
   renderFilterChips();
   wireProductSearch();
   renderCatalog();
-  renderCart();
+  updateCartBadge();
 }
 
 const heroCatalogBtn = document.getElementById('heroCatalogBtn');

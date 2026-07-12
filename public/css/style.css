@@ -253,7 +253,7 @@ main {
 .card:hover { transform: translateY(-3px); box-shadow: 0 14px 30px rgba(0,0,0,0.35); }
 .card-link { display: block; color: inherit; text-decoration: none; cursor: pointer; }
 .card-media {
-  height: 152px;
+  height: 110px;
   border-radius: var(--radius-sm);
   background: linear-gradient(135deg, #efe9dc, #e2d9c6);
   display: flex;
@@ -265,34 +265,15 @@ main {
 }
 .card-media svg { width: 100%; height: 100%; }
 
-/* Photo-template vial card: one shared photo behind per-product text.
-   The photo is a single generated template, not a unique shot per product. */
+/* Plain vial photo, no name/spec text baked on -- the real name and spec are
+   already shown as text next to the image, so the overlay was redundant and
+   overflowed badly on long compound names. One shared photo template. */
 .card-media.photo, .product-media.photo {
   background-image: url('/images/product-mockups/highland-vial-label-template.png');
   background-size: cover;
-  background-position: center 68%;
+  background-position: center 20%;
 }
-.vial-photo-label {
-  position: absolute;
-  left: 24%;
-  right: 24%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  background: rgba(255,255,255,0.001); /* keeps click/tap target predictable, visually transparent */
-}
-/* Text sits in the blank space below the baked-in logo/wordmark, above the
-   green info bar. Card view is short + wide, so cover-fit zooms in hard;
-   that blank space lands lower in the crop than on the square product page. */
-.card-media .vial-photo-label { top: 45%; height: 33%; }
-.product-media .vial-photo-label { top: 57%; height: 16%; }
-/* Font-size is set inline per-product (see vialPhotoLabelHTML in shared.js) so
-   long names can shrink instead of overflowing the label. */
-.vial-photo-label .vp-name { font-weight: 700; color: #1c1a17; line-height: 1.15; overflow-wrap: break-word; }
-.vial-photo-label .vp-spec { color: #4a463f; margin-top: 2px; overflow-wrap: break-word; }
-.product-media .vial-photo-label .vp-spec { margin-top: 4px; }
+.product-media.photo { background-position: center; }
 .card .group { font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted-on-light); font-weight: 700; margin-bottom: 6px; }
 .card h4 { margin: 0 0 4px; font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
 .card .spec { color: var(--muted-on-light); font-size: 12px; margin-bottom: 10px; }
@@ -384,10 +365,8 @@ form input:focus, form select:focus { outline: none; border-color: var(--accent)
 }
 .checkbox-label input[type="checkbox"] { width: auto; margin: 2px 0 0; }
 
-/* ---------- Cart ---------- */
-#cartItems { font-size: 13px; margin-bottom: 12px; }
+/* ---------- Cart (checkout-modal order summary uses .cart-row) ---------- */
 .cart-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-.cart-row-right { display: flex; align-items: center; gap: 10px; }
 .cart-remove-btn {
   background: transparent;
   border: none;
@@ -398,7 +377,62 @@ form input:focus, form select:focus { outline: none; border-color: var(--accent)
   padding: 0 2px;
 }
 .cart-remove-btn:hover { color: var(--danger); }
-#cartTotal { font-weight: 700; margin: 12px 0; font-size: 14px; }
+
+/* ---------- Cart page ---------- */
+#cartItemsPage { margin-bottom: 12px; }
+#cartTotalPage { font-weight: 700; margin: 4px 0 16px; font-size: 14px; }
+.cart-line {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  align-items: center;
+  gap: 18px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border-on-light);
+}
+.cart-line-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cart-line-info strong { font-size: 14px; }
+.cart-line-info span { font-size: 12px; color: var(--muted-on-light); }
+.cart-line-qty {
+  display: flex;
+  align-items: center;
+  background: #f4efe4;
+  border: 1px solid var(--border-on-light);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.cart-line-qty .qty-btn {
+  width: 30px;
+  height: 34px;
+  background: transparent;
+  border: none;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--ink);
+}
+.cart-line-qty .qty-btn:hover { background: #ece4d4; }
+.cart-line-qty-num { min-width: 26px; text-align: center; font-size: 13px; font-weight: 700; }
+.cart-line-price { font-weight: 700; font-size: 14px; min-width: 58px; text-align: right; }
+.cart-line .cart-remove-btn { font-size: 20px; }
+
+.cart-empty-state { text-align: center; padding: 48px 20px; color: var(--muted-on-light); }
+.cart-empty-face { width: 64px; height: 64px; color: var(--muted-on-light); margin-bottom: 16px; }
+.cart-empty-state p { font-size: 15px; margin-bottom: 22px; }
+.cart-empty-cta {
+  display: inline-block;
+  background: var(--ink);
+  color: var(--offwhite);
+  border-radius: 999px;
+  padding: 12px 24px;
+  font-weight: 700;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+@media (max-width: 520px) {
+  .cart-line { grid-template-columns: 1fr auto; row-gap: 10px; }
+  .cart-line-price { text-align: left; }
+}
 
 .status-pill { font-size: 11px; padding: 3px 10px; border-radius: 999px; background: #f4e9d2; color: #8a6216; font-weight: 700; }
 .status-approved { background: #dff2e6; color: var(--success); }
@@ -994,26 +1028,9 @@ body.search-open { overflow: hidden; }
   height: 76px;
   overflow: hidden;
   border-radius: var(--radius-sm);
-  background-image: url('/images/product-mockups/highland-vial-template.png');
+  background-image: url('/images/product-mockups/highland-vial-label-template.png');
   background-size: cover;
-  background-position: center 64%;
-}
-.product-search-result-media .vial-photo-label {
-  top: 39%;
-  left: 24%;
-  right: 24%;
-  height: 28%;
-}
-.product-search-result-media .vp-name {
-  color: #1c1a17;
-  font-size: 5px;
-  font-weight: 800;
-  line-height: 1.05;
-}
-.product-search-result-media .vp-spec {
-  margin-top: 1px;
-  color: #4a463f;
-  font-size: 4px;
+  background-position: center;
 }
 .product-search-result-copy {
   display: flex;
