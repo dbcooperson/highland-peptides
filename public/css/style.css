@@ -53,20 +53,23 @@ body {
 .topbar {
   width: 100%;
   max-width: 1100px;
-  background: var(--card);
-  color: var(--ink);
+  background: rgba(24, 26, 30, 0.6);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: var(--offwhite);
   border-radius: 999px;
   padding: 14px 26px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.25);
 }
 .brand {
   font-size: 17px;
   font-weight: 800;
   letter-spacing: -0.01em;
-  color: var(--ink);
+  color: var(--offwhite);
   display: flex;
   align-items: center;
 }
@@ -90,12 +93,13 @@ body {
   transform: translateX(-50%);
 }
 .site-nav { display: flex; gap: 24px; }
-.site-nav a { color: var(--muted-on-light); text-decoration: none; font-size: 13px; font-weight: 600; }
-.site-nav a:hover, .site-nav a.active { color: var(--ink); }
-#authArea { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted-on-light); }
+.site-nav a { color: var(--muted-on-dark); text-decoration: none; font-size: 13px; font-weight: 600; }
+.site-nav a:hover, .site-nav a.active { color: var(--offwhite); }
+#authArea { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted-on-dark); }
+#authArea a { color: inherit; }
 #authArea button {
-  background: var(--ink);
-  color: var(--offwhite);
+  background: var(--offwhite);
+  color: var(--ink);
   border: none;
   border-radius: 999px;
   padding: 8px 16px;
@@ -113,7 +117,6 @@ body {
 .eyebrow {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
   font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -121,7 +124,6 @@ body {
   font-weight: 600;
   margin-bottom: 22px;
 }
-.eyebrow::before { content: ""; width: 28px; height: 1px; background: var(--border-on-dark); display: inline-block; }
 .hero-title {
   font-size: clamp(34px, 5.5vw, 58px);
   line-height: 1.05;
@@ -201,7 +203,7 @@ main {
   gap: 24px;
 }
 #catalogSection, #gate, #pendingNotice { grid-column: 1; }
-.cart { grid-column: 2; grid-row: 1 / span 2; align-self: start; position: sticky; top: 100px; }
+.cart { grid-column: 2; grid-row: 1 / span 2; align-self: start; position: sticky; top: 100px; margin-top: 44px; }
 
 .panel, .cart {
   background: var(--card);
