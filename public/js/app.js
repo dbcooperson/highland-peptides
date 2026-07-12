@@ -4,7 +4,12 @@ function cardHTML(p) {
   return `
     <div class="card">
       <a class="card-link" href="/product.html?sku=${encodeURIComponent(p.sku)}">
-        <div class="card-media">${vialLabelSVG(p)}</div>
+        <div class="card-media photo">
+          <div class="vial-photo-label">
+            <div class="vp-name">${p.name}</div>
+            <div class="vp-spec">${p.spec}</div>
+          </div>
+        </div>
         <div class="group">${p.group || p.category}</div>
         <h4>${p.name}</h4>
         <div class="spec">${p.spec}</div>
@@ -61,7 +66,6 @@ wireCart();
 
 async function init() {
   const catalogData = await api('/api/catalog');
-  document.getElementById('siteName').textContent = catalogData.siteName;
   document.title = catalogData.siteName;
   catalog = catalogData.products;
   window.siteCatalog = catalog;
