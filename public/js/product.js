@@ -4,7 +4,7 @@ let family = null;
 
 function variantButtonsHTML() {
   return family.variants.map(v => `
-    <button class="filter-chip variant-btn ${v.sku === selectedSku ? 'active' : ''}" data-sku="${v.sku}">
+    <button class="variant-btn ${v.sku === selectedSku ? 'active' : ''}" data-sku="${v.sku}">
       ${v.spec.replace(' x1 vial', '')} &middot; $${v.price.toFixed(2)}
     </button>
   `).join('');
@@ -25,12 +25,16 @@ function renderProduct() {
         <p class="hint" style="font-size:14px; line-height:1.6; margin-bottom:20px;">${family.description}</p>
 
         <div style="font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted-on-light); margin-bottom:8px;">Choose Size</div>
-        <div class="filter-chips" id="variantChips" style="margin-bottom:20px;">${variantButtonsHTML()}</div>
+        <div class="variant-chips" id="variantChips" style="margin-bottom:20px;">${variantButtonsHTML()}</div>
 
         <div class="price" style="font-size:24px; margin-bottom:16px;">$${selected.price.toFixed(2)}</div>
 
         <div style="display:flex; gap:10px; align-items:center; margin-bottom:6px;">
-          <input type="number" id="qtyInput" value="1" min="1" style="width:70px; padding:10px; border-radius:8px; border:1px solid var(--border-on-light); background:#f4efe4;">
+          <div class="qty-stepper">
+            <button type="button" class="qty-btn" id="qtyDown" aria-label="Decrease quantity">&minus;</button>
+            <input type="number" id="qtyInput" value="1" min="1">
+            <button type="button" class="qty-btn" id="qtyUp" aria-label="Increase quantity">+</button>
+          </div>
           <button id="addToCartBtn" style="flex:1;">Add to Cart</button>
         </div>
         <p class="form-msg" id="addMsg" style="color:var(--success);"></p>
@@ -45,8 +49,16 @@ function renderProduct() {
     };
   });
 
+  const qtyInput = document.getElementById('qtyInput');
+  document.getElementById('qtyDown').onclick = () => {
+    qtyInput.value = Math.max(1, (parseInt(qtyInput.value, 10) || 1) - 1);
+  };
+  document.getElementById('qtyUp').onclick = () => {
+    qtyInput.value = (parseInt(qtyInput.value, 10) || 1) + 1;
+  };
+
   document.getElementById('addToCartBtn').onclick = () => {
-    const qty = Math.max(1, parseInt(document.getElementById('qtyInput').value, 10) || 1);
+    const qty = Math.max(1, parseInt(qtyInput.value, 10) || 1);
     addToCart(selectedSku, qty);
     renderCart();
     const msg = document.getElementById('addMsg');
