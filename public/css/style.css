@@ -273,7 +273,7 @@ main {
 /* Photo-template vial card: one shared photo behind per-product text.
    The photo is a single generated template, not a unique shot per product. */
 .card-media.photo, .product-media.photo {
-  background-image: url('/images/product-mockups/highland-vial-template.png');
+  background-image: url('/images/product-mockups/highland-vial-label-template.png');
   background-size: cover;
   background-position: center 68%;
 }
@@ -288,10 +288,11 @@ main {
   text-align: center;
   background: rgba(255,255,255,0.001); /* keeps click/tap target predictable, visually transparent */
 }
-/* Card view is short + wide, so cover-fit zooms in hard; label sits lower
-   in that zoomed crop than it does on the full square product-page image. */
-.card-media .vial-photo-label { top: 38%; height: 26%; }
-.product-media .vial-photo-label { top: 47%; height: 26%; }
+/* Text sits in the blank space below the baked-in logo/wordmark, above the
+   green info bar. Card view is short + wide, so cover-fit zooms in hard;
+   that blank space lands lower in the crop than on the square product page. */
+.card-media .vial-photo-label { top: 45%; height: 33%; }
+.product-media .vial-photo-label { top: 57%; height: 16%; }
 .vial-photo-label .vp-name { font-size: 10px; font-weight: 700; color: #1c1a17; line-height: 1.15; }
 .vial-photo-label .vp-spec { font-size: 8px; color: #4a463f; margin-top: 2px; }
 .product-media .vial-photo-label .vp-name { font-size: 15px; }
