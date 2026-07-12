@@ -8,6 +8,35 @@
 </head>
 <body>
 
+<div class="mountain-bg" aria-hidden="true">
+  <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#161a1f"/>
+        <stop offset="42%" stop-color="#333d47"/>
+        <stop offset="72%" stop-color="#5b5850"/>
+        <stop offset="100%" stop-color="#7a6650"/>
+      </linearGradient>
+      <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#f0c589" stop-opacity="0.45"/>
+        <stop offset="100%" stop-color="#f0c589" stop-opacity="0"/>
+      </radialGradient>
+      <filter id="softBlur" x="-30%" y="-30%" width="160%" height="160%">
+        <feGaussianBlur stdDeviation="10"/>
+      </filter>
+    </defs>
+    <rect x="0" y="0" width="1600" height="900" fill="url(#sky)"/>
+    <g filter="url(#softBlur)">
+      <ellipse cx="1180" cy="430" rx="280" ry="200" fill="url(#glow)"/>
+      <path d="M0,420 L100,380 L220,410 L340,360 L460,400 L580,350 L700,390 L820,340 L940,385 L1060,345 L1180,395 L1300,355 L1420,400 L1600,370 L1600,900 L0,900 Z" fill="#5c6670" opacity="0.5"/>
+      <path d="M0,520 L120,470 L250,500 L380,450 L500,495 L640,440 L760,485 L880,430 L1000,480 L1140,435 L1260,490 L1400,445 L1600,480 L1600,900 L0,900 Z" fill="#414b52" opacity="0.68"/>
+      <path d="M0,620 L150,580 L300,610 L450,560 L600,605 L760,555 L900,600 L1050,550 L1200,595 L1350,560 L1600,600 L1600,900 L0,900 Z" fill="#262e33" opacity="0.85"/>
+      <path d="M0,760 L130,700 L260,740 L400,680 L540,730 L700,670 L860,725 L1020,665 L1180,720 L1340,680 L1600,715 L1600,900 L0,900 Z" fill="#12161a"/>
+    </g>
+  </svg>
+</div>
+<div class="mountain-scrim" aria-hidden="true"></div>
+
 <div id="entryGate" class="entry-gate">
   <div class="entry-gate-box">
     <div class="brand">Highland Peptides</div>
