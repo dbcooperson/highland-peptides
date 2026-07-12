@@ -1,4 +1,4 @@
-let catalog = [];
+﻿let catalog = [];
 
 function cardHTML(p) {
   return `
@@ -43,6 +43,12 @@ function renderBestSellers() {
   wireAddButtons(grid);
 }
 
+function setActiveFilter(group) {
+  activeFilter = group;
+  renderFilterChips();
+  renderCatalog();
+}
+
 function renderFilterChips() {
   const chipsEl = document.getElementById('filterChips');
   const groups = ['All', ...new Set(catalog.map(p => p.group || p.category))];
@@ -50,11 +56,7 @@ function renderFilterChips() {
     `<button class="filter-chip ${g === activeFilter ? 'active' : ''}" data-group="${g}">${g}</button>`
   ).join('');
   chipsEl.querySelectorAll('.filter-chip').forEach(btn => {
-    btn.onclick = () => {
-      activeFilter = btn.dataset.group;
-      renderFilterChips();
-      renderCatalog();
-    };
+    btn.onclick = () => setActiveFilter(btn.dataset.group);
   });
 }
 
@@ -81,13 +83,33 @@ async function init() {
   updateCartBadge();
 }
 
-const heroCatalogBtn = document.getElementById('heroCatalogBtn');
-if (heroCatalogBtn) {
-  heroCatalogBtn.onclick = () => {
-    document.getElementById('catalogSection').scrollIntoView({ behavior: 'smooth' });
-  };
+function openSharedSearch() {
+  const searchButton = document.getElementById('openProductSearch');
+  if (searchButton) searchButton.click();
 }
 
+function scrollToCatalog() {
+  document.getElementById('catalogSection').scrollIntoView({ behavior: 'smooth' });
+}
+
+const heroCatalogBtn = document.getElementById('heroCatalogBtn');
+if (heroCatalogBtn) heroCatalogBtn.onclick = scrollToCatalog;
+
+const heroSearchBtn = document.getElementById('heroSearchBtn');
+if (heroSearchBtn) heroSearchBtn.onclick = openSharedSearch;
+
+const catalogSearchShortcut = document.getElementById('catalogSearchShortcut');
+if (catalogSearchShortcut) catalogSearchShortcut.onclick = openSharedSearch;
+
+document.querySelectorAll('[data-group-jump]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const group = btn.dataset.groupJump;
+    if (catalog.length) setActiveFilter(group);
+    scrollToCatalog();
+  });
+});
+
 init();
+
 
 

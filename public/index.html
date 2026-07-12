@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -98,47 +98,119 @@
     <div id="productSearchResults" class="product-search-results"></div>
   </section>
 </div>
-<section class="hero">
-  <div class="eyebrow">Research Use Only, U.S. Supplier</div>
-  <h1 class="hero-title">Research-grade compounds,<br><em>California shipped.</em></h1>
-  <p class="hero-sub">Browse research-use compounds with clear vial specs, COA availability, and California fulfillment. Products are for laboratory research only, never for human or veterinary use.</p>
-  <button class="hero-cta" id="heroCatalogBtn">Browse the Catalog</button>
+<section class="storefront-hero">
+  <div class="hero-copy">
+    <div class="eyebrow">Highland Peptides • Research Use Only</div>
+    <h1 class="hero-title">Research compounds with a colder-climate kind of discipline.</h1>
+    <p class="hero-sub">Premium lab peptide vials, clear specifications, and COA availability wrapped in a Highland-inspired storefront that feels serious without going sterile.</p>
+    <div class="hero-actions">
+      <button class="hero-cta" id="heroCatalogBtn">Shop Best Sellers</button>
+      <button class="hero-ghost" id="heroSearchBtn" type="button">Search Compounds</button>
+    </div>
+    <div class="hero-proof-row" aria-label="Storefront highlights">
+      <div><strong id="statCompoundCount">120+</strong><span>catalog SKUs</span></div>
+      <div><strong>COA</strong><span>available by lot</span></div>
+      <div><strong>CA</strong><span>fulfillment base</span></div>
+    </div>
+  </div>
 
-  <div class="hero-stats">
-    <div class="stat">
-      <div class="stat-num" id="statCompoundCount">73+</div>
-      <div class="stat-label">Research Compounds</div>
-    </div>
-    <div class="stat">
-      <div class="stat-num">24HR</div>
-      <div class="stat-label">Dispatch Time</div>
-    </div>
-    <div class="stat">
-      <div class="stat-num">CA</div>
-      <div class="stat-label">Ships From</div>
+  <div class="hero-product-showcase" aria-label="Featured Highland Peptides vial mockup">
+    <div class="showcase-card">
+      <div class="showcase-topline">Featured research vial</div>
+      <div class="showcase-vial photo"></div>
+      <div class="showcase-copy">
+        <span>Highland Peptides</span>
+        <strong>Retatrutide</strong>
+        <em>Research-use catalog presentation</em>
+      </div>
+      <div class="showcase-proof">
+        <span>99% purity line</span>
+        <span>RUO label</span>
+        <span>24mo expiry format</span>
+      </div>
     </div>
   </div>
 </section>
 
-<div class="trust-bar">
-  <div class="trust-item">Research Use Certification Required</div>
-  <div class="trust-item">24hr Dispatch</div>
-  <div class="trust-item">Ships From California</div>
+<div class="storefront-strip">
+  <div>Research-use certification required</div>
+  <div>COA documentation available</div>
+  <div>Clear vial specifications</div>
+  <div>California fulfillment base</div>
 </div>
 
 <div class="ruo-banner">
   FOR LABORATORY / RESEARCH USE ONLY. NOT FOR HUMAN OR VETERINARY USE. NOT A DRUG, FOOD, OR COSMETIC.
 </div>
 
-<main>
-  <section id="bestSellers" style="grid-column:1; margin-bottom:8px;">
-    <h2>Best Sellers</h2>
-    <div id="bestSellersGrid" class="grid"></div>
+<main class="storefront-main">
+  <section class="category-board" aria-label="Shop by research category">
+    <div class="section-heading">
+      <span>The Catalog</span>
+      <h2>Shop by research lane.</h2>
+      <p>Start with the most browsed Highland categories, then jump into the full catalog when you know exactly what you need.</p>
+    </div>
+    <div class="category-grid">
+      <button class="category-tile" type="button" data-group-jump="Metabolic">
+        <span>01</span><strong>Metabolic</strong><em>GLP/GIP and incretin-pathway research compounds.</em>
+      </button>
+      <button class="category-tile" type="button" data-group-jump="Growth Hormone">
+        <span>02</span><strong>Growth Hormone</strong><em>GHRH, GHRP, and endocrine-axis research.</em>
+      </button>
+      <button class="category-tile" type="button" data-group-jump="Skin & Recovery">
+        <span>03</span><strong>Recovery</strong><em>Peptides commonly studied in tissue and repair pathways.</em>
+      </button>
+      <button class="category-tile" type="button" data-group-jump="Nootropic">
+        <span>04</span><strong>Nootropic</strong><em>Cognitive, neurotrophic, and stress-response research.</em>
+      </button>
+    </div>
   </section>
 
-  <section id="catalogSection">
-    <h2>Full Catalog</h2>
-    <p class="hint">Browse by category, open a product page for details, or use the search icon to jump straight to a compound.</p>
+  <section id="bestSellers" class="storefront-section">
+    <div class="section-heading split-heading">
+      <div>
+        <span>Best Sellers</span>
+        <h2>Trusted starting points.</h2>
+        <p>Fast access to the compounds researchers look for first, presented with Highland's cleaner vial system.</p>
+      </div>
+      <a href="#catalogSection" class="section-link">View full catalog</a>
+    </div>
+    <div id="bestSellersGrid" class="grid featured-grid"></div>
+  </section>
+
+  <section class="standard-section">
+    <div class="section-heading">
+      <span>The Highland Standard</span>
+      <h2>Built to feel premium, written to stay research-only.</h2>
+    </div>
+    <div class="standard-grid">
+      <article class="standard-card">
+        <span>01</span>
+        <h3>Documented material</h3>
+        <p>COA documentation is available on request for current lots so researchers can verify identity and purity before committing.</p>
+      </article>
+      <article class="standard-card">
+        <span>02</span>
+        <h3>Research-use clarity</h3>
+        <p>Every major page keeps the intended use clear: laboratory research only, not human or veterinary use.</p>
+      </article>
+      <article class="standard-card">
+        <span>03</span>
+        <h3>Distinct shelf presence</h3>
+        <p>Cream labels, deep green, rust accents, and the Highland seal give the catalog a recognizable look competitors do not have.</p>
+      </article>
+    </div>
+  </section>
+
+  <section id="catalogSection" class="catalog-shell">
+    <div class="catalog-heading-row">
+      <div class="section-heading">
+        <span>Full Catalog</span>
+        <h2>Find the compound your research needs.</h2>
+        <p>Filter by category, open a product page for details, or use the search icon to jump straight to a compound.</p>
+      </div>
+      <button class="hero-ghost compact" id="catalogSearchShortcut" type="button">Search catalog</button>
+    </div>
 
     <div id="filterChips" class="filter-chips"></div>
     <div id="catalogGrid" class="grid"></div>
@@ -149,42 +221,27 @@
   </section>
 </main>
 
-<section id="whyUs" style="max-width:1100px; margin:0 auto; padding: 20px 24px 60px;">
-  <h2 style="font-size:12px; letter-spacing:0.14em; text-transform:uppercase; color:var(--muted-on-dark); font-weight:700; margin-bottom:24px;">Why Highland</h2>
-  <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:20px;">
-    <div class="panel">
-      <h4 style="margin-top:0;">Documentation</h4>
-      <p class="hint" style="font-size:13px; line-height:1.6;">COA documentation is available on request for current lots, with product pages kept focused on research identity and vial specifications.</p>
-    </div>
-    <div class="panel">
-      <h4 style="margin-top:0;">Catalog Standards</h4>
-      <p class="hint" style="font-size:13px; line-height:1.6;">Research-use language is repeated at entry, product detail, cart, and checkout so the intended use stays clear throughout the site.</p>
-    </div>
-    <div class="panel">
-      <h4 style="margin-top:0;">Shipping</h4>
-      <p class="hint" style="font-size:13px; line-height:1.6;">California fulfillment and clear cart review are in place now; the purchase flow can be expanded later without redesigning the storefront.</p>
-    </div>
+<section id="faq" class="storefront-faq">
+  <div class="section-heading">
+    <span>Frequently Asked</span>
+    <h2>Quick answers before checkout is finished.</h2>
   </div>
-</section>
-
-<section id="faq" style="max-width:800px; margin:0 auto; padding: 0 24px 60px;">
-  <h2 style="font-size:12px; letter-spacing:0.14em; text-transform:uppercase; color:var(--muted-on-dark); font-weight:700; margin-bottom:24px;">Frequently Asked</h2>
-  <div class="panel">
-    <details style="margin-bottom:14px;">
-      <summary style="cursor:pointer; font-weight:700;">Where do products ship from?</summary>
-      <p class="hint" style="font-size:13px; margin-top:8px;">California. Shipping and payment details can be finalized as the purchase flow matures, but the storefront is already structured around California fulfillment.</p>
-    </details>
-    <details style="margin-bottom:14px;">
-      <summary style="cursor:pointer; font-weight:700;">Can I request documentation?</summary>
-      <p class="hint" style="font-size:13px; margin-top:8px;">Yes. COA documentation is available on request for current lots.</p>
-    </details>
-    <details style="margin-bottom:14px;">
-      <summary style="cursor:pointer; font-weight:700;">Who can order?</summary>
-      <p class="hint" style="font-size:13px; margin-top:8px;">Independent researchers and research companies purchasing solely for laboratory research use. Products are not for human or veterinary consumption, injection, or administration.</p>
+  <div class="panel faq-panel">
+    <details>
+      <summary>Where do products ship from?</summary>
+      <p class="hint">California. Shipping and payment details can be finalized as the purchase flow matures, but the storefront is already structured around California fulfillment.</p>
     </details>
     <details>
-      <summary style="cursor:pointer; font-weight:700;">Is online purchase fully set up?</summary>
-      <p class="hint" style="font-size:13px; margin-top:8px;">The catalog, product pages, cart, and research-use certification flow are in place. The final purchase/payment experience can be completed later.</p>
+      <summary>Can I request documentation?</summary>
+      <p class="hint">Yes. COA documentation is available on request for current lots.</p>
+    </details>
+    <details>
+      <summary>Who can order?</summary>
+      <p class="hint">Independent researchers and research companies purchasing solely for laboratory research use. Products are not for human or veterinary consumption, injection, or administration.</p>
+    </details>
+    <details>
+      <summary>Is online purchase fully set up?</summary>
+      <p class="hint">The catalog, product pages, cart, and research-use certification flow are in place. The final purchase/payment experience can be completed later.</p>
     </details>
   </div>
 </section>
@@ -198,5 +255,6 @@
 <script src="/js/app.js"></script>
 </body>
 </html>
+
 
 

@@ -1260,3 +1260,329 @@ body.search-open { overflow: hidden; }
   .product-trust-grid { grid-template-columns: 1fr; }
   .product-kicker-row { align-items: flex-start; flex-direction: column; }
 }
+
+/* ---------- Competitor-grade Highland storefront ---------- */
+.storefront-hero {
+  max-width: 1180px;
+  min-height: calc(100vh - 120px);
+  margin: 0 auto;
+  padding: 72px 24px 42px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(340px, 0.78fr);
+  align-items: center;
+  gap: 48px;
+}
+.storefront-hero .hero-title {
+  max-width: 780px;
+  font-size: clamp(42px, 6.2vw, 78px);
+  line-height: 0.94;
+  letter-spacing: -0.045em;
+}
+.storefront-hero .hero-sub {
+  max-width: 620px;
+  font-size: 17px;
+}
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 34px;
+}
+.hero-ghost {
+  min-height: 48px;
+  padding: 0 22px;
+  border: 1px solid rgba(243,239,230,0.24);
+  border-radius: 999px;
+  background: rgba(18,22,26,0.36);
+  color: var(--offwhite);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.hero-ghost:hover,
+.hero-ghost:focus-visible {
+  border-color: rgba(243,239,230,0.48);
+  background: rgba(243,239,230,0.08);
+  outline: none;
+}
+.hero-ghost.compact {
+  align-self: start;
+  white-space: nowrap;
+}
+.hero-proof-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  max-width: 650px;
+}
+.hero-proof-row div {
+  padding: 16px;
+  border: 1px solid rgba(243,239,230,0.16);
+  border-radius: 16px;
+  background: rgba(18,22,26,0.42);
+}
+.hero-proof-row strong,
+.hero-proof-row span {
+  display: block;
+}
+.hero-proof-row strong {
+  color: var(--offwhite);
+  font-size: 24px;
+  line-height: 1;
+}
+.hero-proof-row span {
+  margin-top: 6px;
+  color: var(--muted-on-dark);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+.hero-product-showcase {
+  position: relative;
+}
+.hero-product-showcase::before {
+  content: '';
+  position: absolute;
+  inset: 24px -20px -22px 34px;
+  border: 1px solid rgba(193,121,58,0.32);
+  border-radius: 30px;
+}
+.showcase-card {
+  position: relative;
+  padding: 20px;
+  border: 1px solid rgba(243,239,230,0.18);
+  border-radius: 28px;
+  background: linear-gradient(145deg, rgba(250,247,241,0.98), rgba(232,222,204,0.94));
+  color: var(--ink);
+  box-shadow: 0 34px 90px rgba(0,0,0,0.45);
+}
+.showcase-topline {
+  display: flex;
+  justify-content: space-between;
+  color: var(--accent-ink);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.showcase-vial {
+  height: 440px;
+  margin: 12px 0 10px;
+  border-radius: 20px;
+  background-image: url('/images/product-mockups/highland-vial-label-template.png');
+  background-size: cover;
+  background-position: center;
+  box-shadow: inset 0 -28px 36px rgba(28,26,23,0.05);
+}
+.showcase-copy {
+  display: grid;
+  gap: 2px;
+}
+.showcase-copy span {
+  color: var(--muted-on-light);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+.showcase-copy strong {
+  font-size: 34px;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+.showcase-copy em {
+  color: var(--muted-on-light);
+  font-size: 13px;
+  font-style: normal;
+}
+.showcase-proof {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 16px;
+}
+.showcase-proof span {
+  padding: 9px 8px;
+  border-radius: 999px;
+  background: #e9e1d2;
+  color: #435b45;
+  font-size: 10px;
+  font-weight: 900;
+  text-align: center;
+  text-transform: uppercase;
+}
+.storefront-strip {
+  max-width: 1180px;
+  margin: 0 auto 14px;
+  padding: 0 24px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+}
+.storefront-strip div {
+  padding: 15px 12px;
+  background: rgba(10,12,14,0.58);
+  border-block: 1px solid rgba(243,239,230,0.12);
+  color: var(--muted-on-dark);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-transform: uppercase;
+}
+.storefront-main {
+  max-width: 1180px;
+  padding-top: 54px;
+}
+.storefront-section,
+.category-board,
+.standard-section,
+.catalog-shell {
+  margin-bottom: 70px;
+}
+.section-heading {
+  margin-bottom: 24px;
+}
+.section-heading span {
+  display: block;
+  margin-bottom: 9px;
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.section-heading h2 {
+  margin: 0;
+  color: var(--offwhite);
+  font-size: clamp(28px, 4vw, 48px);
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+.section-heading p {
+  max-width: 620px;
+  margin: 12px 0 0;
+  color: var(--muted-on-dark);
+  font-size: 14px;
+  line-height: 1.65;
+}
+.split-heading,
+.catalog-heading-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+.section-link {
+  color: var(--offwhite);
+  font-size: 13px;
+  font-weight: 900;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(243,239,230,0.45);
+}
+.category-grid,
+.standard-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+.category-tile,
+.standard-card {
+  border: 1px solid rgba(243,239,230,0.14);
+  border-radius: 18px;
+  background: rgba(18,22,26,0.58);
+  color: var(--offwhite);
+  text-align: left;
+  box-shadow: 0 22px 55px rgba(0,0,0,0.22);
+}
+.category-tile {
+  min-height: 185px;
+  padding: 20px;
+  cursor: pointer;
+}
+.category-tile:hover,
+.category-tile:focus-visible {
+  transform: translateY(-2px);
+  border-color: rgba(193,121,58,0.6);
+  outline: none;
+}
+.category-tile span,
+.standard-card span {
+  display: block;
+  margin-bottom: 34px;
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.13em;
+}
+.category-tile strong,
+.standard-card h3 {
+  display: block;
+  margin: 0 0 10px;
+  font-size: 20px;
+  letter-spacing: -0.03em;
+}
+.category-tile em,
+.standard-card p {
+  color: var(--muted-on-dark);
+  font-size: 13px;
+  font-style: normal;
+  line-height: 1.55;
+}
+.featured-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.standard-card {
+  padding: 24px;
+}
+.standard-card span { margin-bottom: 52px; }
+.catalog-shell {
+  padding: 28px;
+  border: 1px solid rgba(243,239,230,0.14);
+  border-radius: 24px;
+  background: rgba(10,12,14,0.42);
+}
+.storefront-faq {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 24px 70px;
+}
+.faq-panel details {
+  padding: 17px 0;
+  border-bottom: 1px solid var(--border-on-light);
+}
+.faq-panel details:last-child { border-bottom: 0; }
+.faq-panel summary {
+  cursor: pointer;
+  font-weight: 900;
+}
+.faq-panel p {
+  margin: 10px 0 0;
+  line-height: 1.6;
+}
+@media (max-width: 980px) {
+  .storefront-hero { grid-template-columns: 1fr; min-height: auto; }
+  .hero-product-showcase { max-width: 520px; }
+  .storefront-strip { grid-template-columns: repeat(2, 1fr); }
+  .category-grid,
+  .standard-grid,
+  .featured-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .storefront-hero { padding-top: 46px; gap: 28px; }
+  .storefront-hero .hero-title { font-size: clamp(38px, 13vw, 56px); }
+  .hero-proof-row,
+  .storefront-strip,
+  .category-grid,
+  .standard-grid,
+  .featured-grid { grid-template-columns: 1fr; }
+  .showcase-vial { height: 330px; }
+  .showcase-proof { grid-template-columns: 1fr; }
+  .split-heading,
+  .catalog-heading-row { align-items: flex-start; flex-direction: column; }
+  .catalog-shell { padding: 18px; }
+}
