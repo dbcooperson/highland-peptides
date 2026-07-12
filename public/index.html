@@ -109,26 +109,40 @@
     <h3>Cart</h3>
     <div id="cartItems"></div>
     <div id="cartTotal"></div>
+    <button id="checkoutBtn">Checkout</button>
+    <p class="form-msg" id="cartMsg"></p>
+  </aside>
+</main>
 
-    <div id="checkoutForm" style="margin-top:16px; display:none;">
+<div id="checkoutModal" class="modal-overlay" style="display:none;">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>Checkout</h3>
+      <button type="button" id="checkoutCloseBtn" class="modal-close" aria-label="Close">&times;</button>
+    </div>
+    <div id="modalOrderSummary" class="order-summary"></div>
+
+    <form id="checkoutForm">
       <label>Full Name <input type="text" id="buyerName" required></label>
       <label>Email <input type="email" id="buyerEmail" required placeholder="you@example.com"></label>
       <label>Address Line 1 <input type="text" id="buyerAddress1" required></label>
-      <label>Address Line 2 <input type="text" id="buyerAddress2"></label>
-      <label>City <input type="text" id="buyerCity" required></label>
-      <label>State <input type="text" id="buyerState" required></label>
-      <label>ZIP <input type="text" id="buyerZip" required></label>
+      <label>Address Line 2 (optional) <input type="text" id="buyerAddress2"></label>
+      <div class="modal-row">
+        <label>City <input type="text" id="buyerCity" required></label>
+        <label>State <input type="text" id="buyerState" required></label>
+        <label>ZIP <input type="text" id="buyerZip" required></label>
+      </div>
 
       <label class="checkbox-label">
         <input type="checkbox" id="checkoutCertify" required>
         I certify I am an independent research company or independent researcher, purchasing solely for laboratory / research use, not for human or animal consumption, injection, or administration.
       </label>
-    </div>
 
-    <button id="checkoutBtn">Submit Order</button>
-    <p class="form-msg" id="checkoutMsg"></p>
-  </aside>
-</main>
+      <button type="submit" id="placeOrderBtn">Place Order</button>
+      <p class="form-msg" id="checkoutMsg"></p>
+    </form>
+  </div>
+</div>
 
 <section id="whyUs" style="max-width:1100px; margin:0 auto; padding: 20px 24px 60px;">
   <h2 style="font-size:12px; letter-spacing:0.14em; text-transform:uppercase; color:var(--muted-on-dark); font-weight:700; margin-bottom:24px;">Why Highland</h2>

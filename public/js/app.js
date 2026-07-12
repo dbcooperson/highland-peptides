@@ -99,7 +99,6 @@ function renderCatalog() {
 function renderCart() {
   const itemsEl = document.getElementById('cartItems');
   const totalEl = document.getElementById('cartTotal');
-  const checkoutForm = document.getElementById('checkoutForm');
   const cartCount = document.getElementById('cartCount');
   const skus = Object.keys(cart).filter(s => cart[s] > 0);
 
@@ -109,7 +108,6 @@ function renderCart() {
   if (skus.length === 0) {
     itemsEl.innerHTML = '<p class="hint">Cart is empty.</p>';
     totalEl.textContent = '';
-    checkoutForm.style.display = 'none';
     return;
   }
   let subtotal = 0;
@@ -120,10 +118,50 @@ function renderCart() {
     return `<div class="cart-row"><span>${p.name} x${cart[sku]}</span><span>$${lineTotal.toFixed(2)}</span></div>`;
   }).join('');
   totalEl.textContent = `Subtotal: $${subtotal.toFixed(2)} (+ packaging fee at checkout)`;
-  checkoutForm.style.display = 'block';
 }
 
-document.getElementById('checkoutBtn').addEventListener('click', async () => {
+function cartSubtotal() {
+  return Object.keys(cart).filter(s => cart[s] > 0).reduce((sum, sku) => {
+    const p = catalog.find(x => x.sku === sku);
+    return sum + p.price * cart[sku];
+  }, 0);
+}
+
+function openCheckoutModal() {
+  const summaryEl = document.getElementById('modalOrderSummary');
+  const skus = Object.keys(cart).filter(s => cart[s] > 0);
+  const subtotal = cartSubtotal();
+  summaryEl.innerHTML = skus.map(sku => {
+    const p = catalog.find(x => x.sku === sku);
+    return `<div class="cart-row"><span>${p.name} x${cart[sku]}</span><span>$${(p.price * cart[sku]).toFixed(2)}</span></div>`;
+  }).join('') + `<div class="order-summary-total cart-row"><span>Total (+ packaging fee)</span><span>$${subtotal.toFixed(2)}+</span></div>`;
+
+  document.getElementById('checkoutModal').style.display = 'flex';
+}
+
+function closeCheckoutModal() {
+  document.getElementById('checkoutModal').style.display = 'none';
+}
+
+document.getElementById('checkoutBtn').addEventListener('click', () => {
+  const cartMsg = document.getElementById('cartMsg');
+  const skus = Object.keys(cart).filter(s => cart[s] > 0);
+  if (skus.length === 0) {
+    cartMsg.style.color = 'var(--danger)';
+    cartMsg.textContent = 'Cart is empty.';
+    return;
+  }
+  cartMsg.textContent = '';
+  openCheckoutModal();
+});
+
+document.getElementById('checkoutCloseBtn').addEventListener('click', closeCheckoutModal);
+document.getElementById('checkoutModal').addEventListener('click', (e) => {
+  if (e.target.id === 'checkoutModal') closeCheckoutModal();
+});
+
+document.getElementById('checkoutForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
   const items = Object.keys(cart).filter(s => cart[s] > 0).map(sku => ({ sku, quantity: cart[sku] }));
   const msgEl = document.getElementById('checkoutMsg');
 
@@ -161,6 +199,8 @@ document.getElementById('checkoutBtn').addEventListener('click', async () => {
     msgEl.textContent = `${result.message} (Order #${result.orderId}, total $${result.total.toFixed(2)})`;
     Object.keys(cart).forEach(k => delete cart[k]);
     renderCart();
+    document.getElementById('checkoutForm').reset();
+    setTimeout(closeCheckoutModal, 2500);
   } catch (err) {
     msgEl.style.color = 'var(--danger)';
     msgEl.textContent = err.message;
