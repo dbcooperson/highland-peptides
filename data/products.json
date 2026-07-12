@@ -469,7 +469,7 @@
   },
   {
     "sku": "KPV5",
-    "name": "KPV (Lys-Pro-Val)",
+    "name": "KPV",
     "spec": "5mg x1 vial",
     "cost": 3.5,
     "category": "Peptide",
@@ -477,7 +477,7 @@
   },
   {
     "sku": "KPV10",
-    "name": "KPV (Lys-Pro-Val)",
+    "name": "KPV",
     "spec": "10mg x1 vial",
     "cost": 4.8,
     "category": "Peptide",

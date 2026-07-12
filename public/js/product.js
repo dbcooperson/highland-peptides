@@ -18,12 +18,7 @@ function renderProduct() {
 
   document.getElementById('productContent').innerHTML = `
     <div class="product-layout">
-      <div class="product-media photo">
-        <div class="vial-photo-label">
-          <div class="vp-name">${family.name}</div>
-          <div class="vp-spec">${selected.spec}</div>
-        </div>
-      </div>
+      <div class="product-media photo">${vialPhotoLabelHTML(family.name, selected.spec, { name: 15, spec: 11 })}</div>
       <div class="product-info">
         <div class="group">${family.group || family.category}</div>
         <h1 style="margin:4px 0 10px; font-size:26px; letter-spacing:-0.01em;">${family.name}</h1>

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500;1,600&display=swap');
+﻿@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500;1,600&display=swap');
 
 :root {
   --card: #faf7f1;
@@ -293,10 +293,11 @@ main {
    that blank space lands lower in the crop than on the square product page. */
 .card-media .vial-photo-label { top: 45%; height: 33%; }
 .product-media .vial-photo-label { top: 57%; height: 16%; }
-.vial-photo-label .vp-name { font-size: 10px; font-weight: 700; color: #1c1a17; line-height: 1.15; }
-.vial-photo-label .vp-spec { font-size: 8px; color: #4a463f; margin-top: 2px; }
-.product-media .vial-photo-label .vp-name { font-size: 15px; }
-.product-media .vial-photo-label .vp-spec { font-size: 11px; margin-top: 4px; }
+/* Font-size is set inline per-product (see vialPhotoLabelHTML in shared.js) so
+   long names can shrink instead of overflowing the label. */
+.vial-photo-label .vp-name { font-weight: 700; color: #1c1a17; line-height: 1.15; overflow-wrap: break-word; }
+.vial-photo-label .vp-spec { color: #4a463f; margin-top: 2px; overflow-wrap: break-word; }
+.product-media .vial-photo-label .vp-spec { margin-top: 4px; }
 .card .group { font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted-on-light); font-weight: 700; margin-bottom: 6px; }
 .card h4 { margin: 0 0 4px; font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
 .card .spec { color: var(--muted-on-light); font-size: 12px; margin-bottom: 10px; }
@@ -591,4 +592,148 @@ form input:focus, form select:focus { outline: none; border-color: var(--accent)
 }
 @media (max-width: 700px) {
   .calc-grid { grid-template-columns: 1fr; }
+}
+/* ---------- Cart navigation ---------- */
+.cart-nav { flex-shrink: 0; }
+.cart-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 38px;
+  color: var(--offwhite);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px 12px;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 999px;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.cart-link:hover, .cart-link:focus-visible {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.25);
+  outline: none;
+}
+.cart-icon {
+  position: relative;
+  display: inline-block;
+  width: 18px;
+  height: 13px;
+  border: 1.8px solid currentColor;
+  border-top: 0;
+  border-radius: 2px 2px 5px 5px;
+  transform: skew(-7deg);
+}
+.cart-icon::before {
+  content: '';
+  position: absolute;
+  width: 6px;
+  border-top: 1.8px solid currentColor;
+  top: -4px;
+  left: -5px;
+  transform: rotate(18deg);
+}
+.cart-icon::after {
+  content: '';
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  left: 2px;
+  bottom: -6px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 10px 0 0 currentColor;
+}
+.cart-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+/* ---------- Catalog search ---------- */
+.catalog-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.catalog-search input {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 96px 12px 46px;
+  border: 1px solid var(--border-on-dark);
+  border-radius: 999px;
+  background: rgba(18,22,26,0.58);
+  color: var(--offwhite);
+  font: inherit;
+  font-size: 14px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.catalog-search input::placeholder { color: var(--muted-on-dark); }
+.catalog-search input:focus {
+  outline: none;
+  border-color: rgba(243,239,230,0.55);
+  background: rgba(18,22,26,0.78);
+  box-shadow: 0 0 0 3px rgba(193,121,58,0.2);
+}
+.search-icon {
+  position: absolute;
+  left: 18px;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--muted-on-dark);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.search-icon::after {
+  content: '';
+  position: absolute;
+  width: 7px;
+  border-top: 2px solid var(--muted-on-dark);
+  right: -5px;
+  bottom: -3px;
+  transform: rotate(45deg);
+}
+.search-result-count {
+  position: absolute;
+  right: 18px;
+  color: var(--muted-on-dark);
+  font-size: 11px;
+  font-weight: 700;
+  pointer-events: none;
+}
+.catalog-empty {
+  padding: 42px 20px;
+  border: 1px dashed var(--border-on-dark);
+  border-radius: var(--radius-md);
+  text-align: center;
+  color: var(--muted-on-dark);
+}
+.catalog-empty h3 { margin: 0 0 8px; color: var(--offwhite); font-size: 17px; }
+.catalog-empty p { margin: 0; font-size: 13px; }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+@media (max-width: 640px) {
+  .topbar { padding: 10px 14px; }
+  .cart-label { display: none; }
+  .cart-link { padding: 8px 10px; gap: 7px; }
 }
