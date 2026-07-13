@@ -118,7 +118,7 @@ function showAddedToCartPopup(sku, qty = 1) {
   overlay.innerHTML = `
     <div class="cart-popup-card" role="dialog" aria-modal="true" aria-labelledby="cartPopupTitle">
       <button type="button" class="cart-popup-close" aria-label="Close">&times;</button>
-      <div class="cart-popup-success"><span aria-hidden="true">ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“</span><strong id="cartPopupTitle">Product successfully added to your cart.</strong></div>
+      <div class="cart-popup-success"><span aria-hidden="true">ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œ</span><strong id="cartPopupTitle">Product successfully added to your cart.</strong></div>
       <div class="cart-popup-product">
         <div class="cart-popup-media photo"></div>
         <div class="cart-popup-copy">
@@ -370,7 +370,6 @@ function renderCheckoutSummary() {
   const feeBase = Math.max(0, subtotal - discountAmount + shippingFee);
   const orderFee = round2(feeBase * orderFeeRate);
   const total = round2(feeBase + orderFee);
-  const feePercent = Math.round(orderFeeRate * 1000) / 10;
 
   const lines = skus.map(sku => {
     const p = window.siteCatalog.find(x => x.sku === sku);
@@ -382,7 +381,7 @@ function renderCheckoutSummary() {
     `<div class="cart-row"><span>Subtotal</span><span>$${subtotal.toFixed(2)}</span></div>`,
     appliedDiscount ? `<div class="cart-row"><span>Discount (${appliedDiscount.code})</span><span>-$${discountAmount.toFixed(2)}</span></div>` : '',
     `<div class="cart-row"><span>Shipping</span><span>$${shippingFee.toFixed(2)}</span></div>`,
-    orderFeeRate ? `<div class="cart-row"><span>Taxes (${feePercent}%)</span><span>$${orderFee.toFixed(2)}</span></div>` : '',
+    orderFeeRate ? `<div class="cart-row"><span>Processing fee</span><span>$${orderFee.toFixed(2)}</span></div>` : '',
     `<div class="order-summary-total cart-row"><span>Total</span><span>$${total.toFixed(2)}</span></div>`,
   ].join('');
 

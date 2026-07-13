@@ -14,8 +14,8 @@ module.exports = {
   // Fixed shipping charge added to every order.
   SHIPPING_FEE: 10.27,
 
-  // Percentage-based taxes added to every order (0.035 = 3.5%).
-  ORDER_FEE_RATE: Number(process.env.ORDER_FEE_RATE || 0.035),
+  // Percentage-based processing fee added to every order (0.03 = 3%).
+  ORDER_FEE_RATE: Number(process.env.ORDER_FEE_RATE || 0.03),
 
   // Promo codes: key is the code (case-insensitive), value is the fraction off
   // the subtotal (0.15 = 15% off). Validated server-side at checkout.

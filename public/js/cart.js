@@ -36,12 +36,11 @@ function cartSummaryHTML(subtotal) {
   const feeBase = subtotal + shippingFee;
   const orderFee = Math.round(feeBase * orderFeeRate * 100) / 100;
   const estimatedTotal = feeBase + orderFee;
-  const feePercent = Math.round(orderFeeRate * 1000) / 10;
   return `
     <div class="cart-summary-lines">
       <div><span>Subtotal</span><strong>$${subtotal.toFixed(2)}</strong></div>
       <div><span>Shipping</span><strong>$${shippingFee.toFixed(2)}</strong></div>
-      ${orderFeeRate ? `<div><span>Taxes (${feePercent}%)</span><strong>$${orderFee.toFixed(2)}</strong></div>` : ''}
+      ${orderFeeRate ? `<div><span>Processing fee</span><strong>$${orderFee.toFixed(2)}</strong></div>` : ''}
       <div class="cart-summary-total"><span>Estimated total</span><strong>$${estimatedTotal.toFixed(2)}</strong></div>
     </div>
   `;

@@ -61,8 +61,7 @@ function buildPackingSlip(order, items, res) {
   }
   doc.text(`Shipping: $${(order.shipping_fee || 0).toFixed(2)}`, { align: 'right' });
   if (order.order_fee) {
-    const feePercent = order.order_fee_rate ? ` (${Math.round(order.order_fee_rate * 1000) / 10}%)` : '';
-    doc.text(`Taxes${feePercent}: $${order.order_fee.toFixed(2)}`, { align: 'right' });
+    doc.text(`Processing fee: $${order.order_fee.toFixed(2)}`, { align: 'right' });
   }
   doc.fontSize(11).text(`Total: $${order.total.toFixed(2)}`, { align: 'right' });
 
