@@ -5,7 +5,7 @@ function cardHTML(p) {
     <div class="card product-card">
       <a class="card-link" href="/product/${encodeURIComponent(p.slug)}">
         <div class="card-media photo">
-          <span class="product-card-badge">RUO</span>${vialLabelHTML(p.name, p.spec, 'card-vial-label')}
+          <span class="product-card-badge">RUO</span>
         </div>
         <div class="product-card-meta">
           <div class="group">${p.group || p.category}</div>
@@ -110,6 +110,7 @@ document.querySelectorAll('[data-group-jump]').forEach(btn => {
 });
 
 init();
+
 
 
 

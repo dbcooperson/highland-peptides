@@ -107,7 +107,6 @@ function vialLabelHTML(name, spec, className = '') {
   const strength = escapeHTML(cleanVialSpec(spec));
   return `
     <div class="vial-label-overlay ${className}">
-      <span>Highland Peptides</span>
       <strong title="${productName}">${productName}</strong>
       <em>${strength}</em>
     </div>
@@ -119,7 +118,7 @@ let productSearchCatalogPromise = null;
 function productSearchResultHTML(p) {
   return `
     <a class="product-search-result" href="/product/${encodeURIComponent(p.slug)}">
-      <div class="product-search-result-media photo">${vialLabelHTML(p.name, p.spec, 'search-vial-label')}</div>
+      <div class="product-search-result-media photo"></div>
       <div class="product-search-result-copy">
         <span class="product-search-result-group">${p.group || p.category}</span>
         <strong>${p.name}</strong>
@@ -398,6 +397,8 @@ function wireCheckout() {
     }
   });
 }
+
+
 
 
 
