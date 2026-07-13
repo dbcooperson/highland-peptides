@@ -20,7 +20,7 @@ function save(data) {
 }
 
 // ---------- Orders (guest checkout, no accounts) ----------
-function createOrder({ buyer, certifiedAt, items, subtotal, packagingFee, shippingFee, discountCode, discountAmount, total, paymentProvider }) {
+function createOrder({ buyer, certifiedAt, items, subtotal, packagingFee, shippingFee, orderFee, orderFeeRate, discountCode, discountAmount, total, paymentProvider }) {
   const data = load();
   const order = {
     id: data.nextOrderId++,
@@ -34,6 +34,8 @@ function createOrder({ buyer, certifiedAt, items, subtotal, packagingFee, shippi
     subtotal,
     packaging_fee: packagingFee,
     shipping_fee: shippingFee,
+    order_fee: orderFee || 0,
+    order_fee_rate: orderFeeRate || 0,
     discount_code: discountCode || null,
     discount_amount: discountAmount || 0,
     total,

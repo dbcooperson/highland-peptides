@@ -26,6 +26,7 @@ app.get('/api/catalog', (req, res) => {
     products: catalog,
     packagingFee: config.PACKAGING_FEE,
     shippingFee: config.SHIPPING_FEE,
+    orderFeeRate: config.ORDER_FEE_RATE,
   });
 });
 
@@ -88,7 +89,9 @@ function prepareCheckout(body) {
 
   const packagingFee = config.PACKAGING_FEE;
   const shippingFee = config.SHIPPING_FEE;
-  const total = Math.round((subtotal - discountAmount + packagingFee + shippingFee) * 100) / 100;
+  const feeBase = Math.max(0, subtotal - discountAmount + packagingFee + shippingFee);
+  const orderFee = Math.round(feeBase * config.ORDER_FEE_RATE * 100) / 100;
+  const total = Math.round((feeBase + orderFee) * 100) / 100;
 
   return {
     orderInput: {
@@ -107,6 +110,8 @@ function prepareCheckout(body) {
       subtotal,
       packagingFee,
       shippingFee,
+      orderFee,
+      orderFeeRate: config.ORDER_FEE_RATE,
       discountCode: discountMatch ? discountMatch.code : null,
       discountAmount,
       total,

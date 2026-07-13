@@ -52,7 +52,7 @@ async function createPayPalOrder(order) {
             breakdown: {
               item_total: { currency_code: config.PAYPAL_CURRENCY, value: order.subtotal.toFixed(2) },
               shipping: { currency_code: config.PAYPAL_CURRENCY, value: order.shipping_fee.toFixed(2) },
-              handling: { currency_code: config.PAYPAL_CURRENCY, value: order.packaging_fee.toFixed(2) },
+              handling: { currency_code: config.PAYPAL_CURRENCY, value: ((order.packaging_fee || 0) + (order.order_fee || 0)).toFixed(2) },
               discount: { currency_code: config.PAYPAL_CURRENCY, value: order.discount_amount.toFixed(2) },
             },
           },
