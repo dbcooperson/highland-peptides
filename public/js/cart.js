@@ -12,17 +12,39 @@ function cartLineHTML(sku, qty, p) {
   const lineTotal = p.price * qty;
   return `
     <div class="cart-line">
+      <div class="cart-line-media photo" aria-hidden="true"></div>
       <div class="cart-line-info">
-        <strong>${p.name}</strong>
-        <span>${p.spec}</span>
+        <div class="cart-line-kicker">${escapeHTML(p.group || p.category || 'Research product')}</div>
+        <strong>${escapeHTML(p.name)}</strong>
+        <span>${escapeHTML(cleanVialSpec(p.spec))} x${qty} vial${qty === 1 ? '' : 's'}</span>
+        <em>99%+ purity | COA available</em>
       </div>
-      <div class="cart-line-qty">
+      <div class="cart-line-qty" aria-label="Quantity controls">
         <button type="button" class="qty-btn cart-qty-down" data-sku="${sku}" aria-label="Decrease quantity">&minus;</button>
         <span class="cart-line-qty-num">${qty}</span>
         <button type="button" class="qty-btn cart-qty-up" data-sku="${sku}" aria-label="Increase quantity">+</button>
       </div>
       <div class="cart-line-price">$${lineTotal.toFixed(2)}</div>
-      <button type="button" class="cart-remove-btn" data-sku="${sku}" aria-label="Remove ${p.name} from cart">&times;</button>
+      <button type="button" class="cart-remove-btn" data-sku="${sku}" aria-label="Remove ${escapeHTML(p.name)} from cart">&times;</button>
+    </div>
+  `;
+}
+
+function cartSummaryHTML(subtotal) {
+  const packagingFee = (window.siteFees && window.siteFees.packagingFee) || 0;
+  const shippingFee = (window.siteFees && window.siteFees.shippingFee) || 0;
+  const estimatedTotal = subtotal + packagingFee + shippingFee;
+  return `
+    <div class="cart-summary-lines">
+      <div><span>Subtotal</span><strong>$${subtotal.toFixed(2)}</strong></div>
+      <div><span>Shipping</span><strong>$${shippingFee.toFixed(2)}</strong></div>
+      <div><span>Packaging</span><strong>$${packagingFee.toFixed(2)}</strong></div>
+      <div class="cart-summary-total"><span>Estimated total</span><strong>$${estimatedTotal.toFixed(2)}</strong></div>
+    </div>
+    <div class="cart-trust-stack">
+      <span>✓ 99%+ purity research compounds</span>
+      <span>✓ COA available on request</span>
+      <span>✓ PayPal Business checkout</span>
     </div>
   `;
 }
@@ -33,7 +55,11 @@ function renderCartPage() {
   const itemsEl = document.getElementById('cartItemsPage');
   const totalEl = document.getElementById('cartTotalPage');
   const checkoutBtn = document.getElementById('checkoutBtn');
+  const itemSummary = document.getElementById('cartItemSummary');
   updateCartBadge();
+
+  const itemCount = cartItemCount(cart);
+  if (itemSummary) itemSummary.textContent = `${itemCount} item${itemCount === 1 ? '' : 's'}`;
 
   if (skus.length === 0) {
     itemsEl.innerHTML = `
@@ -43,7 +69,12 @@ function renderCartPage() {
         <a href="/index.html#catalogSection" class="cart-empty-cta">Browse the Catalog</a>
       </div>
     `;
-    totalEl.textContent = '';
+    totalEl.innerHTML = `
+      <div class="cart-summary-empty">
+        <strong>No items yet</strong>
+        <span>Add research products to see your estimated total.</span>
+      </div>
+    `;
     checkoutBtn.style.display = 'none';
     return;
   }
@@ -56,7 +87,7 @@ function renderCartPage() {
     subtotal += p.price * cart[sku];
     return cartLineHTML(sku, cart[sku], p);
   }).join('');
-  totalEl.textContent = `Subtotal: $${subtotal.toFixed(2)} (+ shipping and packaging at checkout)`;
+  totalEl.innerHTML = cartSummaryHTML(subtotal);
 
   itemsEl.querySelectorAll('.cart-qty-down').forEach(btn => {
     btn.onclick = () => {
@@ -88,6 +119,9 @@ async function init() {
   window.siteCatalog = catalogData.products;
   window.siteFees = { packagingFee: catalogData.packagingFee, shippingFee: catalogData.shippingFee };
   renderCartPage();
+  if (new URLSearchParams(window.location.search).get('checkout') === '1') {
+    setTimeout(() => document.getElementById('checkoutBtn')?.click(), 150);
+  }
 }
 
 init();

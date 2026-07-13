@@ -51,6 +51,7 @@ function addToCart(sku, qty = 1) {
   const cart = getCart();
   cart[sku] = (cart[sku] || 0) + qty;
   saveCart(cart);
+  setTimeout(() => showAddedToCartPopup(sku, qty), 0);
   return cart;
 }
 
@@ -84,6 +85,93 @@ function updateCartBadge() {
   const count = cartItemCount(getCart());
   el.textContent = count;
   el.setAttribute('aria-label', `${count} item${count === 1 ? '' : 's'}`);
+}
+
+function getCatalogProductBySku(sku) {
+  const catalog = Array.isArray(window.siteCatalog) ? window.siteCatalog : [];
+  return catalog.find(product => product.sku === sku) || null;
+}
+
+function showAddedToCartPopup(sku, qty = 1) {
+  if (document.getElementById('entryGate')?.style.display === 'flex') return;
+  const product = getCatalogProductBySku(sku);
+  if (!product || !document.body) return;
+
+  let overlay = document.getElementById('addToCartPopup');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'addToCartPopup';
+    overlay.className = 'cart-popup-overlay';
+    document.body.appendChild(overlay);
+  }
+
+  const cart = getCart();
+  const subtotal = Object.keys(cart).reduce((sum, itemSku) => {
+    const item = getCatalogProductBySku(itemSku);
+    return item ? sum + item.price * cart[itemSku] : sum;
+  }, 0);
+  const count = cartItemCount(cart);
+  const suggestions = (Array.isArray(window.siteCatalog) ? window.siteCatalog : [])
+    .filter(item => item.sku !== sku && item.popular)
+    .slice(0, 2);
+
+  overlay.innerHTML = `
+    <div class="cart-popup-card" role="dialog" aria-modal="true" aria-labelledby="cartPopupTitle">
+      <button type="button" class="cart-popup-close" aria-label="Close">&times;</button>
+      <div class="cart-popup-success"><span aria-hidden="true">âœ“</span><strong id="cartPopupTitle">Product successfully added to your cart.</strong></div>
+      <div class="cart-popup-product">
+        <div class="cart-popup-media photo"></div>
+        <div class="cart-popup-copy">
+          <strong>${escapeHTML(product.name)}</strong>
+          <span>${escapeHTML(cleanVialSpec(product.spec))} &bull; Qty ${qty}</span>
+          <em>99%+ purity | COA available</em>
+        </div>
+        <div class="cart-popup-price">$${(product.price * qty).toFixed(2)}</div>
+      </div>
+      <div class="cart-popup-totals">
+        <span>${count} item${count === 1 ? '' : 's'} in cart</span>
+        <strong>Subtotal $${subtotal.toFixed(2)}</strong>
+      </div>
+      <div class="cart-popup-actions">
+        <button type="button" class="cart-popup-checkout">Checkout</button>
+        <button type="button" class="cart-popup-continue">Continue Shopping</button>
+      </div>
+      ${suggestions.length ? `
+        <div class="cart-popup-suggestions">
+          <div class="cart-popup-suggestions-title">Suggested research products</div>
+          <div class="cart-popup-suggestion-grid">
+            ${suggestions.map(item => `
+              <a href="/product/${encodeURIComponent(item.slug)}" class="cart-popup-suggestion">
+                <span class="cart-popup-suggestion-media photo"></span>
+                <span><strong>${escapeHTML(item.name)}</strong><em>${escapeHTML(cleanVialSpec(item.spec))} &bull; $${item.price.toFixed(2)}</em></span>
+              </a>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
+    </div>
+  `;
+
+  const close = () => {
+    overlay.classList.remove('active');
+    setTimeout(() => { overlay.hidden = true; }, 180);
+  };
+
+  overlay.hidden = false;
+  requestAnimationFrame(() => overlay.classList.add('active'));
+  overlay.querySelector('.cart-popup-close').onclick = close;
+  overlay.querySelector('.cart-popup-continue').onclick = close;
+  overlay.querySelector('.cart-popup-checkout').onclick = () => {
+    if (window.location.pathname.endsWith('/cart.html')) {
+      close();
+      document.getElementById('checkoutBtn')?.click();
+      return;
+    }
+    window.location.href = '/cart.html?checkout=1';
+  };
+  overlay.onclick = event => {
+    if (event.target === overlay) close();
+  };
 }
 
 

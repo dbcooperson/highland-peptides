@@ -84,13 +84,38 @@
   FOR LABORATORY / RESEARCH USE ONLY. NOT FOR HUMAN OR VETERINARY USE. NOT A DRUG, FOOD, OR COSMETIC.
 </div>
 
-<main>
-  <section id="cartSection" class="panel">
-    <h1 style="margin-top:0; font-size:24px; letter-spacing:-0.01em;">Your Cart</h1>
-    <div id="cartItemsPage"></div>
-    <div id="cartTotalPage"></div>
-    <button id="checkoutBtn">Checkout</button>
-    <p class="form-msg" id="cartMsg"></p>
+<main class="cart-main">
+  <section id="cartSection" class="panel cart-page">
+    <div class="cart-page-header">
+      <div>
+        <div class="cart-eyebrow">Secure research supply</div>
+        <h1>Your Cart</h1>
+        <p>Review your research-use-only order before continuing to PayPal checkout.</p>
+      </div>
+      <a href="/index.html#catalogSection" class="cart-header-link">Continue Shopping</a>
+    </div>
+
+    <div class="cart-layout">
+      <div class="cart-items-card">
+        <div class="cart-card-title">
+          <span>Selected items</span>
+          <em id="cartItemSummary">0 items</em>
+        </div>
+        <div id="cartItemsPage"></div>
+      </div>
+
+      <aside class="cart-summary-card">
+        <div class="cart-card-title">
+          <span>Order summary</span>
+          <em>PayPal checkout</em>
+        </div>
+        <div id="cartTotalPage"></div>
+        <button id="checkoutBtn" class="checkout-primary-btn">Checkout Securely</button>
+        <a href="/index.html#catalogSection" class="checkout-secondary-link">Keep shopping</a>
+        <p class="cart-summary-note">For laboratory / research use only. Not for human or veterinary use.</p>
+        <p class="form-msg" id="cartMsg"></p>
+      </aside>
+    </div>
   </section>
 </main>
 
