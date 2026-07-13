@@ -1728,8 +1728,8 @@ body.search-open { overflow: hidden; }
   font-weight: 900;
   letter-spacing: -0.035em;
   line-height: 0.95;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 .vial-label-overlay em {
   min-width: 54px;
@@ -1764,6 +1764,7 @@ body.search-open { overflow: hidden; }
   .detail-vial-label strong { font-size: 18px; }
   .showcase-vial-label strong { font-size: 18px; }
 }
+
 
 
 

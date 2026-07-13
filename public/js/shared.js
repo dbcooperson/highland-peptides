@@ -102,8 +102,25 @@ function cleanVialSpec(spec) {
   return String(spec || '').replace(/\s*x1\s*vial/i, '').replace(/\s+/g, ' ').trim();
 }
 
+
+const VIAL_LABEL_ALIASES = {
+  'CJC-1295 without DAC + Ipamorelin': 'CJC W/O DAC + IPA',
+  'CJC-1295 without DAC': 'CJC W/O DAC',
+  'Cagrilintide + Semaglutide': 'CAGRI + SEMA',
+  'Semax 10mg + Selank 10mg': 'SEMAX + SELANK',
+  'Semax 5mg + Selank 5mg': 'SEMAX + SELANK',
+  'BPC-157 + GHK-Cu + TB-500 + KPV Blend (Klow)': 'KLOW BLEND',
+  'BPC-157 + GHK-Cu + TB-500 Blend (Glow)': 'GLOW BLEND',
+  'BPC-157 + TB-500 Blend': 'BPC + TB-500',
+  'Bacteriostatic Water': 'BAC WATER',
+};
+
+function vialDisplayName(name) {
+  const cleanName = String(name || '').trim();
+  return VIAL_LABEL_ALIASES[cleanName] || cleanName;
+}
 function vialLabelHTML(name, spec, className = '') {
-  const productName = escapeHTML(name);
+  const productName = escapeHTML(vialDisplayName(name));
   const strength = escapeHTML(cleanVialSpec(spec));
   return `
     <div class="vial-label-overlay ${className}">
@@ -397,6 +414,7 @@ function wireCheckout() {
     }
   });
 }
+
 
 
 
