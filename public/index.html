@@ -115,60 +115,29 @@
     </div>
   </div>
 
-  <div class="hero-product-showcase" aria-label="Featured Highland Peptides vial mockup">
-    <div class="showcase-card">
-      <div class="showcase-topline">Best selling research peptide</div>
-      <div class="showcase-vial photo"><div class="vial-label-overlay showcase-vial-label"><strong>Retatrutide</strong><em>20mg</em></div></div>
-      <div class="showcase-copy">
-        <span>Highland Peptides</span>
-        <strong>Retatrutide</strong>
-        <em>Research-use catalog presentation</em>
-      </div>
-      <div class="showcase-proof">
-        <span>99% purity line</span>
-        <span>Fast shipping</span>
-        <span>Lasts 2 years</span>
-      </div>
+  <aside class="hero-commerce-panel" aria-label="Popular Highland Peptides products">
+    <div class="hero-panel-kicker">Best sellers</div>
+    <h2>High-demand research vials, ready to compare.</h2>
+    <div class="hero-mini-products">
+      <a href="/product/retatrutide" class="hero-mini-product">
+        <span class="mini-vial photo" aria-hidden="true"></span>
+        <span><strong>Retatrutide</strong><em>20mg | COA available</em></span>
+      </a>
+      <a href="/product/tirzepatide" class="hero-mini-product">
+        <span class="mini-vial photo" aria-hidden="true"></span>
+        <span><strong>Tirzepatide</strong><em>20mg / 30mg | Fast shipping</em></span>
+      </a>
+      <a href="/product/bpc-157" class="hero-mini-product">
+        <span class="mini-vial photo" aria-hidden="true"></span>
+        <span><strong>BPC-157</strong><em>10mg | 99%+ purity line</em></span>
+      </a>
     </div>
-  </div>
-</section>
-
-<section class="trust-dock" aria-label="Highland Peptides trust highlights">
-  <div class="trust-dock-item">
-    <span class="trust-icon trust-icon-flask" aria-hidden="true"></span>
-    <div>
-      <strong>Lab research only</strong>
-      <p>RUO certification before browsing.</p>
+    <div class="hero-panel-proof">
+      <span><strong>99%+</strong> purity target</span>
+      <span><strong>COA</strong> by lot</span>
+      <span><strong>2yr</strong> expiry format</span>
     </div>
-  </div>
-  <div class="trust-dock-item">
-    <span class="trust-icon trust-icon-shield" aria-hidden="true"></span>
-    <div>
-      <strong>COA available</strong>
-      <p>Documentation on request by lot.</p>
-    </div>
-  </div>
-  <div class="trust-dock-item">
-    <span class="trust-icon trust-icon-vial" aria-hidden="true"></span>
-    <div>
-      <strong>Clear vial specs</strong>
-      <p>Strength and format shown upfront.</p>
-    </div>
-  </div>
-  <div class="trust-dock-item">
-    <span class="trust-icon trust-icon-box" aria-hidden="true"></span>
-    <div>
-      <strong>California base</strong>
-      <p>Domestic fulfillment foundation.</p>
-    </div>
-  </div>
-  <div class="trust-dock-item">
-    <span class="trust-icon trust-icon-seal" aria-hidden="true"></span>
-    <div>
-      <strong>Highland standard</strong>
-      <p>Premium label system and catalog.</p>
-    </div>
-  </div>
+  </aside>
 </section>
 
 <div class="ruo-banner">
@@ -176,11 +145,30 @@
 </div>
 
 <main class="storefront-main">
+  <section id="bestSellers" class="storefront-section best-sellers-priority">
+    <div class="section-heading split-heading">
+      <div>
+        <span>Best Sellers</span>
+        <h2>Start with the compounds researchers look for first.</h2>
+        <p>High-demand research vials with clear strengths, fast add-to-cart, and COA availability by lot.</p>
+      </div>
+      <a href="#catalogSection" class="section-link">View full catalog</a>
+    </div>
+    <div id="bestSellersGrid" class="grid featured-grid"></div>
+  </section>
+
+  <section class="lab-confidence-strip" aria-label="Lab and fulfillment highlights">
+    <div><strong>99%+ purity line</strong><span>Purity-focused sourcing for current lots.</span></div>
+    <div><strong>COA available</strong><span>Documentation available on request by lot.</span></div>
+    <div><strong>Fast shipping</strong><span>U.S. fulfillment built around quick dispatch.</span></div>
+    <div><strong>Research use only</strong><span>Clear RUO certification before checkout.</span></div>
+  </section>
+
   <section class="category-board" aria-label="Shop by research category">
     <div class="section-heading">
       <span>The Catalog</span>
       <h2>Shop by research lane.</h2>
-      <p>Start with the most browsed Highland categories, then jump into the full catalog when you know exactly what you need.</p>
+      <p>Browse the main Highland categories, then jump into the full catalog when you know exactly what you need.</p>
     </div>
     <div class="category-grid">
       <button class="category-tile" type="button" data-group-jump="Metabolic">
@@ -198,27 +186,15 @@
     </div>
   </section>
 
-  <section id="bestSellers" class="storefront-section">
-    <div class="section-heading split-heading">
-      <div>
-        <span>Best Sellers</span>
-        <h2>Trusted starting points.</h2>
-        <p>Fast access to the compounds researchers look for first, presented with Highland's cleaner vial system.</p>
-      </div>
-      <a href="#catalogSection" class="section-link">View full catalog</a>
-    </div>
-    <div id="bestSellersGrid" class="grid featured-grid"></div>
-  </section>
-
   <section class="standard-section">
     <div class="section-heading">
       <span>The Highland Standard</span>
-      <h2>Built to feel premium, written to stay research-only.</h2>
+      <h2>Proof-forward, research-only, easy to shop.</h2>
     </div>
     <div class="standard-grid">
       <article class="standard-card">
         <span>01</span>
-        <h3>Documented material</h3>
+        <h3>Documentation first</h3>
         <p>COA documentation is available on request for current lots so researchers can verify identity and purity before committing.</p>
       </article>
       <article class="standard-card">
@@ -228,12 +204,11 @@
       </article>
       <article class="standard-card">
         <span>03</span>
-        <h3>Distinct shelf presence</h3>
-        <p>Cream labels, deep green, rust accents, and the Highland seal give the catalog a recognizable look competitors do not have.</p>
+        <h3>Fast storefront flow</h3>
+        <p>Search, category filters, product pages, cart, and checkout are designed so customers can find the right vial quickly.</p>
       </article>
     </div>
   </section>
-
   <section id="catalogSection" class="catalog-shell">
     <div class="catalog-heading-row">
       <div class="section-heading">

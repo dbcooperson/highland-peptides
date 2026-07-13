@@ -1459,6 +1459,135 @@ body.search-open { overflow: hidden; }
 .hero-proof-row span {
   display: block;
 }
+.hero-commerce-panel {
+  padding: 22px;
+  border: 1px solid rgba(243,239,230,0.16);
+  border-radius: 26px;
+  background: linear-gradient(145deg, rgba(250,247,241,0.98), rgba(232,222,204,0.94));
+  color: var(--ink);
+  box-shadow: 0 34px 90px rgba(0,0,0,0.42);
+}
+.hero-panel-kicker {
+  color: var(--accent-ink);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.hero-commerce-panel h2 {
+  margin: 10px 0 18px;
+  max-width: 420px;
+  font-size: clamp(26px, 3vw, 38px);
+  line-height: 0.98;
+  letter-spacing: -0.045em;
+}
+.hero-mini-products {
+  display: grid;
+  gap: 10px;
+}
+.hero-mini-product {
+  display: grid;
+  grid-template-columns: 74px 1fr;
+  gap: 12px;
+  align-items: center;
+  min-height: 86px;
+  padding: 10px;
+  border: 1px solid rgba(28,26,23,0.08);
+  border-radius: 18px;
+  background: rgba(255,255,255,0.42);
+  color: inherit;
+  text-decoration: none;
+  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+.hero-mini-product:hover {
+  transform: translateY(-2px);
+  border-color: rgba(67,91,69,0.24);
+  background: rgba(255,255,255,0.66);
+}
+.mini-vial {
+  width: 74px;
+  height: 66px;
+  border-radius: 14px;
+  border: 1px solid var(--border-on-light);
+  background-color: #efe7d8;
+  background-image: url('/images/product-mockups/highland-vial-label-template.png');
+  background-size: 170%;
+  background-position: center 26%;
+}
+.hero-mini-product strong,
+.hero-mini-product em {
+  display: block;
+}
+.hero-mini-product strong {
+  font-size: 17px;
+  letter-spacing: -0.02em;
+}
+.hero-mini-product em {
+  margin-top: 4px;
+  color: var(--muted-on-light);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+}
+.hero-panel-proof {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 14px;
+}
+.hero-panel-proof span {
+  padding: 10px 8px;
+  border-radius: 14px;
+  background: rgba(67,91,69,0.1);
+  color: #435b45;
+  font-size: 11px;
+  font-weight: 800;
+  text-align: center;
+}
+.hero-panel-proof strong {
+  display: block;
+  margin-bottom: 2px;
+  color: #223626;
+  font-size: 16px;
+}
+.lab-confidence-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  margin-bottom: 28px;
+  border: 1px solid rgba(243,239,230,0.16);
+  border-radius: 22px;
+  background: rgba(243,239,230,0.16);
+  box-shadow: 0 24px 60px rgba(0,0,0,0.18);
+}
+.lab-confidence-strip div {
+  padding: 18px;
+  background: rgba(18,22,26,0.72);
+}
+.lab-confidence-strip strong,
+.lab-confidence-strip span {
+  display: block;
+}
+.lab-confidence-strip strong {
+  color: var(--offwhite);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.lab-confidence-strip span {
+  margin-top: 7px;
+  color: var(--muted-on-dark);
+  font-size: 12px;
+  line-height: 1.45;
+}
+.best-sellers-priority {
+  margin-top: -18px;
+}
+.best-sellers-priority .featured-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
 .hero-proof-row strong {
   color: var(--offwhite);
   font-size: 24px;
@@ -1792,6 +1921,7 @@ body.search-open { overflow: hidden; }
   .storefront-hero { grid-template-columns: 1fr; min-height: auto; }
   .hero-product-showcase { max-width: 520px; }
   .trust-dock { grid-template-columns: repeat(2, 1fr); }
+  .lab-confidence-strip, .best-sellers-priority .featured-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .category-grid,
   .standard-grid,
   .featured-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1820,6 +1950,7 @@ body.search-open { overflow: hidden; }
   .featured-grid { grid-template-columns: 1fr; }
   .showcase-vial { height: 330px; }
   .showcase-proof { grid-template-columns: 1fr; }
+  .hero-panel-proof, .lab-confidence-strip, .best-sellers-priority .featured-grid { grid-template-columns: 1fr; }
   .split-heading,
   .catalog-heading-row { align-items: flex-start; flex-direction: column; }
   .catalog-shell { padding: 18px; }

@@ -39,7 +39,7 @@ let activeFilter = 'All';
 
 function renderBestSellers() {
   const grid = document.getElementById('bestSellersGrid');
-  const bestSellers = catalog.filter(p => p.popular);
+  const bestSellers = catalog.filter(p => p.popular).slice(0, 4);
   grid.innerHTML = bestSellers.map(cardHTML).join('');
   wireAddButtons(grid);
 }
