@@ -1474,63 +1474,55 @@ body.search-open { overflow: hidden; }
 }
 .hero-product-showcase {
   position: relative;
-  width: min(100%, 430px);
-  justify-self: end;
 }
 .hero-product-showcase::before {
-  content: '';
-  position: absolute;
-  inset: 22px -18px -20px 28px;
-  border: 1px solid rgba(74,101,76,0.42);
-  border-radius: 30px;
+  content: none;
 }
 .showcase-card {
   position: relative;
-  padding: 18px;
-  border: 1px solid rgba(74,101,76,0.28);
+  padding: 20px;
+  border: 1px solid rgba(243,239,230,0.18);
   border-radius: 28px;
-  background: linear-gradient(145deg, rgba(240,246,235,0.98), rgba(213,226,204,0.96));
+  background: linear-gradient(145deg, rgba(250,247,241,0.98), rgba(232,222,204,0.94));
   color: var(--ink);
   box-shadow: 0 34px 90px rgba(0,0,0,0.45);
 }
 .showcase-topline {
   display: flex;
   justify-content: space-between;
-  color: #38543c;
+  color: var(--accent-ink);
   font-size: 10px;
   font-weight: 900;
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 .showcase-vial {
-  height: 330px;
-  margin: 12px 0 12px;
+  height: 440px;
+  margin: 12px 0 10px;
   border-radius: 20px;
   background-image: url('/images/product-mockups/highland-vial-label-template.png');
-  background-size: contain;
-  background-repeat: no-repeat;
+  background-size: cover;
   background-position: center;
-  background-color: #edf3e8;
-  box-shadow: inset 0 0 0 1px rgba(74,101,76,0.1), inset 0 -28px 36px rgba(28,26,23,0.05);
+  box-shadow: inset 0 -28px 36px rgba(28,26,23,0.05);
 }
 .showcase-copy {
   display: grid;
   gap: 2px;
 }
 .showcase-copy span {
-  color: #60705e;
+  color: var(--muted-on-light);
   font-size: 11px;
   font-weight: 900;
   letter-spacing: 0.13em;
   text-transform: uppercase;
 }
 .showcase-copy strong {
-  font-size: 30px;
+  font-size: 34px;
   letter-spacing: -0.04em;
   line-height: 1;
 }
 .showcase-copy em {
-  color: #60705e;
+  color: var(--muted-on-light);
   font-size: 13px;
   font-style: normal;
 }
@@ -1543,8 +1535,8 @@ body.search-open { overflow: hidden; }
 .showcase-proof span {
   padding: 9px 8px;
   border-radius: 999px;
-  background: rgba(74,101,76,0.12);
-  color: #38543c;
+  background: #e9e1d2;
+  color: #435b45;
   font-size: 10px;
   font-weight: 900;
   text-align: center;
@@ -1798,7 +1790,7 @@ body.search-open { overflow: hidden; }
 }
 @media (max-width: 980px) {
   .storefront-hero { grid-template-columns: 1fr; min-height: auto; }
-  .hero-product-showcase { width: min(100%, 460px); justify-self: center; }
+  .hero-product-showcase { max-width: 520px; }
   .trust-dock { grid-template-columns: repeat(2, 1fr); }
   .category-grid,
   .standard-grid,
@@ -1826,7 +1818,7 @@ body.search-open { overflow: hidden; }
   .category-grid,
   .standard-grid,
   .featured-grid { grid-template-columns: 1fr; }
-  .showcase-vial { height: 270px; }
+  .showcase-vial { height: 330px; }
   .showcase-proof { grid-template-columns: 1fr; }
   .split-heading,
   .catalog-heading-row { align-items: flex-start; flex-direction: column; }
