@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Learn about Highland Peptides, a research-use-only supplier with premium Highland-inspired branding, clear catalog standards, and California fulfillment.">
-<title>About Us: Highland Peptides</title>
+<meta name="description" content="Contact Highland Peptides support for research-use-only order, catalog, and COA questions.">
+<title>Support - Highland Peptides</title>
 <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
@@ -38,6 +38,23 @@
 </div>
 <div class="mountain-scrim" aria-hidden="true"></div>
 
+<div id="entryGate" class="entry-gate">
+  <div class="entry-gate-box">
+    <div class="brand">Highland Peptides</div>
+    <h2>Research Use Only</h2>
+    <p>This site sells laboratory research compounds. They are not drugs, foods, cosmetics, or dietary supplements, and are not for human or veterinary use. By entering, you certify that:</p>
+    <ul>
+      <li>You are 21 years of age or older.</li>
+      <li>You are an independent research company or an independent researcher, purchasing solely for laboratory / research purposes.</li>
+      <li>You are NOT using these products for human consumption, injection, or administration of any kind.</li>
+    </ul>
+    <div class="entry-gate-actions">
+      <button id="entryAgreeBtn">I Certify the Above, Enter Site</button>
+      <button id="entryExitBtn" class="secondary">Exit</button>
+    </div>
+  </div>
+</div>
+
 <div class="nav-wrap">
   <header class="topbar">
     <div class="brand"><a href="/index.html" style="color:inherit;text-decoration:none;display:flex;align-items:center;gap:10px;">
@@ -46,9 +63,9 @@
     </a></div>
     <nav class="site-nav">
       <a href="/index.html#catalogSection">Shop</a>
-      <a href="/about.html" class="active">About Us</a>
+      <a href="/about.html">About Us</a>
       <a href="/calculator.html">Research Calculator</a>
-      <a href="/support.html">Support</a>
+      <a href="/support.html" class="active">Support</a>
     </nav>
     <div class="header-actions">
       <button id="openProductSearch" class="nav-search-button" type="button" aria-label="Search products">
@@ -63,50 +80,54 @@
       </nav>
     </div>
   </header>
-</div><section class="hero" style="padding-bottom: 20px;">
-  <div class="eyebrow">About Highland Peptides</div>
-  <h1 class="hero-title">Premium research supply,<br><em>without the clinical coldness.</em></h1>
-  <p class="hero-sub">Highland Peptides is a research-use-only supplier built around clear catalog standards, careful fulfillment, and a warmer premium identity inspired by the Scottish Highlands.</p>
-</section>
+</div>
 
-<main style="display:block; max-width: 900px; padding-top: 0;">
-  <section class="panel" style="margin-bottom: 24px;">
-    <h2>What we do</h2>
-    <p class="hint" style="font-size:14px; line-height:1.7; color:var(--muted-on-light);">
-      We supply laboratory research compounds to independent researchers and research companies. Products are listed for research use only and are not sold as drugs, foods, cosmetics, supplements, or items for human or veterinary administration.
-    </p>
-  </section>
+<div class="ruo-banner">
+  FOR LABORATORY / RESEARCH USE ONLY. NOT FOR HUMAN OR VETERINARY USE. NOT A DRUG, FOOD, OR COSMETIC.
+</div>
 
-  <section class="panel" style="margin-bottom: 24px;">
-    <h2>Catalog standards</h2>
-    <p class="hint" style="font-size:14px; line-height:1.7; color:var(--muted-on-light);">
-      Our catalog is intentionally positioned around research documentation and clear product identity. COA documentation is available on request for current lots, and the site repeats research-use language at entry, product detail, and checkout so the intended use stays unambiguous.
-    </p>
-  </section>
+<main>
+  <section class="panel support-panel">
+    <div class="support-grid">
+      <div>
+        <div class="eyebrow">Highland Support</div>
+        <h1>Need help with an order or catalog question?</h1>
+        <p class="hint">Send us a support email for order status, COA requests, payment questions, catalog questions, or general research-use-only support.</p>
+        <div class="support-card">
+          <strong>Email</strong>
+          <a href="mailto:support@highlandpeptides.com">support@highlandpeptides.com</a>
+          <span>Typical response: within 1 business day.</span>
+        </div>
+        <p class="support-note">Please do not describe human use, dosing, injection, administration, or medical outcomes. Highland Peptides products are for laboratory research use only.</p>
+      </div>
 
-  <section class="panel" style="margin-bottom: 24px;">
-    <h2>Fulfillment</h2>
-    <p class="hint" style="font-size:14px; line-height:1.7; color:var(--muted-on-light);">
-      Orders ship from California, with the storefront designed for quick catalog browsing, clear vial specifications, and straightforward cart review. The purchase flow can continue to mature later without changing the brand or catalog foundation.
-    </p>
-  </section>
-
-  <section class="panel">
-    <h2>Brand direction</h2>
-    <p class="hint" style="font-size:14px; line-height:1.7; color:var(--muted-on-light);">
-      The Highland identity is meant to feel rugged, premium, and calm: misty mountain layers, warm cream labels, restrained green and amber accents, and clean modern typography. The goal is professional research supply without feeling sterile or generic.
-    </p>
+      <form id="supportForm" class="support-form">
+        <label>Your Name <input type="text" id="supportName" required></label>
+        <label>Your Email <input type="email" id="supportEmail" required></label>
+        <label>Order Number (optional) <input type="text" id="supportOrder" placeholder="Example: 1042"></label>
+        <label>Topic
+          <select id="supportTopic">
+            <option>Order question</option>
+            <option>Payment question</option>
+            <option>COA request</option>
+            <option>Catalog question</option>
+            <option>Other support</option>
+          </select>
+        </label>
+        <label>Message <textarea id="supportMessage" rows="6" required placeholder="Tell us how we can help."></textarea></label>
+        <button type="submit">Open Email Draft</button>
+        <p class="form-msg" id="supportMsg"></p>
+      </form>
+    </div>
   </section>
 </main>
 
 <footer class="site-footer">
   Highland Peptides: for laboratory / research use only. Not for human or veterinary use, consumption, or administration of any kind.
-  Not evaluated by the FDA. See our Research Use Only Terms at signup for full terms.
+  Not evaluated by the FDA.
 </footer>
 
 <script src="/js/shared.js"></script>
+<script src="/js/support.js"></script>
 </body>
 </html>
-
-
-

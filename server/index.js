@@ -56,7 +56,7 @@ app.get('/api/discount-code', (req, res) => {
 
 // ---------- Checkout (guest, no account) ----------
 function prepareCheckout(body) {
-  const { items: rawItems, buyer, certified, discountCode } = body || {};
+  const { items: rawItems, buyer, certified, discountCode, paymentMethod } = body || {};
 
   if (certified !== true) {
     return { error: 'You must certify research/business use to place an order.' };
@@ -64,6 +64,8 @@ function prepareCheckout(body) {
   if (!buyer || !buyer.name || !buyer.email || !buyer.address1 || !buyer.city || !buyer.state || !buyer.zip) {
     return { error: 'Name, email, and full shipping address are required.' };
   }
+
+  const normalizedPaymentMethod = paymentMethod === 'paypal' ? 'paypal' : 'manual';
 
   const items = Array.isArray(rawItems) ? rawItems : [];
   if (items.length === 0) return { error: 'Cart is empty.' };
@@ -108,6 +110,7 @@ function prepareCheckout(body) {
       discountCode: discountMatch ? discountMatch.code : null,
       discountAmount,
       total,
+      paymentMethod: normalizedPaymentMethod,
     },
   };
 }
@@ -159,19 +162,6 @@ app.post('/api/paypal/capture-order', async (req, res) => {
   }
 });
 
-app.post('/api/checkout', (req, res) => {
-  const prepared = prepareCheckout(req.body);
-  if (prepared.error) return res.status(400).json({ error: prepared.error });
-
-  const order = db.createOrder({ ...prepared.orderInput, paymentProvider: 'manual' });
-
-  res.json({
-    ok: true,
-    orderId: order.id,
-    total: order.total,
-    message: 'Order received and is pending payment instructions. Our team will follow up with how to complete payment.',
-  });
-});
 // ---------- Admin ----------
 app.post('/api/admin/login', (req, res) => {
   const { password } = req.body || {};

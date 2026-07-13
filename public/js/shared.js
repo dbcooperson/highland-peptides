@@ -315,6 +315,7 @@ function checkoutPayloadFromForm() {
     },
     certified: document.getElementById('checkoutCertify').checked,
     discountCode: appliedDiscount ? appliedDiscount.code : null,
+    paymentMethod: 'paypal',
   };
 }
 
@@ -465,7 +466,7 @@ async function initPayPalCheckout() {
     }).render('#paypalButtons');
     paypalButtonsRendered = true;
   } catch (err) {
-    paypalButtons.innerHTML = '<div class="paypal-disabled">PayPal could not load. You can still place the order and complete payment manually.</div>';
+    paypalButtons.innerHTML = '<div class="paypal-disabled">PayPal could not load. Please refresh the page or contact support@highlandpeptides.com.</div>';
     if (paypalMsg) {
       paypalMsg.style.color = 'var(--danger)';
       paypalMsg.textContent = err.message || 'PayPal is unavailable right now.';
@@ -491,6 +492,7 @@ function wireCheckout() {
     if (e.target.id === 'checkoutModal') closeCheckoutModal();
   });
 
+
   const promoApplyBtn = document.getElementById('promoApplyBtn');
   if (promoApplyBtn) {
     promoApplyBtn.addEventListener('click', applyPromoCode);
@@ -499,24 +501,7 @@ function wireCheckout() {
     });
   }
 
-  document.getElementById('checkoutForm').addEventListener('submit', async (e) => {
+  document.getElementById('checkoutForm').addEventListener('submit', (e) => {
     e.preventDefault();
-    const msgEl = document.getElementById('checkoutMsg');
-    const payload = checkoutPayloadFromForm();
-    if (!validateCheckoutPayload(payload, msgEl)) return;
-
-    try {
-      const result = await api('/api/checkout', {
-        method: 'POST',
-        body: payload,
-      });
-      msgEl.style.color = 'var(--success)';
-      msgEl.textContent = `${result.message} (Order #${result.orderId}, total $${result.total.toFixed(2)})`;
-      clearCartAfterCheckout();
-      setTimeout(closeCheckoutModal, 2500);
-    } catch (err) {
-      msgEl.style.color = 'var(--danger)';
-      msgEl.textContent = err.message;
-    }
   });
 }
