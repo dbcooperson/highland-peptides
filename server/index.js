@@ -7,6 +7,7 @@ const db = require('./db');
 const { catalog, bySku, getProductFamily } = require('./products');
 const { requireAdmin } = require('./auth');
 const { buildPackingSlip, buildContentsLabel } = require('./labels');
+const { isPayPalConfigured, createPayPalOrder, capturePayPalOrder } = require('./paypal');
 
 const app = express();
 app.use(express.json());
@@ -54,18 +55,18 @@ app.get('/api/discount-code', (req, res) => {
 });
 
 // ---------- Checkout (guest, no account) ----------
-app.post('/api/checkout', (req, res) => {
-  const { items: rawItems, buyer, certified, discountCode } = req.body || {};
+function prepareCheckout(body) {
+  const { items: rawItems, buyer, certified, discountCode } = body || {};
 
   if (certified !== true) {
-    return res.status(400).json({ error: 'You must certify research/business use to place an order.' });
+    return { error: 'You must certify research/business use to place an order.' };
   }
   if (!buyer || !buyer.name || !buyer.email || !buyer.address1 || !buyer.city || !buyer.state || !buyer.zip) {
-    return res.status(400).json({ error: 'Name, email, and full shipping address are required.' });
+    return { error: 'Name, email, and full shipping address are required.' };
   }
 
   const items = Array.isArray(rawItems) ? rawItems : [];
-  if (items.length === 0) return res.status(400).json({ error: 'Cart is empty.' });
+  if (items.length === 0) return { error: 'Cart is empty.' };
 
   let subtotal = 0;
   const resolved = [];
@@ -73,7 +74,7 @@ app.post('/api/checkout', (req, res) => {
     const product = bySku[item.sku];
     const qty = parseInt(item.quantity, 10);
     if (!product || !qty || qty < 1) {
-      return res.status(400).json({ error: `Invalid item: ${item.sku}` });
+      return { error: `Invalid item: ${item.sku}` };
     }
     subtotal += product.price * qty;
     resolved.push({ sku: product.sku, name: product.name, spec: product.spec, quantity: qty, unit_price: product.price });
@@ -87,35 +88,90 @@ app.post('/api/checkout', (req, res) => {
   const shippingFee = config.SHIPPING_FEE;
   const total = Math.round((subtotal - discountAmount + packagingFee + shippingFee) * 100) / 100;
 
-  const order = db.createOrder({
-    buyer: {
-      name: buyer.name,
-      email: buyer.email,
-      address1: buyer.address1,
-      address2: buyer.address2 || '',
-      city: buyer.city,
-      state: buyer.state,
-      zip: buyer.zip,
-      country: buyer.country || 'US',
+  return {
+    orderInput: {
+      buyer: {
+        name: buyer.name,
+        email: buyer.email,
+        address1: buyer.address1,
+        address2: buyer.address2 || '',
+        city: buyer.city,
+        state: buyer.state,
+        zip: buyer.zip,
+        country: buyer.country || 'US',
+      },
+      certifiedAt: new Date().toISOString(),
+      items: resolved,
+      subtotal,
+      packagingFee,
+      shippingFee,
+      discountCode: discountMatch ? discountMatch.code : null,
+      discountAmount,
+      total,
     },
-    certifiedAt: new Date().toISOString(),
-    items: resolved,
-    subtotal,
-    packagingFee,
-    shippingFee,
-    discountCode: discountMatch ? discountMatch.code : null,
-    discountAmount,
-    total,
+  };
+}
+
+app.get('/api/paypal/config', (req, res) => {
+  res.json({
+    enabled: isPayPalConfigured(),
+    clientId: isPayPalConfigured() ? config.PAYPAL_CLIENT_ID : null,
+    currency: config.PAYPAL_CURRENCY,
+    environment: config.PAYPAL_ENV,
   });
+});
+
+app.post('/api/paypal/create-order', async (req, res) => {
+  if (!isPayPalConfigured()) {
+    return res.status(503).json({ error: 'PayPal is not configured yet.' });
+  }
+
+  const prepared = prepareCheckout(req.body);
+  if (prepared.error) return res.status(400).json({ error: prepared.error });
+
+  try {
+    const order = db.createOrder({ ...prepared.orderInput, paymentProvider: 'paypal' });
+    const paypalOrder = await createPayPalOrder(order);
+    res.json({ ok: true, orderId: order.id, paypalOrderId: paypalOrder.id, total: order.total });
+  } catch (err) {
+    res.status(502).json({ error: err.message || 'Could not start PayPal checkout.' });
+  }
+});
+
+app.post('/api/paypal/capture-order', async (req, res) => {
+  const { paypalOrderId, orderId } = req.body || {};
+  if (!paypalOrderId || !orderId) {
+    return res.status(400).json({ error: 'Missing PayPal order details.' });
+  }
+
+  const order = db.getOrderById(orderId);
+  if (!order) return res.status(404).json({ error: 'Order not found.' });
+
+  try {
+    const capture = await capturePayPalOrder(paypalOrderId);
+    if (capture.status !== 'COMPLETED') {
+      return res.status(400).json({ error: `PayPal payment was not completed. Status: ${capture.status}` });
+    }
+    db.markOrderPaid(orderId, paypalOrderId);
+    res.json({ ok: true, orderId: Number(orderId), paypalOrderId, total: order.total, message: 'Payment received. Order is confirmed.' });
+  } catch (err) {
+    res.status(502).json({ error: err.message || 'Could not confirm PayPal payment.' });
+  }
+});
+
+app.post('/api/checkout', (req, res) => {
+  const prepared = prepareCheckout(req.body);
+  if (prepared.error) return res.status(400).json({ error: prepared.error });
+
+  const order = db.createOrder({ ...prepared.orderInput, paymentProvider: 'manual' });
 
   res.json({
     ok: true,
     orderId: order.id,
-    total,
+    total: order.total,
     message: 'Order received and is pending payment instructions. Our team will follow up with how to complete payment.',
   });
 });
-
 // ---------- Admin ----------
 app.post('/api/admin/login', (req, res) => {
   const { password } = req.body || {};

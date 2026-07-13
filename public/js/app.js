@@ -12,9 +12,10 @@ function cardHTML(p) {
           <div class="product-card-spec">${p.spec.replace(' x1 vial', '')}</div>
         </div>
         <h4>${p.name}</h4>
+        <p class="product-card-description">${escapeHTML(p.description || 'Research-use compound for laboratory applications.')}</p>
         <div class="product-card-foot">
           <div>
-            <div class="product-card-note">99%+ purity · COA available</div>
+            <div class="product-card-note">99%+ purity | COA available</div>
             <div class="price">$${p.price.toFixed(2)}</div>
           </div>
           <span class="product-card-arrow" aria-hidden="true">&rsaquo;</span>

@@ -140,7 +140,7 @@ function productSearchResultHTML(p) {
         <span class="product-search-result-group">${p.group || p.category}</span>
         <strong>${p.name}</strong>
         <span>${p.spec}</span>
-        <span class="product-search-result-proof">99%+ purity · COA available</span>
+        <span class="product-search-result-proof">99%+ purity | COA available</span>
       </div>
       <span class="product-search-result-arrow" aria-hidden="true">&rsaquo;</span>
     </a>
@@ -206,7 +206,7 @@ function initProductSearch() {
     const catalog = await getProductSearchCatalog();
     const query = input.value.trim().toLowerCase();
     const matches = query
-      ? catalog.filter(p => [p.name, p.spec, p.sku, p.category, p.group]
+      ? catalog.filter(p => [p.name, p.spec, p.sku, p.category, p.group, p.description]
           .filter(Boolean)
           .some(value => String(value).toLowerCase().includes(query)))
       : catalog.filter(p => p.popular).slice(0, 8);
@@ -265,10 +265,15 @@ function round2(n) {
 // ---------- Checkout modal (lives on the cart page only) ----------
 
 let appliedDiscount = null; // { code, percentOff } | null
+let paypalConfigPromise = null;
+let paypalButtonsRendered = false;
+let pendingPayPalLocalOrderId = null;
 
 function renderCheckoutSummary() {
   const cart = getCart();
   const summaryEl = document.getElementById('modalOrderSummary');
+  if (!summaryEl) return;
+
   const skus = Object.keys(cart).filter(s => cart[s] > 0);
   const subtotal = round2(cartSubtotal());
   const packagingFee = (window.siteFees && window.siteFees.packagingFee) || 0;
@@ -279,7 +284,7 @@ function renderCheckoutSummary() {
   const lines = skus.map(sku => {
     const p = window.siteCatalog.find(x => x.sku === sku);
     if (!p) return '';
-    return `<div class="cart-row"><span>${p.name} x${cart[sku]}</span><span>$${(p.price * cart[sku]).toFixed(2)}</span></div>`;
+    return `<div class="cart-row"><span>${escapeHTML(p.name)} x${cart[sku]}</span><span>$${(p.price * cart[sku]).toFixed(2)}</span></div>`;
   }).join('');
 
   const breakdown = [
@@ -293,14 +298,67 @@ function renderCheckoutSummary() {
   summaryEl.innerHTML = lines + '<div style="height:1px; background:var(--border-on-light); margin:10px 0;"></div>' + breakdown;
 }
 
+function checkoutPayloadFromForm() {
+  const cart = getCart();
+  const items = Object.keys(cart).filter(s => cart[s] > 0).map(sku => ({ sku, quantity: cart[sku] }));
+  return {
+    items,
+    buyer: {
+      name: document.getElementById('buyerName').value.trim(),
+      email: document.getElementById('buyerEmail').value.trim(),
+      address1: document.getElementById('buyerAddress1').value.trim(),
+      address2: document.getElementById('buyerAddress2').value.trim(),
+      city: document.getElementById('buyerCity').value.trim(),
+      state: document.getElementById('buyerState').value.trim(),
+      zip: document.getElementById('buyerZip').value.trim(),
+      country: 'US',
+    },
+    certified: document.getElementById('checkoutCertify').checked,
+    discountCode: appliedDiscount ? appliedDiscount.code : null,
+  };
+}
+
+function validateCheckoutPayload(payload, msgEl) {
+  if (payload.items.length === 0) {
+    msgEl.style.color = 'var(--danger)';
+    msgEl.textContent = 'Cart is empty.';
+    return false;
+  }
+  if (!payload.buyer.name || !payload.buyer.email || !payload.buyer.address1 || !payload.buyer.city || !payload.buyer.state || !payload.buyer.zip) {
+    msgEl.style.color = 'var(--danger)';
+    msgEl.textContent = 'Name, email, and full shipping address are required before payment.';
+    return false;
+  }
+  if (!payload.certified) {
+    msgEl.style.color = 'var(--danger)';
+    msgEl.textContent = 'You must certify research/business use before payment.';
+    return false;
+  }
+  msgEl.textContent = '';
+  return true;
+}
+
+function clearCartAfterCheckout() {
+  saveCart({});
+  appliedDiscount = null;
+  updateCartBadge();
+  document.dispatchEvent(new CustomEvent('cart:updated'));
+  document.getElementById('checkoutForm').reset();
+}
+
 function openCheckoutModal() {
   appliedDiscount = null;
   const promoInput = document.getElementById('promoInput');
   const promoMsg = document.getElementById('promoMsg');
+  const checkoutMsg = document.getElementById('checkoutMsg');
+  const paypalMsg = document.getElementById('paypalMsg');
   if (promoInput) promoInput.value = '';
   if (promoMsg) promoMsg.textContent = '';
+  if (checkoutMsg) checkoutMsg.textContent = '';
+  if (paypalMsg) paypalMsg.textContent = '';
   renderCheckoutSummary();
   document.getElementById('checkoutModal').style.display = 'flex';
+  initPayPalCheckout();
 }
 
 function closeCheckoutModal() {
@@ -336,6 +394,85 @@ async function applyPromoCode() {
   renderCheckoutSummary();
 }
 
+function getPayPalConfig() {
+  if (!paypalConfigPromise) paypalConfigPromise = api('/api/paypal/config');
+  return paypalConfigPromise;
+}
+
+function loadPayPalSdk(clientId, currency) {
+  if (window.paypal) return Promise.resolve();
+  const existing = document.querySelector('script[data-paypal-sdk="true"]');
+  if (existing) {
+    return new Promise((resolve, reject) => {
+      existing.addEventListener('load', resolve, { once: true });
+      existing.addEventListener('error', reject, { once: true });
+    });
+  }
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(clientId)}&currency=${encodeURIComponent(currency)}&intent=capture`;
+    script.dataset.paypalSdk = 'true';
+    script.onload = resolve;
+    script.onerror = () => reject(new Error('Could not load PayPal checkout.'));
+    document.head.appendChild(script);
+  });
+}
+
+async function initPayPalCheckout() {
+  const paypalButtons = document.getElementById('paypalButtons');
+  const paypalMsg = document.getElementById('paypalMsg');
+  if (!paypalButtons || paypalButtonsRendered) return;
+
+  try {
+    const config = await getPayPalConfig();
+    if (!config.enabled) {
+      paypalButtons.innerHTML = '<div class="paypal-disabled">PayPal is ready in the code, but credentials still need to be added in Render before online payment can go live.</div>';
+      return;
+    }
+    await loadPayPalSdk(config.clientId, config.currency || 'USD');
+    if (!window.paypal) throw new Error('PayPal checkout did not load.');
+
+    window.paypal.Buttons({
+      style: { layout: 'vertical', color: 'gold', shape: 'pill', label: 'paypal' },
+      onClick(data, actions) {
+        const payload = checkoutPayloadFromForm();
+        return validateCheckoutPayload(payload, paypalMsg) ? actions.resolve() : actions.reject();
+      },
+      async createOrder() {
+        const payload = checkoutPayloadFromForm();
+        const result = await api('/api/paypal/create-order', { method: 'POST', body: payload });
+        pendingPayPalLocalOrderId = result.orderId;
+        return result.paypalOrderId;
+      },
+      async onApprove(data) {
+        const result = await api('/api/paypal/capture-order', {
+          method: 'POST',
+          body: { paypalOrderId: data.orderID, orderId: pendingPayPalLocalOrderId },
+        });
+        paypalMsg.style.color = 'var(--success)';
+        paypalMsg.textContent = `${result.message} Order #${result.orderId}.`;
+        clearCartAfterCheckout();
+        setTimeout(closeCheckoutModal, 2500);
+      },
+      onCancel() {
+        paypalMsg.style.color = 'var(--muted-on-light)';
+        paypalMsg.textContent = 'PayPal checkout was cancelled.';
+      },
+      onError(err) {
+        paypalMsg.style.color = 'var(--danger)';
+        paypalMsg.textContent = err && err.message ? err.message : 'PayPal checkout failed. Please try again.';
+      },
+    }).render('#paypalButtons');
+    paypalButtonsRendered = true;
+  } catch (err) {
+    paypalButtons.innerHTML = '<div class="paypal-disabled">PayPal could not load. You can still place the order and complete payment manually.</div>';
+    if (paypalMsg) {
+      paypalMsg.style.color = 'var(--danger)';
+      paypalMsg.textContent = err.message || 'PayPal is unavailable right now.';
+    }
+  }
+}
+
 function wireCheckout() {
   document.getElementById('checkoutBtn').addEventListener('click', () => {
     const cartMsg = document.getElementById('cartMsg');
@@ -364,50 +501,18 @@ function wireCheckout() {
 
   document.getElementById('checkoutForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const cart = getCart();
-    const items = Object.keys(cart).filter(s => cart[s] > 0).map(sku => ({ sku, quantity: cart[sku] }));
     const msgEl = document.getElementById('checkoutMsg');
-
-    if (items.length === 0) {
-      msgEl.style.color = 'var(--danger)';
-      msgEl.textContent = 'Cart is empty.';
-      return;
-    }
-
-    const buyer = {
-      name: document.getElementById('buyerName').value.trim(),
-      email: document.getElementById('buyerEmail').value.trim(),
-      address1: document.getElementById('buyerAddress1').value.trim(),
-      address2: document.getElementById('buyerAddress2').value.trim(),
-      city: document.getElementById('buyerCity').value.trim(),
-      state: document.getElementById('buyerState').value.trim(),
-      zip: document.getElementById('buyerZip').value.trim(),
-    };
-    const certified = document.getElementById('checkoutCertify').checked;
-
-    if (!buyer.name || !buyer.email || !buyer.address1 || !buyer.city || !buyer.state || !buyer.zip) {
-      msgEl.style.color = 'var(--danger)';
-      msgEl.textContent = 'Name, email, and full shipping address are required.';
-      return;
-    }
-    if (!certified) {
-      msgEl.style.color = 'var(--danger)';
-      msgEl.textContent = 'You must certify research/business use to place an order.';
-      return;
-    }
+    const payload = checkoutPayloadFromForm();
+    if (!validateCheckoutPayload(payload, msgEl)) return;
 
     try {
       const result = await api('/api/checkout', {
         method: 'POST',
-        body: { items, buyer, certified, discountCode: appliedDiscount ? appliedDiscount.code : null },
+        body: payload,
       });
       msgEl.style.color = 'var(--success)';
       msgEl.textContent = `${result.message} (Order #${result.orderId}, total $${result.total.toFixed(2)})`;
-      saveCart({});
-      appliedDiscount = null;
-      updateCartBadge();
-      document.dispatchEvent(new CustomEvent('cart:updated'));
-      document.getElementById('checkoutForm').reset();
+      clearCartAfterCheckout();
       setTimeout(closeCheckoutModal, 2500);
     } catch (err) {
       msgEl.style.color = 'var(--danger)';
@@ -415,10 +520,3 @@ function wireCheckout() {
     }
   });
 }
-
-
-
-
-
-
-

@@ -610,14 +610,6 @@
     "group": "Nootropic"
   },
   {
-    "sku": "TR5",
-    "name": "Tirzepatide",
-    "spec": "5mg x1 vial",
-    "cost": 4,
-    "category": "Peptide",
-    "group": "Metabolic"
-  },
-  {
     "sku": "TR10",
     "name": "Tirzepatide",
     "spec": "10mg x1 vial",
@@ -649,14 +641,6 @@
     "category": "Peptide",
     "group": "Metabolic",
     "salePrice": 21
-  },
-  {
-    "sku": "RT5",
-    "name": "Retatrutide",
-    "spec": "5mg x1 vial",
-    "cost": 5.5,
-    "category": "Peptide",
-    "group": "Metabolic"
   },
   {
     "sku": "RT10",

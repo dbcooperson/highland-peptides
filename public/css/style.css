@@ -1099,6 +1099,39 @@ body.search-open { overflow: hidden; }
   color: var(--muted-on-light);
   font-size: 13px;
 }
+.payment-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0 12px;
+  color: var(--muted-on-light);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.payment-divider::before,
+.payment-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-on-light);
+}
+.paypal-section {
+  margin: 0 0 12px;
+}
+.paypal-disabled {
+  padding: 12px;
+  border: 1px solid var(--border-on-light);
+  border-radius: var(--radius-sm);
+  background: #f4efe4;
+  color: var(--muted-on-light);
+  font-size: 12px;
+  line-height: 1.45;
+}
+.manual-payment-btn {
+  background: #332f29;
+}
 @media (max-width: 680px) {
   .product-search-overlay { padding: 68px 10px 10px; }
   .product-search-dialog {
@@ -1167,6 +1200,17 @@ body.search-open { overflow: hidden; }
   margin-bottom: 10px;
   font-size: 16px;
   line-height: 1.18;
+}
+.product-card-description {
+  min-height: 48px;
+  margin: -2px 0 12px;
+  color: var(--muted-on-light);
+  font-size: 12px;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .product-card-note {
   margin-bottom: 2px;
@@ -1281,6 +1325,7 @@ body.search-open { overflow: hidden; }
   .product-layout { grid-template-columns: 330px 1fr; }
   .product-media { aspect-ratio: 4 / 5; }
 }
+
 @media (max-width: 680px) {
   .product-card .card-media { height: 150px; }
   .product-trust-grid { grid-template-columns: 1fr; }
@@ -1784,6 +1829,7 @@ body.search-open { overflow: hidden; }
   padding: 5px 14px;
   font-size: 15px;
 }
+
 @media (max-width: 680px) {
   .detail-vial-label strong { font-size: 18px; }
   .showcase-vial-label strong { font-size: 18px; }

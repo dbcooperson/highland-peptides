@@ -123,7 +123,12 @@
         I certify I am an independent research company or independent researcher, purchasing solely for laboratory / research use, not for human or animal consumption, injection, or administration.
       </label>
 
-      <button type="submit" id="placeOrderBtn">Place Order</button>
+      <div class="payment-divider"><span>Pay securely online</span></div>
+      <div id="paypalSection" class="paypal-section">
+        <div id="paypalButtons"></div>
+        <p class="form-msg" id="paypalMsg"></p>
+      </div>
+      <button type="submit" id="placeOrderBtn" class="manual-payment-btn">Place Order / Manual Payment</button>
       <p class="form-msg" id="checkoutMsg"></p>
     </form>
   </div>

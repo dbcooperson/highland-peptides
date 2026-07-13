@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { MARKUP_MULTIPLIER, PRICE_ADJUSTMENT, PRICE_DECIMALS } = require('./config');
+const { MARKUP_MULTIPLIER, PRICE_ADJUSTMENT, PRICE_DECIMALS, PRICE_OFFSET, PRICE_ENDINGS } = require('./config');
 
 const raw = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'products.json'), 'utf8'));
 const descriptions = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'descriptions.json'), 'utf8'));
@@ -12,6 +12,20 @@ function round(n, d) {
 
 function slugify(name) {
   return name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+function prettyPrice(amount) {
+  const target = amount + PRICE_OFFSET;
+  const floor = Math.floor(target);
+  const endings = Array.isArray(PRICE_ENDINGS) && PRICE_ENDINGS.length ? PRICE_ENDINGS : [0.25, 0.50, 0.75, 0.99];
+  const candidates = [];
+
+  for (let dollar = Math.max(0, floor - 1); dollar <= floor + 2; dollar += 1) {
+    endings.forEach(ending => candidates.push(round(dollar + ending, PRICE_DECIMALS)));
+  }
+
+  return candidates
+    .filter(price => price > 0)
+    .sort((a, b) => Math.abs(a - target) - Math.abs(b - target) || b - a)[0];
 }
 
 function specSortValue(spec) {
@@ -54,7 +68,8 @@ const catalog = raw
     group: p.group,
     slug: slugify(p.name),
     popular: popularRank[p.sku] !== undefined,
-    price: round((p.salePrice != null ? p.salePrice : p.cost * MARKUP_MULTIPLIER) * PRICE_ADJUSTMENT, PRICE_DECIMALS),
+    description: descriptions[p.name] || '',
+    price: prettyPrice((p.salePrice != null ? p.salePrice : p.cost * MARKUP_MULTIPLIER) * PRICE_ADJUSTMENT),
   }))
   .sort((a, b) => {
     const aRank = popularRank[a.sku];

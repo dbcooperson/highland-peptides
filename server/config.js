@@ -22,6 +22,12 @@ module.exports = {
     NM: 0.15,
   },
 
+  // Adds a flat amount to every public product price before final price styling.
+  PRICE_OFFSET: 2,
+
+  // Final public prices are snapped to the nearest of these endings.
+  PRICE_ENDINGS: [0.25, 0.50, 0.75, 0.99],
+
   // Round all sale prices to this many decimal places.
   PRICE_DECIMALS: 2,
 
@@ -30,6 +36,12 @@ module.exports = {
 
   // Session secret (change via env var SESSION_SECRET before deploying).
   SESSION_SECRET: process.env.SESSION_SECRET || 'change-me-session-secret',
+
+  // PayPal Checkout. Use sandbox while testing, then switch PAYPAL_ENV to live.
+  PAYPAL_CLIENT_ID: process.env.PAYPAL_CLIENT_ID || '',
+  PAYPAL_CLIENT_SECRET: process.env.PAYPAL_CLIENT_SECRET || '',
+  PAYPAL_ENV: process.env.PAYPAL_ENV || 'sandbox',
+  PAYPAL_CURRENCY: process.env.PAYPAL_CURRENCY || 'USD',
 
   SITE_NAME: process.env.SITE_NAME || 'Highland Peptides',
 };

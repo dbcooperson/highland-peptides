@@ -20,11 +20,14 @@ function save(data) {
 }
 
 // ---------- Orders (guest checkout, no accounts) ----------
-function createOrder({ buyer, certifiedAt, items, subtotal, packagingFee, shippingFee, discountCode, discountAmount, total }) {
+function createOrder({ buyer, certifiedAt, items, subtotal, packagingFee, shippingFee, discountCode, discountAmount, total, paymentProvider }) {
   const data = load();
   const order = {
     id: data.nextOrderId++,
     status: 'pending_payment',
+    payment_provider: paymentProvider || 'manual',
+    payment_reference: null,
+    paid_at: null,
     buyer,
     certified_at: certifiedAt,
     items,
@@ -51,6 +54,17 @@ function getOrderById(id) {
   return data.orders.find(o => o.id === Number(id)) || null;
 }
 
+
+function markOrderPaid(id, paymentReference) {
+  const data = load();
+  const order = data.orders.find(o => o.id === Number(id));
+  if (!order) return null;
+  order.status = 'paid';
+  order.payment_reference = paymentReference || order.payment_reference || null;
+  order.paid_at = new Date().toISOString();
+  save(data);
+  return order;
+}
 function updateOrderStatus(id, status) {
   const data = load();
   const order = data.orders.find(o => o.id === Number(id));
@@ -60,4 +74,4 @@ function updateOrderStatus(id, status) {
   return order;
 }
 
-module.exports = { createOrder, getAllOrders, getOrderById, updateOrderStatus };
+module.exports = { createOrder, getAllOrders, getOrderById, markOrderPaid, updateOrderStatus };
