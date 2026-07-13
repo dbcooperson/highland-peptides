@@ -8,15 +8,13 @@ module.exports = {
   // Applied on top of the markup/salePrice for every product (1.15 = +15%).
   PRICE_ADJUSTMENT: 1.15,
 
-  // Flat packaging fee added to every order.
-  // Set from real bag cost ($27/100 = $0.27/unit). Doesn't yet include a separate
-  // ink/label-roll estimate -- bump this up if you want that folded in too.
-  PACKAGING_FEE: 0.27,
+  // Packaging is folded into the fixed shipping charge shown to customers.
+  PACKAGING_FEE: 0,
 
-  // Flat shipping fee added to every order.
-  SHIPPING_FEE: 10.00,
+  // Fixed shipping charge added to every order.
+  SHIPPING_FEE: 10.27,
 
-  // Percentage-based service fee added to every order (0.035 = 3.5%).
+  // Percentage-based taxes added to every order (0.035 = 3.5%).
   ORDER_FEE_RATE: Number(process.env.ORDER_FEE_RATE || 0.035),
 
   // Promo codes: key is the code (case-insensitive), value is the fraction off

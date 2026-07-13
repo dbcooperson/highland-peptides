@@ -118,7 +118,7 @@ function showAddedToCartPopup(sku, qty = 1) {
   overlay.innerHTML = `
     <div class="cart-popup-card" role="dialog" aria-modal="true" aria-labelledby="cartPopupTitle">
       <button type="button" class="cart-popup-close" aria-label="Close">&times;</button>
-      <div class="cart-popup-success"><span aria-hidden="true">Ã¢Å“â€œ</span><strong id="cartPopupTitle">Product successfully added to your cart.</strong></div>
+      <div class="cart-popup-success"><span aria-hidden="true">ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“</span><strong id="cartPopupTitle">Product successfully added to your cart.</strong></div>
       <div class="cart-popup-product">
         <div class="cart-popup-media photo"></div>
         <div class="cart-popup-copy">
@@ -364,11 +364,10 @@ function renderCheckoutSummary() {
 
   const skus = Object.keys(cart).filter(s => cart[s] > 0);
   const subtotal = round2(cartSubtotal());
-  const packagingFee = (window.siteFees && window.siteFees.packagingFee) || 0;
   const shippingFee = (window.siteFees && window.siteFees.shippingFee) || 0;
   const discountAmount = appliedDiscount ? round2(subtotal * appliedDiscount.percentOff / 100) : 0;
   const orderFeeRate = (window.siteFees && window.siteFees.orderFeeRate) || 0;
-  const feeBase = Math.max(0, subtotal - discountAmount + packagingFee + shippingFee);
+  const feeBase = Math.max(0, subtotal - discountAmount + shippingFee);
   const orderFee = round2(feeBase * orderFeeRate);
   const total = round2(feeBase + orderFee);
   const feePercent = Math.round(orderFeeRate * 1000) / 10;
@@ -383,8 +382,7 @@ function renderCheckoutSummary() {
     `<div class="cart-row"><span>Subtotal</span><span>$${subtotal.toFixed(2)}</span></div>`,
     appliedDiscount ? `<div class="cart-row"><span>Discount (${appliedDiscount.code})</span><span>-$${discountAmount.toFixed(2)}</span></div>` : '',
     `<div class="cart-row"><span>Shipping</span><span>$${shippingFee.toFixed(2)}</span></div>`,
-    `<div class="cart-row"><span>Packaging</span><span>$${packagingFee.toFixed(2)}</span></div>`,
-    orderFeeRate ? `<div class="cart-row"><span>Service fee (${feePercent}%)</span><span>$${orderFee.toFixed(2)}</span></div>` : '',
+    orderFeeRate ? `<div class="cart-row"><span>Taxes (${feePercent}%)</span><span>$${orderFee.toFixed(2)}</span></div>` : '',
     `<div class="order-summary-total cart-row"><span>Total</span><span>$${total.toFixed(2)}</span></div>`,
   ].join('');
 

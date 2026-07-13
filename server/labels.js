@@ -56,11 +56,13 @@ function buildPackingSlip(order, items, res) {
   if (order.discount_code) {
     doc.text(`Discount (${order.discount_code}): -$${(order.discount_amount || 0).toFixed(2)}`, { align: 'right' });
   }
-  doc.text(`Packaging fee: $${(order.packaging_fee || 0).toFixed(2)}`, { align: 'right' });
+  if (order.packaging_fee) {
+    doc.text(`Packaging fee: $${order.packaging_fee.toFixed(2)}`, { align: 'right' });
+  }
   doc.text(`Shipping: $${(order.shipping_fee || 0).toFixed(2)}`, { align: 'right' });
   if (order.order_fee) {
     const feePercent = order.order_fee_rate ? ` (${Math.round(order.order_fee_rate * 1000) / 10}%)` : '';
-    doc.text(`Service fee${feePercent}: $${order.order_fee.toFixed(2)}`, { align: 'right' });
+    doc.text(`Taxes${feePercent}: $${order.order_fee.toFixed(2)}`, { align: 'right' });
   }
   doc.fontSize(11).text(`Total: $${order.total.toFixed(2)}`, { align: 'right' });
 

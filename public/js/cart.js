@@ -31,10 +31,9 @@ function cartLineHTML(sku, qty, p) {
 }
 
 function cartSummaryHTML(subtotal) {
-  const packagingFee = (window.siteFees && window.siteFees.packagingFee) || 0;
   const shippingFee = (window.siteFees && window.siteFees.shippingFee) || 0;
   const orderFeeRate = (window.siteFees && window.siteFees.orderFeeRate) || 0;
-  const feeBase = subtotal + packagingFee + shippingFee;
+  const feeBase = subtotal + shippingFee;
   const orderFee = Math.round(feeBase * orderFeeRate * 100) / 100;
   const estimatedTotal = feeBase + orderFee;
   const feePercent = Math.round(orderFeeRate * 1000) / 10;
@@ -42,8 +41,7 @@ function cartSummaryHTML(subtotal) {
     <div class="cart-summary-lines">
       <div><span>Subtotal</span><strong>$${subtotal.toFixed(2)}</strong></div>
       <div><span>Shipping</span><strong>$${shippingFee.toFixed(2)}</strong></div>
-      <div><span>Packaging</span><strong>$${packagingFee.toFixed(2)}</strong></div>
-      ${orderFeeRate ? `<div><span>Service fee (${feePercent}%)</span><strong>$${orderFee.toFixed(2)}</strong></div>` : ''}
+      ${orderFeeRate ? `<div><span>Taxes (${feePercent}%)</span><strong>$${orderFee.toFixed(2)}</strong></div>` : ''}
       <div class="cart-summary-total"><span>Estimated total</span><strong>$${estimatedTotal.toFixed(2)}</strong></div>
     </div>
   `;
