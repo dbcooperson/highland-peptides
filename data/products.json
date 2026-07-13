@@ -651,39 +651,6 @@
     "salePrice": 21
   },
   {
-    "sku": "TR40",
-    "name": "Tirzepatide",
-    "spec": "40mg x1 vial",
-    "cost": 11,
-    "category": "Peptide",
-    "group": "Metabolic"
-  },
-  {
-    "sku": "TR45",
-    "name": "Tirzepatide",
-    "spec": "45mg x1 vial",
-    "cost": 12,
-    "category": "Peptide",
-    "group": "Metabolic"
-  },
-  {
-    "sku": "TR50",
-    "name": "Tirzepatide",
-    "spec": "50mg x1 vial",
-    "cost": 13.5,
-    "category": "Peptide",
-    "group": "Metabolic"
-  },
-  {
-    "sku": "TR60",
-    "name": "Tirzepatide",
-    "spec": "60mg x1 vial",
-    "cost": 15.8,
-    "category": "Peptide",
-    "group": "Metabolic",
-    "salePrice": 31
-  },
-  {
     "sku": "RT5",
     "name": "Retatrutide",
     "spec": "5mg x1 vial",
@@ -725,30 +692,6 @@
     "category": "Peptide",
     "group": "Metabolic",
     "salePrice": 46
-  },
-  {
-    "sku": "RT40",
-    "name": "Retatrutide",
-    "spec": "40mg x1 vial",
-    "cost": 19.5,
-    "category": "Peptide",
-    "group": "Metabolic"
-  },
-  {
-    "sku": "RT50",
-    "name": "Retatrutide",
-    "spec": "50mg x1 vial",
-    "cost": 23,
-    "category": "Peptide",
-    "group": "Metabolic"
-  },
-  {
-    "sku": "RT60",
-    "name": "Retatrutide",
-    "spec": "60mg x1 vial",
-    "cost": 27,
-    "category": "Peptide",
-    "group": "Metabolic"
   },
   {
     "sku": "SM2",

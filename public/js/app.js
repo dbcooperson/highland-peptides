@@ -1,4 +1,4 @@
-﻿let catalog = [];
+let catalog = [];
 
 function cardHTML(p) {
   return `
@@ -14,7 +14,7 @@ function cardHTML(p) {
         <h4>${p.name}</h4>
         <div class="product-card-foot">
           <div>
-            <div class="product-card-note">COA available</div>
+            <div class="product-card-note">99%+ purity · COA available</div>
             <div class="price">$${p.price.toFixed(2)}</div>
           </div>
           <span class="product-card-arrow" aria-hidden="true">&rsaquo;</span>

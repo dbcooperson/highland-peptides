@@ -14,6 +14,26 @@ function slugify(name) {
   return name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 }
 
+function specSortValue(spec) {
+  const text = String(spec || '').toLowerCase();
+  const matches = [...text.matchAll(/(\d+(?:\.\d+)?)\s*(mcg|mg|iu|ml)/g)];
+  if (!matches.length) return Number.MAX_SAFE_INTEGER;
+
+  return matches.reduce((total, match) => {
+    const amount = Number(match[1]);
+    const unit = match[2];
+    if (unit === 'mcg') return total + amount / 1000;
+    if (unit === 'iu') return total + amount / 1000000;
+    if (unit === 'ml') return total + amount * 1000000;
+    return total + amount;
+  }, 0);
+}
+
+function compareVariants(a, b) {
+  const specDifference = specSortValue(a.spec) - specSortValue(b.spec);
+  if (specDifference !== 0) return specDifference;
+  return a.price - b.price || a.spec.localeCompare(b.spec);
+}
 // Curated by general market popularity, not sales data (this business is new).
 // Sets both catalog order and which items appear in "Best Sellers".
 const POPULAR_SKUS = [
@@ -56,7 +76,7 @@ function getProductFamily({ sku, slug }) {
   if (!product) return null;
   const variants = catalog
     .filter(p => p.name === product.name)
-    .sort((a, b) => a.price - b.price);
+    .sort(compareVariants);
   return {
     name: product.name,
     slug: product.slug,

@@ -1,4 +1,4 @@
-﻿const pathMatch = window.location.pathname.match(/^\/product\/([^/]+)$/);
+const pathMatch = window.location.pathname.match(/^\/product\/([^/]+)$/);
 const slug = pathMatch ? decodeURIComponent(pathMatch[1]) : null;
 const sku = new URLSearchParams(window.location.search).get('sku');
 let selectedSku = sku;
@@ -27,9 +27,15 @@ function renderProduct() {
           <div class="group">${family.group || family.category}</div>
           <span class="ruo-pill">Research Use Only</span>
         </div>
+        <div class="product-proof-pills" aria-label="Product quality highlights">
+          <span>99%+ Purity</span>
+          <span>COA Available</span>
+          <span>Research Grade</span>
+        </div>
         <h1 class="product-title">${family.name}</h1>
         <p class="hint product-description">${family.description}</p>
         <div class="product-trust-grid">
+          <div><strong>Purity</strong><span>99%+ research grade</span></div>
           <div><strong>COA</strong><span>Available on request</span></div>
           <div><strong>Ships</strong><span>From California</span></div>
           <div><strong>Use</strong><span>Laboratory research only</span></div>
@@ -51,7 +57,7 @@ function renderProduct() {
           </div>
           <button id="addToCartBtn" class="add-to-cart-btn">Add to Cart</button>
         </div>
-        <p class="product-use-note">Not for human or veterinary use, consumption, injection, or administration.</p>
+        <p class="product-use-note">99%+ purity research compound. Not for human or veterinary use, consumption, injection, or administration.</p>
         <p class="form-msg" id="addMsg" style="color:var(--success);"></p>
       </div>
     </div>

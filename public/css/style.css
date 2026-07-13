@@ -1,4 +1,4 @@
-﻿@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500;1,600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500;1,600&display=swap');
 
 :root {
   --card: #faf7f1;
@@ -1197,6 +1197,30 @@ body.search-open { overflow: hidden; }
   font-size: 14px;
   line-height: 1.65;
 }
+.product-proof-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 14px;
+}
+.product-proof-pills span {
+  padding: 7px 10px;
+  border: 1px solid #d9ccb8;
+  border-radius: 999px;
+  background: #f4efe4;
+  color: var(--accent-ink);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.product-search-result-proof {
+  color: var(--success) !important;
+  font-size: 10px !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
 .ruo-pill {
   padding: 6px 10px;
   border: 1px solid #d7ccb9;
@@ -1205,7 +1229,7 @@ body.search-open { overflow: hidden; }
 }
 .product-trust-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
   margin: 0 0 24px;
 }

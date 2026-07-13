@@ -1,4 +1,4 @@
-﻿// Shared helpers used by every page (catalog, product detail, cart).
+// Shared helpers used by every page (catalog, product detail, cart).
 
 // ---------- Entry gate (age + research-use certification, shown before anything else) ----------
 function initEntryGate() {
@@ -140,6 +140,7 @@ function productSearchResultHTML(p) {
         <span class="product-search-result-group">${p.group || p.category}</span>
         <strong>${p.name}</strong>
         <span>${p.spec}</span>
+        <span class="product-search-result-proof">99%+ purity · COA available</span>
       </div>
       <span class="product-search-result-arrow" aria-hidden="true">&rsaquo;</span>
     </a>
