@@ -8,6 +8,7 @@ function variantButtonsHTML() {
   return family.variants.map(v => `
     <button class="variant-btn ${v.sku === selectedSku ? 'active' : ''}" data-sku="${v.sku}">
       <span class="variant-size">${v.spec.replace(' x1 vial', '')}</span>
+      <span class="variant-meta">${v.sku}</span>
       <span class="variant-price">$${v.price.toFixed(2)}</span>
     </button>
   `).join('');
@@ -28,17 +29,22 @@ function renderProduct() {
           <span class="ruo-pill">Research Use Only</span>
         </div>
         <div class="product-proof-pills" aria-label="Product quality highlights">
-          <span>99%+ Purity</span>
-          <span>COA Available</span>
-          <span>Research Grade</span>
+          <span>99%+ purity line</span>
+          <span>COA by lot</span>
+          <span>Fast U.S. fulfillment</span>
         </div>
         <h1 class="product-title">${family.name}</h1>
         <p class="hint product-description">${family.description}</p>
+        <div class="product-selected-card">
+          <span>Selected vial</span>
+          <strong>${cleanVialSpec(selected.spec)}</strong>
+          <em>CAT no. ${selected.sku}</em>
+        </div>
         <div class="product-trust-grid">
-          <div><strong>Purity</strong><span>99%+ research grade</span></div>
-          <div><strong>COA</strong><span>Available on request</span></div>
-          <div><strong>Ships</strong><span>From California</span></div>
-          <div><strong>Use</strong><span>Laboratory research only</span></div>
+          <div><strong>Purity</strong><span>99%+ research-grade line</span></div>
+          <div><strong>COA</strong><span>Available by current lot</span></div>
+          <div><strong>Ships</strong><span>Fast fulfillment from California</span></div>
+          <div><strong>Expiry</strong><span>Good for the next 2 years</span></div>
         </div>
 
         <div class="size-label">Choose vial size</div>
@@ -57,7 +63,7 @@ function renderProduct() {
           </div>
           <button id="addToCartBtn" class="add-to-cart-btn">Add to Cart</button>
         </div>
-        <p class="product-use-note">99%+ purity research compound. Not for human or veterinary use, consumption, injection, or administration.</p>
+        <p class="product-use-note">Sold strictly for laboratory research use. Not for human or veterinary consumption, administration, diagnostic use, or injection.</p>
         <p class="form-msg" id="addMsg" style="color:var(--success);"></p>
       </div>
     </div>
@@ -99,7 +105,7 @@ async function init() {
     api(`/api/product?${query}`),
   ]);
   window.siteCatalog = catalogData.products;
-  window.siteFees = { packagingFee: catalogData.packagingFee, shippingFee: catalogData.shippingFee };
+  window.siteFees = { packagingFee: catalogData.packagingFee, shippingFee: catalogData.shippingFee, orderFeeRate: catalogData.orderFeeRate || 0 };
   family = productData;
   selectedSku = sku || family.variants[0].sku;
   renderProduct();
@@ -109,5 +115,6 @@ async function init() {
 init().catch(() => {
   document.getElementById('productContent').innerHTML = '<p class="hint">Product not found.</p>';
 });
+
 
 

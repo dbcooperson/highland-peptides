@@ -118,7 +118,7 @@ function showAddedToCartPopup(sku, qty = 1) {
   overlay.innerHTML = `
     <div class="cart-popup-card" role="dialog" aria-modal="true" aria-labelledby="cartPopupTitle">
       <button type="button" class="cart-popup-close" aria-label="Close">&times;</button>
-      <div class="cart-popup-success"><span aria-hidden="true">ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œ</span><strong id="cartPopupTitle">Product successfully added to your cart.</strong></div>
+      <div class="cart-popup-success"><span aria-hidden="true">OK</span><strong id="cartPopupTitle">Product successfully added to your cart.</strong></div>
       <div class="cart-popup-product">
         <div class="cart-popup-media photo"></div>
         <div class="cart-popup-copy">
@@ -222,13 +222,13 @@ let productSearchCatalogPromise = null;
 
 function productSearchResultHTML(p) {
   return `
-    <a class="product-search-result" href="/product/${encodeURIComponent(p.slug)}">
+    <a class="product-search-result" href="/product/${encodeURIComponent(p.slug)}?sku=${encodeURIComponent(p.sku)}">
       <div class="product-search-result-media photo"></div>
       <div class="product-search-result-copy">
-        <span class="product-search-result-group">${p.group || p.category}</span>
-        <strong>${p.name}</strong>
-        <span>${p.spec}</span>
-        <span class="product-search-result-proof">99%+ purity | COA available</span>
+        <span class="product-search-result-group">${escapeHTML(p.group || p.category)} | ${escapeHTML(p.sku)}</span>
+        <strong>${escapeHTML(p.name)}</strong>
+        <span>${escapeHTML(cleanVialSpec(p.spec))} | $${p.price.toFixed(2)}</span>
+        <span class="product-search-result-proof">99%+ purity line | COA by lot</span>
       </div>
       <span class="product-search-result-arrow" aria-hidden="true">&rsaquo;</span>
     </a>
@@ -257,6 +257,7 @@ function ensureProductSearchOverlay() {
         <span class="nav-search-icon" aria-hidden="true"></span>
         <input id="productSearchInput" type="search" placeholder="Search compounds, categories, SKUs, or specifications" autocomplete="off">
       </div>
+      <div class="product-search-quick-chips" id="productSearchQuickChips" aria-label="Quick search categories"></div>
       <div id="productSearchStatus" class="product-search-status" aria-live="polite"></div>
       <div id="productSearchResults" class="product-search-results"></div>
     </section>
@@ -289,6 +290,18 @@ function initProductSearch() {
   const input = document.getElementById('productSearchInput');
   const results = document.getElementById('productSearchResults');
   const status = document.getElementById('productSearchStatus');
+  const quickChips = document.getElementById('productSearchQuickChips');
+
+  const renderQuickChips = async () => {
+    const catalog = await getProductSearchCatalog();
+    const groups = [...new Set(catalog.map(p => p.group || p.category).filter(Boolean))].slice(0, 6);
+    if (quickChips) {
+      quickChips.innerHTML = groups.map(group => `<button type="button" data-query="${escapeHTML(group)}">${escapeHTML(group)}</button>`).join('');
+      quickChips.querySelectorAll('button').forEach(btn => {
+        btn.onclick = () => { input.value = btn.dataset.query; renderResults(); input.focus(); };
+      });
+    }
+  };
 
   const renderResults = async () => {
     const catalog = await getProductSearchCatalog();
@@ -313,6 +326,7 @@ function initProductSearch() {
     input.value = '';
     status.textContent = 'Loading products';
     results.innerHTML = '';
+    renderQuickChips();
     renderResults();
     requestAnimationFrame(() => input.focus());
   };
@@ -541,7 +555,7 @@ async function initPayPalCheckout() {
           body: { paypalOrderId: data.orderID, orderId: pendingPayPalLocalOrderId },
         });
         paypalMsg.style.color = 'var(--success)';
-        paypalMsg.textContent = `${result.message} Order #${result.orderId}.`;
+        paypalMsg.innerHTML = `<div class="checkout-success-card"><strong>Payment received. Order #${result.orderId} is confirmed.</strong><span>A confirmation record has been created for fulfillment. For help, contact support@highlandpeptides.com.</span></div>`;
         clearCartAfterCheckout();
         setTimeout(closeCheckoutModal, 2500);
       },
@@ -595,3 +609,5 @@ function wireCheckout() {
     e.preventDefault();
   });
 }
+
+

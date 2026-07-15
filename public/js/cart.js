@@ -17,7 +17,8 @@ function cartLineHTML(sku, qty, p) {
         <div class="cart-line-kicker">${escapeHTML(p.group || p.category || 'Research product')}</div>
         <strong>${escapeHTML(p.name)}</strong>
         <span>${escapeHTML(cleanVialSpec(p.spec))} x${qty} vial${qty === 1 ? '' : 's'}</span>
-        <em>99%+ purity | COA available</em>
+        <span class="cart-line-sku">CAT no. ${escapeHTML(p.sku)}</span>
+        <em>99%+ purity line | COA by lot</em>
       </div>
       <div class="cart-line-qty" aria-label="Quantity controls">
         <button type="button" class="qty-btn cart-qty-down" data-sku="${sku}" aria-label="Decrease quantity">&minus;</button>
@@ -37,6 +38,7 @@ function cartSummaryHTML(subtotal) {
   const orderFee = Math.round(feeBase * orderFeeRate * 100) / 100;
   const estimatedTotal = feeBase + orderFee;
   return `
+    <div class="cart-summary-trust"><span>Secure checkout</span><span>RUO certification required</span><span>Support: support@highlandpeptides.com</span></div>
     <div class="cart-summary-lines">
       <div><span>Subtotal</span><strong>$${subtotal.toFixed(2)}</strong></div>
       <div><span>Shipping</span><strong>$${shippingFee.toFixed(2)}</strong></div>
