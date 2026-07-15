@@ -28,6 +28,20 @@ function prettyPrice(amount) {
     .sort((a, b) => Math.abs(a - target) - Math.abs(b - target) || b - a)[0];
 }
 
+
+function nextPriceAbove(minimum) {
+  const endings = Array.isArray(PRICE_ENDINGS) && PRICE_ENDINGS.length ? PRICE_ENDINGS : [0.25, 0.50, 0.75, 0.99];
+  const floor = Math.floor(minimum);
+  const candidates = [];
+
+  for (let dollar = Math.max(0, floor - 1); dollar <= floor + 4; dollar += 1) {
+    endings.forEach(ending => candidates.push(round(dollar + ending, PRICE_DECIMALS)));
+  }
+
+  return candidates
+    .filter(price => price > minimum)
+    .sort((a, b) => a - b)[0] || round(minimum + 1, PRICE_DECIMALS);
+}
 function specSortValue(spec) {
   const text = String(spec || '').toLowerCase();
   const matches = [...text.matchAll(/(\d+(?:\.\d+)?)\s*(mcg|mg|iu|ml)/g)];
@@ -59,7 +73,7 @@ const popularRank = Object.fromEntries(POPULAR_SKUS.map((sku, i) => [sku, i]));
 // Public catalog: cost is never exposed to the frontend, only the sale price.
 // salePrice, when set, overrides the cost*markup formula (used for items priced
 // directly off a competitor reference rather than our own supplier cost).
-const catalog = raw
+const pricedCatalog = raw
   .map(p => ({
     sku: p.sku,
     name: p.name,
@@ -70,7 +84,26 @@ const catalog = raw
     popular: popularRank[p.sku] !== undefined,
     description: descriptions[p.name] || '',
     price: prettyPrice((p.salePrice != null ? p.salePrice : p.cost * MARKUP_MULTIPLIER) * PRICE_ADJUSTMENT),
-  }))
+  }));
+
+const byNameForPricing = new Map();
+pricedCatalog.forEach(product => {
+  if (!byNameForPricing.has(product.name)) byNameForPricing.set(product.name, []);
+  byNameForPricing.get(product.name).push(product);
+});
+
+byNameForPricing.forEach(variants => {
+  variants.sort(compareVariants);
+  let previousPrice = 0;
+  variants.forEach(product => {
+    if (product.price < previousPrice) {
+      product.price = nextPriceAbove(previousPrice);
+    }
+    previousPrice = product.price;
+  });
+});
+
+const catalog = pricedCatalog
   .sort((a, b) => {
     const aRank = popularRank[a.sku];
     const bRank = popularRank[b.sku];
@@ -103,3 +136,5 @@ function getProductFamily({ sku, slug }) {
 }
 
 module.exports = { catalog, bySku, bySlug, getProductFamily };
+
+
