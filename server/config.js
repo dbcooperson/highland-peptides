@@ -22,6 +22,8 @@ module.exports = {
   DISCOUNT_CODES: {
     NM: 0.15,
     FISH: 0.15,
+    PARAM: 0.15,
+    PARAM: 0.15,
   },
 
   // Adds a flat amount to every public product price before final price styling.
@@ -47,3 +49,4 @@ module.exports = {
 
   SITE_NAME: process.env.SITE_NAME || 'Highland Peptides',
 };
+
