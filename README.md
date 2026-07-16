@@ -94,3 +94,40 @@ DATA_DIR=/var/data
 ```
 
 If an old `data/db.json` exists when this new code first runs, the app copies it into the persistent path automatically.
+
+## Order backups: email and Discord
+
+Paid orders can be backed up outside the website database. This is strongly recommended.
+
+### Discord order bot / webhook
+
+Create a Discord webhook in the channel where you want order alerts, then add this Render environment variable:
+
+```txt
+DISCORD_ORDER_WEBHOOK_URL=https://discord.com/api/webhooks/...
+```
+
+When PayPal captures an order, or when you manually mark an order as paid/fulfilled in admin, the site will post the order details to Discord.
+
+### Email order backup
+
+To email yourself a copy of every paid order, configure SMTP in Render:
+
+```txt
+ORDER_BACKUP_EMAIL_TO=support@highlandpeptides.com
+ORDER_BACKUP_EMAIL_FROM=support@highlandpeptides.com
+SMTP_HOST=your-smtp-host
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=your-smtp-login
+SMTP_PASS=your-smtp-password
+```
+
+If you use a provider that requires SSL on port 465, set:
+
+```txt
+SMTP_PORT=465
+SMTP_SECURE=true
+```
+
+Backups are sent after payment capture. They are also sent if an admin manually changes an order to paid or fulfilled.

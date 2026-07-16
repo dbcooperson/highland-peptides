@@ -8,6 +8,7 @@ const { catalog, bySku, costBySku, getProductFamily } = require('./products');
 const { requireAdmin } = require('./auth');
 const { buildPackingSlip, buildContentsLabel } = require('./labels');
 const { isPayPalConfigured, createPayPalOrder, capturePayPalOrder } = require('./paypal');
+const { sendOrderBackup } = require('./notifications');
 
 const app = express();
 app.use(express.json());
@@ -160,12 +161,26 @@ app.post('/api/paypal/capture-order', async (req, res) => {
     if (capture.status !== 'COMPLETED') {
       return res.status(400).json({ error: `PayPal payment was not completed. Status: ${capture.status}` });
     }
-    db.markOrderPaid(orderId, paypalOrderId);
-    res.json({ ok: true, orderId: Number(orderId), paypalOrderId, total: order.total, message: 'Payment received. Order is confirmed.' });
+    const paidOrder = db.markOrderPaid(orderId, paypalOrderId);
+    await backupOrderIfNeeded(paidOrder, 'paypal_capture');
+    res.json({ ok: true, orderId: Number(orderId), paypalOrderId, total: paidOrder.total, message: 'Payment received. Order is confirmed.' });
   } catch (err) {
     res.status(502).json({ error: err.message || 'Could not confirm PayPal payment.' });
   }
 });
+
+async function backupOrderIfNeeded(order, source) {
+  if (!order || order.backup_sent_at) return;
+  try {
+    const result = await sendOrderBackup(order, source);
+    if (result.channels.length || result.errors.length) {
+      db.markOrderBackupSent(order.id, result.channels, result.errors);
+    }
+    if (result.errors.length) console.error('Order backup errors:', result.errors.join('; '));
+  } catch (err) {
+    console.error('Order backup failed:', err.message || err);
+  }
+}
 
 // ---------- Admin ----------
 
@@ -302,13 +317,16 @@ app.get('/api/admin/orders', requireAdmin, (req, res) => {
   res.json({ orders });
 });
 
-app.post('/api/admin/orders/:id/status', requireAdmin, (req, res) => {
+app.post('/api/admin/orders/:id/status', requireAdmin, async (req, res) => {
   const { status } = req.body || {};
   if (!['pending_payment', 'paid', 'fulfilled', 'cancelled'].includes(status)) {
     return res.status(400).json({ error: 'invalid status' });
   }
   const order = db.updateOrderStatus(req.params.id, status);
   if (!order) return res.status(404).json({ error: 'Order not found' });
+  if (['paid', 'fulfilled'].includes(status)) {
+    await backupOrderIfNeeded(order, 'admin_status_' + status);
+  }
   res.json({ ok: true });
 });
 
@@ -326,3 +344,4 @@ app.get('/api/admin/orders/:id/contents-label.pdf', requireAdmin, (req, res) => 
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`${config.SITE_NAME} running on http://localhost:${PORT}`));
+

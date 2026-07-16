@@ -23,7 +23,6 @@ module.exports = {
     NM: 0.15,
     FISH: 0.15,
     PARAM: 0.15,
-    PARAM: 0.15,
   },
 
   // Adds a flat amount to every public product price before final price styling.
@@ -46,6 +45,17 @@ module.exports = {
   PAYPAL_CLIENT_SECRET: process.env.PAYPAL_CLIENT_SECRET || '',
   PAYPAL_ENV: process.env.PAYPAL_ENV || 'sandbox',
   PAYPAL_CURRENCY: process.env.PAYPAL_CURRENCY || 'USD',
+
+  // Optional order backups. Configure these in Render so paid orders are copied
+  // outside the site database.
+  DISCORD_ORDER_WEBHOOK_URL: process.env.DISCORD_ORDER_WEBHOOK_URL || '',
+  ORDER_BACKUP_EMAIL_TO: process.env.ORDER_BACKUP_EMAIL_TO || '',
+  ORDER_BACKUP_EMAIL_FROM: process.env.ORDER_BACKUP_EMAIL_FROM || process.env.SMTP_USER || 'orders@highlandpeptides.com',
+  SMTP_HOST: process.env.SMTP_HOST || '',
+  SMTP_PORT: Number(process.env.SMTP_PORT || 587),
+  SMTP_SECURE: String(process.env.SMTP_SECURE || '').toLowerCase() === 'true',
+  SMTP_USER: process.env.SMTP_USER || '',
+  SMTP_PASS: process.env.SMTP_PASS || '',
 
   SITE_NAME: process.env.SITE_NAME || 'Highland Peptides',
 };

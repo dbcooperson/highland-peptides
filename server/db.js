@@ -111,6 +111,17 @@ function updateOrderStatus(id, status) {
   return order;
 }
 
+function markOrderBackupSent(id, channels = [], errors = []) {
+  const data = load();
+  const order = data.orders.find(o => o.id === Number(id));
+  if (!order) return null;
+  order.backup_sent_at = new Date().toISOString();
+  order.backup_channels = channels;
+  order.backup_errors = errors;
+  save(data);
+  return order;
+}
+
 function getStorageInfo() {
   return {
     dbPath: DB_PATH,
@@ -120,4 +131,4 @@ function getStorageInfo() {
   };
 }
 
-module.exports = { createOrder, getAllOrders, getOrderById, markOrderPaid, updateOrderStatus, getStorageInfo };
+module.exports = { createOrder, getAllOrders, getOrderById, markOrderPaid, updateOrderStatus, markOrderBackupSent, getStorageInfo };
