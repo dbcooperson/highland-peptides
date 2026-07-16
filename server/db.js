@@ -62,6 +62,7 @@ function createOrder({ buyer, certifiedAt, items, subtotal, packagingFee, shippi
     status: 'pending_payment',
     payment_provider: paymentProvider || 'manual',
     payment_reference: null,
+    paypal_order_id: null,
     paid_at: null,
     buyer,
     certified_at: certifiedAt,
@@ -89,6 +90,15 @@ function getAllOrders() {
 function getOrderById(id) {
   const data = load();
   return data.orders.find(o => o.id === Number(id)) || null;
+}
+
+function setPayPalOrderId(id, paypalOrderId) {
+  const data = load();
+  const order = data.orders.find(o => o.id === Number(id));
+  if (!order) return null;
+  order.paypal_order_id = paypalOrderId || null;
+  save(data);
+  return order;
 }
 
 function markOrderPaid(id, paymentReference) {
@@ -131,4 +141,4 @@ function getStorageInfo() {
   };
 }
 
-module.exports = { createOrder, getAllOrders, getOrderById, markOrderPaid, updateOrderStatus, markOrderBackupSent, getStorageInfo };
+module.exports = { createOrder, getAllOrders, getOrderById, setPayPalOrderId, markOrderPaid, updateOrderStatus, markOrderBackupSent, getStorageInfo };

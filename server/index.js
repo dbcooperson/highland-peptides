@@ -1,4 +1,5 @@
 const path = require('path');
+const crypto = require('crypto');
 const express = require('express');
 const session = require('express-session');
 
@@ -10,15 +11,49 @@ const { buildPackingSlip, buildContentsLabel } = require('./labels');
 const { isPayPalConfigured, createPayPalOrder, capturePayPalOrder } = require('./paypal');
 const { sendOrderBackup } = require('./notifications');
 
+const isProductionRuntime = Boolean(process.env.RENDER || process.env.RENDER_SERVICE_ID || process.env.NODE_ENV === 'production');
+if (isProductionRuntime) {
+  if (!process.env.ADMIN_PASSWORD || config.ADMIN_PASSWORD === 'change-me-before-launch') {
+    throw new Error('ADMIN_PASSWORD must be set before running in production.');
+  }
+  if (!process.env.SESSION_SECRET || config.SESSION_SECRET === 'change-me-session-secret') {
+    throw new Error('SESSION_SECRET must be set before running in production.');
+  }
+}
+
 const app = express();
-app.use(express.json());
+app.disable('x-powered-by');
+app.set('trust proxy', 1);
+
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  if (req.secure || req.get('x-forwarded-proto') === 'https') {
+    res.setHeader('Strict-Transport-Security', 'max-age=15552000; includeSubDomains');
+  }
+  next();
+});
+
+app.use(express.json({ limit: '25kb' }));
 app.use(session({
   secret: config.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 1000 * 60 * 60 * 24 * 7 },
+  name: 'hp.sid',
+  proxy: true,
+  cookie: {
+    httpOnly: true,
+    secure: isProductionRuntime,
+    sameSite: 'lax',
+    maxAge: 1000 * 60 * 60 * 8,
+  },
 }));
-app.use(express.static(path.join(__dirname, '..', 'public')));
+app.use(express.static(path.join(__dirname, '..', 'public'), {
+  maxAge: process.env.NODE_ENV === 'production' ? '1h' : 0,
+  fallthrough: true,
+}));
 
 // ---------- Public catalog ----------
 app.get('/api/catalog', (req, res) => {
@@ -56,6 +91,44 @@ app.get('/api/discount-code', (req, res) => {
   res.json({ valid: true, code: match.code, percentOff: Math.round(match.rate * 100) });
 });
 
+function cleanText(value, maxLength) {
+  return String(value || '').trim().replace(/[\u0000-\u001f\u007f]/g, '').slice(0, maxLength);
+}
+
+function cleanEmail(value) {
+  const email = cleanText(value, 254).toLowerCase();
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : '';
+}
+
+function cleanPostal(value) {
+  return cleanText(value, 20).toUpperCase();
+}
+
+function cleanCountry(value) {
+  const country = cleanText(value || 'US', 2).toUpperCase();
+  return /^[A-Z]{2}$/.test(country) ? country : 'US';
+}
+
+const checkoutAttempts = new Map();
+const CHECKOUT_WINDOW_MS = 15 * 60 * 1000;
+const CHECKOUT_MAX_ATTEMPTS = 30;
+
+function rateLimitMap(map, key, maxAttempts, windowMs) {
+  const now = Date.now();
+  const current = map.get(key);
+  const attempt = current && current.firstAt + windowMs > now ? current : { count: 0, firstAt: now };
+  attempt.count += 1;
+  map.set(key, attempt);
+  return attempt.count <= maxAttempts;
+}
+
+function checkCheckoutRateLimit(req, res, next) {
+  if (!rateLimitMap(checkoutAttempts, clientIp(req), CHECKOUT_MAX_ATTEMPTS, CHECKOUT_WINDOW_MS)) {
+    return res.status(429).json({ error: 'Too many checkout attempts. Please try again later.' });
+  }
+  next();
+}
+
 // ---------- Checkout (guest, no account) ----------
 function prepareCheckout(body) {
   const { items: rawItems, buyer, certified, discountCode, paymentMethod } = body || {};
@@ -63,21 +136,33 @@ function prepareCheckout(body) {
   if (certified !== true) {
     return { error: 'You must certify research/business use to place an order.' };
   }
-  if (!buyer || !buyer.name || !buyer.email || !buyer.address1 || !buyer.city || !buyer.state || !buyer.zip) {
-    return { error: 'Name, email, and full shipping address are required.' };
+  const cleanBuyer = buyer ? {
+    name: cleanText(buyer.name, 100),
+    email: cleanEmail(buyer.email),
+    address1: cleanText(buyer.address1, 160),
+    address2: cleanText(buyer.address2, 160),
+    city: cleanText(buyer.city, 80),
+    state: cleanText(buyer.state, 40).toUpperCase(),
+    zip: cleanPostal(buyer.zip),
+    country: cleanCountry(buyer.country),
+  } : null;
+
+  if (!cleanBuyer || !cleanBuyer.name || !cleanBuyer.email || !cleanBuyer.address1 || !cleanBuyer.city || !cleanBuyer.state || !cleanBuyer.zip) {
+    return { error: 'Name, valid email, and full shipping address are required.' };
   }
 
   const normalizedPaymentMethod = paymentMethod === 'paypal' ? 'paypal' : 'manual';
 
   const items = Array.isArray(rawItems) ? rawItems : [];
   if (items.length === 0) return { error: 'Cart is empty.' };
+  if (items.length > 50) return { error: 'Cart has too many line items.' };
 
   let subtotal = 0;
   const resolved = [];
   for (const item of items) {
     const product = bySku[item.sku];
     const qty = parseInt(item.quantity, 10);
-    if (!product || !qty || qty < 1) {
+    if (!product || !qty || qty < 1 || qty > 99) {
       return { error: `Invalid item: ${item.sku}` };
     }
     subtotal += product.price * qty;
@@ -96,16 +181,7 @@ function prepareCheckout(body) {
 
   return {
     orderInput: {
-      buyer: {
-        name: buyer.name,
-        email: buyer.email,
-        address1: buyer.address1,
-        address2: buyer.address2 || '',
-        city: buyer.city,
-        state: buyer.state,
-        zip: buyer.zip,
-        country: buyer.country || 'US',
-      },
+      buyer: cleanBuyer,
       certifiedAt: new Date().toISOString(),
       items: resolved,
       subtotal,
@@ -130,7 +206,7 @@ app.get('/api/paypal/config', (req, res) => {
   });
 });
 
-app.post('/api/paypal/create-order', async (req, res) => {
+app.post('/api/paypal/create-order', checkCheckoutRateLimit, async (req, res) => {
   if (!isPayPalConfigured()) {
     return res.status(503).json({ error: 'PayPal is not configured yet.' });
   }
@@ -141,13 +217,36 @@ app.post('/api/paypal/create-order', async (req, res) => {
   try {
     const order = db.createOrder({ ...prepared.orderInput, paymentProvider: 'paypal' });
     const paypalOrder = await createPayPalOrder(order);
+    db.setPayPalOrderId(order.id, paypalOrder.id);
     res.json({ ok: true, orderId: order.id, paypalOrderId: paypalOrder.id, total: order.total });
   } catch (err) {
     res.status(502).json({ error: err.message || 'Could not start PayPal checkout.' });
   }
 });
 
-app.post('/api/paypal/capture-order', async (req, res) => {
+
+function validatePayPalCaptureForOrder(capture, order, paypalOrderId) {
+  if (!order || order.payment_provider !== 'paypal') return 'Order is not a PayPal order.';
+  if (order.status !== 'pending_payment') return 'Order is not pending payment.';
+  if (!order.paypal_order_id || order.paypal_order_id !== paypalOrderId) return 'PayPal order does not match this cart order.';
+
+  const unit = Array.isArray(capture.purchase_units) ? capture.purchase_units[0] : null;
+  const referenceOk = unit && unit.reference_id === `HP-${order.id}`;
+  const capturePayment = unit && unit.payments && Array.isArray(unit.payments.captures) ? unit.payments.captures[0] : null;
+  const amount = capturePayment && capturePayment.amount ? capturePayment.amount : null;
+  const expectedTotal = Number(order.total || 0).toFixed(2);
+
+  if (!referenceOk) return 'PayPal reference does not match this order.';
+  if (!amount || amount.currency_code !== config.PAYPAL_CURRENCY || amount.value !== expectedTotal) {
+    return 'PayPal payment amount does not match this order.';
+  }
+  if (capturePayment && capturePayment.status && capturePayment.status !== 'COMPLETED') {
+    return `PayPal capture was not completed. Status: ${capturePayment.status}`;
+  }
+  return null;
+}
+
+app.post('/api/paypal/capture-order', checkCheckoutRateLimit, async (req, res) => {
   const { paypalOrderId, orderId } = req.body || {};
   if (!paypalOrderId || !orderId) {
     return res.status(400).json({ error: 'Missing PayPal order details.' });
@@ -161,6 +260,8 @@ app.post('/api/paypal/capture-order', async (req, res) => {
     if (capture.status !== 'COMPLETED') {
       return res.status(400).json({ error: `PayPal payment was not completed. Status: ${capture.status}` });
     }
+    const validationError = validatePayPalCaptureForOrder(capture, order, paypalOrderId);
+    if (validationError) return res.status(400).json({ error: validationError });
     const paidOrder = db.markOrderPaid(orderId, paypalOrderId);
     await backupOrderIfNeeded(paidOrder, 'paypal_capture');
     res.json({ ok: true, orderId: Number(orderId), paypalOrderId, total: paidOrder.total, message: 'Payment received. Order is confirmed.' });
@@ -222,6 +323,48 @@ function orderFinancialSummary(order) {
   };
 }
 
+
+const adminLoginAttempts = new Map();
+const ADMIN_LOGIN_WINDOW_MS = 15 * 60 * 1000;
+const ADMIN_LOGIN_MAX_ATTEMPTS = 6;
+
+function clientIp(req) {
+  return req.ip || req.get('x-forwarded-for') || req.socket.remoteAddress || 'unknown';
+}
+
+function safePasswordMatch(input, expected) {
+  const inputHash = crypto.createHash('sha256').update(String(input || '')).digest();
+  const expectedHash = crypto.createHash('sha256').update(String(expected || '')).digest();
+  return crypto.timingSafeEqual(inputHash, expectedHash);
+}
+
+function checkAdminLoginLimit(req, res, next) {
+  const now = Date.now();
+  const key = clientIp(req);
+  const attempt = adminLoginAttempts.get(key);
+  if (attempt && attempt.blockedUntil && attempt.blockedUntil > now) {
+    return res.status(429).json({ error: 'Too many login attempts. Try again later.' });
+  }
+  next();
+}
+
+function recordAdminLoginFailure(req) {
+  const now = Date.now();
+  const key = clientIp(req);
+  const current = adminLoginAttempts.get(key);
+  const attempt = current && current.firstAt + ADMIN_LOGIN_WINDOW_MS > now
+    ? current
+    : { count: 0, firstAt: now, blockedUntil: 0 };
+  attempt.count += 1;
+  if (attempt.count >= ADMIN_LOGIN_MAX_ATTEMPTS) {
+    attempt.blockedUntil = now + ADMIN_LOGIN_WINDOW_MS;
+  }
+  adminLoginAttempts.set(key, attempt);
+}
+
+function resetAdminLoginFailures(req) {
+  adminLoginAttempts.delete(clientIp(req));
+}
 
 app.get('/api/admin/profit', requireAdmin, (req, res) => {
   const countedStatuses = ['paid', 'fulfilled'];
@@ -291,18 +434,25 @@ app.get('/api/admin/profit', requireAdmin, (req, res) => {
   res.json({ totals, lines: lines.sort((a, b) => b.grossProfit - a.grossProfit) });
 });
 
-app.post('/api/admin/login', (req, res) => {
+app.post('/api/admin/login', checkAdminLoginLimit, (req, res) => {
   const { password } = req.body || {};
-  if (password !== config.ADMIN_PASSWORD) {
+  if (!safePasswordMatch(password, config.ADMIN_PASSWORD)) {
+    recordAdminLoginFailure(req);
     return res.status(401).json({ error: 'Wrong admin password.' });
   }
-  req.session.isAdmin = true;
-  res.json({ ok: true });
+  resetAdminLoginFailures(req);
+  req.session.regenerate(err => {
+    if (err) return res.status(500).json({ error: 'Could not start admin session.' });
+    req.session.isAdmin = true;
+    res.json({ ok: true });
+  });
 });
 
 app.post('/api/admin/logout', (req, res) => {
-  req.session.isAdmin = false;
-  res.json({ ok: true });
+  req.session.destroy(() => {
+    res.clearCookie('hp.sid');
+    res.json({ ok: true });
+  });
 });
 
 app.get('/api/admin/storage', requireAdmin, (req, res) => {

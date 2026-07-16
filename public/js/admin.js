@@ -14,7 +14,16 @@ function th(text) { return `<th class="admin-th">${text}</th>`; }
 function money(value) { return '$' + Number(value || 0).toFixed(2); }
 
 function escapeHtml(s) {
-  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return String(s || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/\"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function mailtoHref(email) {
+  return 'mailto:' + encodeURIComponent(String(email || '').trim());
 }
 
 function initAdminTabs() {
@@ -147,7 +156,7 @@ async function loadOrders() {
       <tr>
         ${td('#' + o.id + '<br>' + statusBadge(o.status))}
         ${td(escapeHtml(o.buyer.name))}
-        ${td(`<button class="admin-copy-btn" data-copy="${escapeHtml(o.buyer.email)}">Copy email</button><br><a href="mailto:${escapeHtml(o.buyer.email)}">${escapeHtml(o.buyer.email)}</a>`)}
+        ${td(`<button class="admin-copy-btn" data-copy="${escapeHtml(o.buyer.email)}">Copy email</button><br><a href="${mailtoHref(o.buyer.email)}">${escapeHtml(o.buyer.email)}</a>`)}
         ${td(escapeHtml(`${o.buyer.address1}${o.buyer.address2 ? ', ' + o.buyer.address2 : ''}, ${o.buyer.city}, ${o.buyer.state} ${o.buyer.zip}`))}
         ${td(orderItemsHTML(o))}
         ${td(discountHTML(o))}
