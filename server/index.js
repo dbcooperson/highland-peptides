@@ -4,7 +4,7 @@ const session = require('express-session');
 
 const config = require('./config');
 const db = require('./db');
-const { catalog, bySku, getProductFamily } = require('./products');
+const { catalog, bySku, costBySku, getProductFamily } = require('./products');
 const { requireAdmin } = require('./auth');
 const { buildPackingSlip, buildContentsLabel } = require('./labels');
 const { isPayPalConfigured, createPayPalOrder, capturePayPalOrder } = require('./paypal');
@@ -168,6 +168,75 @@ app.post('/api/paypal/capture-order', async (req, res) => {
 });
 
 // ---------- Admin ----------
+
+app.get('/api/admin/profit', requireAdmin, (req, res) => {
+  const countedStatuses = ['paid', 'fulfilled'];
+  const orders = db.getAllOrders().filter(order => countedStatuses.includes(order.status));
+  const lines = [];
+  const totals = {
+    orderCount: orders.length,
+    vialCount: 0,
+    totalCollected: 0,
+    productRevenue: 0,
+    discounts: 0,
+    shippingCollected: 0,
+    processingCollected: 0,
+    cogs: 0,
+    grossProfit: 0,
+    grossMargin: 0,
+  };
+
+  orders.forEach(order => {
+    const subtotal = Number(order.subtotal || 0);
+    const discount = Number(order.discount_amount || 0);
+    const discountRate = subtotal > 0 ? discount / subtotal : 0;
+    totals.totalCollected += Number(order.total || 0);
+    totals.discounts += discount;
+    totals.shippingCollected += Number(order.shipping_fee || 0);
+    totals.processingCollected += Number(order.order_fee || 0);
+
+    (order.items || []).forEach(item => {
+      const quantity = Number(item.quantity || 0);
+      const unitPrice = Number(item.unit_price || 0);
+      const lineRevenueBeforeDiscount = unitPrice * quantity;
+      const allocatedDiscount = Math.round(lineRevenueBeforeDiscount * discountRate * 100) / 100;
+      const lineRevenue = Math.round((lineRevenueBeforeDiscount - allocatedDiscount) * 100) / 100;
+      const unitCost = Number(costBySku[item.sku] || 0);
+      const lineCost = Math.round(unitCost * quantity * 100) / 100;
+      const lineProfit = Math.round((lineRevenue - lineCost) * 100) / 100;
+
+      totals.vialCount += quantity;
+      totals.productRevenue += lineRevenue;
+      totals.cogs += lineCost;
+      lines.push({
+        orderId: order.id,
+        status: order.status,
+        sku: item.sku,
+        name: item.name,
+        spec: item.spec,
+        quantity,
+        unitPrice,
+        unitCost,
+        revenue: lineRevenue,
+        cogs: lineCost,
+        grossProfit: lineProfit,
+        margin: lineRevenue > 0 ? Math.round((lineProfit / lineRevenue) * 1000) / 10 : 0,
+      });
+    });
+  });
+
+  totals.productRevenue = Math.round(totals.productRevenue * 100) / 100;
+  totals.discounts = Math.round(totals.discounts * 100) / 100;
+  totals.shippingCollected = Math.round(totals.shippingCollected * 100) / 100;
+  totals.processingCollected = Math.round(totals.processingCollected * 100) / 100;
+  totals.totalCollected = Math.round(totals.totalCollected * 100) / 100;
+  totals.cogs = Math.round(totals.cogs * 100) / 100;
+  totals.grossProfit = Math.round((totals.productRevenue - totals.cogs) * 100) / 100;
+  totals.grossMargin = totals.productRevenue > 0 ? Math.round((totals.grossProfit / totals.productRevenue) * 1000) / 10 : 0;
+
+  res.json({ totals, lines: lines.sort((a, b) => b.grossProfit - a.grossProfit) });
+});
+
 app.post('/api/admin/login', (req, res) => {
   const { password } = req.body || {};
   if (password !== config.ADMIN_PASSWORD) {

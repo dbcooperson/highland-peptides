@@ -2565,3 +2565,68 @@ body.search-open { overflow: hidden; }
   .product-selected-card { grid-template-columns: 1fr; }
   .product-selected-card em { grid-column: auto; grid-row: auto; }
 }
+
+/* ---------- Admin tabs + profit ---------- */
+.admin-tabs {
+  display: flex;
+  gap: 10px;
+  max-width: 1400px;
+  margin: 0 0 14px;
+}
+.admin-tab {
+  border: 1px solid rgba(243,239,230,0.18);
+  border-radius: 999px;
+  background: rgba(250,247,241,0.06);
+  color: var(--muted-on-dark);
+  padding: 10px 16px;
+  font-weight: 900;
+  cursor: pointer;
+}
+.admin-tab.active {
+  background: var(--offwhite);
+  color: var(--ink);
+}
+.admin-tab-panel[hidden] { display: none; }
+.profit-summary-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+#profitTable .admin-td:nth-child(6) {
+  color: #a8e3b2;
+  font-weight: 900;
+}
+@media (max-width: 900px) {
+  .profit-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ---------- Admin order total breakdown ---------- */
+.admin-total-breakdown {
+  display: grid;
+  gap: 5px;
+  min-width: 130px;
+}
+.admin-total-breakdown div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+.admin-total-breakdown span {
+  color: var(--muted-on-dark);
+}
+.admin-total-breakdown strong {
+  color: var(--offwhite);
+}
+.admin-savings,
+.admin-savings strong {
+  color: #a8e3b2 !important;
+  font-weight: 900;
+}
+.admin-final-total {
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(243,239,230,0.16);
+}
+.admin-final-total span,
+.admin-final-total strong {
+  color: var(--offwhite) !important;
+  font-weight: 900;
+}

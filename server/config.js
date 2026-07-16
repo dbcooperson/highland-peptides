@@ -21,6 +21,7 @@ module.exports = {
   // the subtotal (0.15 = 15% off). Validated server-side at checkout.
   DISCOUNT_CODES: {
     NM: 0.15,
+    FISH: 0.15,
   },
 
   // Adds a flat amount to every public product price before final price styling.

@@ -114,6 +114,7 @@ const catalog = pricedCatalog
   });
 
 const bySku = Object.fromEntries(catalog.map(p => [p.sku, p]));
+const costBySku = Object.fromEntries(raw.map(p => [p.sku, p.cost]));
 const bySlug = Object.fromEntries(catalog.map(p => [p.slug, p]));
 
 // Resolves a SKU or slug to its full product family (all spec variants sharing
@@ -135,6 +136,6 @@ function getProductFamily({ sku, slug }) {
   };
 }
 
-module.exports = { catalog, bySku, bySlug, getProductFamily };
+module.exports = { catalog, bySku, bySlug, costBySku, getProductFamily };
 
 

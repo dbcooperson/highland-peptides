@@ -22,10 +22,19 @@
     </form>
   </section>
 
-  <section id="adminPanels" style="display:none;">
-    <div class="panel" id="ordersPanel">
+    <section id="adminPanels" style="display:none;">
+    <div class="admin-tabs" role="tablist" aria-label="Admin sections">
+      <button type="button" class="admin-tab active" data-admin-tab="orders">Orders</button>
+      <button type="button" class="admin-tab" data-admin-tab="profit">Profit</button>
+    </div>
+    <div class="panel admin-tab-panel" id="ordersPanel" data-admin-panel="orders">
       <h2>Orders <span class="hint">(guest checkout, no accounts to review)</span></h2>
       <table id="ordersTable" style="width:100%; border-collapse: collapse;"></table>
+    </div>
+    <div class="panel admin-tab-panel" id="profitPanel" data-admin-panel="profit" hidden>
+      <h2>Profit <span class="hint">(paid and fulfilled orders only)</span></h2>
+      <div id="profitSummary"></div>
+      <table id="profitTable" style="width:100%; border-collapse: collapse;"></table>
     </div>
   </section>
 </main>
@@ -33,6 +42,8 @@
 <script src="/js/admin.js"></script>
 </body>
 </html>
+
+
 
 
 
