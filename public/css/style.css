@@ -2630,3 +2630,27 @@ body.search-open { overflow: hidden; }
   color: var(--offwhite) !important;
   font-weight: 900;
 }
+
+/* ---------- Admin storage durability warning ---------- */
+.admin-storage-info {
+  margin: 0 0 14px;
+}
+.admin-storage-ok,
+.admin-storage-warn {
+  display: block;
+  padding: 12px 14px;
+  border-radius: 14px;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.4;
+}
+.admin-storage-ok {
+  border: 1px solid rgba(58,126,75,0.26);
+  background: rgba(58,126,75,0.16);
+  color: #a8e3b2;
+}
+.admin-storage-warn {
+  border: 1px solid rgba(193,121,58,0.34);
+  background: rgba(193,121,58,0.16);
+  color: #f0c589;
+}

@@ -58,3 +58,39 @@ public/       Storefront + admin frontend (plain HTML/CSS/JS)
 data/         products.json (catalog) + db.json (accounts/orders, created on first run)
 legal/        Draft RUO disclaimer for attorney review
 ```
+
+## Permanent order storage on Render
+
+Orders are written to a JSON database file. On Render, the app now defaults to:
+
+```txt
+/var/data/db.json
+```
+
+To make orders survive deploys/restarts, add a **Render Persistent Disk** to the web service:
+
+1. Open the Highland Peptides service in Render.
+2. Go to **Disks**.
+3. Add a persistent disk.
+4. Set the mount path to:
+
+```txt
+/var/data
+```
+
+5. Redeploy the service.
+6. Open `/admin.html` and check the storage banner. It should say the persistent Render path is active.
+
+Optional override environment variables:
+
+```txt
+ORDER_DB_PATH=/var/data/db.json
+```
+
+or:
+
+```txt
+DATA_DIR=/var/data
+```
+
+If an old `data/db.json` exists when this new code first runs, the app copies it into the persistent path automatically.

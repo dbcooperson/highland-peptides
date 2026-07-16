@@ -114,6 +114,19 @@ async function loadProfit() {
   `;
 }
 
+async function loadStorageInfo() {
+  try {
+    const info = await api('/api/admin/storage');
+    const target = document.getElementById('adminStorageInfo');
+    if (!target) return;
+    target.innerHTML = info.usingPersistentRenderPath
+      ? '<span class="admin-storage-ok">Order storage path: /var/data/db.json. Confirm Render Persistent Disk is mounted at /var/data.</span>'
+      : '<span class="admin-storage-warn">Warning: order storage is not using /var/data. Add a Render Persistent Disk mounted at /var/data before relying on live orders.</span>';
+  } catch {
+    // Non-blocking: orders still load even if the storage check fails.
+  }
+}
+
 async function loadOrders() {
   const { orders } = await api('/api/admin/orders');
   const panel = document.getElementById('ordersPanel');
@@ -163,6 +176,7 @@ document.getElementById('adminLoginForm').addEventListener('submit', async (e) =
     document.getElementById('adminPanels').style.display = 'block';
     document.getElementById('adminLogoutBtn').style.display = 'inline-block';
     initAdminTabs();
+    loadStorageInfo();
     loadOrders();
     loadProfit();
   } catch (err) {
@@ -174,4 +188,5 @@ document.getElementById('adminLogoutBtn').addEventListener('click', async () => 
   await api('/api/admin/logout', { method: 'POST' });
   location.reload();
 });
+
 

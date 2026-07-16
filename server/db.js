@@ -1,14 +1,48 @@
-// Simple JSON-file-backed store. No native dependencies, so it deploys anywhere
-// Node runs (Render, Railway, a VPS, etc.) without a compile step.
+// Simple JSON-file-backed order store.
+//
+// IMPORTANT FOR RENDER:
+// Orders must live on a persistent disk, not inside the deployed repo folder.
+// On Render, mount a Persistent Disk at /var/data and this app will store orders
+// at /var/data/db.json by default. You can override with ORDER_DB_PATH or DATA_DIR.
 
 const fs = require('fs');
 const path = require('path');
 
-const DB_PATH = path.join(__dirname, '..', 'data', 'db.json');
+const LEGACY_DB_PATH = path.join(__dirname, '..', 'data', 'db.json');
+
+function defaultDbPath() {
+  if (process.env.ORDER_DB_PATH) return process.env.ORDER_DB_PATH;
+  if (process.env.DATA_DIR) return path.join(process.env.DATA_DIR, 'db.json');
+  if (process.env.RENDER || process.env.RENDER_SERVICE_ID) return '/var/data/db.json';
+  return LEGACY_DB_PATH;
+}
+
+const DB_PATH = defaultDbPath();
+
+function ensureDbDirectory() {
+  const dir = path.dirname(DB_PATH);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+}
+
+function migrateLegacyDbIfNeeded() {
+  ensureDbDirectory();
+  if (DB_PATH === LEGACY_DB_PATH) return;
+  if (fs.existsSync(DB_PATH)) return;
+  if (fs.existsSync(LEGACY_DB_PATH)) {
+    fs.copyFileSync(LEGACY_DB_PATH, DB_PATH);
+  }
+}
+
+function initialData() {
+  return { orders: [], nextOrderId: 1 };
+}
 
 function load() {
+  migrateLegacyDbIfNeeded();
   if (!fs.existsSync(DB_PATH)) {
-    const initial = { orders: [], nextOrderId: 1 };
+    const initial = initialData();
     fs.writeFileSync(DB_PATH, JSON.stringify(initial, null, 2));
     return initial;
   }
@@ -16,6 +50,7 @@ function load() {
 }
 
 function save(data) {
+  ensureDbDirectory();
   fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2));
 }
 
@@ -56,7 +91,6 @@ function getOrderById(id) {
   return data.orders.find(o => o.id === Number(id)) || null;
 }
 
-
 function markOrderPaid(id, paymentReference) {
   const data = load();
   const order = data.orders.find(o => o.id === Number(id));
@@ -67,6 +101,7 @@ function markOrderPaid(id, paymentReference) {
   save(data);
   return order;
 }
+
 function updateOrderStatus(id, status) {
   const data = load();
   const order = data.orders.find(o => o.id === Number(id));
@@ -76,4 +111,13 @@ function updateOrderStatus(id, status) {
   return order;
 }
 
-module.exports = { createOrder, getAllOrders, getOrderById, markOrderPaid, updateOrderStatus };
+function getStorageInfo() {
+  return {
+    dbPath: DB_PATH,
+    legacyDbPath: LEGACY_DB_PATH,
+    usingPersistentRenderPath: DB_PATH.replace(/\\/g, '/').startsWith('/var/data/'),
+    exists: fs.existsSync(DB_PATH),
+  };
+}
+
+module.exports = { createOrder, getAllOrders, getOrderById, markOrderPaid, updateOrderStatus, getStorageInfo };

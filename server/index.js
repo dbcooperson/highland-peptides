@@ -251,6 +251,10 @@ app.post('/api/admin/logout', (req, res) => {
   res.json({ ok: true });
 });
 
+app.get('/api/admin/storage', requireAdmin, (req, res) => {
+  res.json(db.getStorageInfo());
+});
+
 app.get('/api/admin/orders', requireAdmin, (req, res) => {
   res.json({ orders: db.getAllOrders() });
 });
