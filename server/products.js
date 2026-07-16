@@ -113,6 +113,26 @@ const catalog = pricedCatalog
     return a.group.localeCompare(b.group) || a.name.localeCompare(b.name);
   });
 
+function priceAudit() {
+  const issues = [];
+  byNameForPricing.forEach((variants, name) => {
+    const sorted = [...variants].sort(compareVariants);
+    for (let i = 1; i < sorted.length; i += 1) {
+      const previous = sorted[i - 1];
+      const current = sorted[i];
+      if (specSortValue(current.spec) > specSortValue(previous.spec) && current.price <= previous.price) {
+        issues.push({
+          name,
+          previous: { sku: previous.sku, spec: previous.spec, price: previous.price },
+          current: { sku: current.sku, spec: current.spec, price: current.price },
+          type: current.price < previous.price ? 'higher_strength_cheaper' : 'higher_strength_same_price',
+        });
+      }
+    }
+  });
+  return { productCount: catalog.length, issueCount: issues.length, issues };
+}
+
 const bySku = Object.fromEntries(catalog.map(p => [p.sku, p]));
 const costBySku = Object.fromEntries(raw.map(p => [p.sku, p.cost]));
 const bySlug = Object.fromEntries(catalog.map(p => [p.slug, p]));
@@ -136,6 +156,6 @@ function getProductFamily({ sku, slug }) {
   };
 }
 
-module.exports = { catalog, bySku, bySlug, costBySku, getProductFamily };
+module.exports = { catalog, bySku, bySlug, costBySku, getProductFamily, priceAudit };
 
 

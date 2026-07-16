@@ -124,7 +124,7 @@ function showAddedToCartPopup(sku, qty = 1) {
         <div class="cart-popup-copy">
           <strong>${escapeHTML(product.name)}</strong>
           <span>${escapeHTML(cleanVialSpec(product.spec))} &bull; Qty ${qty}</span>
-          <em>99%+ purity | COA available</em>
+          <em>Guaranteed 99% purity</em>
         </div>
         <div class="cart-popup-price">$${(product.price * qty).toFixed(2)}</div>
       </div>
@@ -217,18 +217,53 @@ function vialLabelHTML(name, spec, className = '') {
     </div>
   `;
 }
+
+const SEARCH_ALIASES = {
+  'Retatrutide': ['reta', 'rt'],
+  'Tirzepatide': ['tirz', 'tr'],
+  'Semaglutide': ['sema', 'sem'],
+  'Cagrilintide': ['cagri', 'cag'],
+  'Cagrilintide + Semaglutide': ['cagri sema', 'cag sem', 'cagsem'],
+  'CJC-1295 without DAC + Ipamorelin': ['cjc ipa', 'cjc ipamorelin', 'cjc w/o dac ipa', 'cjc no dac ipa'],
+  'CJC-1295 without DAC': ['cjc no dac', 'cjc w/o dac'],
+  'CJC-1295 with DAC': ['cjc dac'],
+  'Bacteriostatic Water': ['bac water', 'bac', 'water'],
+  'BPC-157': ['bpc'],
+  'TB-500': ['tb500', 'tb'],
+  'BPC-157 + TB-500 Blend': ['bpc tb', 'bpc tb500'],
+  'BPC-157 + GHK-Cu + TB-500 Blend (Glow)': ['glow', 'glow blend'],
+  'BPC-157 + GHK-Cu + TB-500 + KPV Blend (Klow)': ['klow', 'klow blend'],
+  'GHK-Cu': ['ghk', 'ghk cu'],
+  'MOTS-c': ['mots', 'motsc'],
+  'NAD+': ['nad', 'nad plus'],
+  'Melanotan II': ['mt2', 'mt-ii'],
+  'Melanotan I': ['mt1', 'mt-i'],
+};
+
+function searchableValues(product) {
+  return [
+    product.name,
+    product.spec,
+    product.sku,
+    product.category,
+    product.group,
+    product.description,
+    ...(SEARCH_ALIASES[product.name] || []),
+  ].filter(Boolean).map(value => String(value).toLowerCase());
+}
+
 // ---------- Shared product search (used by every public page) ----------
 let productSearchCatalogPromise = null;
 
 function productSearchResultHTML(p) {
   return `
-    <a class="product-search-result" href="/product/${encodeURIComponent(p.slug)}?sku=${encodeURIComponent(p.sku)}">
+    <a class="product-search-result" href="/product/${encodeURIComponent(p.slug)}">
       <div class="product-search-result-media photo"></div>
       <div class="product-search-result-copy">
-        <span class="product-search-result-group">${escapeHTML(p.group || p.category)} | ${escapeHTML(p.sku)}</span>
+        <span class="product-search-result-group">${escapeHTML(p.group || p.category)}</span>
         <strong>${escapeHTML(p.name)}</strong>
         <span>${escapeHTML(cleanVialSpec(p.spec))} | $${p.price.toFixed(2)}</span>
-        <span class="product-search-result-proof">99%+ purity line | COA by lot</span>
+        <span class="product-search-result-proof">Guaranteed 99% purity</span>
       </div>
       <span class="product-search-result-arrow" aria-hidden="true">&rsaquo;</span>
     </a>
@@ -255,7 +290,7 @@ function ensureProductSearchOverlay() {
       <label for="productSearchInput" class="sr-only">Search products</label>
       <div class="product-search-input-wrap">
         <span class="nav-search-icon" aria-hidden="true"></span>
-        <input id="productSearchInput" type="search" placeholder="Search compounds, categories, SKUs, or specifications" autocomplete="off">
+        <input id="productSearchInput" type="search" placeholder="Search compounds, categories, or specifications" autocomplete="off">
       </div>
       <div class="product-search-quick-chips" id="productSearchQuickChips" aria-label="Quick search categories"></div>
       <div id="productSearchStatus" class="product-search-status" aria-live="polite"></div>
@@ -307,9 +342,7 @@ function initProductSearch() {
     const catalog = await getProductSearchCatalog();
     const query = input.value.trim().toLowerCase();
     const matches = query
-      ? catalog.filter(p => [p.name, p.spec, p.sku, p.category, p.group, p.description]
-          .filter(Boolean)
-          .some(value => String(value).toLowerCase().includes(query)))
+      ? catalog.filter(p => searchableValues(p).some(value => value.includes(query)))
       : catalog.filter(p => p.popular).slice(0, 8);
 
     status.textContent = query
@@ -317,7 +350,7 @@ function initProductSearch() {
       : 'Popular research products';
     results.innerHTML = matches.length
       ? matches.slice(0, 24).map(productSearchResultHTML).join('')
-      : '<div class="product-search-empty"><strong>No products found</strong><span>Try another compound, SKU, category, or specification.</span></div>';
+      : '<div class="product-search-empty"><strong>No products found</strong><span>Try another compound, category, or specification.</span></div>';
   };
 
   const openSearch = () => {
@@ -462,12 +495,14 @@ function openCheckoutModal() {
   if (checkoutMsg) checkoutMsg.textContent = '';
   if (paypalMsg) paypalMsg.textContent = '';
   renderCheckoutSummary();
+  document.body.classList.add('checkout-modal-open');
   document.getElementById('checkoutModal').style.display = 'flex';
   initPayPalCheckout();
 }
 
 function closeCheckoutModal() {
   document.getElementById('checkoutModal').style.display = 'none';
+  document.body.classList.remove('checkout-modal-open');
 }
 
 async function applyPromoCode() {

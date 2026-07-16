@@ -7,8 +7,7 @@ let family = null;
 function variantButtonsHTML() {
   return family.variants.map(v => `
     <button class="variant-btn ${v.sku === selectedSku ? 'active' : ''}" data-sku="${v.sku}">
-      <span class="variant-size">${v.spec.replace(' x1 vial', '')}</span>
-      <span class="variant-meta">${v.sku}</span>
+      <span class="variant-size">${escapeHTML(cleanVialSpec(v.spec))}</span>
       <span class="variant-price">$${v.price.toFixed(2)}</span>
     </button>
   `).join('');
@@ -18,30 +17,29 @@ function renderProduct() {
   const selected = family.variants.find(v => v.sku === selectedSku) || family.variants[0];
   document.title = `${family.name} - Highland Peptides`;
   document.getElementById('breadcrumb').innerHTML =
-    `<a href="/index.html#catalogSection" style="color:inherit;">Shop</a> / ${family.group || family.category} / ${family.name}`;
+    `<a href="/index.html#catalogSection" style="color:inherit;">Shop</a> / ${escapeHTML(family.group || family.category)} / ${escapeHTML(family.name)}`;
 
   document.getElementById('productContent').innerHTML = `
     <div class="product-layout">
       <div class="product-media photo">${vialLabelHTML(family.name, selected.spec, 'detail-vial-label')}</div>
       <div class="product-info">
         <div class="product-kicker-row">
-          <div class="group">${family.group || family.category}</div>
+          <div class="group">${escapeHTML(family.group || family.category)}</div>
           <span class="ruo-pill">Research Use Only</span>
         </div>
         <div class="product-proof-pills" aria-label="Product quality highlights">
-          <span>99%+ purity line</span>
+          <span>Guaranteed 99% purity</span>
           <span>COA by lot</span>
           <span>Fast U.S. fulfillment</span>
         </div>
-        <h1 class="product-title">${family.name}</h1>
-        <p class="hint product-description">${family.description}</p>
+        <h1 class="product-title">${escapeHTML(family.name)}</h1>
+        <p class="hint product-description">${escapeHTML(family.description)}</p>
         <div class="product-selected-card">
           <span>Selected vial</span>
-          <strong>${cleanVialSpec(selected.spec)}</strong>
-          <em>CAT no. ${selected.sku}</em>
+          <strong>${escapeHTML(cleanVialSpec(selected.spec))}</strong>
         </div>
         <div class="product-trust-grid">
-          <div><strong>Purity</strong><span>99%+ research-grade line</span></div>
+          <div><strong>Purity</strong><span>Guaranteed 99% purity</span></div>
           <div><strong>COA</strong><span>Available by current lot</span></div>
           <div><strong>Ships</strong><span>Fast fulfillment from California</span></div>
           <div><strong>Expiry</strong><span>Good for the next 2 years</span></div>

@@ -8,20 +8,20 @@ function cardHTML(p) {
           <span class="product-card-badge">RUO</span>
         </div>
         <div class="product-card-meta">
-          <div class="group">${p.group || p.category}</div>
-          <div class="product-card-spec">${p.spec.replace(' x1 vial', '')}</div>
+          <div class="group">${escapeHTML(p.group || p.category)}</div>
+          <div class="product-card-spec">${escapeHTML(cleanVialSpec(p.spec))}</div>
         </div>
-        <h4>${p.name}</h4>
+        <h4>${escapeHTML(p.name)}</h4>
         <p class="product-card-description">${escapeHTML(p.description || 'Research-use compound for laboratory applications.')}</p>
         <div class="product-card-foot">
           <div>
-            <div class="product-card-note">99%+ purity | COA available</div>
+            <div class="product-card-note">Guaranteed 99% purity</div>
             <div class="price">$${p.price.toFixed(2)}</div>
           </div>
           <span class="product-card-arrow" aria-hidden="true">&rsaquo;</span>
         </div>
       </a>
-      <button data-sku="${p.sku}" class="addBtn">Add to Cart</button>
+      <button data-sku="${escapeHTML(p.sku)}" class="addBtn">Add to Cart</button>
     </div>
   `;
 }
@@ -54,7 +54,7 @@ function renderFilterChips() {
   const chipsEl = document.getElementById('filterChips');
   const groups = ['All', ...new Set(catalog.map(p => p.group || p.category))];
   chipsEl.innerHTML = groups.map(g =>
-    `<button class="filter-chip ${g === activeFilter ? 'active' : ''}" data-group="${g}">${g}</button>`
+    `<button class="filter-chip ${g === activeFilter ? 'active' : ''}" data-group="${escapeHTML(g)}">${escapeHTML(g)}</button>`
   ).join('');
   chipsEl.querySelectorAll('.filter-chip').forEach(btn => {
     btn.onclick = () => setActiveFilter(btn.dataset.group);
@@ -75,7 +75,7 @@ async function init() {
   document.title = catalogData.siteName;
   catalog = catalogData.products;
   window.siteCatalog = catalog;
-  window.siteFees = { packagingFee: catalogData.packagingFee, shippingFee: catalogData.shippingFee };
+  window.siteFees = { packagingFee: catalogData.packagingFee, shippingFee: catalogData.shippingFee, orderFeeRate: catalogData.orderFeeRate || 0 };
   const statEl = document.getElementById('statCompoundCount');
   if (statEl) statEl.textContent = '111';
   renderBestSellers();

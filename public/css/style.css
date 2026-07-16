@@ -2468,11 +2468,6 @@ body.search-open { overflow: hidden; }
   line-height: 1.4;
 }
 .checkout-success-card span { font-size: 12px; }
-.cart-line-sku {
-  color: var(--muted-on-light);
-  font-size: 11px;
-  font-weight: 800;
-}
 .cart-summary-trust {
   display: grid;
   gap: 7px;
@@ -2668,4 +2663,165 @@ body.search-open { overflow: hidden; }
 .admin-profit-line strong {
   color: #a8e3b2 !important;
   font-weight: 900;
+}
+
+/* ---------- Admin launch checks ---------- */
+.launch-check-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 18px 0;
+}
+.launch-check-card,
+.admin-launch-note {
+  border-radius: 16px;
+  padding: 16px;
+  border: 1px solid rgba(243,239,230,0.16);
+  background: rgba(250,247,241,0.06);
+}
+.launch-check-card span,
+.admin-launch-note span {
+  display: block;
+  color: var(--muted-on-dark);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  margin-bottom: 7px;
+}
+.launch-check-card strong,
+.admin-launch-note strong {
+  display: block;
+  color: var(--offwhite);
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+.launch-check-card p {
+  margin: 0;
+  color: var(--muted-on-dark);
+  font-size: 12px;
+  line-height: 1.45;
+}
+.launch-check-card.ok,
+.admin-launch-ok {
+  border-color: rgba(58,126,75,0.28);
+  background: rgba(58,126,75,0.13);
+}
+.launch-check-card.ok span,
+.admin-launch-ok span { color: #a8e3b2; }
+.launch-check-card.warn,
+.admin-launch-warn {
+  border-color: rgba(193,121,58,0.34);
+  background: rgba(193,121,58,0.14);
+}
+.launch-check-card.warn span,
+.admin-launch-warn span { color: #f0c589; }
+@media (max-width: 900px) {
+  .launch-check-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 620px) {
+  .launch-check-grid { grid-template-columns: 1fr; }
+}
+
+/* ---------- Admin order tools ---------- */
+.admin-order-toolbar {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 190px auto;
+  gap: 10px;
+  align-items: center;
+  margin: 14px 0 18px;
+}
+.admin-order-toolbar input,
+.admin-order-toolbar select {
+  border: 1px solid rgba(243,239,230,0.18);
+  border-radius: 999px;
+  background: rgba(250,247,241,0.08);
+  color: var(--offwhite);
+  padding: 11px 13px;
+  font: inherit;
+  font-size: 13px;
+}
+.admin-order-toolbar input::placeholder { color: var(--muted-on-dark); }
+.admin-order-toolbar select option { color: #1c1a17; }
+.admin-export-link {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: var(--offwhite);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 900;
+  text-decoration: none;
+}
+.admin-note-box {
+  display: grid;
+  gap: 7px;
+  margin-top: 10px;
+  min-width: 180px;
+}
+.admin-note-box label {
+  color: var(--muted-on-dark);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.admin-notes-input {
+  width: 100%;
+  min-height: 62px;
+  resize: vertical;
+  border: 1px solid rgba(243,239,230,0.18);
+  border-radius: 10px;
+  background: rgba(250,247,241,0.08);
+  color: var(--offwhite);
+  padding: 8px;
+  font: inherit;
+  font-size: 12px;
+}
+.admin-save-note {
+  width: fit-content;
+  border: 1px solid rgba(243,239,230,0.2);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--offwhite);
+  padding: 7px 10px;
+  font-size: 11px;
+  font-weight: 900;
+  cursor: pointer;
+}
+@media (max-width: 760px) {
+  .admin-order-toolbar { grid-template-columns: 1fr; }
+}
+
+/* ---------- Mobile checkout tightening ---------- */
+@media (max-width: 520px) {
+  .modal-overlay {
+    align-items: stretch;
+    padding: 10px;
+  }
+  .modal-box {
+    max-height: calc(100vh - 20px);
+    padding: 22px 18px;
+    border-radius: 18px;
+  }
+  .promo-row { grid-template-columns: 1fr; display: grid; }
+  .purchase-row { flex-direction: column; }
+  .add-to-cart-btn { min-height: 48px; }
+  .qty-stepper { justify-content: center; }
+}
+
+/* ---------- Checkout modal focus fix ---------- */
+.modal-overlay {
+  background: rgba(8, 10, 10, 0.94);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.checkout-modal-open .cart-page,
+.checkout-modal-open .topbar,
+.checkout-modal-open .ruo-banner,
+.checkout-modal-open .site-footer {
+  filter: blur(3px);
 }

@@ -17,8 +17,7 @@ function cartLineHTML(sku, qty, p) {
         <div class="cart-line-kicker">${escapeHTML(p.group || p.category || 'Research product')}</div>
         <strong>${escapeHTML(p.name)}</strong>
         <span>${escapeHTML(cleanVialSpec(p.spec))} x${qty} vial${qty === 1 ? '' : 's'}</span>
-        <span class="cart-line-sku">CAT no. ${escapeHTML(p.sku)}</span>
-        <em>99%+ purity line | COA by lot</em>
+        <em>Guaranteed 99% purity</em>
       </div>
       <div class="cart-line-qty" aria-label="Quantity controls">
         <button type="button" class="qty-btn cart-qty-down" data-sku="${sku}" aria-label="Decrease quantity">&minus;</button>

@@ -5,7 +5,7 @@ const session = require('express-session');
 
 const config = require('./config');
 const db = require('./db');
-const { catalog, bySku, costBySku, getProductFamily } = require('./products');
+const { catalog, bySku, costBySku, getProductFamily, priceAudit } = require('./products');
 const { requireAdmin } = require('./auth');
 const { buildPackingSlip, buildContentsLabel } = require('./labels');
 const { isPayPalConfigured, createPayPalOrder, capturePayPalOrder } = require('./paypal');
@@ -455,10 +455,95 @@ app.post('/api/admin/logout', (req, res) => {
   });
 });
 
+
+app.get('/api/admin/launch-checks', requireAdmin, (req, res) => {
+  const storage = db.getStorageInfo();
+  const paidOrders = db.getAllOrders().filter(order => ['paid', 'fulfilled'].includes(order.status));
+  const checks = [
+    {
+      key: 'storage',
+      label: 'Persistent order storage',
+      ok: storage.usingPersistentRenderPath,
+      detail: storage.usingPersistentRenderPath
+        ? 'Orders are configured for /var/data/db.json. Still confirm Render disk is mounted at /var/data.'
+        : 'Orders are not using /var/data. Add/confirm a Render Persistent Disk before taking live orders.',
+    },
+    {
+      key: 'paypal',
+      label: 'PayPal credentials',
+      ok: isPayPalConfigured() && config.PAYPAL_ENV === 'live',
+      detail: isPayPalConfigured()
+        ? `PayPal is configured in ${config.PAYPAL_ENV} mode.`
+        : 'PayPal credentials are missing, checkout cannot take online payment yet.',
+    },
+    {
+      key: 'discord',
+      label: 'Discord order backup',
+      ok: Boolean(config.DISCORD_ORDER_WEBHOOK_URL),
+      detail: config.DISCORD_ORDER_WEBHOOK_URL
+        ? 'Discord webhook is configured for paid-order backups.'
+        : 'Add DISCORD_ORDER_WEBHOOK_URL in Render to receive paid orders in Discord.',
+    },
+    {
+      key: 'email',
+      label: 'Email order backup',
+      ok: Boolean(config.SMTP_HOST && config.ORDER_BACKUP_EMAIL_TO),
+      detail: config.SMTP_HOST && config.ORDER_BACKUP_EMAIL_TO
+        ? 'SMTP email backup is configured.'
+        : 'Optional: add SMTP settings if you want email copies too. Cloudflare routing alone is inbound-only.',
+    },
+    {
+      key: 'price-audit',
+      label: 'Catalog price sanity',
+      ok: priceAudit().issueCount === 0,
+      detail: priceAudit().issueCount === 0
+        ? `No bad price ladders found across ${priceAudit().productCount} products.`
+        : `${priceAudit().issueCount} price ladder issue(s) need review.`,
+    },
+    {
+      key: 'test-order',
+      label: 'Live payment smoke test',
+      ok: paidOrders.length > 0,
+      detail: paidOrders.length > 0
+        ? `${paidOrders.length} paid/fulfilled order(s) recorded.`
+        : 'Place a small live test order after deploy, confirm it appears here, then redeploy and confirm it remains.',
+    },
+  ];
+  res.json({ checks, priceAudit: priceAudit(), storage });
+});
+
+function csvEscape(value) {
+  const text = String(value == null ? '' : value);
+  return '"' + text.replace(/"/g, '""') + '"';
+}
+
+function ordersCsv(orders) {
+  const headers = ['Order','Status','Buyer','Email','Ship To','Items','Code','Discount','Total','Notes','Created'];
+  const rows = orders.map(order => {
+    const buyer = order.buyer || {};
+    const address = [buyer.address1, buyer.address2, buyer.city, buyer.state, buyer.zip].filter(Boolean).join(', ');
+    const items = (order.items || []).map(item => String(item.quantity || 0) + 'x ' + item.name + ' ' + item.spec + ' (' + item.sku + ')').join('; ');
+    return [order.id, order.status, buyer.name, buyer.email, address, items, order.discount_code || '', order.discount_amount || 0, order.total || 0, order.notes || '', order.created_at].map(csvEscape).join(',');
+  });
+  return [headers.map(csvEscape).join(','), ...rows].join('\n');
+}
 app.get('/api/admin/storage', requireAdmin, (req, res) => {
   res.json(db.getStorageInfo());
 });
 
+app.get('/api/admin/orders.csv', requireAdmin, (req, res) => {
+  const orders = db.getAllOrders();
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', 'attachment; filename="highland-orders.csv"');
+  res.send(ordersCsv(orders));
+});
+
+app.post('/api/admin/orders/:id/notes', requireAdmin, (req, res) => {
+  const notes = cleanText(req.body && req.body.notes, 2000);
+  const order = db.updateOrderNotes(req.params.id, notes);
+  if (!order) return res.status(404).json({ error: 'Order not found' });
+  res.json({ ok: true, notes: order.notes || '' });
+});
 app.get('/api/admin/orders', requireAdmin, (req, res) => {
   const orders = db.getAllOrders().map(order => ({
     ...order,
@@ -494,4 +579,5 @@ app.get('/api/admin/orders/:id/contents-label.pdf', requireAdmin, (req, res) => 
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`${config.SITE_NAME} running on http://localhost:${PORT}`));
+
 

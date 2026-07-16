@@ -75,6 +75,7 @@ function createOrder({ buyer, certifiedAt, items, subtotal, packagingFee, shippi
     discount_code: discountCode || null,
     discount_amount: discountAmount || 0,
     total,
+    notes: '',
     created_at: new Date().toISOString(),
   };
   data.orders.push(order);
@@ -121,6 +122,15 @@ function updateOrderStatus(id, status) {
   return order;
 }
 
+function updateOrderNotes(id, notes) {
+  const data = load();
+  const order = data.orders.find(o => o.id === Number(id));
+  if (!order) return null;
+  order.notes = String(notes || '').slice(0, 2000);
+  save(data);
+  return order;
+}
+
 function markOrderBackupSent(id, channels = [], errors = []) {
   const data = load();
   const order = data.orders.find(o => o.id === Number(id));
@@ -141,4 +151,4 @@ function getStorageInfo() {
   };
 }
 
-module.exports = { createOrder, getAllOrders, getOrderById, setPayPalOrderId, markOrderPaid, updateOrderStatus, markOrderBackupSent, getStorageInfo };
+module.exports = { createOrder, getAllOrders, getOrderById, setPayPalOrderId, markOrderPaid, updateOrderStatus, updateOrderNotes, markOrderBackupSent, getStorageInfo };
