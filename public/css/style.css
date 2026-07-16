@@ -2654,3 +2654,18 @@ body.search-open { overflow: hidden; }
   background: rgba(193,121,58,0.16);
   color: #f0c589;
 }
+
+/* ---------- Admin spend + profit display ---------- */
+.admin-money-breakdown {
+  min-width: 170px;
+}
+.admin-profit-line {
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(168,227,178,0.22);
+}
+.admin-profit-line span,
+.admin-profit-line strong {
+  color: #a8e3b2 !important;
+  font-weight: 900;
+}

@@ -169,6 +169,45 @@ app.post('/api/paypal/capture-order', async (req, res) => {
 
 // ---------- Admin ----------
 
+function orderFinancialSummary(order) {
+  const subtotal = Number(order.subtotal || 0);
+  const discount = Number(order.discount_amount || 0);
+  const shipping = Number(order.shipping_fee || 0);
+  const processing = Number(order.order_fee || 0);
+  const totalSpent = Number(order.total || 0);
+  const discountRate = subtotal > 0 ? discount / subtotal : 0;
+  let cogs = 0;
+  let productRevenueAfterDiscount = 0;
+
+  (order.items || []).forEach(item => {
+    const quantity = Number(item.quantity || 0);
+    const unitPrice = Number(item.unit_price || 0);
+    const lineRevenueBeforeDiscount = unitPrice * quantity;
+    const allocatedDiscount = Math.round(lineRevenueBeforeDiscount * discountRate * 100) / 100;
+    productRevenueAfterDiscount += lineRevenueBeforeDiscount - allocatedDiscount;
+    cogs += Number(costBySku[item.sku] || 0) * quantity;
+  });
+
+  productRevenueAfterDiscount = Math.round(productRevenueAfterDiscount * 100) / 100;
+  cogs = Math.round(cogs * 100) / 100;
+  const grossProfit = Math.round((productRevenueAfterDiscount - cogs) * 100) / 100;
+  const grossMargin = productRevenueAfterDiscount > 0 ? Math.round((grossProfit / productRevenueAfterDiscount) * 1000) / 10 : 0;
+
+  return {
+    beforeCodeTotal: Math.round((subtotal + shipping + processing) * 100) / 100,
+    subtotal,
+    discount,
+    shipping,
+    processing,
+    totalSpent,
+    productRevenueAfterDiscount,
+    cogs,
+    grossProfit,
+    grossMargin,
+  };
+}
+
+
 app.get('/api/admin/profit', requireAdmin, (req, res) => {
   const countedStatuses = ['paid', 'fulfilled'];
   const orders = db.getAllOrders().filter(order => countedStatuses.includes(order.status));
@@ -256,7 +295,11 @@ app.get('/api/admin/storage', requireAdmin, (req, res) => {
 });
 
 app.get('/api/admin/orders', requireAdmin, (req, res) => {
-  res.json({ orders: db.getAllOrders() });
+  const orders = db.getAllOrders().map(order => ({
+    ...order,
+    financials: orderFinancialSummary(order),
+  }));
+  res.json({ orders });
 });
 
 app.post('/api/admin/orders/:id/status', requireAdmin, (req, res) => {

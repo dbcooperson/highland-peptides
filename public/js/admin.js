@@ -42,17 +42,26 @@ function discountHTML(order) {
 }
 
 function orderTotalHTML(order) {
+  const financials = order.financials || {};
   const subtotal = Number(order.subtotal || 0);
   const saved = Number(order.discount_amount || 0);
   const shipping = Number(order.shipping_fee || 0);
   const processing = Number(order.order_fee || 0);
-  const finalTotal = Number(order.total || 0);
-  const beforeDiscountTotal = subtotal + shipping + processing;
+  const beforeDiscountTotal = Number(financials.beforeCodeTotal || (subtotal + shipping + processing));
+  const totalSpent = Number(financials.totalSpent || order.total || 0);
+  const cogs = Number(financials.cogs || 0);
+  const productRevenue = Number(financials.productRevenueAfterDiscount || Math.max(0, subtotal - saved));
+  const grossProfit = Number(financials.grossProfit ?? (productRevenue - cogs));
+  const grossMargin = Number(financials.grossMargin || 0);
   return `
-    <div class="admin-total-breakdown">
+    <div class="admin-total-breakdown admin-money-breakdown">
       <div><span>Before code</span><strong>${money(beforeDiscountTotal)}</strong></div>
       ${saved > 0 ? `<div class="admin-savings"><span>Code saved</span><strong>-${money(saved)}</strong></div>` : '<div><span>Code saved</span><strong>$0.00</strong></div>'}
-      <div class="admin-final-total"><span>Final total</span><strong>${money(finalTotal)}</strong></div>
+      <div class="admin-final-total"><span>Customer spent</span><strong>${money(totalSpent)}</strong></div>
+      <div><span>Product revenue</span><strong>${money(productRevenue)}</strong></div>
+      <div><span>COGS</span><strong>${money(cogs)}</strong></div>
+      <div class="admin-profit-line"><span>Profit after code</span><strong>${money(grossProfit)}</strong></div>
+      <div><span>Margin</span><strong>${grossMargin}%</strong></div>
     </div>
   `;
 }
@@ -133,7 +142,7 @@ async function loadOrders() {
   if (panel && !panel.querySelector('.admin-summary-grid')) panel.insertAdjacentHTML('afterbegin', summaryHTML(orders));
 
   document.getElementById('ordersTable').innerHTML = `
-    <tr>${['Order','Buyer','Contact','Ship To','Items','Code savings','Total breakdown','Status','Created','Actions'].map(th).join('')}</tr>
+    <tr>${['Order','Buyer','Contact','Ship To','Items','Code savings','Spend + profit','Status','Created','Actions'].map(th).join('')}</tr>
     ${orders.map(o => `
       <tr>
         ${td('#' + o.id + '<br>' + statusBadge(o.status))}
