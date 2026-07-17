@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Highland Peptides payment confirmation for research-use-only orders.">
+<title>Payment Successful - Highland Peptides</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="mountain-bg" aria-hidden="true">
+  <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#161a1f"/>
+        <stop offset="42%" stop-color="#333d47"/>
+        <stop offset="72%" stop-color="#5b5850"/>
+        <stop offset="100%" stop-color="#7a6650"/>
+      </linearGradient>
+      <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#f0c589" stop-opacity="0.45"/>
+        <stop offset="100%" stop-color="#f0c589" stop-opacity="0"/>
+      </radialGradient>
+      <filter id="softBlur" x="-30%" y="-30%" width="160%" height="160%">
+        <feGaussianBlur stdDeviation="10"/>
+      </filter>
+    </defs>
+    <rect x="0" y="0" width="1600" height="900" fill="url(#sky)"/>
+    <g filter="url(#softBlur)">
+      <ellipse cx="1180" cy="430" rx="280" ry="200" fill="url(#glow)"/>
+      <path d="M0,420 L100,380 L220,410 L340,360 L460,400 L580,350 L700,390 L820,340 L940,385 L1060,345 L1180,395 L1300,355 L1420,400 L1600,370 L1600,900 L0,900 Z" fill="#5c6670" opacity="0.5"/>
+      <path d="M0,520 L120,470 L250,500 L380,450 L500,495 L640,440 L760,485 L880,430 L1000,480 L1140,435 L1260,490 L1400,445 L1600,480 L1600,900 L0,900 Z" fill="#414b52" opacity="0.68"/>
+      <path d="M0,620 L150,580 L300,610 L450,560 L600,605 L760,555 L900,600 L1050,550 L1200,595 L1350,560 L1600,600 L1600,900 L0,900 Z" fill="#262e33" opacity="0.85"/>
+      <path d="M0,760 L130,700 L260,740 L400,680 L540,730 L700,670 L860,725 L1020,665 L1180,720 L1340,680 L1600,715 L1600,900 L0,900 Z" fill="#12161a"/>
+    </g>
+  </svg>
+</div>
+<div class="mountain-scrim" aria-hidden="true"></div>
+
+<div class="nav-wrap">
+  <header class="topbar">
+    <div class="brand"><a href="/index.html" style="color:inherit;text-decoration:none;display:flex;align-items:center;gap:10px;">
+      <div class="brand-seal-wrap"><img src="/images/product-mockups/highland-seal-reference.png" alt="Highland Peptides"></div>
+      Highland Peptides
+    </a></div>
+    <nav class="site-nav">
+      <a href="/index.html#catalogSection">Shop</a>
+      <a href="/about.html">About Us</a>
+      <a href="/calculator.html">Research Calculator</a>
+      <a href="/support.html">Support</a>
+    </nav>
+    <div class="header-actions">
+      <button id="openProductSearch" class="nav-search-button" type="button" aria-label="Search products">
+        <span class="nav-search-icon" aria-hidden="true"></span>
+      </button>
+      <nav class="cart-nav">
+        <a href="/cart.html" class="cart-link" aria-label="View cart">
+          <span class="cart-icon" aria-hidden="true"></span>
+          <span class="cart-label">Cart</span>
+          <span id="cartCount" class="cart-count" aria-label="0 items">0</span>
+        </a>
+      </nav>
+    </div>
+  </header>
+</div>
+
+<div class="ruo-banner">
+  FOR LABORATORY / RESEARCH USE ONLY. NOT FOR HUMAN OR VETERINARY USE. NOT A DRUG, FOOD, OR COSMETIC.
+</div>
+
+<main class="success-main">
+  <section class="success-card panel">
+    <div class="success-icon" aria-hidden="true">?</div>
+    <div class="success-eyebrow">Payment successful</div>
+    <h1>Your order is confirmed.</h1>
+    <p class="success-lede">Thank you for your research-use-only order with Highland Peptides.</p>
+    <div id="successOrderNumber" class="success-order-number" hidden></div>
+    <div class="success-next-steps">
+      <div>
+        <strong>What happens next?</strong>
+        <span>We'll prepare your order for fulfillment and send updated tracking information to your email in about a week.</span>
+      </div>
+      <div>
+        <strong>Need help?</strong>
+        <span>Email <a href="mailto:support@highlandpeptides.com">support@highlandpeptides.com</a> with your order number.</span>
+      </div>
+    </div>
+    <div class="success-actions">
+      <a href="/index.html#catalogSection" class="success-primary">Continue shopping</a>
+      <a href="/support.html" class="success-secondary">Contact support</a>
+    </div>
+    <p class="success-ruo-note">Products are sold strictly for laboratory research use only. Not for human or veterinary consumption, administration, diagnostic use, or injection.</p>
+  </section>
+</main>
+
+<footer class="site-footer">
+  Highland Peptides: for laboratory / research use only. Not for human or veterinary use, consumption, or administration of any kind.
+  Not evaluated by the FDA.
+</footer>
+
+<script src="/js/shared.js"></script>
+<script>
+  const order = new URLSearchParams(window.location.search).get('order');
+  const target = document.getElementById('successOrderNumber');
+  if (order && target) {
+    target.hidden = false;
+    target.textContent = `Order #${order}`;
+  }
+</script>
+</body>
+</html>

@@ -590,9 +590,9 @@ async function initPayPalCheckout() {
           body: { paypalOrderId: data.orderID, orderId: pendingPayPalLocalOrderId },
         });
         paypalMsg.style.color = 'var(--success)';
-        paypalMsg.innerHTML = `<div class="checkout-success-card"><strong>Payment received. Order #${result.orderId} is confirmed.</strong><span>A confirmation record has been created for fulfillment. For help, contact support@highlandpeptides.com.</span></div>`;
+        paypalMsg.textContent = 'Payment confirmed. Redirecting to your order confirmation...';
         clearCartAfterCheckout();
-        setTimeout(closeCheckoutModal, 2500);
+        window.location.href = `/success.html?order=${encodeURIComponent(result.orderId)}`;
       },
       onCancel() {
         paypalMsg.style.color = 'var(--muted-on-light)';
@@ -644,5 +644,6 @@ function wireCheckout() {
     e.preventDefault();
   });
 }
+
 
 
