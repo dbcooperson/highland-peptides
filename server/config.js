@@ -25,6 +25,8 @@ module.exports = {
     PARAM: 0.15,
     KAY: 0.15,
     HUM: 0.15,
+    JUSTIN: 0.15,
+    BCG: 0.15,
   },
 
   // Adds a flat amount to every public product price before final price styling.
@@ -61,6 +63,7 @@ module.exports = {
 
   SITE_NAME: process.env.SITE_NAME || 'Highland Peptides',
 };
+
 
 
 
