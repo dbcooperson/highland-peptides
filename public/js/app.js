@@ -77,7 +77,7 @@ async function init() {
   window.siteCatalog = catalog;
   window.siteFees = { packagingFee: catalogData.packagingFee, shippingFee: catalogData.shippingFee, orderFeeRate: catalogData.orderFeeRate || 0 };
   const statEl = document.getElementById('statCompoundCount');
-  if (statEl) statEl.textContent = '111';
+  if (statEl) statEl.textContent = String(catalog.length);
   renderBestSellers();
   renderFilterChips();
   renderCatalog();

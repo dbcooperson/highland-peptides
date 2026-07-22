@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { MARKUP_MULTIPLIER, PRICE_ADJUSTMENT, PRICE_DECIMALS, PRICE_OFFSET, PRICE_ENDINGS } = require('./config');
+const { MARKUP_MULTIPLIER, PRICE_ADJUSTMENT, PRICE_DECIMALS } = require('./config');
 
 const raw = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'products.json'), 'utf8'));
 const descriptions = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'descriptions.json'), 'utf8'));
@@ -12,35 +12,6 @@ function round(n, d) {
 
 function slugify(name) {
   return name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-}
-function prettyPrice(amount) {
-  const target = amount + PRICE_OFFSET;
-  const floor = Math.floor(target);
-  const endings = Array.isArray(PRICE_ENDINGS) && PRICE_ENDINGS.length ? PRICE_ENDINGS : [0.25, 0.50, 0.75, 0.99];
-  const candidates = [];
-
-  for (let dollar = Math.max(0, floor - 1); dollar <= floor + 2; dollar += 1) {
-    endings.forEach(ending => candidates.push(round(dollar + ending, PRICE_DECIMALS)));
-  }
-
-  return candidates
-    .filter(price => price > 0)
-    .sort((a, b) => Math.abs(a - target) - Math.abs(b - target) || b - a)[0];
-}
-
-
-function nextPriceAbove(minimum) {
-  const endings = Array.isArray(PRICE_ENDINGS) && PRICE_ENDINGS.length ? PRICE_ENDINGS : [0.25, 0.50, 0.75, 0.99];
-  const floor = Math.floor(minimum);
-  const candidates = [];
-
-  for (let dollar = Math.max(0, floor - 1); dollar <= floor + 4; dollar += 1) {
-    endings.forEach(ending => candidates.push(round(dollar + ending, PRICE_DECIMALS)));
-  }
-
-  return candidates
-    .filter(price => price > minimum)
-    .sort((a, b) => a - b)[0] || round(minimum + 1, PRICE_DECIMALS);
 }
 function specSortValue(spec) {
   const text = String(spec || '').toLowerCase();
@@ -71,8 +42,7 @@ const POPULAR_SKUS = [
 const popularRank = Object.fromEntries(POPULAR_SKUS.map((sku, i) => [sku, i]));
 
 // Public catalog: cost is never exposed to the frontend, only the sale price.
-// salePrice, when set, overrides the cost*markup formula (used for items priced
-// directly off a competitor reference rather than our own supplier cost).
+// Price rule: supplier per-vial cost * markup * adjustment, unless a fixed public salePrice is set.
 const pricedCatalog = raw
   .map(p => ({
     sku: p.sku,
@@ -83,7 +53,7 @@ const pricedCatalog = raw
     slug: slugify(p.name),
     popular: popularRank[p.sku] !== undefined,
     description: descriptions[p.name] || '',
-    price: prettyPrice((p.salePrice != null ? p.salePrice : p.cost * MARKUP_MULTIPLIER) * PRICE_ADJUSTMENT),
+    price: round(p.salePrice != null ? p.salePrice : p.cost * MARKUP_MULTIPLIER * PRICE_ADJUSTMENT, PRICE_DECIMALS),
   }));
 
 const byNameForPricing = new Map();
@@ -92,16 +62,6 @@ pricedCatalog.forEach(product => {
   byNameForPricing.get(product.name).push(product);
 });
 
-byNameForPricing.forEach(variants => {
-  variants.sort(compareVariants);
-  let previousPrice = 0;
-  variants.forEach(product => {
-    if (product.price < previousPrice) {
-      product.price = nextPriceAbove(previousPrice);
-    }
-    previousPrice = product.price;
-  });
-});
 
 const catalog = pricedCatalog
   .sort((a, b) => {

@@ -5,7 +5,7 @@ module.exports = {
   // Markup multiplier applied to your supplier cost (2 = double the cost)
   MARKUP_MULTIPLIER: 2,
 
-  // Applied on top of the markup/salePrice for every product (1.15 = +15%).
+  // Applied on top of the markup for every product (1.15 = +15%).
   PRICE_ADJUSTMENT: 1.15,
 
   // Packaging is folded into the fixed shipping charge shown to customers.
@@ -27,15 +27,13 @@ module.exports = {
     HUM: 0.15,
     JUSTIN: 0.15,
     BCG: 0.15,
+    JETT: 0.15,
+    BABE: 0.15,
+    VICKY: 0.15,
   },
 
-  // Adds a flat amount to every public product price before final price styling.
-  PRICE_OFFSET: 2,
 
-  // Final public prices are snapped to the nearest of these endings.
-  PRICE_ENDINGS: [0.25, 0.50, 0.75, 0.99],
-
-  // Round all sale prices to this many decimal places.
+  // Round all public product prices to this many decimal places.
   PRICE_DECIMALS: 2,
 
   // Admin login password (change this via env var ADMIN_PASSWORD before deploying).
