@@ -156,9 +156,31 @@
       </div>
       <p class="paypal-setup-note">If PayPal shows an error, please refresh and try again or contact support@highlandpeptides.com.</p>
 
+      <div class="payment-divider"><span>or pay with Crypto (5% off)</span></div>
+      <div class="crypto-section">
+        <label>Pay with
+          <select id="cryptoAssetSelect">
+            <option value="BTC">Bitcoin (BTC)</option>
+            <option value="USDC">USDC (Ethereum / ERC-20)</option>
+          </select>
+        </label>
+        <p class="crypto-price-preview" id="cryptoPricePreview"></p>
+        <button type="button" id="cryptoCheckoutBtn" class="manual-checkout-btn">Submit Order, Pay with Crypto</button>
+        <p class="form-msg" id="cryptoMsg"></p>
+
+        <div id="cryptoPaymentDetails" class="crypto-payment-details" style="display:none;">
+          <p class="crypto-address-label">Send payment to this address:</p>
+          <p class="crypto-address" id="cryptoAddressText"></p>
+          <p class="crypto-network-note" id="cryptoNetworkNote"></p>
+          <label>Transaction ID (paste here after sending) <input type="text" id="cryptoTxidInput" placeholder="Transaction ID / hash"></label>
+          <button type="button" id="cryptoConfirmBtn" class="manual-checkout-btn">I've Sent Payment</button>
+          <p class="form-msg" id="cryptoConfirmMsg"></p>
+        </div>
+      </div>
+
       <div class="payment-divider"><span>or</span></div>
       <button type="button" id="manualCheckoutBtn" class="manual-checkout-btn">Submit Order, Pay by Invoice</button>
-      <p class="hint" style="margin-top:8px; text-align:center;">We'll email payment instructions from support@highlandpeptides.com.</p>
+      <p class="hint" style="margin-top:8px; text-align:center;">We'll email payment instructions shortly.</p>
 
       <p class="form-msg" id="checkoutMsg"></p>
     </form>

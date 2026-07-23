@@ -86,8 +86,8 @@ function orderHtml(order, source = 'payment') {
   `;
 }
 
-function configuredEmailTransport() {
-  if (!config.SMTP_HOST || !config.ORDER_BACKUP_EMAIL_TO) return null;
+function smtpTransport() {
+  if (!config.SMTP_HOST) return null;
   return nodemailer.createTransport({
     host: config.SMTP_HOST,
     port: config.SMTP_PORT,
@@ -100,7 +100,8 @@ function configuredEmailTransport() {
 }
 
 async function sendEmailBackup(order, source) {
-  const transport = configuredEmailTransport();
+  if (!config.ORDER_BACKUP_EMAIL_TO) return null;
+  const transport = smtpTransport();
   if (!transport) return null;
   await transport.sendMail({
     from: config.ORDER_BACKUP_EMAIL_FROM,
@@ -146,4 +147,72 @@ async function sendOrderBackup(order, source = 'payment') {
   return { channels, errors };
 }
 
-module.exports = { sendOrderBackup, orderText };
+function customerInstructionsText(order) {
+  const ref = `HP-${order.id}`;
+  const lines = [
+    `Thanks for your order at ${config.SITE_NAME}!`,
+    ``,
+    `Order ${ref} - Total due: ${money(order.total)}`,
+    ``,
+  ];
+
+  if (order.payment_provider === 'crypto') {
+    const asset = order.crypto_asset || 'BTC';
+    const address = asset === 'USDC' ? config.CRYPTO_WALLETS.USDC_ERC20 : config.CRYPTO_WALLETS.BTC;
+    const network = asset === 'USDC' ? 'Ethereum mainnet (ERC-20) ONLY - do not send on another network' : 'Bitcoin network';
+    lines.push(
+      `Send ${asset} to this address (${network}):`,
+      address,
+      ``,
+      `After sending, reply to this email with your transaction ID (TXID) or submit it on our site so we can confirm your payment quickly.`,
+      `Please reference your order number: ${ref}`,
+    );
+  } else {
+    lines.push(
+      `We'll follow up shortly with payment instructions.`,
+      `If you have questions, reply to this email.`,
+    );
+  }
+
+  return lines.join('\n');
+}
+
+function customerInstructionsHtml(order) {
+  const ref = `HP-${order.id}`;
+  let body;
+  if (order.payment_provider === 'crypto') {
+    const asset = order.crypto_asset || 'BTC';
+    const address = asset === 'USDC' ? config.CRYPTO_WALLETS.USDC_ERC20 : config.CRYPTO_WALLETS.BTC;
+    const network = asset === 'USDC' ? 'Ethereum mainnet (ERC-20) ONLY &mdash; do not send on another network' : 'Bitcoin network';
+    body = `
+      <p>Send <strong>${htmlEscape(asset)}</strong> to this address (${network}):</p>
+      <p style="font-family:monospace; font-size:15px;">${htmlEscape(address)}</p>
+      <p>After sending, reply to this email with your transaction ID (TXID) or submit it on our site so we can confirm your payment quickly.</p>
+      <p>Please reference your order number: <strong>${htmlEscape(ref)}</strong></p>
+    `;
+  } else {
+    body = `<p>We'll follow up shortly with payment instructions. If you have questions, reply to this email.</p>`;
+  }
+
+  return `
+    <h2>Thanks for your order at ${htmlEscape(config.SITE_NAME)}!</h2>
+    <p><strong>Order ${htmlEscape(ref)}</strong> &mdash; Total due: ${money(order.total)}</p>
+    ${body}
+  `;
+}
+
+async function sendCustomerPaymentInstructions(order) {
+  const transport = smtpTransport();
+  const buyer = order.buyer || {};
+  if (!transport || !buyer.email) return null;
+  await transport.sendMail({
+    from: config.ORDER_BACKUP_EMAIL_FROM,
+    to: buyer.email,
+    subject: `${config.SITE_NAME} Order HP-${order.id} - Payment Instructions`,
+    text: customerInstructionsText(order),
+    html: customerInstructionsHtml(order),
+  });
+  return 'email';
+}
+
+module.exports = { sendOrderBackup, sendCustomerPaymentInstructions, orderText };

@@ -55,13 +55,14 @@ function save(data) {
 }
 
 // ---------- Orders (guest checkout, no accounts) ----------
-function createOrder({ buyer, certifiedAt, items, subtotal, packagingFee, shippingFee, orderFee, orderFeeRate, discountCode, discountAmount, total, paymentProvider }) {
+function createOrder({ buyer, certifiedAt, items, subtotal, packagingFee, shippingFee, orderFee, orderFeeRate, discountCode, discountAmount, total, paymentProvider, cryptoAsset }) {
   const data = load();
   const order = {
     id: data.nextOrderId++,
     status: 'pending_payment',
     payment_provider: paymentProvider || 'manual',
     payment_reference: null,
+    crypto_asset: paymentProvider === 'crypto' ? (cryptoAsset || 'BTC') : null,
     paypal_order_id: null,
     paid_at: null,
     buyer,
@@ -113,6 +114,21 @@ function markOrderPaid(id, paymentReference) {
   return order;
 }
 
+function isTxidUsed(txid) {
+  const data = load();
+  const normalized = String(txid).trim().toLowerCase();
+  return data.orders.some(o => o.payment_reference && String(o.payment_reference).trim().toLowerCase() === normalized);
+}
+
+function setPaymentReference(id, reference) {
+  const data = load();
+  const order = data.orders.find(o => o.id === Number(id));
+  if (!order) return null;
+  order.payment_reference = reference;
+  save(data);
+  return order;
+}
+
 function updateOrderStatus(id, status) {
   const data = load();
   const order = data.orders.find(o => o.id === Number(id));
@@ -151,4 +167,4 @@ function getStorageInfo() {
   };
 }
 
-module.exports = { createOrder, getAllOrders, getOrderById, setPayPalOrderId, markOrderPaid, updateOrderStatus, updateOrderNotes, markOrderBackupSent, getStorageInfo };
+module.exports = { createOrder, getAllOrders, getOrderById, setPayPalOrderId, markOrderPaid, updateOrderStatus, updateOrderNotes, markOrderBackupSent, getStorageInfo, isTxidUsed, setPaymentReference };

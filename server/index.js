@@ -9,7 +9,7 @@ const { catalog, bySku, costBySku, getProductFamily, priceAudit } = require('./p
 const { requireAdmin } = require('./auth');
 const { buildPackingSlip, buildContentsLabel } = require('./labels');
 const { isPayPalConfigured, createPayPalOrder, capturePayPalOrder } = require('./paypal');
-const { sendOrderBackup } = require('./notifications');
+const { sendOrderBackup, sendCustomerPaymentInstructions } = require('./notifications');
 
 const isProductionRuntime = Boolean(process.env.RENDER || process.env.RENDER_SERVICE_ID || process.env.NODE_ENV === 'production');
 if (isProductionRuntime) {
@@ -63,6 +63,7 @@ app.get('/api/catalog', (req, res) => {
     packagingFee: config.PACKAGING_FEE,
     shippingFee: config.SHIPPING_FEE,
     orderFeeRate: config.ORDER_FEE_RATE,
+    altPaymentDiscountRate: config.ALT_PAYMENT_DISCOUNT_RATE,
   });
 });
 
@@ -131,7 +132,7 @@ function checkCheckoutRateLimit(req, res, next) {
 
 // ---------- Checkout (guest, no account) ----------
 function prepareCheckout(body) {
-  const { items: rawItems, buyer, certified, discountCode, paymentMethod } = body || {};
+  const { items: rawItems, buyer, certified, discountCode, paymentMethod, cryptoAsset } = body || {};
 
   if (certified !== true) {
     return { error: 'You must certify research/business use to place an order.' };
@@ -151,7 +152,8 @@ function prepareCheckout(body) {
     return { error: 'Name, valid email, and full shipping address are required.' };
   }
 
-  const normalizedPaymentMethod = paymentMethod === 'paypal' ? 'paypal' : 'manual';
+  const normalizedPaymentMethod = ['paypal', 'crypto'].includes(paymentMethod) ? paymentMethod : 'manual';
+  const normalizedCryptoAsset = normalizedPaymentMethod === 'crypto' && cryptoAsset === 'USDC' ? 'USDC' : 'BTC';
 
   const items = Array.isArray(rawItems) ? rawItems : [];
   if (items.length === 0) return { error: 'Cart is empty.' };
@@ -171,7 +173,10 @@ function prepareCheckout(body) {
   subtotal = Math.round(subtotal * 100) / 100;
 
   const discountMatch = resolveDiscountCode(discountCode);
-  const discountAmount = discountMatch ? Math.round(subtotal * discountMatch.rate * 100) / 100 : 0;
+  const codeDiscount = discountMatch ? subtotal * discountMatch.rate : 0;
+  const altPaymentDiscount = normalizedPaymentMethod === 'crypto' ? subtotal * config.ALT_PAYMENT_DISCOUNT_RATE : 0;
+  const discountAmount = Math.round((codeDiscount + altPaymentDiscount) * 100) / 100;
+  const discountLabel = [discountMatch ? discountMatch.code : null, altPaymentDiscount ? 'CRYPTO5' : null].filter(Boolean).join('+') || null;
 
   const packagingFee = config.PACKAGING_FEE;
   const shippingFee = config.SHIPPING_FEE;
@@ -189,10 +194,11 @@ function prepareCheckout(body) {
       shippingFee,
       orderFee,
       orderFeeRate: config.ORDER_FEE_RATE,
-      discountCode: discountMatch ? discountMatch.code : null,
+      discountCode: discountLabel,
       discountAmount,
       total,
       paymentMethod: normalizedPaymentMethod,
+      cryptoAsset: normalizedCryptoAsset,
     },
   };
 }
@@ -232,15 +238,48 @@ app.post('/api/checkout', checkCheckoutRateLimit, async (req, res) => {
   const prepared = prepareCheckout(req.body);
   if (prepared.error) return res.status(400).json({ error: prepared.error });
 
-  const order = db.createOrder({ ...prepared.orderInput, paymentProvider: 'manual' });
-  await backupOrderIfNeeded(order, 'manual_submit');
+  const { paymentMethod, cryptoAsset, ...orderInput } = prepared.orderInput;
+  const order = db.createOrder({ ...orderInput, paymentProvider: paymentMethod, cryptoAsset });
+  await backupOrderIfNeeded(order, `${paymentMethod}_submit`);
+  await sendCustomerInstructionsIfNeeded(order);
 
-  res.json({
+  const response = {
     ok: true,
     orderId: order.id,
     total: order.total,
-    message: 'Checkout request received. We will email payment instructions from support@highlandpeptides.com shortly.',
-  });
+    message: 'Checkout request received. We will email payment instructions shortly.',
+  };
+
+  if (paymentMethod === 'crypto') {
+    const address = cryptoAsset === 'USDC' ? config.CRYPTO_WALLETS.USDC_ERC20 : config.CRYPTO_WALLETS.BTC;
+    const network = cryptoAsset === 'USDC' ? 'Ethereum mainnet (ERC-20) only' : 'Bitcoin network';
+    response.crypto = { asset: cryptoAsset, address, network, reference: `HP-${order.id}` };
+    response.message = `Order received. Send ${cryptoAsset} to the address shown to complete payment.`;
+  }
+
+  res.json(response);
+});
+
+app.post('/api/orders/:id/confirm-crypto', checkCheckoutRateLimit, (req, res) => {
+  const order = db.getOrderById(req.params.id);
+  if (!order) return res.status(404).json({ error: 'Order not found.' });
+  if (order.payment_provider !== 'crypto') return res.status(400).json({ error: 'Order is not a crypto order.' });
+
+  const email = cleanEmail(req.body && req.body.email);
+  if (!email || email !== order.buyer.email) {
+    return res.status(403).json({ error: 'Email does not match this order.' });
+  }
+
+  const txid = cleanText(req.body && req.body.txid, 200);
+  if (!txid || txid.length < 8) {
+    return res.status(400).json({ error: 'Enter a valid transaction ID.' });
+  }
+  if (db.isTxidUsed(txid)) {
+    return res.status(409).json({ error: 'This transaction ID has already been submitted for another order.' });
+  }
+
+  db.setPaymentReference(order.id, txid);
+  res.json({ ok: true, message: "Thanks - we'll verify this on-chain and confirm your order shortly." });
 });
 
 
@@ -288,6 +327,15 @@ app.post('/api/paypal/capture-order', checkCheckoutRateLimit, async (req, res) =
     res.status(502).json({ error: err.message || 'Could not confirm PayPal payment.' });
   }
 });
+
+async function sendCustomerInstructionsIfNeeded(order) {
+  if (!order || order.payment_provider === 'paypal') return;
+  try {
+    await sendCustomerPaymentInstructions(order);
+  } catch (err) {
+    console.error('Customer payment instructions email failed:', err.message || err);
+  }
+}
 
 async function backupOrderIfNeeded(order, source) {
   if (!order || order.backup_sent_at) return;

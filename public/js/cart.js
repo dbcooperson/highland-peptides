@@ -114,7 +114,7 @@ wireCheckout();
 async function init() {
   const catalogData = await api('/api/catalog');
   window.siteCatalog = catalogData.products;
-  window.siteFees = { packagingFee: catalogData.packagingFee, shippingFee: catalogData.shippingFee, orderFeeRate: catalogData.orderFeeRate || 0 };
+  window.siteFees = { packagingFee: catalogData.packagingFee, shippingFee: catalogData.shippingFee, orderFeeRate: catalogData.orderFeeRate || 0, altPaymentDiscountRate: catalogData.altPaymentDiscountRate || 0 };
   renderCartPage();
   if (new URLSearchParams(window.location.search).get('checkout') === '1') {
     setTimeout(() => document.getElementById('checkoutBtn')?.click(), 150);

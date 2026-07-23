@@ -1154,6 +1154,57 @@ body.search-open { overflow: hidden; }
 }
 .manual-checkout-btn:hover { border-color: var(--accent); transform: translateY(-1px); }
 .manual-checkout-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+.crypto-section { margin: 0 0 4px; }
+.crypto-section label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted-on-light);
+  margin-bottom: 8px;
+}
+.crypto-section select,
+.crypto-section input {
+  width: 100%;
+  margin-top: 4px;
+  padding: 10px 12px;
+  border: 1.5px solid var(--border-on-light);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  background: var(--card);
+  color: var(--ink);
+}
+.crypto-price-preview {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--success);
+}
+.crypto-payment-details {
+  margin-top: 12px;
+  padding: 14px;
+  border: 1.5px solid var(--border-on-light);
+  border-radius: var(--radius-sm);
+  background: #f4efe4;
+}
+.crypto-address-label {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted-on-light);
+}
+.crypto-address {
+  margin: 0 0 8px;
+  font-family: monospace;
+  font-size: 13px;
+  word-break: break-all;
+  color: var(--ink);
+}
+.crypto-network-note {
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: var(--danger);
+  font-weight: 700;
+}
 .support-panel { max-width: 980px; }
 .support-grid {
   display: grid;
@@ -2565,6 +2616,7 @@ body.search-open { overflow: hidden; }
 }
 .admin-payment-paypal { background: rgba(58,126,75,0.24); color: #a8e3b2; }
 .admin-payment-manual { background: rgba(212,160,64,0.24); color: #f0cf8a; }
+.admin-payment-crypto { background: rgba(120,100,220,0.28); color: #c9bdf5; }
 .admin-copy-btn {
   margin-bottom: 5px;
   border: 1px solid rgba(243,239,230,0.2);

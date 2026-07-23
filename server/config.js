@@ -50,6 +50,16 @@ module.exports = {
 
   // Optional order backups. Configure these in Render so paid orders are copied
   // outside the site database.
+  // Crypto payment addresses (customer-facing, shown at checkout).
+  CRYPTO_WALLETS: {
+    BTC: process.env.CRYPTO_BTC_ADDRESS || 'bc1qvz90rnsmdq3fyefxpcxdj4sp03pcwwyysryu82',
+    USDC_ERC20: process.env.CRYPTO_USDC_ADDRESS || '0xAD9c0B152064BAFf5A39173a1F68659103ACAEE8',
+  },
+
+  // Discount applied for paying via crypto/Zelle instead of card, as an incentive
+  // (0.05 = 5% off subtotal). Stacks with a promo code if both are used.
+  ALT_PAYMENT_DISCOUNT_RATE: Number(process.env.ALT_PAYMENT_DISCOUNT_RATE || 0.05),
+
   DISCORD_ORDER_WEBHOOK_URL: process.env.DISCORD_ORDER_WEBHOOK_URL || '',
   ORDER_BACKUP_EMAIL_TO: process.env.ORDER_BACKUP_EMAIL_TO || '',
   ORDER_BACKUP_EMAIL_FROM: process.env.ORDER_BACKUP_EMAIL_FROM || process.env.SMTP_USER || 'orders@highlandpeptides.com',

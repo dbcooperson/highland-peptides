@@ -308,7 +308,7 @@ function getProductSearchCatalog() {
   if (!productSearchCatalogPromise) {
     productSearchCatalogPromise = api('/api/catalog').then(data => {
       window.siteCatalog = data.products;
-      window.siteFees = { packagingFee: data.packagingFee, shippingFee: data.shippingFee, orderFeeRate: data.orderFeeRate || 0 };
+      window.siteFees = { packagingFee: data.packagingFee, shippingFee: data.shippingFee, orderFeeRate: data.orderFeeRate || 0, altPaymentDiscountRate: data.altPaymentDiscountRate || 0 };
       return data.products;
     });
   }
@@ -486,15 +486,21 @@ function clearCartAfterCheckout() {
 
 function openCheckoutModal() {
   appliedDiscount = null;
+  lastCryptoOrder = null;
   const promoInput = document.getElementById('promoInput');
   const promoMsg = document.getElementById('promoMsg');
   const checkoutMsg = document.getElementById('checkoutMsg');
   const paypalMsg = document.getElementById('paypalMsg');
+  const cryptoMsg = document.getElementById('cryptoMsg');
+  const cryptoDetails = document.getElementById('cryptoPaymentDetails');
   if (promoInput) promoInput.value = '';
   if (promoMsg) promoMsg.textContent = '';
   if (checkoutMsg) checkoutMsg.textContent = '';
   if (paypalMsg) paypalMsg.textContent = '';
+  if (cryptoMsg) cryptoMsg.textContent = '';
+  if (cryptoDetails) cryptoDetails.style.display = 'none';
   renderCheckoutSummary();
+  renderCryptoPricePreview();
   document.body.classList.add('checkout-modal-open');
   document.getElementById('checkoutModal').style.display = 'flex';
   initPayPalCheckout();
@@ -613,6 +619,86 @@ async function initPayPalCheckout() {
   }
 }
 
+let lastCryptoOrder = null; // { id, email } | null
+
+function renderCryptoPricePreview() {
+  const previewEl = document.getElementById('cryptoPricePreview');
+  if (!previewEl) return;
+  const subtotal = round2(cartSubtotal());
+  const rate = (window.siteFees && window.siteFees.altPaymentDiscountRate) || 0;
+  const shippingFee = (window.siteFees && window.siteFees.shippingFee) || 0;
+  const orderFeeRate = (window.siteFees && window.siteFees.orderFeeRate) || 0;
+  const discount = round2(subtotal * rate);
+  const feeBase = Math.max(0, subtotal - discount + shippingFee);
+  const orderFee = round2(feeBase * orderFeeRate);
+  const total = round2(feeBase + orderFee);
+  previewEl.textContent = rate ? `Crypto price: $${total.toFixed(2)} (saves $${discount.toFixed(2)})` : '';
+}
+
+async function submitCryptoCheckout() {
+  const msgEl = document.getElementById('cryptoMsg');
+  const btn = document.getElementById('cryptoCheckoutBtn');
+  const asset = document.getElementById('cryptoAssetSelect').value;
+  const payload = checkoutPayloadFromForm();
+  payload.paymentMethod = 'crypto';
+  payload.cryptoAsset = asset;
+
+  if (!validateCheckoutPayload(payload, msgEl)) return;
+
+  const buyerEmail = payload.buyer.email;
+  btn.disabled = true;
+  try {
+    const result = await api('/api/checkout', { method: 'POST', body: payload });
+    msgEl.style.color = 'var(--success)';
+    msgEl.textContent = `${result.message} (Order #${result.orderId}, total $${result.total.toFixed(2)})`;
+    lastCryptoOrder = { id: result.orderId, email: buyerEmail };
+
+    if (result.crypto) {
+      document.getElementById('cryptoAddressText').textContent = result.crypto.address;
+      document.getElementById('cryptoNetworkNote').textContent = `${result.crypto.network}. Reference: ${result.crypto.reference}`;
+      document.getElementById('cryptoPaymentDetails').style.display = 'block';
+    }
+    clearCartAfterCheckout();
+  } catch (err) {
+    msgEl.style.color = 'var(--danger)';
+    msgEl.textContent = err.message;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function confirmCryptoPayment() {
+  const msgEl = document.getElementById('cryptoConfirmMsg');
+  const btn = document.getElementById('cryptoConfirmBtn');
+  const txid = document.getElementById('cryptoTxidInput').value.trim();
+
+  if (!lastCryptoOrder) {
+    msgEl.style.color = 'var(--danger)';
+    msgEl.textContent = 'Submit your order first.';
+    return;
+  }
+  if (!txid) {
+    msgEl.style.color = 'var(--danger)';
+    msgEl.textContent = 'Paste your transaction ID first.';
+    return;
+  }
+
+  btn.disabled = true;
+  try {
+    const result = await api(`/api/orders/${lastCryptoOrder.id}/confirm-crypto`, {
+      method: 'POST',
+      body: { email: lastCryptoOrder.email, txid },
+    });
+    msgEl.style.color = 'var(--success)';
+    msgEl.textContent = result.message;
+  } catch (err) {
+    msgEl.style.color = 'var(--danger)';
+    msgEl.textContent = err.message;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
 async function submitManualCheckout() {
   const msgEl = document.getElementById('checkoutMsg');
   const btn = document.getElementById('manualCheckoutBtn');
@@ -665,6 +751,15 @@ function wireCheckout() {
 
   const manualBtn = document.getElementById('manualCheckoutBtn');
   if (manualBtn) manualBtn.addEventListener('click', submitManualCheckout);
+
+  const cryptoBtn = document.getElementById('cryptoCheckoutBtn');
+  if (cryptoBtn) cryptoBtn.addEventListener('click', submitCryptoCheckout);
+
+  const cryptoConfirmBtn = document.getElementById('cryptoConfirmBtn');
+  if (cryptoConfirmBtn) cryptoConfirmBtn.addEventListener('click', confirmCryptoPayment);
+
+  const cryptoAssetSelect = document.getElementById('cryptoAssetSelect');
+  if (cryptoAssetSelect) cryptoAssetSelect.addEventListener('change', renderCryptoPricePreview);
 
   document.getElementById('checkoutForm').addEventListener('submit', (e) => {
     e.preventDefault();

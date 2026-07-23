@@ -84,6 +84,13 @@ function paymentHTML(order) {
   if (provider === 'paypal') {
     return `<span class="admin-payment admin-payment-paypal">PayPal</span>${order.paypal_order_id ? `<br><span class="admin-muted">${escapeHtml(order.paypal_order_id)}</span>` : ''}`;
   }
+  if (provider === 'crypto') {
+    const asset = escapeHtml(order.crypto_asset || 'BTC');
+    const txid = order.payment_reference
+      ? `<br><span class="admin-muted">TXID: ${escapeHtml(order.payment_reference)}</span>`
+      : '<br><span class="admin-muted">Waiting on TXID</span>';
+    return `<span class="admin-payment admin-payment-crypto">Crypto (${asset})</span>${txid}`;
+  }
   return '<span class="admin-payment admin-payment-manual">Manual invoice</span><br><span class="admin-muted">Needs payment link sent</span>';
 }
 
