@@ -613,6 +613,29 @@ async function initPayPalCheckout() {
   }
 }
 
+async function submitManualCheckout() {
+  const msgEl = document.getElementById('checkoutMsg');
+  const btn = document.getElementById('manualCheckoutBtn');
+  const payload = checkoutPayloadFromForm();
+  payload.paymentMethod = 'manual';
+
+  if (!validateCheckoutPayload(payload, msgEl)) return;
+
+  btn.disabled = true;
+  try {
+    const result = await api('/api/checkout', { method: 'POST', body: payload });
+    msgEl.style.color = 'var(--success)';
+    msgEl.textContent = `${result.message} (Order #${result.orderId}, total $${result.total.toFixed(2)})`;
+    clearCartAfterCheckout();
+    setTimeout(closeCheckoutModal, 3000);
+  } catch (err) {
+    msgEl.style.color = 'var(--danger)';
+    msgEl.textContent = err.message;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
 function wireCheckout() {
   document.getElementById('checkoutBtn').addEventListener('click', () => {
     const cartMsg = document.getElementById('cartMsg');
@@ -639,6 +662,9 @@ function wireCheckout() {
       if (e.key === 'Enter') { e.preventDefault(); applyPromoCode(); }
     });
   }
+
+  const manualBtn = document.getElementById('manualCheckoutBtn');
+  if (manualBtn) manualBtn.addEventListener('click', submitManualCheckout);
 
   document.getElementById('checkoutForm').addEventListener('submit', (e) => {
     e.preventDefault();

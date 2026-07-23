@@ -224,6 +224,25 @@ app.post('/api/paypal/create-order', checkCheckoutRateLimit, async (req, res) =>
   }
 });
 
+// Manual/invoice checkout fallback -- records the order as pending_payment and
+// notifies us (Discord/email backup) so we can follow up with payment
+// instructions directly. Used when PayPal is down/restricted, or as a plain
+// alternative to it.
+app.post('/api/checkout', checkCheckoutRateLimit, async (req, res) => {
+  const prepared = prepareCheckout(req.body);
+  if (prepared.error) return res.status(400).json({ error: prepared.error });
+
+  const order = db.createOrder({ ...prepared.orderInput, paymentProvider: 'manual' });
+  await backupOrderIfNeeded(order, 'manual_submit');
+
+  res.json({
+    ok: true,
+    orderId: order.id,
+    total: order.total,
+    message: 'Checkout request received. We will email payment instructions from support@highlandpeptides.com shortly.',
+  });
+});
+
 
 function validatePayPalCaptureForOrder(capture, order, paypalOrderId) {
   if (!order || order.payment_provider !== 'paypal') return 'Order is not a PayPal order.';

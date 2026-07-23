@@ -79,6 +79,14 @@ function statusBadge(status) {
   return `<span class="admin-status admin-status-${escapeHtml(status)}">${escapeHtml(status).replace('_', ' ')}</span>`;
 }
 
+function paymentHTML(order) {
+  const provider = order.payment_provider || 'manual';
+  if (provider === 'paypal') {
+    return `<span class="admin-payment admin-payment-paypal">PayPal</span>${order.paypal_order_id ? `<br><span class="admin-muted">${escapeHtml(order.paypal_order_id)}</span>` : ''}`;
+  }
+  return '<span class="admin-payment admin-payment-manual">Manual invoice</span><br><span class="admin-muted">Needs payment link sent</span>';
+}
+
 function summaryHTML(orders) {
   const paid = orders.filter(o => o.status === 'paid').length;
   const pending = orders.filter(o => o.status === 'pending_payment').length;
@@ -223,7 +231,7 @@ function adminNotesHTML(order) {
 function renderOrdersTable() {
   const orders = filteredAdminOrders();
   document.getElementById('ordersTable').innerHTML = `
-    <tr>${['Order','Buyer','Contact','Ship To','Items','Code savings','Spend + profit','Status','Created','Actions'].map(th).join('')}</tr>
+    <tr>${['Order','Buyer','Contact','Ship To','Items','Code savings','Payment','Spend + profit','Status','Created','Actions'].map(th).join('')}</tr>
     ${orders.map(o => `
       <tr>
         ${td('#' + o.id + '<br>' + statusBadge(o.status))}
@@ -232,6 +240,7 @@ function renderOrdersTable() {
         ${td(escapeHtml(`${o.buyer.address1}${o.buyer.address2 ? ', ' + o.buyer.address2 : ''}, ${o.buyer.city}, ${o.buyer.state} ${o.buyer.zip}`))}
         ${td(orderItemsHTML(o))}
         ${td(discountHTML(o))}
+        ${td(paymentHTML(o))}
         ${td(orderTotalHTML(o))}
         ${td(`<select data-id="${o.id}" class="statusSelect">
           ${['pending_payment','paid','fulfilled','cancelled'].map(s => `<option value="${s}" ${s===o.status?'selected':''}>${s.replace('_', ' ')}</option>`).join('')}
