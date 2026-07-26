@@ -219,13 +219,21 @@ function orderSearchText(order) {
     .toLowerCase();
 }
 
+function paymentProviderGroup(order) {
+  const provider = String(order.payment_provider || 'manual').toLowerCase();
+  if (provider.includes('paypal')) return 'paypal_any';
+  if (provider.includes('crypto') || provider === 'btc' || provider === 'usdc') return 'crypto_any';
+  return provider;
+}
+
 function filteredAdminOrders() {
   const query = (document.getElementById('adminOrderSearch')?.value || '').trim().toLowerCase();
   const status = document.getElementById('adminStatusFilter')?.value || 'all';
   const payment = document.getElementById('adminPaymentFilter')?.value || 'all';
   return adminOrdersCache.filter(order => {
     const statusMatch = status === 'all' || order.status === status;
-    const paymentMatch = payment === 'all' || (order.payment_provider || 'manual') === payment;
+    const provider = String(order.payment_provider || 'manual').toLowerCase();
+    const paymentMatch = payment === 'all' || paymentProviderGroup(order) === payment || provider === payment;
     const queryMatch = !query || orderSearchText(order).includes(query);
     return statusMatch && paymentMatch && queryMatch;
   });
@@ -304,9 +312,12 @@ async function loadOrders() {
   if (existingSummary) existingSummary.remove();
   if (panel) panel.insertAdjacentHTML('afterbegin', summaryHTML(orders));
   renderOrdersTable();
-  document.getElementById('adminOrderSearch')?.addEventListener('input', renderOrdersTable);
-  document.getElementById('adminStatusFilter')?.addEventListener('change', renderOrdersTable);
-  document.getElementById('adminPaymentFilter')?.addEventListener('change', renderOrdersTable);
+  const searchInput = document.getElementById('adminOrderSearch');
+  const statusFilter = document.getElementById('adminStatusFilter');
+  const paymentFilter = document.getElementById('adminPaymentFilter');
+  if (searchInput) searchInput.oninput = renderOrdersTable;
+  if (statusFilter) statusFilter.onchange = renderOrdersTable;
+  if (paymentFilter) paymentFilter.onchange = renderOrdersTable;
 }
 document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -329,6 +340,9 @@ document.getElementById('adminLogoutBtn').addEventListener('click', async () => 
   await api('/api/admin/logout', { method: 'POST' });
   location.reload();
 });
+
+
+
 
 
 
