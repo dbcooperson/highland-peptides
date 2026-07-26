@@ -55,14 +55,25 @@ function save(data) {
 }
 
 // ---------- Orders (guest checkout, no accounts) ----------
+function paymentMatchAdjustmentCents(orderId, paymentProvider) {
+  if (paymentProvider === 'paypal') return 0;
+  return (Number(orderId) % 49) + 1;
+}
+
 function createOrder({ buyer, certifiedAt, items, subtotal, packagingFee, shippingFee, orderFee, orderFeeRate, discountCode, discountAmount, total, paymentProvider, cryptoAsset }) {
   const data = load();
+  const id = data.nextOrderId++;
+  const normalizedProvider = paymentProvider || 'manual';
+  const matchCents = paymentMatchAdjustmentCents(id, normalizedProvider);
+  const paymentMatchAdjustment = Math.round(matchCents) / 100;
+  const baseTotal = Number(total || 0);
+  const finalTotal = Math.round((baseTotal + paymentMatchAdjustment) * 100) / 100;
   const order = {
-    id: data.nextOrderId++,
+    id,
     status: 'pending_payment',
-    payment_provider: paymentProvider || 'manual',
+    payment_provider: normalizedProvider,
     payment_reference: null,
-    crypto_asset: paymentProvider === 'crypto' ? (cryptoAsset || 'BTC') : null,
+    crypto_asset: normalizedProvider === 'crypto' ? (cryptoAsset || 'BTC') : null,
     paypal_order_id: null,
     paid_at: null,
     buyer,
@@ -75,7 +86,9 @@ function createOrder({ buyer, certifiedAt, items, subtotal, packagingFee, shippi
     order_fee_rate: orderFeeRate || 0,
     discount_code: discountCode || null,
     discount_amount: discountAmount || 0,
-    total,
+    base_total: baseTotal,
+    payment_match_adjustment: paymentMatchAdjustment,
+    total: finalTotal,
     notes: '',
     created_at: new Date().toISOString(),
   };
@@ -168,3 +181,5 @@ function getStorageInfo() {
 }
 
 module.exports = { createOrder, getAllOrders, getOrderById, setPayPalOrderId, markOrderPaid, updateOrderStatus, updateOrderNotes, markOrderBackupSent, getStorageInfo, isTxidUsed, setPaymentReference };
+
+

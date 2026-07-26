@@ -40,6 +40,13 @@
           <option value="fulfilled">Fulfilled</option>
           <option value="cancelled">Cancelled</option>
         </select>
+        <select id="adminPaymentFilter">
+          <option value="all">All payments</option>
+          <option value="manual_paypal">PayPal manual</option>
+          <option value="crypto">Crypto</option>
+          <option value="paypal">PayPal checkout</option>
+          <option value="manual">Manual invoice</option>
+        </select>
         <a class="admin-export-link" href="/api/admin/orders.csv">Export CSV</a>
       </div>
       <table id="ordersTable" style="width:100%; border-collapse: collapse;"></table>
@@ -60,6 +67,7 @@
 <script src="/js/admin.js"></script>
 </body>
 </html>
+
 
 
 

@@ -152,7 +152,7 @@ function prepareCheckout(body) {
     return { error: 'Name, valid email, and full shipping address are required.' };
   }
 
-  const normalizedPaymentMethod = ['paypal', 'crypto'].includes(paymentMethod) ? paymentMethod : 'manual';
+  const normalizedPaymentMethod = ['paypal', 'manual_paypal', 'crypto'].includes(paymentMethod) ? paymentMethod : 'manual_paypal';
   const normalizedCryptoAsset = normalizedPaymentMethod === 'crypto' && cryptoAsset === 'USDC' ? 'USDC' : 'BTC';
 
   const items = Array.isArray(rawItems) ? rawItems : [];
@@ -247,8 +247,16 @@ app.post('/api/checkout', checkCheckoutRateLimit, async (req, res) => {
     ok: true,
     orderId: order.id,
     total: order.total,
-    message: 'Checkout request received. We will email payment instructions shortly.',
+    baseTotal: order.base_total || order.total,
+    paymentMatchAdjustment: order.payment_match_adjustment || 0,
+    paymentMethod: order.payment_provider,
+    message: 'Order received. Send the exact total shown to complete payment.',
   };
+
+  if (paymentMethod === 'manual_paypal') {
+    response.paypal = { email: config.PAYPAL_MANUAL_EMAIL, reference: `HP-${order.id}` };
+    response.message = 'Order received. Send the exact total shown to PayPal to complete payment.';
+  }
 
   if (paymentMethod === 'crypto') {
     const address = cryptoAsset === 'USDC' ? config.CRYPTO_WALLETS.USDC_ERC20 : config.CRYPTO_WALLETS.BTC;
@@ -646,5 +654,8 @@ app.get('/api/admin/orders/:id/contents-label.pdf', requireAdmin, (req, res) => 
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`${config.SITE_NAME} running on http://localhost:${PORT}`));
+
+
+
 
 

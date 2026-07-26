@@ -82,7 +82,10 @@ function statusBadge(status) {
 function paymentHTML(order) {
   const provider = order.payment_provider || 'manual';
   if (provider === 'paypal') {
-    return `<span class="admin-payment admin-payment-paypal">PayPal</span>${order.paypal_order_id ? `<br><span class="admin-muted">${escapeHtml(order.paypal_order_id)}</span>` : ''}`;
+    return `<span class="admin-payment admin-payment-paypal">PayPal checkout</span>${order.paypal_order_id ? `<br><span class="admin-muted">${escapeHtml(order.paypal_order_id)}</span>` : ''}`;
+  }
+  if (provider === 'manual_paypal') {
+    return `<span class="admin-payment admin-payment-paypal">PayPal manual</span><br><span class="admin-muted">Match exact total</span>`;
   }
   if (provider === 'crypto') {
     const asset = escapeHtml(order.crypto_asset || 'BTC');
@@ -218,10 +221,12 @@ function orderSearchText(order) {
 function filteredAdminOrders() {
   const query = (document.getElementById('adminOrderSearch')?.value || '').trim().toLowerCase();
   const status = document.getElementById('adminStatusFilter')?.value || 'all';
+  const payment = document.getElementById('adminPaymentFilter')?.value || 'all';
   return adminOrdersCache.filter(order => {
     const statusMatch = status === 'all' || order.status === status;
+    const paymentMatch = payment === 'all' || (order.payment_provider || 'manual') === payment;
     const queryMatch = !query || orderSearchText(order).includes(query);
-    return statusMatch && queryMatch;
+    return statusMatch && paymentMatch && queryMatch;
   });
 }
 
@@ -300,6 +305,7 @@ async function loadOrders() {
   renderOrdersTable();
   document.getElementById('adminOrderSearch')?.addEventListener('input', renderOrdersTable);
   document.getElementById('adminStatusFilter')?.addEventListener('change', renderOrdersTable);
+  document.getElementById('adminPaymentFilter')?.addEventListener('change', renderOrdersTable);
 }
 document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -322,6 +328,7 @@ document.getElementById('adminLogoutBtn').addEventListener('click', async () => 
   await api('/api/admin/logout', { method: 'POST' });
   location.reload();
 });
+
 
 
 

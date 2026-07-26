@@ -47,6 +47,7 @@ module.exports = {
   PAYPAL_CLIENT_SECRET: process.env.PAYPAL_CLIENT_SECRET || '',
   PAYPAL_ENV: process.env.PAYPAL_ENV || 'sandbox',
   PAYPAL_CURRENCY: process.env.PAYPAL_CURRENCY || 'USD',
+  PAYPAL_MANUAL_EMAIL: process.env.PAYPAL_MANUAL_EMAIL || 'at475756@gmail.com',
 
   // Optional order backups. Configure these in Render so paid orders are copied
   // outside the site database.
@@ -56,7 +57,7 @@ module.exports = {
     USDC_ERC20: process.env.CRYPTO_USDC_ADDRESS || '0xAD9c0B152064BAFf5A39173a1F68659103ACAEE8',
   },
 
-  // Discount applied for paying via crypto/Zelle instead of card, as an incentive
+  // Discount applied for paying via crypto instead of card, as an incentive
   // (0.05 = 5% off subtotal). Stacks with a promo code if both are used.
   ALT_PAYMENT_DISCOUNT_RATE: Number(process.env.ALT_PAYMENT_DISCOUNT_RATE || 0.05),
 
@@ -71,6 +72,8 @@ module.exports = {
 
   SITE_NAME: process.env.SITE_NAME || 'Highland Peptides',
 };
+
+
 
 
 

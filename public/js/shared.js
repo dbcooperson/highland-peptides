@@ -452,7 +452,7 @@ function checkoutPayloadFromForm() {
     },
     certified: document.getElementById('checkoutCertify').checked,
     discountCode: appliedDiscount ? appliedDiscount.code : null,
-    paymentMethod: 'paypal',
+    paymentMethod: 'manual_paypal',
   };
 }
 
@@ -487,6 +487,7 @@ function clearCartAfterCheckout() {
 function openCheckoutModal() {
   appliedDiscount = null;
   lastCryptoOrder = null;
+  cryptoChoiceOpen = false;
   const promoInput = document.getElementById('promoInput');
   const promoMsg = document.getElementById('promoMsg');
   const checkoutMsg = document.getElementById('checkoutMsg');
@@ -498,12 +499,20 @@ function openCheckoutModal() {
   if (checkoutMsg) checkoutMsg.textContent = '';
   if (paypalMsg) paypalMsg.textContent = '';
   if (cryptoMsg) cryptoMsg.textContent = '';
+  const manualDetails = document.getElementById('manualPaymentDetails');
+  const paypalDetails = document.getElementById('paypalPaymentDetails');
+  const cryptoChoice = document.getElementById('cryptoChoiceDetails');
+  if (manualDetails) manualDetails.style.display = 'none';
+  if (paypalDetails) paypalDetails.style.display = 'none';
+  if (cryptoChoice) cryptoChoice.style.display = 'none';
   if (cryptoDetails) cryptoDetails.style.display = 'none';
+  const cryptoButton = document.getElementById('cryptoCheckoutBtn');
+  if (cryptoButton) cryptoButton.querySelector('strong').innerHTML = 'Crypto <em>5% off</em>';
   renderCheckoutSummary();
   renderCryptoPricePreview();
   document.body.classList.add('checkout-modal-open');
   document.getElementById('checkoutModal').style.display = 'flex';
-  initPayPalCheckout();
+
 }
 
 function closeCheckoutModal() {
@@ -620,6 +629,7 @@ async function initPayPalCheckout() {
 }
 
 let lastCryptoOrder = null; // { id, email } | null
+let cryptoChoiceOpen = false;
 
 function renderCryptoPricePreview() {
   const previewEl = document.getElementById('cryptoPricePreview');
@@ -635,9 +645,30 @@ function renderCryptoPricePreview() {
   previewEl.textContent = rate ? `Crypto price: $${total.toFixed(2)} (saves $${discount.toFixed(2)})` : '';
 }
 
+function showManualPaymentShell(title, summary) {
+  const details = document.getElementById('manualPaymentDetails');
+  const titleEl = document.getElementById('manualPaymentTitle');
+  const summaryEl = document.getElementById('manualPaymentSummary');
+  if (details) details.style.display = 'block';
+  if (titleEl) titleEl.textContent = title;
+  if (summaryEl) summaryEl.innerHTML = summary;
+}
+
 async function submitCryptoCheckout() {
-  const msgEl = document.getElementById('cryptoMsg');
+  const msgEl = document.getElementById('checkoutMsg');
   const btn = document.getElementById('cryptoCheckoutBtn');
+  const choice = document.getElementById('cryptoChoiceDetails');
+  const paypalDetails = document.getElementById('paypalPaymentDetails');
+
+  if (!cryptoChoiceOpen) {
+    cryptoChoiceOpen = true;
+    if (paypalDetails) paypalDetails.style.display = 'none';
+    if (choice) choice.style.display = 'block';
+    showManualPaymentShell('Crypto payment', 'Choose BTC or USDC, then submit the order to get the exact payment total and address.');
+    btn.querySelector('strong').innerHTML = 'Submit Crypto Order <em>5% off</em>';
+    return;
+  }
+
   const asset = document.getElementById('cryptoAssetSelect').value;
   const payload = checkoutPayloadFromForm();
   payload.paymentMethod = 'crypto';
@@ -650,8 +681,10 @@ async function submitCryptoCheckout() {
   try {
     const result = await api('/api/checkout', { method: 'POST', body: payload });
     msgEl.style.color = 'var(--success)';
-    msgEl.textContent = `${result.message} (Order #${result.orderId}, total $${result.total.toFixed(2)})`;
+    msgEl.textContent = 'Order submitted. Send the exact amount shown below.';
     lastCryptoOrder = { id: result.orderId, email: buyerEmail };
+
+    showManualPaymentShell('Crypto payment instructions', `<strong>Order #${result.orderId}</strong><br>Exact total due: <strong>$${result.total.toFixed(2)}</strong><br><span class="hint">Unique matching cents: $${Number(result.paymentMatchAdjustment || 0).toFixed(2)}</span>`);
 
     if (result.crypto) {
       document.getElementById('cryptoAddressText').textContent = result.crypto.address;
@@ -699,11 +732,11 @@ async function confirmCryptoPayment() {
   }
 }
 
-async function submitManualCheckout() {
+async function submitManualPaypalCheckout() {
   const msgEl = document.getElementById('checkoutMsg');
-  const btn = document.getElementById('manualCheckoutBtn');
+  const btn = document.getElementById('manualPaypalCheckoutBtn');
   const payload = checkoutPayloadFromForm();
-  payload.paymentMethod = 'manual';
+  payload.paymentMethod = 'manual_paypal';
 
   if (!validateCheckoutPayload(payload, msgEl)) return;
 
@@ -711,9 +744,16 @@ async function submitManualCheckout() {
   try {
     const result = await api('/api/checkout', { method: 'POST', body: payload });
     msgEl.style.color = 'var(--success)';
-    msgEl.textContent = `${result.message} (Order #${result.orderId}, total $${result.total.toFixed(2)})`;
+    msgEl.textContent = 'Order submitted. Send the exact amount shown below.';
+    const paypalDetails = document.getElementById('paypalPaymentDetails');
+    const cryptoChoice = document.getElementById('cryptoChoiceDetails');
+    const cryptoDetails = document.getElementById('cryptoPaymentDetails');
+    if (cryptoChoice) cryptoChoice.style.display = 'none';
+    if (cryptoDetails) cryptoDetails.style.display = 'none';
+    if (paypalDetails) paypalDetails.style.display = 'block';
+    document.getElementById('paypalPaymentEmail').textContent = result.paypal ? result.paypal.email : 'at475756@gmail.com';
+    showManualPaymentShell('PayPal payment instructions', `<strong>Order #${result.orderId}</strong><br>Exact total due: <strong>$${result.total.toFixed(2)}</strong><br><span class="hint">Unique matching cents: $${Number(result.paymentMatchAdjustment || 0).toFixed(2)}</span>`);
     clearCartAfterCheckout();
-    setTimeout(closeCheckoutModal, 3000);
   } catch (err) {
     msgEl.style.color = 'var(--danger)';
     msgEl.textContent = err.message;
@@ -749,8 +789,8 @@ function wireCheckout() {
     });
   }
 
-  const manualBtn = document.getElementById('manualCheckoutBtn');
-  if (manualBtn) manualBtn.addEventListener('click', submitManualCheckout);
+  const manualPaypalBtn = document.getElementById('manualPaypalCheckoutBtn');
+  if (manualPaypalBtn) manualPaypalBtn.addEventListener('click', submitManualPaypalCheckout);
 
   const cryptoBtn = document.getElementById('cryptoCheckoutBtn');
   if (cryptoBtn) cryptoBtn.addEventListener('click', submitCryptoCheckout);
@@ -765,6 +805,10 @@ function wireCheckout() {
     e.preventDefault();
   });
 }
+
+
+
+
 
 
 

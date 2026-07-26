@@ -167,6 +167,14 @@ function customerInstructionsText(order) {
       `After sending, reply to this email with your transaction ID (TXID) or submit it on our site so we can confirm your payment quickly.`,
       `Please reference your order number: ${ref}`,
     );
+  } else if (order.payment_provider === 'manual_paypal') {
+    lines.push(
+      `Send the exact total due to PayPal:`,
+      config.PAYPAL_MANUAL_EMAIL,
+      ``,
+      `Use the exact amount shown above so we can match your payment to ${ref}.`,
+      `Orders are processed after payment is confirmed. If you have questions, reply to this email.`,
+    );
   } else {
     lines.push(
       `We'll follow up shortly with payment instructions.`,
@@ -189,6 +197,13 @@ function customerInstructionsHtml(order) {
       <p style="font-family:monospace; font-size:15px;">${htmlEscape(address)}</p>
       <p>After sending, reply to this email with your transaction ID (TXID) or submit it on our site so we can confirm your payment quickly.</p>
       <p>Please reference your order number: <strong>${htmlEscape(ref)}</strong></p>
+    `;
+  } else if (order.payment_provider === 'manual_paypal') {
+    body = `
+      <p>Send the exact total due to PayPal:</p>
+      <p style="font-family:monospace; font-size:16px;"><strong>${htmlEscape(config.PAYPAL_MANUAL_EMAIL)}</strong></p>
+      <p>Use the exact amount shown above so we can match your payment to <strong>${htmlEscape(ref)}</strong>.</p>
+      <p>Orders are processed after payment is confirmed. If you have questions, reply to this email.</p>
     `;
   } else {
     body = `<p>We'll follow up shortly with payment instructions. If you have questions, reply to this email.</p>`;
@@ -216,3 +231,4 @@ async function sendCustomerPaymentInstructions(order) {
 }
 
 module.exports = { sendOrderBackup, sendCustomerPaymentInstructions, orderText };
+
