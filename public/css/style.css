@@ -2858,6 +2858,33 @@ body.search-open { overflow: hidden; }
   .launch-check-grid { grid-template-columns: 1fr; }
 }
 
+/* Keep wide admin order data from stretching the whole page */
+#ordersPanel {
+  overflow: hidden;
+}
+#ordersTable {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+#ordersTable .admin-th,
+#ordersTable .admin-td {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+#ordersTable .admin-td:nth-child(7) {
+  max-width: 260px;
+}
+.admin-payment-ref {
+  display: inline-block;
+  max-width: 235px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
 /* ---------- Admin order tools ---------- */
 .admin-order-toolbar {
   display: grid;
@@ -3091,4 +3118,5 @@ body.search-open { overflow: hidden; }
   .success-next-steps { grid-template-columns: 1fr; }
   .success-actions { display: grid; }
 }
+
 

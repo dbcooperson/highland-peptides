@@ -89,8 +89,9 @@ function paymentHTML(order) {
   }
   if (provider === 'crypto') {
     const asset = escapeHtml(order.crypto_asset || 'BTC');
-    const txid = order.payment_reference
-      ? `<br><span class="admin-muted">TXID: ${escapeHtml(order.payment_reference)}</span>`
+    const rawTxid = String(order.payment_reference || '');
+    const txid = rawTxid
+      ? `<br><span class="admin-muted admin-payment-ref" title="${escapeHtml(rawTxid)}">TXID: ${escapeHtml(rawTxid)}</span>`
       : '<br><span class="admin-muted">Waiting on TXID</span>';
     return `<span class="admin-payment admin-payment-crypto">Crypto (${asset})</span>${txid}`;
   }
@@ -328,6 +329,7 @@ document.getElementById('adminLogoutBtn').addEventListener('click', async () => 
   await api('/api/admin/logout', { method: 'POST' });
   location.reload();
 });
+
 
 
 
