@@ -33,6 +33,9 @@ module.exports = {
   },
 
 
+  // Extra global price multiplier applied after formula/overrides (1.15 = raise all public prices by 15%).
+  PUBLIC_PRICE_MULTIPLIER: Number(process.env.PUBLIC_PRICE_MULTIPLIER || 1.15),
+
   // Round all public product prices to this many decimal places.
   PRICE_DECIMALS: 2,
 
@@ -72,6 +75,7 @@ module.exports = {
 
   SITE_NAME: process.env.SITE_NAME || 'Highland Peptides',
 };
+
 
 
 

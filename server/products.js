@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { MARKUP_MULTIPLIER, PRICE_ADJUSTMENT, PRICE_DECIMALS } = require('./config');
+const { MARKUP_MULTIPLIER, PRICE_ADJUSTMENT, PUBLIC_PRICE_MULTIPLIER, PRICE_DECIMALS } = require('./config');
 
 const raw = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'products.json'), 'utf8'));
 const descriptions = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'descriptions.json'), 'utf8'));
@@ -53,7 +53,7 @@ const pricedCatalog = raw
     slug: slugify(p.name),
     popular: popularRank[p.sku] !== undefined,
     description: descriptions[p.name] || '',
-    price: round(p.salePrice != null ? p.salePrice : p.cost * MARKUP_MULTIPLIER * PRICE_ADJUSTMENT, PRICE_DECIMALS),
+    price: round((p.salePrice != null ? p.salePrice : p.cost * MARKUP_MULTIPLIER * PRICE_ADJUSTMENT) * PUBLIC_PRICE_MULTIPLIER, PRICE_DECIMALS),
   }));
 
 const byNameForPricing = new Map();
@@ -117,5 +117,6 @@ function getProductFamily({ sku, slug }) {
 }
 
 module.exports = { catalog, bySku, bySlug, costBySku, getProductFamily, priceAudit };
+
 
 
