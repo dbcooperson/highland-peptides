@@ -30,6 +30,7 @@ module.exports = {
     JETT: 0.15,
     BABE: 0.15,
     VICKY: 0.15,
+    TK: 0.15,
   },
 
 
@@ -75,6 +76,7 @@ module.exports = {
 
   SITE_NAME: process.env.SITE_NAME || 'Highland Peptides',
 };
+
 
 
 
