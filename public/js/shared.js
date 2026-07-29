@@ -207,11 +207,20 @@ function vialDisplayName(name) {
   const cleanName = String(name || '').trim();
   return VIAL_LABEL_ALIASES[cleanName] || cleanName;
 }
+function vialLabelSizeClass(name) {
+  const raw = String(vialDisplayName(name) || '').replace(/[^a-z0-9]/gi, '');
+  if (raw.length >= 18) return 'vial-label-xlong';
+  if (raw.length >= 11) return 'vial-label-long';
+  if (raw.length >= 9) return 'vial-label-medium';
+  return 'vial-label-short';
+}
+
 function vialLabelHTML(name, spec, className = '') {
   const productName = escapeHTML(vialDisplayName(name));
   const strength = escapeHTML(cleanVialSpec(spec));
+  const sizeClass = vialLabelSizeClass(name);
   return `
-    <div class="vial-label-overlay ${className}">
+    <div class="vial-label-overlay ${className} ${sizeClass}">
       <strong title="${productName}">${productName}</strong>
       <em>${strength}</em>
     </div>

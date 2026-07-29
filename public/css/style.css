@@ -3285,3 +3285,55 @@ body.search-open { overflow: hidden; }
 .vial-label-overlay {
   z-index: 2;
 }
+
+/* Keep dynamic label text inside the printable vial label area. Long names are scaled like a curved vial label instead of spilling off the glass. */
+.vial-label-overlay {
+  width: 40%;
+  top: 59%;
+  gap: 6px;
+}
+.detail-vial-label,
+.showcase-vial-label {
+  width: 38%;
+  top: 59%;
+}
+.vial-label-overlay strong {
+  font-size: clamp(10px, 1.25vw, 18px);
+  letter-spacing: -0.055em;
+  line-height: 0.92;
+  transform-origin: center;
+}
+.vial-label-medium strong {
+  font-size: clamp(9px, 1.05vw, 16px);
+  letter-spacing: -0.07em;
+  transform: scaleX(0.92);
+}
+.vial-label-long strong {
+  font-size: clamp(8px, 0.92vw, 14px);
+  letter-spacing: -0.08em;
+  transform: scaleX(0.82);
+}
+.vial-label-xlong strong {
+  font-size: clamp(7px, 0.82vw, 12px);
+  letter-spacing: -0.085em;
+  line-height: 0.9;
+  transform: scaleX(0.76);
+}
+.detail-vial-label em,
+.showcase-vial-label em,
+.vial-label-overlay em {
+  padding: 4px 10px;
+  font-size: clamp(9px, 0.82vw, 13px);
+}
+@media (max-width: 680px) {
+  .detail-vial-label,
+  .showcase-vial-label,
+  .vial-label-overlay {
+    width: 42%;
+    top: 59%;
+  }
+  .vial-label-overlay strong { font-size: 12px; }
+  .vial-label-medium strong { font-size: 11px; }
+  .vial-label-long strong { font-size: 10px; }
+  .vial-label-xlong strong { font-size: 9px; }
+}
