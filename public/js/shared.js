@@ -221,8 +221,8 @@ function vialLabelHTML(name, spec, className = '') {
   const sizeClass = vialLabelSizeClass(name);
   return `
     <div class="vial-label-overlay ${className} ${sizeClass}">
-      <strong title="${productName}">${productName}</strong>
-      <em>${strength}</em>
+      <strong title="${productName}" style="color:#23382b;text-shadow:0 1px 0 rgba(250,247,241,.8),0 0 8px rgba(250,247,241,.75);">${productName}</strong>
+      <em style="color:#f3efe6;background:linear-gradient(180deg,rgba(68,72,70,.96),rgba(42,45,43,.96));border-color:rgba(243,239,230,.45);">${strength}</em>
     </div>
   `;
 }
