@@ -43,8 +43,9 @@ module.exports = {
   // Round all public product prices to this many decimal places.
   PRICE_DECIMALS: 2,
 
-  // Admin login password (change this via env var ADMIN_PASSWORD before deploying).
+  // Admin login password. Prefer ADMIN_PASSWORD_SHA256 in production so the raw password is not stored.
   ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || 'change-me-before-launch',
+  ADMIN_PASSWORD_SHA256: process.env.ADMIN_PASSWORD_SHA256 || '',
 
   // Session secret (change via env var SESSION_SECRET before deploying).
   SESSION_SECRET: process.env.SESSION_SECRET || 'change-me-session-secret',

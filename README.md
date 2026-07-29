@@ -19,7 +19,7 @@ PDF generation. Payment processing is intentionally stubbed — orders land as
 
 1. **Supplier costs.** `data/products.json` currently has placeholder cost figures. Replace `cost` for each SKU with what you're actually paying your COA-verified supplier.
 2. **Packaging fee.** `server/config.js` → `PACKAGING_FEE` is a $1.50 placeholder. Update it to your real per-order ink + bag cost.
-3. **Admin password & session secret.** Set the `ADMIN_PASSWORD` and `SESSION_SECRET` environment variables before deploying — do not leave the defaults in `config.js`.
+3. **Admin password & session secret.** Set `ADMIN_PASSWORD_SHA256` (preferred) or `ADMIN_PASSWORD`, plus `SESSION_SECRET`, before deploying — do not leave the defaults in `config.js`.
 4. **Payment.** No processor is wired in. Checkout currently just records the order as pending. Once you've set up a business entity + a processor that allows this product category, this is the next thing to build.
 5. **Legal review.** `legal/RUO_Disclaimer_DRAFT.docx` is a first-draft disclaimer, not legal advice. Have an attorney review and finalize it, and confirm your final product list, before this goes live.
 
@@ -39,7 +39,7 @@ Node hosts. Reasonable low-effort options: Render, Railway, or a small VPS.
 Steps are the same everywhere:
 
 1. Push this folder to a GitHub repo (or upload directly if the host supports it).
-2. Set environment variables: `ADMIN_PASSWORD`, `SESSION_SECRET`, `SITE_NAME`.
+2. Set environment variables: `ADMIN_PASSWORD_SHA256`, `SESSION_SECRET`, `SITE_NAME`. Use `ADMIN_PASSWORD` only for local testing if needed.
 3. Start command: `npm install && node server/index.js`.
 4. Point your domain's DNS at the host once you've registered one.
 5. Data is stored in `data/db.json` on disk — make sure your host's disk persists between deploys (Render/Railway both support this with a persistent disk/volume; without one, orders would reset on redeploy).

@@ -13,8 +13,8 @@ const { sendOrderBackup, sendCustomerPaymentInstructions } = require('./notifica
 
 const isProductionRuntime = Boolean(process.env.RENDER || process.env.RENDER_SERVICE_ID || process.env.NODE_ENV === 'production');
 if (isProductionRuntime) {
-  if (!process.env.ADMIN_PASSWORD || config.ADMIN_PASSWORD === 'change-me-before-launch') {
-    throw new Error('ADMIN_PASSWORD must be set before running in production.');
+  if ((!process.env.ADMIN_PASSWORD_SHA256 && !process.env.ADMIN_PASSWORD) || (!config.ADMIN_PASSWORD_SHA256 && config.ADMIN_PASSWORD === 'change-me-before-launch')) {
+    throw new Error('ADMIN_PASSWORD_SHA256 or ADMIN_PASSWORD must be set before running in production.');
   }
   if (!process.env.SESSION_SECRET || config.SESSION_SECRET === 'change-me-session-secret') {
     throw new Error('SESSION_SECRET must be set before running in production.');
@@ -407,9 +407,13 @@ function clientIp(req) {
   return req.ip || req.get('x-forwarded-for') || req.socket.remoteAddress || 'unknown';
 }
 
-function safePasswordMatch(input, expected) {
-  const inputHash = crypto.createHash('sha256').update(String(input || '')).digest();
-  const expectedHash = crypto.createHash('sha256').update(String(expected || '')).digest();
+function safePasswordMatch(input, expected, expectedSha256 = '') {
+  const inputHashHex = crypto.createHash('sha256').update(String(input || '')).digest('hex');
+  const expectedHashHex = String(expectedSha256 || '').trim().toLowerCase()
+    || crypto.createHash('sha256').update(String(expected || '')).digest('hex');
+  if (!/^[a-f0-9]{64}$/.test(expectedHashHex)) return false;
+  const inputHash = Buffer.from(inputHashHex, 'hex');
+  const expectedHash = Buffer.from(expectedHashHex, 'hex');
   return crypto.timingSafeEqual(inputHash, expectedHash);
 }
 
@@ -511,7 +515,7 @@ app.get('/api/admin/profit', requireAdmin, (req, res) => {
 
 app.post('/api/admin/login', checkAdminLoginLimit, (req, res) => {
   const { password } = req.body || {};
-  if (!safePasswordMatch(password, config.ADMIN_PASSWORD)) {
+  if (!safePasswordMatch(password, config.ADMIN_PASSWORD, config.ADMIN_PASSWORD_SHA256)) {
     recordAdminLoginFailure(req);
     return res.status(401).json({ error: 'Wrong admin password.' });
   }
