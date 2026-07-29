@@ -120,7 +120,7 @@ function showAddedToCartPopup(sku, qty = 1) {
       <button type="button" class="cart-popup-close" aria-label="Close">&times;</button>
       <div class="cart-popup-success"><span aria-hidden="true">OK</span><strong id="cartPopupTitle">Product successfully added to your cart.</strong></div>
       <div class="cart-popup-product">
-        <div class="cart-popup-media photo"></div>
+        <div class="cart-popup-media photo sku-mockup"${productImageStyle(product)}></div>
         <div class="cart-popup-copy">
           <strong>${escapeHTML(product.name)}</strong>
           <span>${escapeHTML(cleanVialSpec(product.spec))} &bull; Qty ${qty}</span>
@@ -142,7 +142,7 @@ function showAddedToCartPopup(sku, qty = 1) {
           <div class="cart-popup-suggestion-grid">
             ${suggestions.map(item => `
               <a href="/product/${encodeURIComponent(item.slug)}" class="cart-popup-suggestion">
-                <span class="cart-popup-suggestion-media photo"></span>
+                <span class="cart-popup-suggestion-media photo sku-mockup"${productImageStyle(item)}></span>
                 <span><strong>${escapeHTML(item.name)}</strong><em>${escapeHTML(cleanVialSpec(item.spec))} &bull; $${item.price.toFixed(2)}</em></span>
               </a>
             `).join('')}
@@ -203,6 +203,10 @@ const VIAL_LABEL_ALIASES = {
   'Bacteriostatic Water': 'BAC WATER',
 };
 
+function productImageStyle(product) {
+  if (!product || !product.image) return '';
+  return ` style="--mockup-image:url('${escapeHTML(product.image)}')"`;
+}
 function vialDisplayName(name) {
   const cleanName = String(name || '').trim();
   return VIAL_LABEL_ALIASES[cleanName] || cleanName;
@@ -267,7 +271,7 @@ let productSearchCatalogPromise = null;
 function productSearchResultHTML(p) {
   return `
     <a class="product-search-result" href="/product/${encodeURIComponent(p.slug)}">
-      <div class="product-search-result-media photo"></div>
+      <div class="product-search-result-media photo sku-mockup"${productImageStyle(p)}></div>
       <div class="product-search-result-copy">
         <span class="product-search-result-group">${escapeHTML(p.group || p.category)}</span>
         <strong>${escapeHTML(p.name)}</strong>

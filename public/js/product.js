@@ -21,7 +21,7 @@ function renderProduct() {
 
   document.getElementById('productContent').innerHTML = `
     <div class="product-layout">
-      <div class="product-media photo">${vialLabelHTML(family.name, selected.spec, 'detail-vial-label printed-vial-label')}</div>
+      <div class="product-media photo sku-mockup"${productImageStyle(selected)}></div>
       <div class="product-info">
         <div class="product-kicker-row">
           <div class="group">${escapeHTML(family.group || family.category)}</div>

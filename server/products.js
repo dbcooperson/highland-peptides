@@ -53,6 +53,7 @@ const pricedCatalog = raw
     slug: slugify(p.name),
     popular: popularRank[p.sku] !== undefined,
     description: descriptions[p.name] || '',
+    image: `/images/product-mockups/generated/${p.sku}.webp`,
     price: round((p.salePrice != null ? p.salePrice : p.cost * MARKUP_MULTIPLIER * PRICE_ADJUSTMENT) * PUBLIC_PRICE_MULTIPLIER, PRICE_DECIMALS),
   }));
 

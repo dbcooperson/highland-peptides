@@ -3403,3 +3403,13 @@ body.search-open { overflow: hidden; }
   .product-media.photo .printed-vial-label strong { font-size: 10px !important; }
   .product-media.photo .printed-vial-label em { font-size: 9px !important; }
 }
+
+/* Generated per-SKU mockups. These are baked images, not live text overlays. */
+.sku-mockup::before {
+  background-image: var(--mockup-image, url('/images/product-mockups/highland-vial-label-template.png')) !important;
+}
+.product-media.sku-mockup .vial-label-overlay,
+.card-media.sku-mockup .vial-label-overlay,
+.showcase-vial.sku-mockup .vial-label-overlay {
+  display: none !important;
+}

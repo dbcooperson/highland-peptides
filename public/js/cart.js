@@ -30,7 +30,7 @@ function cartLineHTML(sku, qty, p) {
   const lineTotal = p.price * qty;
   return `
     <div class="cart-line">
-      <div class="cart-line-media photo" aria-hidden="true"></div>
+      <div class="cart-line-media photo sku-mockup"${productImageStyle(p)} aria-hidden="true"></div>
       <div class="cart-line-info">
         <div class="cart-line-kicker">${escapeHTML(p.group || p.category || 'Research product')}</div>
         <strong>${escapeHTML(p.name)}</strong>
