@@ -13,10 +13,9 @@ function clearHighlandCart(event) {
 window.clearHighlandCart = clearHighlandCart;
 
 document.addEventListener('click', (event) => {
-  if (event.defaultPrevented) return;
-  const clearBtn = event.target && event.target.closest ? event.target.closest('#clearCartBtn') : null;
+  const clearBtn = event.target && event.target.closest ? event.target.closest('#clearCartBtn, #clearCartSummaryBtn') : null;
   if (clearBtn) clearHighlandCart(event);
-});
+}, true);
 function sadFaceSVG() {
   return `<svg class="cart-empty-face" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
     <circle cx="50" cy="46" r="34" fill="none" stroke="currentColor" stroke-width="3"/>
@@ -176,6 +175,10 @@ document.addEventListener('cart:updated', renderCartPage);
 wireCheckout();
 
 async function init() {
+  if (new URLSearchParams(window.location.search).get('clearCart') === '1') {
+    clearHighlandCart();
+    history.replaceState(null, '', '/cart.html');
+  }
   const catalogData = await api('/api/catalog');
   window.siteCatalog = catalogData.products;
   window.siteFees = { packagingFee: catalogData.packagingFee, shippingFee: catalogData.shippingFee, orderFeeRate: catalogData.orderFeeRate || 0, altPaymentDiscountRate: catalogData.altPaymentDiscountRate || 0 };

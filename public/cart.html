@@ -6,6 +6,7 @@
 <meta name="description" content="Review research-use-only catalog items in your Highland Peptides cart before continuing.">
 <title>Cart - Highland Peptides</title>
 <link rel="stylesheet" href="/css/style.css">
+<script>if(new URLSearchParams(location.search).get("clearCart")==="1"){try{localStorage.removeItem("hp_cart");}catch(e){}}</script>
 </head>
 <body>
 
@@ -93,7 +94,7 @@
         <p>Review your research-use-only order before continuing to secure checkout.</p>
       </div>
       <div class="cart-header-actions">
-        <button type="button" id="clearCartBtn" class="cart-header-link cart-clear-link" onclick="clearHighlandCart(event)">Clear Cart</button>
+        <a href="/cart.html?clearCart=1" id="clearCartBtn" class="cart-header-link cart-clear-link">Clear Cart</a>
         <a href="/index.html#catalogSection" class="cart-header-link">Continue Shopping</a>
       </div>
     </div>
@@ -115,6 +116,7 @@
         <div id="cartTotalPage"></div>
         <button id="checkoutBtn" class="checkout-primary-btn">Checkout Securely</button>
         <a href="/index.html#catalogSection" class="checkout-secondary-link">Keep shopping</a>
+        <a href="/cart.html?clearCart=1" id="clearCartSummaryBtn" class="checkout-secondary-link cart-clear-link">Clear cart</a>
         <p class="cart-summary-note">For laboratory / research use only. Not for human or veterinary use.</p>
         <p class="form-msg" id="cartMsg"></p>
       </aside>
