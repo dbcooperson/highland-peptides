@@ -1,3 +1,22 @@
+function clearHighlandCart(event) {
+  if (event && typeof event.preventDefault === 'function') event.preventDefault();
+  try { localStorage.removeItem('hp_cart'); } catch (err) {}
+  saveCart({});
+  updateCartBadge();
+  const msg = document.getElementById('cartMsg');
+  if (msg) {
+    msg.style.color = 'var(--success)';
+    msg.textContent = 'Cart cleared.';
+  }
+  renderCartPage();
+}
+window.clearHighlandCart = clearHighlandCart;
+
+document.addEventListener('click', (event) => {
+  if (event.defaultPrevented) return;
+  const clearBtn = event.target && event.target.closest ? event.target.closest('#clearCartBtn') : null;
+  if (clearBtn) clearHighlandCart(event);
+});
 function sadFaceSVG() {
   return `<svg class="cart-empty-face" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
     <circle cx="50" cy="46" r="34" fill="none" stroke="currentColor" stroke-width="3"/>
@@ -170,10 +189,6 @@ async function init() {
     }
   });
   if (prunedCart) saveCart(currentCart);
-  document.getElementById('clearCartBtn')?.addEventListener('click', () => {
-    saveCart({});
-    renderCartPage();
-  });
   renderCartPage();
   if (new URLSearchParams(window.location.search).get('checkout') === '1') {
     setTimeout(() => document.getElementById('checkoutBtn')?.click(), 150);

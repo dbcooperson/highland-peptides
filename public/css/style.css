@@ -3186,3 +3186,18 @@ body.search-open { overflow: hidden; }
     text-align: center;
   }
 }
+
+.cart-header-actions {
+  position: relative;
+  z-index: 5;
+  pointer-events: auto;
+}
+.cart-clear-link {
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  color: var(--ink);
+}
