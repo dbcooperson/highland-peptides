@@ -640,6 +640,11 @@ app.post('/api/admin/orders/:id/status', requireAdmin, async (req, res) => {
   res.json({ ok: true });
 });
 
+app.delete('/api/admin/orders/:id', requireAdmin, (req, res) => {
+  const removed = db.deleteOrder(req.params.id);
+  if (!removed) return res.status(404).json({ error: 'Order not found' });
+  res.json({ ok: true, deletedOrderId: removed.id });
+});
 app.get('/api/admin/orders/:id/packing-slip.pdf', requireAdmin, (req, res) => {
   const order = db.getOrderById(req.params.id);
   if (!order) return res.status(404).send('Not found');

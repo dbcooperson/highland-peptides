@@ -171,6 +171,15 @@ function markOrderBackupSent(id, channels = [], errors = []) {
   return order;
 }
 
+function deleteOrder(id) {
+  const data = load();
+  const orderId = Number(id);
+  const index = data.orders.findIndex(o => o.id === orderId);
+  if (index === -1) return null;
+  const [removed] = data.orders.splice(index, 1);
+  save(data);
+  return removed;
+}
 function getStorageInfo() {
   return {
     dbPath: DB_PATH,
@@ -180,6 +189,6 @@ function getStorageInfo() {
   };
 }
 
-module.exports = { createOrder, getAllOrders, getOrderById, setPayPalOrderId, markOrderPaid, updateOrderStatus, updateOrderNotes, markOrderBackupSent, getStorageInfo, isTxidUsed, setPaymentReference };
+module.exports = { createOrder, getAllOrders, getOrderById, setPayPalOrderId, markOrderPaid, updateOrderStatus, updateOrderNotes, deleteOrder, markOrderBackupSent, getStorageInfo, isTxidUsed, setPaymentReference };
 
 

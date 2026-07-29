@@ -3201,3 +3201,26 @@ body.search-open { overflow: hidden; }
   pointer-events: auto;
   color: var(--ink);
 }
+
+.admin-delete-order {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 8px 0 10px;
+  border: 1px solid rgba(201, 79, 63, 0.55);
+  border-radius: 999px;
+  background: rgba(201, 79, 63, 0.12);
+  color: #ffb8ad;
+  padding: 7px 10px;
+  font-size: 11px;
+  font-weight: 900;
+  cursor: pointer;
+}
+.admin-delete-order:hover {
+  background: rgba(201, 79, 63, 0.2);
+  color: #ffd3cd;
+}
+.admin-delete-order:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
