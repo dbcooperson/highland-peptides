@@ -173,7 +173,8 @@ function customerInstructionsText(order) {
       config.PAYPAL_MANUAL_EMAIL,
       ``,
       `Use the exact amount shown above so we can match your payment to ${ref}.`,
-      `Orders are processed after payment is confirmed. If you have questions, reply to this email.`,
+      `Payment is manually reviewed before fulfillment. Once confirmed, your order ships the next business day.`,
+      `If you have questions, reply to this email.`,
     );
   } else {
     lines.push(
@@ -203,7 +204,8 @@ function customerInstructionsHtml(order) {
       <p>Send the exact total due to PayPal:</p>
       <p style="font-family:monospace; font-size:16px;"><strong>${htmlEscape(config.PAYPAL_MANUAL_EMAIL)}</strong></p>
       <p>Use the exact amount shown above so we can match your payment to <strong>${htmlEscape(ref)}</strong>.</p>
-      <p>Orders are processed after payment is confirmed. If you have questions, reply to this email.</p>
+      <p>Payment is manually reviewed before fulfillment. Once confirmed, your order ships the next business day.</p>
+      <p>If you have questions, reply to this email.</p>
     `;
   } else {
     body = `<p>We'll follow up shortly with payment instructions. If you have questions, reply to this email.</p>`;

@@ -250,12 +250,12 @@ app.post('/api/checkout', checkCheckoutRateLimit, async (req, res) => {
     baseTotal: order.base_total || order.total,
     paymentMatchAdjustment: order.payment_match_adjustment || 0,
     paymentMethod: order.payment_provider,
-    message: 'Order received. Send the exact total shown to complete payment.',
+    message: 'Order received. Send the exact total shown for manual payment verification.',
   };
 
   if (paymentMethod === 'manual_paypal') {
     response.paypal = { email: config.PAYPAL_MANUAL_EMAIL, reference: `HP-${order.id}` };
-    response.message = 'Order received. Send the exact total shown to PayPal to complete payment.';
+    response.message = 'Order received. Send the exact total shown to PayPal. We manually verify payment before fulfillment.';
   }
 
   if (paymentMethod === 'crypto') {

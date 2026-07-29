@@ -684,7 +684,7 @@ async function submitCryptoCheckout() {
   try {
     const result = await api('/api/checkout', { method: 'POST', body: payload });
     msgEl.style.color = 'var(--success)';
-    msgEl.textContent = 'Order submitted. Send the exact amount shown below.';
+    msgEl.textContent = 'Order submitted. Please send the exact total shown below for manual verification.';
     lastCryptoOrder = { id: result.orderId, email: buyerEmail };
 
     showManualPaymentShell('Crypto payment instructions', `<strong>Order #${result.orderId}</strong><br>Exact total due: <strong>$${result.total.toFixed(2)}</strong><br><span class="hint">Unique matching cents: $${Number(result.paymentMatchAdjustment || 0).toFixed(2)}</span>`);
@@ -755,7 +755,7 @@ async function submitManualPaypalCheckout() {
     if (cryptoDetails) cryptoDetails.style.display = 'none';
     if (paypalDetails) paypalDetails.style.display = 'block';
     document.getElementById('paypalPaymentEmail').textContent = result.paypal ? result.paypal.email : 'at475756@gmail.com';
-    showManualPaymentShell('PayPal payment instructions', `<strong>Order #${result.orderId}</strong><br>Exact total due: <strong>$${result.total.toFixed(2)}</strong><br><span class="hint">Unique matching cents: $${Number(result.paymentMatchAdjustment || 0).toFixed(2)}</span>`);
+    showManualPaymentShell('PayPal payment instructions', `<strong>Order #${result.orderId}</strong><br>Exact total due: <strong>$${result.total.toFixed(2)}</strong><br>Send payment to: <strong>${result.paypal ? result.paypal.email : 'at475756@gmail.com'}</strong><br><span class="hint">Please send the exact total shown. We manually verify payment, then confirmed orders ship the next business day.</span>`);
     clearCartAfterCheckout();
   } catch (err) {
     msgEl.style.color = 'var(--danger)';
