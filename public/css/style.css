@@ -3351,3 +3351,15 @@ body.search-open { overflow: hidden; }
   border-color: rgba(243,239,230,0.45) !important;
   box-shadow: 0 2px 8px rgba(28,26,23,0.24);
 }
+
+/* Temporary live-site cleanup: hide dynamic vial text overlays until rendered SKU mockups are generated. */
+.product-media .vial-label-overlay,
+.card-media .vial-label-overlay,
+.showcase-vial .vial-label-overlay {
+  display: none !important;
+}
+.product-media.photo::before,
+.showcase-vial.photo::before,
+.card-media.photo::before {
+  inset: 0;
+}
