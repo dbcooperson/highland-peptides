@@ -3363,3 +3363,43 @@ body.search-open { overflow: hidden; }
 .card-media.photo::before {
   inset: 0;
 }
+
+/* Product detail printed vial label: restore readable product text without the giant floating overlay look. */
+.product-media.photo .printed-vial-label {
+  display: grid !important;
+  top: 58.5%;
+  left: 50%;
+  width: 34%;
+  gap: 5px;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+}
+.product-media.photo .printed-vial-label strong {
+  color: #243a2d !important;
+  max-width: 100%;
+  font-size: clamp(8px, 1vw, 13px) !important;
+  line-height: 0.9;
+  letter-spacing: -0.075em;
+  text-shadow: 0 1px 0 rgba(250,247,241,0.6);
+  transform-origin: center;
+}
+.product-media.photo .printed-vial-label.vial-label-medium strong { transform: scaleX(0.88); }
+.product-media.photo .printed-vial-label.vial-label-long strong { transform: scaleX(0.76); }
+.product-media.photo .printed-vial-label.vial-label-xlong strong { transform: scaleX(0.68); }
+.product-media.photo .printed-vial-label em {
+  min-width: 38px;
+  padding: 3px 8px;
+  color: #f3efe6 !important;
+  background: rgba(52, 57, 54, 0.96) !important;
+  border: 1px solid rgba(243,239,230,0.4) !important;
+  border-radius: 999px;
+  font-size: clamp(8px, 0.78vw, 11px) !important;
+  box-shadow: 0 2px 5px rgba(28,26,23,0.2);
+}
+@media (max-width: 680px) {
+  .product-media.photo .printed-vial-label {
+    width: 36%;
+  }
+  .product-media.photo .printed-vial-label strong { font-size: 10px !important; }
+  .product-media.photo .printed-vial-label em { font-size: 9px !important; }
+}
