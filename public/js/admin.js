@@ -208,6 +208,30 @@ async function loadStorageInfo() {
   }
 }
 
+async function deleteAdminOrder(link) {
+  const label = link.dataset.label || `#${link.dataset.id}`;
+  const ok = window.confirm(`Delete order ${label}? This permanently removes it from the admin panel and profit totals.`);
+  if (!ok) return;
+  link.style.pointerEvents = 'none';
+  link.textContent = 'Deleting...';
+  try {
+    await api(`/api/admin/orders/${link.dataset.id}`, { method: 'DELETE' });
+    await loadOrders();
+    loadProfit();
+    loadLaunchChecks();
+  } catch (err) {
+    link.style.pointerEvents = '';
+    link.textContent = 'Delete order';
+    window.alert(err.message || 'Could not delete order.');
+  }
+}
+
+document.addEventListener('click', (event) => {
+  const deleteLink = event.target && event.target.closest ? event.target.closest('.admin-delete-order') : null;
+  if (!deleteLink) return;
+  event.preventDefault();
+  deleteAdminOrder(deleteLink);
+});
 let adminOrdersCache = [];
 
 function orderSearchText(order) {
@@ -269,7 +293,7 @@ function renderOrdersTable() {
         ${td(new Date(o.created_at).toLocaleString())}
         ${td(`<a href="/api/admin/orders/${o.id}/packing-slip.pdf" target="_blank">Packing Slip</a><br>
                <a href="/api/admin/orders/${o.id}/contents-label.pdf" target="_blank">4x6 Label</a><br>
-               <button type="button" class="admin-delete-order" data-id="${o.id}" data-label="#${o.id} ${escapeHtml(o.buyer.name)}">Delete order</button>
+               <a href="#" class="admin-delete-order" data-id="${o.id}" data-label="#${o.id} ${escapeHtml(o.buyer.name)}">Delete order</a>
                ${adminNotesHTML(o)}`)}
       </tr>
     `).join('') || `<tr>${td('No orders match your filter.')}</tr>`}
@@ -303,25 +327,7 @@ function renderOrdersTable() {
       setTimeout(() => { btn.textContent = 'Save note'; }, 1200);
     };
   });
-  document.querySelectorAll('.admin-delete-order').forEach(btn => {
-    btn.onclick = async () => {
-      const label = btn.dataset.label || `#${btn.dataset.id}`;
-      const ok = window.confirm(`Delete order ${label}? This permanently removes it from the admin panel and profit totals.`);
-      if (!ok) return;
-      btn.disabled = true;
-      btn.textContent = 'Deleting...';
-      try {
-        await api(`/api/admin/orders/${btn.dataset.id}`, { method: 'DELETE' });
-        await loadOrders();
-        loadProfit();
-        loadLaunchChecks();
-      } catch (err) {
-        btn.disabled = false;
-        btn.textContent = 'Delete order';
-        window.alert(err.message || 'Could not delete order.');
-      }
-    };
-  });
+
 }
 
 async function loadOrders() {
