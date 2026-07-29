@@ -3228,3 +3228,13 @@ body.search-open { overflow: hidden; }
   opacity: 0.6;
   cursor: wait;
 }
+
+/* Product image crop fix: show the full vial on product/detail and hero cards instead of zoom-cropping the cap. */
+.product-media.photo,
+.showcase-vial.photo,
+.showcase-vial {
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-color: #f4eee2;
+}
