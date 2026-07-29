@@ -3337,3 +3337,17 @@ body.search-open { overflow: hidden; }
   .vial-label-long strong { font-size: 10px; }
   .vial-label-xlong strong { font-size: 9px; }
 }
+
+/* Vial label readability: use printed dark ink on the cream label instead of white overlay text. */
+.vial-label-overlay strong {
+  color: #23382b !important;
+  text-shadow:
+    0 1px 0 rgba(250,247,241,0.7),
+    0 0 8px rgba(250,247,241,0.72);
+}
+.vial-label-overlay em {
+  color: #f3efe6 !important;
+  background: linear-gradient(180deg, rgba(68,72,70,0.96), rgba(42,45,43,0.96)) !important;
+  border-color: rgba(243,239,230,0.45) !important;
+  box-shadow: 0 2px 8px rgba(28,26,23,0.24);
+}
