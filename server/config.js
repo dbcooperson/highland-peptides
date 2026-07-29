@@ -31,6 +31,7 @@ module.exports = {
     BABE: 0.15,
     VICKY: 0.15,
     TK: 0.15,
+    JBG: 0.15,
   },
 
 
