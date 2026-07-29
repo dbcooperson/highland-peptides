@@ -3238,3 +3238,50 @@ body.search-open { overflow: hidden; }
   background-position: center;
   background-color: #f4eee2;
 }
+
+/* Hard reset vial mockups: use a contained pseudo-image so older cover/zoom rules cannot crop into the cap. */
+.card-media.photo,
+.product-media.photo,
+.showcase-vial.photo,
+.cart-line-media.photo,
+.cart-popup-media.photo,
+.cart-popup-suggestion-media.photo,
+.product-search-result-media,
+.mini-vial {
+  background-image: none !important;
+  background-color: #f4eee2;
+  position: relative;
+  overflow: hidden;
+}
+.card-media.photo::before,
+.product-media.photo::before,
+.showcase-vial.photo::before,
+.cart-line-media.photo::before,
+.cart-popup-media.photo::before,
+.cart-popup-suggestion-media.photo::before,
+.product-search-result-media::before,
+.mini-vial::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url('/images/product-mockups/highland-vial-label-template.png');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  pointer-events: none;
+}
+.product-media.photo::before,
+.showcase-vial.photo::before,
+.card-media.photo::before {
+  inset: 8px;
+}
+.cart-line-media.photo::before,
+.cart-popup-media.photo::before,
+.cart-popup-suggestion-media.photo::before,
+.product-search-result-media::before,
+.mini-vial::before {
+  inset: 4px;
+}
+.vial-label-overlay {
+  z-index: 2;
+}
