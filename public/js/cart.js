@@ -30,6 +30,24 @@ function cartLineHTML(sku, qty, p) {
   `;
 }
 
+function unavailableCartLineHTML(sku, qty) {
+  return `
+    <div class="cart-line cart-line-unavailable">
+      <div class="cart-line-media photo" aria-hidden="true"></div>
+      <div class="cart-line-info">
+        <div class="cart-line-kicker">Unavailable item</div>
+        <strong>${escapeHTML(sku)}</strong>
+        <span>This product is no longer active on the website.</span>
+        <em>Remove it from your cart to continue checkout.</em>
+      </div>
+      <div class="cart-line-qty" aria-label="Quantity">
+        <span class="cart-line-qty-num">${qty}</span>
+      </div>
+      <div class="cart-line-price">$0.00</div>
+      <button type="button" class="cart-remove-btn" data-sku="${escapeHTML(sku)}" aria-label="Remove unavailable item ${escapeHTML(sku)} from cart">&times;</button>
+    </div>
+  `;
+}
 function cartSummaryHTML(subtotal) {
   const shippingFee = (window.siteFees && window.siteFees.shippingFee) || 0;
   const orderFeeRate = (window.siteFees && window.siteFees.orderFeeRate) || 0;
@@ -78,13 +96,36 @@ function renderCartPage() {
 
   checkoutBtn.style.display = 'block';
   let subtotal = 0;
+  let unavailableCount = 0;
   itemsEl.innerHTML = skus.map(sku => {
     const p = window.siteCatalog.find(x => x.sku === sku);
-    if (!p) return '';
+    if (!p) {
+      unavailableCount += 1;
+      return unavailableCartLineHTML(sku, cart[sku]);
+    }
     subtotal += p.price * cart[sku];
     return cartLineHTML(sku, cart[sku], p);
   }).join('');
+  if (unavailableCount) {
+    itemsEl.insertAdjacentHTML('afterbegin', `
+      <div class="cart-cleanup-notice">
+        <span>${unavailableCount} discontinued item${unavailableCount === 1 ? '' : 's'} in your cart.</span>
+        <button type="button" id="removeUnavailableCartItems">Remove unavailable items</button>
+      </div>
+    `);
+  }
   totalEl.innerHTML = cartSummaryHTML(subtotal);
+  checkoutBtn.disabled = unavailableCount > 0;
+  checkoutBtn.title = unavailableCount > 0 ? 'Remove unavailable items before checkout.' : '';
+
+  document.getElementById('removeUnavailableCartItems')?.addEventListener('click', () => {
+    const nextCart = getCart();
+    Object.keys(nextCart).forEach(sku => {
+      if (!window.siteCatalog.find(x => x.sku === sku)) delete nextCart[sku];
+    });
+    saveCart(nextCart);
+    renderCartPage();
+  });
 
   itemsEl.querySelectorAll('.cart-qty-down').forEach(btn => {
     btn.onclick = () => {
