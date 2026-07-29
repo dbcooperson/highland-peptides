@@ -3406,7 +3406,23 @@ body.search-open { overflow: hidden; }
 
 /* Generated per-SKU mockups. These are baked images, not live text overlays. */
 .sku-mockup::before {
-  background-image: var(--mockup-image, url('/images/product-mockups/highland-vial-label-template.png')) !important;
+  display: none !important;
+  content: none !important;
+  background-image: none !important;
+}
+.sku-mockup-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  z-index: 1;
+  pointer-events: none;
+}
+.product-card-badge {
+  position: relative;
+  z-index: 2;
 }
 .product-media.sku-mockup .vial-label-overlay,
 .card-media.sku-mockup .vial-label-overlay,

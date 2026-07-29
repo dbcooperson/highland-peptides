@@ -21,7 +21,7 @@ function renderProduct() {
 
   document.getElementById('productContent').innerHTML = `
     <div class="product-layout">
-      <div class="product-media photo sku-mockup"${productImageStyle(selected)}></div>
+      <div class="product-media photo sku-mockup">${productMockupImageHTML(selected)}</div>
       <div class="product-info">
         <div class="product-kicker-row">
           <div class="group">${escapeHTML(family.group || family.category)}</div>

@@ -4,7 +4,8 @@ function cardHTML(p) {
   return `
     <div class="card product-card">
       <a class="card-link" href="/product/${encodeURIComponent(p.slug)}">
-        <div class="card-media photo sku-mockup"${productImageStyle(p)}>
+        <div class="card-media photo sku-mockup">
+          ${productMockupImageHTML(p)}
           <span class="product-card-badge">RUO</span>
         </div>
         <div class="product-card-meta">
