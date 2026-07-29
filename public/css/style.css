@@ -3164,3 +3164,25 @@ body.search-open { overflow: hidden; }
     flex-direction: column;
   }
 }
+
+.cart-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.cart-clear-link {
+  font-family: inherit;
+  cursor: pointer;
+}
+@media (max-width: 640px) {
+  .cart-header-actions {
+    justify-content: stretch;
+    width: 100%;
+  }
+  .cart-header-actions .cart-header-link {
+    flex: 1;
+    text-align: center;
+  }
+}

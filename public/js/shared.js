@@ -437,7 +437,10 @@ function renderCheckoutSummary() {
 
 function checkoutPayloadFromForm() {
   const cart = getCart();
-  const items = Object.keys(cart).filter(s => cart[s] > 0).map(sku => ({ sku, quantity: cart[sku] }));
+  const activeSkus = new Set((window.siteCatalog || []).map(p => p.sku));
+  const items = Object.keys(cart)
+    .filter(sku => cart[sku] > 0 && (!activeSkus.size || activeSkus.has(sku)))
+    .map(sku => ({ sku, quantity: cart[sku] }));
   return {
     items,
     buyer: {

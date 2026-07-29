@@ -117,6 +117,10 @@ function renderCartPage() {
   totalEl.innerHTML = cartSummaryHTML(subtotal);
   checkoutBtn.disabled = unavailableCount > 0;
   checkoutBtn.title = unavailableCount > 0 ? 'Remove unavailable items before checkout.' : '';
+  if (!unavailableCount) {
+    checkoutBtn.disabled = false;
+    checkoutBtn.title = '';
+  }
 
   document.getElementById('removeUnavailableCartItems')?.addEventListener('click', () => {
     const nextCart = getCart();
@@ -156,6 +160,20 @@ async function init() {
   const catalogData = await api('/api/catalog');
   window.siteCatalog = catalogData.products;
   window.siteFees = { packagingFee: catalogData.packagingFee, shippingFee: catalogData.shippingFee, orderFeeRate: catalogData.orderFeeRate || 0, altPaymentDiscountRate: catalogData.altPaymentDiscountRate || 0 };
+  const activeSkus = new Set(window.siteCatalog.map(p => p.sku));
+  const currentCart = getCart();
+  let prunedCart = false;
+  Object.keys(currentCart).forEach(sku => {
+    if (!activeSkus.has(sku)) {
+      delete currentCart[sku];
+      prunedCart = true;
+    }
+  });
+  if (prunedCart) saveCart(currentCart);
+  document.getElementById('clearCartBtn')?.addEventListener('click', () => {
+    saveCart({});
+    renderCartPage();
+  });
   renderCartPage();
   if (new URLSearchParams(window.location.search).get('checkout') === '1') {
     setTimeout(() => document.getElementById('checkoutBtn')?.click(), 150);
