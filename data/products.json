@@ -348,7 +348,8 @@
     "spec": "1000mg x1 vial",
     "cost": 9.5,
     "category": "Peptide",
-    "group": "Metabolic"
+    "group": "Metabolic",
+    "salePrice": 26.2
   },
   {
     "sku": "10AM",
@@ -684,7 +685,8 @@
     "spec": "20mg x1 vial",
     "cost": 9,
     "category": "Peptide",
-    "group": "Skin & Recovery"
+    "group": "Skin & Recovery",
+    "salePrice": 26.078261
   },
   {
     "sku": "BB10",
