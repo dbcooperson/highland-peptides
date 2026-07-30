@@ -6,7 +6,7 @@
     "cost": 4.6,
     "category": "Peptide",
     "group": "Longevity",
-    "salePrice": 15
+    "salePrice": 15.643478
   },
   {
     "sku": "ET50",
@@ -14,7 +14,8 @@
     "spec": "50mg x1 vial",
     "cost": 12,
     "category": "Peptide",
-    "group": "Longevity"
+    "group": "Longevity",
+    "salePrice": 27.817391
   },
   {
     "sku": "DS5",
@@ -23,7 +24,7 @@
     "cost": 3.2,
     "category": "Peptide",
     "group": "Sleep",
-    "salePrice": 13.7
+    "salePrice": 13.904348
   },
   {
     "sku": "DS10",
@@ -32,7 +33,7 @@
     "cost": 5.8,
     "category": "Peptide",
     "group": "Sleep",
-    "salePrice": 16.3
+    "salePrice": 16.513043
   },
   {
     "sku": "DS15",
@@ -41,7 +42,7 @@
     "cost": 7.5,
     "category": "Peptide",
     "group": "Sleep",
-    "salePrice": 18.04
+    "salePrice": 18.252174
   },
   {
     "sku": "SK5",
@@ -50,7 +51,7 @@
     "cost": 3.7,
     "category": "Peptide",
     "group": "Nootropic",
-    "salePrice": 14.13
+    "salePrice": 14.773913
   },
   {
     "sku": "SK10",
@@ -59,7 +60,7 @@
     "cost": 5.5,
     "category": "Peptide",
     "group": "Nootropic",
-    "salePrice": 15.87
+    "salePrice": 16.513043
   },
   {
     "sku": "PIN20",
@@ -67,7 +68,8 @@
     "spec": "20mg x1 vial",
     "cost": 6.5,
     "category": "Peptide",
-    "group": "Longevity"
+    "group": "Longevity",
+    "salePrice": 15.643478
   },
   {
     "sku": "XA5",
@@ -76,7 +78,7 @@
     "cost": 3.7,
     "category": "Peptide",
     "group": "Nootropic",
-    "salePrice": 14.13
+    "salePrice": 14.773913
   },
   {
     "sku": "XA10",
@@ -85,7 +87,7 @@
     "cost": 5.5,
     "category": "Peptide",
     "group": "Nootropic",
-    "salePrice": 15.87
+    "salePrice": 16.513043
   },
   {
     "sku": "2S10",
@@ -93,7 +95,8 @@
     "spec": "10mg x1 vial",
     "cost": 6.5,
     "category": "Peptide",
-    "group": "Mitochondrial"
+    "group": "Mitochondrial",
+    "salePrice": 15.643478
   },
   {
     "sku": "2S50",
@@ -111,7 +114,7 @@
     "cost": 3,
     "category": "Peptide",
     "group": "Growth Hormone",
-    "salePrice": 13.48
+    "salePrice": 13.904348
   },
   {
     "sku": "G210",
@@ -120,7 +123,7 @@
     "cost": 4.6,
     "category": "Peptide",
     "group": "Growth Hormone",
-    "salePrice": 15
+    "salePrice": 15.643478
   },
   {
     "sku": "G65",
@@ -129,7 +132,7 @@
     "cost": 3,
     "category": "Peptide",
     "group": "Growth Hormone",
-    "salePrice": 13.48
+    "salePrice": 13.904348
   },
   {
     "sku": "G610",
@@ -138,7 +141,7 @@
     "cost": 4.6,
     "category": "Peptide",
     "group": "Growth Hormone",
-    "salePrice": 15
+    "salePrice": 15.643478
   },
   {
     "sku": "CND2",
@@ -147,7 +150,7 @@
     "cost": 4,
     "category": "Peptide",
     "group": "Growth Hormone",
-    "salePrice": 14.35
+    "salePrice": 14.773913
   },
   {
     "sku": "CND5",
@@ -163,7 +166,8 @@
     "spec": "10mg x1 vial",
     "cost": 12.8,
     "category": "Peptide",
-    "group": "Growth Hormone"
+    "group": "Growth Hormone",
+    "salePrice": 29.556522
   },
   {
     "sku": "CP10",
@@ -171,7 +175,8 @@
     "spec": "5mg+5mg x1 vial",
     "cost": 7.5,
     "category": "Peptide",
-    "group": "Growth Hormone"
+    "group": "Growth Hormone",
+    "salePrice": 17.382609
   },
   {
     "sku": "CD2",
@@ -179,7 +184,8 @@
     "spec": "2mg x1 vial",
     "cost": 5.8,
     "category": "Peptide",
-    "group": "Growth Hormone"
+    "group": "Growth Hormone",
+    "salePrice": 13.904348
   },
   {
     "sku": "CD5",
@@ -187,7 +193,8 @@
     "spec": "5mg x1 vial",
     "cost": 13.5,
     "category": "Peptide",
-    "group": "Growth Hormone"
+    "group": "Growth Hormone",
+    "salePrice": 31.295652
   },
   {
     "sku": "SMO5",
@@ -195,7 +202,8 @@
     "spec": "5mg x1 vial",
     "cost": 6.5,
     "category": "Peptide",
-    "group": "Growth Hormone"
+    "group": "Growth Hormone",
+    "salePrice": 15.643478
   },
   {
     "sku": "SMO10",
@@ -203,7 +211,8 @@
     "spec": "10mg x1 vial",
     "cost": 12,
     "category": "Peptide",
-    "group": "Growth Hormone"
+    "group": "Growth Hormone",
+    "salePrice": 27.817391
   },
   {
     "sku": "HX5",
@@ -211,7 +220,8 @@
     "spec": "5mg x1 vial",
     "cost": 6.5,
     "category": "Peptide",
-    "group": "Growth Hormone"
+    "group": "Growth Hormone",
+    "salePrice": 15.643478
   },
   {
     "sku": "HGHFRAG",
@@ -219,7 +229,8 @@
     "spec": "5mg x1 vial",
     "cost": 7.2,
     "category": "Peptide",
-    "group": "Metabolic"
+    "group": "Metabolic",
+    "salePrice": 17.382609
   },
   {
     "sku": "IG01",
@@ -228,7 +239,7 @@
     "cost": 3.5,
     "category": "Peptide",
     "group": "Growth Factor",
-    "salePrice": 13.91
+    "salePrice": 14.773913
   },
   {
     "sku": "IG1",
@@ -246,7 +257,7 @@
     "cost": 4,
     "category": "Peptide",
     "group": "Growth Hormone",
-    "salePrice": 14.35
+    "salePrice": 14.773913
   },
   {
     "sku": "IP10",
@@ -255,7 +266,7 @@
     "cost": 6,
     "category": "Peptide",
     "group": "Growth Hormone",
-    "salePrice": 16.52
+    "salePrice": 17.382609
   },
   {
     "sku": "CU",
@@ -264,7 +275,7 @@
     "cost": 3.2,
     "category": "Peptide",
     "group": "Skin & Recovery",
-    "salePrice": 13.7
+    "salePrice": 13.904348
   },
   {
     "sku": "CU100",
@@ -273,7 +284,7 @@
     "cost": 4.5,
     "category": "Peptide",
     "group": "Skin & Recovery",
-    "salePrice": 15
+    "salePrice": 15.643478
   },
   {
     "sku": "KS10",
@@ -281,7 +292,8 @@
     "spec": "10mg x1 vial",
     "cost": 7,
     "category": "Peptide",
-    "group": "Hormone"
+    "group": "Hormone",
+    "salePrice": 16.513043
   },
   {
     "sku": "TY10",
@@ -289,7 +301,8 @@
     "spec": "10mg x1 vial",
     "cost": 5.5,
     "category": "Peptide",
-    "group": "Immune"
+    "group": "Immune",
+    "salePrice": 13.034783
   },
   {
     "sku": "TA5",
@@ -297,7 +310,8 @@
     "spec": "5mg x1 vial",
     "cost": 7.5,
     "category": "Peptide",
-    "group": "Immune"
+    "group": "Immune",
+    "salePrice": 17.382609
   },
   {
     "sku": "TA10",
@@ -305,7 +319,8 @@
     "spec": "10mg x1 vial",
     "cost": 14,
     "category": "Peptide",
-    "group": "Immune"
+    "group": "Immune",
+    "salePrice": 33.034783
   },
   {
     "sku": "MS40",
@@ -323,7 +338,7 @@
     "cost": 3.8,
     "category": "Peptide",
     "group": "Antioxidant",
-    "salePrice": 14.13
+    "salePrice": 14.773913
   },
   {
     "sku": "F410",
@@ -340,7 +355,8 @@
     "spec": "100mg x1 vial",
     "cost": 5,
     "category": "Peptide",
-    "group": "Metabolic"
+    "group": "Metabolic",
+    "salePrice": 12.165217
   },
   {
     "sku": "NJ1000",
@@ -357,7 +373,8 @@
     "spec": "10mg x1 vial",
     "cost": 5.6,
     "category": "Peptide",
-    "group": "Metabolic"
+    "group": "Metabolic",
+    "salePrice": 13.034783
   },
   {
     "sku": "50AM",
@@ -365,7 +382,8 @@
     "spec": "50mg x1 vial",
     "cost": 9,
     "category": "Peptide",
-    "group": "Metabolic"
+    "group": "Metabolic",
+    "salePrice": 20.86087
   },
   {
     "sku": "LC216",
@@ -373,7 +391,8 @@
     "spec": "10ml x1 vial",
     "cost": 7.5,
     "category": "Peptide",
-    "group": "Metabolic"
+    "group": "Metabolic",
+    "salePrice": 17.382609
   },
   {
     "sku": "VIP5",
@@ -381,7 +400,8 @@
     "spec": "5mg x1 vial",
     "cost": 6.5,
     "category": "Peptide",
-    "group": "Hormone"
+    "group": "Hormone",
+    "salePrice": 15.643478
   },
   {
     "sku": "VIP10",
@@ -389,7 +409,8 @@
     "spec": "10mg x1 vial",
     "cost": 12,
     "category": "Peptide",
-    "group": "Hormone"
+    "group": "Hormone",
+    "salePrice": 27.817391
   },
   {
     "sku": "S332",
@@ -398,7 +419,7 @@
     "cost": 7,
     "category": "Peptide",
     "group": "Metabolic",
-    "salePrice": 35
+    "salePrice": 35.643478
   },
   {
     "sku": "KPV5",
@@ -407,7 +428,7 @@
     "cost": 3.5,
     "category": "Peptide",
     "group": "Immune",
-    "salePrice": 13.91
+    "salePrice": 14.773913
   },
   {
     "sku": "KPV10",
@@ -416,7 +437,7 @@
     "cost": 4.8,
     "category": "Peptide",
     "group": "Immune",
-    "salePrice": 15.22
+    "salePrice": 15.643478
   },
   {
     "sku": "LL375",
@@ -424,7 +445,8 @@
     "spec": "5mg x1 vial",
     "cost": 6.5,
     "category": "Peptide",
-    "group": "Antimicrobial"
+    "group": "Antimicrobial",
+    "salePrice": 15.643478
   },
   {
     "sku": "LEMONB",
@@ -432,7 +454,8 @@
     "spec": "10mg x1 vial",
     "cost": 5.5,
     "category": "Peptide",
-    "group": "Skin & Recovery"
+    "group": "Skin & Recovery",
+    "salePrice": 13.034783
   },
   {
     "sku": "OT10",
@@ -441,7 +464,7 @@
     "cost": 5.2,
     "category": "Peptide",
     "group": "Hormone",
-    "salePrice": 15.652174
+    "salePrice": 16.513043
   },
   {
     "sku": "WA10",
@@ -450,7 +473,7 @@
     "cost": 1.3,
     "category": "Supplies",
     "group": "Supplies",
-    "salePrice": 10
+    "salePrice": 10.426087
   },
   {
     "sku": "5AD",
@@ -458,7 +481,8 @@
     "spec": "5mg x1 vial",
     "cost": 8,
     "category": "Peptide",
-    "group": "Metabolic"
+    "group": "Metabolic",
+    "salePrice": 19.121739
   },
   {
     "sku": "FM2",
@@ -467,7 +491,7 @@
     "cost": 4,
     "category": "Peptide",
     "group": "Growth Factor",
-    "salePrice": 14.35
+    "salePrice": 14.773913
   },
   {
     "sku": "PE10",
@@ -475,7 +499,8 @@
     "spec": "10ml x1 vial",
     "cost": 6,
     "category": "Peptide",
-    "group": "Nootropic"
+    "group": "Nootropic",
+    "salePrice": 13.904348
   },
   {
     "sku": "AE1",
@@ -483,7 +508,8 @@
     "spec": "1ml x1 vial",
     "cost": 6.7,
     "category": "Peptide",
-    "group": "Muscle"
+    "group": "Muscle",
+    "salePrice": 15.643478
   },
   {
     "sku": "NSK30",
@@ -491,7 +517,8 @@
     "spec": "30ml x1 vial",
     "cost": 10.5,
     "category": "Peptide",
-    "group": "Nootropic"
+    "group": "Nootropic",
+    "salePrice": 24.33913
   },
   {
     "sku": "CA20",
@@ -499,7 +526,8 @@
     "spec": "20ml x1 vial",
     "cost": 9.3,
     "category": "Peptide",
-    "group": "Cardiovascular"
+    "group": "Cardiovascular",
+    "salePrice": 21.730435
   },
   {
     "sku": "AD5",
@@ -507,7 +535,8 @@
     "spec": "5mg x1 vial",
     "cost": 12,
     "category": "Peptide",
-    "group": "Metabolic"
+    "group": "Metabolic",
+    "salePrice": 27.817391
   },
   {
     "sku": "XS10",
@@ -515,7 +544,8 @@
     "spec": "10ml x1 vial",
     "cost": 5.7,
     "category": "Peptide",
-    "group": "Nootropic"
+    "group": "Nootropic",
+    "salePrice": 13.904348
   },
   {
     "sku": "XS20",
@@ -523,7 +553,8 @@
     "spec": "20ml x1 vial",
     "cost": 8.6,
     "category": "Peptide",
-    "group": "Nootropic"
+    "group": "Nootropic",
+    "salePrice": 19.991304
   },
   {
     "sku": "TR20",
@@ -531,7 +562,8 @@
     "spec": "20mg x1 vial",
     "cost": 7,
     "category": "Peptide",
-    "group": "Metabolic"
+    "group": "Metabolic",
+    "salePrice": 16.513043
   },
   {
     "sku": "TR30",
@@ -539,7 +571,8 @@
     "spec": "30mg x1 vial",
     "cost": 8.6,
     "category": "Peptide",
-    "group": "Metabolic"
+    "group": "Metabolic",
+    "salePrice": 19.991304
   },
   {
     "sku": "TR40",
@@ -547,7 +580,8 @@
     "spec": "40mg x1 vial",
     "cost": 11,
     "category": "Peptide",
-    "group": "Metabolic"
+    "group": "Metabolic",
+    "salePrice": 26.078261
   },
   {
     "sku": "RT15",
@@ -555,7 +589,8 @@
     "spec": "15mg x1 vial",
     "cost": 9.5,
     "category": "Peptide",
-    "group": "Metabolic"
+    "group": "Metabolic",
+    "salePrice": 22.6
   },
   {
     "sku": "RT20",
@@ -563,7 +598,8 @@
     "spec": "20mg x1 vial",
     "cost": 12,
     "category": "Peptide",
-    "group": "Metabolic"
+    "group": "Metabolic",
+    "salePrice": 27.817391
   },
   {
     "sku": "RT30",
@@ -571,7 +607,8 @@
     "spec": "30mg x1 vial",
     "cost": 15.7,
     "category": "Peptide",
-    "group": "Metabolic"
+    "group": "Metabolic",
+    "salePrice": 36.513043
   },
   {
     "sku": "SM2",
@@ -580,7 +617,7 @@
     "cost": 3,
     "category": "Peptide",
     "group": "Metabolic",
-    "salePrice": 13.48
+    "salePrice": 13.904348
   },
   {
     "sku": "SM5",
@@ -589,7 +626,7 @@
     "cost": 3.5,
     "category": "Peptide",
     "group": "Metabolic",
-    "salePrice": 13.91
+    "salePrice": 14.773913
   },
   {
     "sku": "SM10",
@@ -598,7 +635,7 @@
     "cost": 4.5,
     "category": "Peptide",
     "group": "Metabolic",
-    "salePrice": 15
+    "salePrice": 15.643478
   },
   {
     "sku": "SM15",
@@ -607,7 +644,7 @@
     "cost": 6,
     "category": "Peptide",
     "group": "Metabolic",
-    "salePrice": 16.52
+    "salePrice": 17.382609
   },
   {
     "sku": "SM20",
@@ -616,7 +653,7 @@
     "cost": 7,
     "category": "Peptide",
     "group": "Metabolic",
-    "salePrice": 17.39
+    "salePrice": 18.252174
   },
   {
     "sku": "SM30",
@@ -624,7 +661,8 @@
     "spec": "30mg x1 vial",
     "cost": 9,
     "category": "Peptide",
-    "group": "Metabolic"
+    "group": "Metabolic",
+    "salePrice": 20.86087
   },
   {
     "sku": "MT1",
@@ -633,7 +671,7 @@
     "cost": 4,
     "category": "Peptide",
     "group": "Melanocortin",
-    "salePrice": 14.35
+    "salePrice": 14.773913
   },
   {
     "sku": "ML10",
@@ -642,7 +680,7 @@
     "cost": 4,
     "category": "Peptide",
     "group": "Melanocortin",
-    "salePrice": 14.35
+    "salePrice": 14.773913
   },
   {
     "sku": "P41",
@@ -650,7 +688,8 @@
     "spec": "10mg x1 vial",
     "cost": 5,
     "category": "Peptide",
-    "group": "Hormone"
+    "group": "Hormone",
+    "salePrice": 12.165217
   },
   {
     "sku": "BC5",
@@ -659,7 +698,7 @@
     "cost": 4,
     "category": "Peptide",
     "group": "Skin & Recovery",
-    "salePrice": 14.35
+    "salePrice": 14.773913
   },
   {
     "sku": "BC10",
@@ -668,7 +707,7 @@
     "cost": 6,
     "category": "Peptide",
     "group": "Skin & Recovery",
-    "salePrice": 16.52
+    "salePrice": 17.382609
   },
   {
     "sku": "BC15",
@@ -677,7 +716,7 @@
     "cost": 7.5,
     "category": "Peptide",
     "group": "Skin & Recovery",
-    "salePrice": 18.04
+    "salePrice": 18.252174
   },
   {
     "sku": "BC20",
@@ -694,7 +733,8 @@
     "spec": "5mg+5mg x1 vial",
     "cost": 7.5,
     "category": "Peptide",
-    "group": "Skin & Recovery"
+    "group": "Skin & Recovery",
+    "salePrice": 17.382609
   },
   {
     "sku": "BB20",
@@ -702,7 +742,8 @@
     "spec": "10mg+10mg x1 vial",
     "cost": 14.5,
     "category": "Peptide",
-    "group": "Skin & Recovery"
+    "group": "Skin & Recovery",
+    "salePrice": 33.904348
   },
   {
     "sku": "G10K",
@@ -710,7 +751,8 @@
     "spec": "10000IU x1 vial",
     "cost": 11,
     "category": "Peptide",
-    "group": "Hormone"
+    "group": "Hormone",
+    "salePrice": 26.078261
   },
   {
     "sku": "G5K",
@@ -718,7 +760,8 @@
     "spec": "5000IU x1 vial",
     "cost": 6,
     "category": "Peptide",
-    "group": "Hormone"
+    "group": "Hormone",
+    "salePrice": 13.904348
   },
   {
     "sku": "TSM10",
@@ -727,7 +770,7 @@
     "cost": 15,
     "category": "Peptide",
     "group": "Growth Hormone",
-    "salePrice": 30.434783
+    "salePrice": 31.295652
   },
   {
     "sku": "TSM20",
@@ -744,7 +787,8 @@
     "spec": "10mg x1 vial",
     "cost": 12,
     "category": "Peptide",
-    "group": "Skin & Recovery"
+    "group": "Skin & Recovery",
+    "salePrice": 27.817391
   },
   {
     "sku": "CGL5",
@@ -752,7 +796,8 @@
     "spec": "5mg x1 vial",
     "cost": 8.8,
     "category": "Peptide",
-    "group": "Metabolic"
+    "group": "Metabolic",
+    "salePrice": 20.86087
   },
   {
     "sku": "CGL10",
@@ -760,7 +805,8 @@
     "spec": "10mg x1 vial",
     "cost": 14.5,
     "category": "Peptide",
-    "group": "Metabolic"
+    "group": "Metabolic",
+    "salePrice": 33.904348
   },
   {
     "sku": "SUR10",
@@ -777,7 +823,8 @@
     "spec": "5mg+5mg x1 vial",
     "cost": 13,
     "category": "Peptide",
-    "group": "Metabolic"
+    "group": "Metabolic",
+    "salePrice": 30.426087
   },
   {
     "sku": "BBG70",
@@ -803,7 +850,8 @@
     "spec": "5mg x1 vial",
     "cost": 9,
     "category": "Peptide",
-    "group": "Metabolic"
+    "group": "Metabolic",
+    "salePrice": 20.86087
   },
   {
     "sku": "MTD10",
