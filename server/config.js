@@ -34,6 +34,7 @@ module.exports = {
     ONE: 0.15,
     OZAN: 0.15,
     MANLET: 0.15,
+    CERT: 0.15,
   },
 
 
