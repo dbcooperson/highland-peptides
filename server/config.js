@@ -37,6 +37,7 @@ module.exports = {
     CERT: 0.15,
     CHUD: 0.15,
     TORAH: 0.15,
+    OGRE: 0.15,
   },
 
 
