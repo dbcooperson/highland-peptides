@@ -36,6 +36,7 @@ module.exports = {
     JARED: 0.15,
     CERT: 0.15,
     CHUD: 0.15,
+    TORAH: 0.15,
   },
 
 
