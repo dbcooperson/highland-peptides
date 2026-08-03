@@ -38,6 +38,7 @@ module.exports = {
     CHUD: 0.15,
     TORAH: 0.15,
     OGRE: 0.15,
+    PEAR: 0.15,
   },
 
 
