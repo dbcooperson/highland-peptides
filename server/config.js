@@ -39,6 +39,7 @@ module.exports = {
     TORAH: 0.15,
     OGRE: 0.15,
     PEAR: 0.15,
+    LANG10: 0.15,
   },
 
 
