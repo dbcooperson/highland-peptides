@@ -40,7 +40,7 @@ module.exports = {
     OGRE: 0.15,
     PEAR: 0.15,
     LANG10: 0.10,
-    CNTRL10: 0.10,
+    CNTRL: 0.10,
   },
 
 
