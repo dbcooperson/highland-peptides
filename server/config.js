@@ -42,6 +42,7 @@ module.exports = {
     LANG10: 0.10,
     CNTRL: 0.10,
     BIOMAX: 0.10,
+    PHARMACODE: 0.15,
   },
 
 
