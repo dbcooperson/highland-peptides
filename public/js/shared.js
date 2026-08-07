@@ -437,10 +437,17 @@ function selectedCountryCode() {
   return (document.getElementById('buyerCountry')?.value || 'US').trim().toUpperCase();
 }
 
+function selectedCountryName() {
+  const select = document.getElementById('buyerCountry');
+  return select && select.selectedOptions && select.selectedOptions[0]
+    ? select.selectedOptions[0].textContent.trim()
+    : selectedCountryCode();
+}
+
 function updateShippingCountryNote() {
   const note = document.getElementById('shippingCountryNote');
   if (!note) return;
-  const country = selectedCountryCode() || 'US';
+  const country = selectedCountryName() || 'United States';
   const method = selectedShippingMethod();
   note.textContent = method === 'international'
     ? `International shipping selected for ${country}. Please confirm this is the correct destination country before payment.`
@@ -524,7 +531,7 @@ function validateCheckoutPayload(payload, msgEl) {
   }
   if (!/^[A-Z]{2}$/.test(payload.buyer.country)) {
     msgEl.style.color = 'var(--danger)';
-    msgEl.textContent = 'Enter a valid 2-letter destination country code, like US, CA, GB, or AU.';
+    msgEl.textContent = 'Select a valid destination country from the list.';
     return false;
   }
   if (payload.shippingMethod === 'domestic' && payload.buyer.country !== 'US') {
@@ -866,7 +873,7 @@ function wireCheckout() {
   });
 
   const buyerCountryInput = document.getElementById('buyerCountry');
-  if (buyerCountryInput) buyerCountryInput.addEventListener('input', updateShippingCountryNote);
+  if (buyerCountryInput) buyerCountryInput.addEventListener('change', updateShippingCountryNote);
 
   const promoApplyBtn = document.getElementById('promoApplyBtn');
   if (promoApplyBtn) {
