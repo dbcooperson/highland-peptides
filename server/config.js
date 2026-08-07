@@ -15,7 +15,7 @@ module.exports = {
   SHIPPING_FEE: 10.27,
 
   // Flat international shipping option shown at checkout.
-  INTERNATIONAL_SHIPPING_FEE: 30,
+  INTERNATIONAL_SHIPPING_FEE: 35,
 
   // Percentage-based processing fee added to every order (0.03 = 3%).
   ORDER_FEE_RATE: Number(process.env.ORDER_FEE_RATE || 0.03),

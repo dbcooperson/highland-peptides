@@ -148,7 +148,8 @@
         <label>State / Province <input type="text" id="buyerState" required></label>
         <label>ZIP / Postal <input type="text" id="buyerZip" required></label>
       </div>
-      <label>Country code <input type="text" id="buyerCountry" required maxlength="2" value="US" placeholder="US"></label>
+      <label>Confirm destination country <input type="text" id="buyerCountry" required maxlength="2" value="US" placeholder="US"></label>
+      <p class="checkout-country-note" id="shippingCountryNote">Use a 2-letter country code. Choose International shipping for any destination outside the U.S.</p>
 
       <fieldset class="shipping-method-fieldset">
         <legend>Shipping option</legend>
@@ -158,13 +159,18 @@
         </label>
         <label class="shipping-method-option">
           <input type="radio" name="shippingMethod" value="international">
-          <span><strong>International shipping</strong><em>$30.00 anywhere in the world</em></span>
+          <span><strong>International shipping</strong><em>$35.00 anywhere in the world</em></span>
         </label>
       </fieldset>
 
       <label class="checkbox-label">
         <input type="checkbox" id="checkoutCertify" required>
         I certify I am an independent research company or independent researcher, purchasing solely for laboratory / research use, not for human or animal consumption, injection, or administration.
+      </label>
+
+      <label class="checkbox-label payment-policy-confirm">
+        <input type="checkbox" id="paymentPolicyConfirm" required>
+        I understand payment must be sent for the exact total shown. If the amount is incorrect, Highland Peptides will send a confirmation email. If no response is received within 72 hours, fulfillment will not proceed and the payment will not be refunded except where required by law.
       </label>
 
       <div class="payment-divider"><span>Choose payment method</span></div>
@@ -178,7 +184,7 @@
           <span>Submit order and pay by BTC or USDC.</span>
         </button>
       </div>
-      <p class="manual-payment-note">Each order receives a unique exact total. Payments are manually reviewed, and confirmed orders ship the next business day.</p>
+      <p class="manual-payment-note">Each order receives a unique exact total. Payments are manually reviewed, and confirmed orders ship the next business day. Wrong payment amounts require email confirmation within 72 hours before fulfillment can proceed.</p>
       <p class="form-msg" id="checkoutMsg"></p>
 
       <div id="manualPaymentDetails" class="manual-payment-details" style="display:none;">

@@ -19,7 +19,7 @@ function orderText(order, source = 'payment') {
     .map(item => `- ${item.quantity}x ${item.name} (${item.spec} | ${item.sku}) @ ${money(item.unit_price)}`)
     .join('\n');
   const buyer = order.buyer || {};
-  const address = [buyer.address1, buyer.address2, buyer.city, buyer.state, buyer.zip]
+  const address = [buyer.address1, buyer.address2, buyer.city, buyer.state, buyer.zip, buyer.country]
     .filter(Boolean)
     .join(', ');
 
@@ -41,7 +41,7 @@ function orderText(order, source = 'payment') {
     ``,
     `Subtotal: ${money(order.subtotal)}`,
     order.discount_code ? `Discount (${order.discount_code}): -${money(order.discount_amount)}` : `Discount: ${money(0)}`,
-    `Shipping: ${money(order.shipping_fee)}`,
+    `Shipping: ${money(order.shipping_fee)}${order.shipping_method === 'international' ? ' (international)' : ' (U.S.)'}`,
     order.order_fee ? `Processing: ${money(order.order_fee)}` : null,
     `Total: ${money(order.total)}`,
   ].filter(line => line !== null).join('\n');
@@ -80,7 +80,7 @@ function orderHtml(order, source = 'payment') {
     <h3>Total</h3>
     <p>Subtotal: ${money(order.subtotal)}<br>
     ${order.discount_code ? `Discount (${htmlEscape(order.discount_code)}): -${money(order.discount_amount)}<br>` : ''}
-    Shipping: ${money(order.shipping_fee)}<br>
+    Shipping: ${money(order.shipping_fee)} ${order.shipping_method === 'international' ? '(international)' : '(U.S.)'}<br>
     ${order.order_fee ? `Processing: ${money(order.order_fee)}<br>` : ''}
     <strong>Total: ${money(order.total)}</strong></p>
   `;
@@ -166,6 +166,7 @@ function customerInstructionsText(order) {
       ``,
       `After sending, reply to this email with your transaction ID (TXID) or submit it on our site so we can confirm your payment quickly.`,
       `Please reference your order number: ${ref}`,
+      `If the amount is incorrect, we will send a confirmation email. If no response is received within 72 hours, fulfillment will not proceed and the payment will not be refunded except where required by law.`,
     );
   } else if (order.payment_provider === 'manual_paypal') {
     lines.push(
@@ -173,6 +174,7 @@ function customerInstructionsText(order) {
       config.PAYPAL_MANUAL_EMAIL,
       ``,
       `Use the exact amount shown above so we can match your payment to ${ref}.`,
+      `If the amount is incorrect, we will send a confirmation email. If no response is received within 72 hours, fulfillment will not proceed and the payment will not be refunded except where required by law.`,
       `Payment is manually reviewed before fulfillment. Once confirmed, your order ships the next business day.`,
       `If you have questions, reply to this email.`,
     );
@@ -198,12 +200,14 @@ function customerInstructionsHtml(order) {
       <p style="font-family:monospace; font-size:15px;">${htmlEscape(address)}</p>
       <p>After sending, reply to this email with your transaction ID (TXID) or submit it on our site so we can confirm your payment quickly.</p>
       <p>Please reference your order number: <strong>${htmlEscape(ref)}</strong></p>
+      <p>If the amount is incorrect, we will send a confirmation email. If no response is received within 72 hours, fulfillment will not proceed and the payment will not be refunded except where required by law.</p>
     `;
   } else if (order.payment_provider === 'manual_paypal') {
     body = `
       <p>Send the exact total due to PayPal:</p>
       <p style="font-family:monospace; font-size:16px;"><strong>${htmlEscape(config.PAYPAL_MANUAL_EMAIL)}</strong></p>
       <p>Use the exact amount shown above so we can match your payment to <strong>${htmlEscape(ref)}</strong>.</p>
+      <p>If the amount is incorrect, we will send a confirmation email. If no response is received within 72 hours, fulfillment will not proceed and the payment will not be refunded except where required by law.</p>
       <p>Payment is manually reviewed before fulfillment. Once confirmed, your order ships the next business day.</p>
       <p>If you have questions, reply to this email.</p>
     `;

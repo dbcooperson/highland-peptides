@@ -328,7 +328,7 @@ function getProductSearchCatalog() {
   if (!productSearchCatalogPromise) {
     productSearchCatalogPromise = api('/api/catalog').then(data => {
       window.siteCatalog = data.products;
-      window.siteFees = { packagingFee: data.packagingFee, shippingFee: data.shippingFee, internationalShippingFee: data.internationalShippingFee || 30, shippingOptions: data.shippingOptions || [], orderFeeRate: data.orderFeeRate || 0, altPaymentDiscountRate: data.altPaymentDiscountRate || 0 };
+      window.siteFees = { packagingFee: data.packagingFee, shippingFee: data.shippingFee, internationalShippingFee: data.internationalShippingFee || 35, shippingOptions: data.shippingOptions || [], orderFeeRate: data.orderFeeRate || 0, altPaymentDiscountRate: data.altPaymentDiscountRate || 0 };
       return data.products;
     });
   }
@@ -425,12 +425,26 @@ function selectedShippingMethod() {
 function selectedShippingFee() {
   const fees = window.siteFees || {};
   return selectedShippingMethod() === 'international'
-    ? Number(fees.internationalShippingFee || 30)
+    ? Number(fees.internationalShippingFee || 35)
     : Number(fees.shippingFee || 0);
 }
 
 function selectedShippingLabel() {
   return selectedShippingMethod() === 'international' ? 'International shipping' : 'U.S. shipping';
+}
+
+function selectedCountryCode() {
+  return (document.getElementById('buyerCountry')?.value || 'US').trim().toUpperCase();
+}
+
+function updateShippingCountryNote() {
+  const note = document.getElementById('shippingCountryNote');
+  if (!note) return;
+  const country = selectedCountryCode() || 'US';
+  const method = selectedShippingMethod();
+  note.textContent = method === 'international'
+    ? `International shipping selected for ${country}. Please confirm this is the correct destination country before payment.`
+    : `U.S. shipping selected. Use International shipping for any destination outside the U.S.`;
 }
 
 // ---------- Checkout modal (lives on the cart page only) ----------
@@ -487,10 +501,11 @@ function checkoutPayloadFromForm() {
       city: document.getElementById('buyerCity').value.trim(),
       state: document.getElementById('buyerState').value.trim(),
       zip: document.getElementById('buyerZip').value.trim(),
-      country: (document.getElementById('buyerCountry')?.value || 'US').trim().toUpperCase(),
+      country: selectedCountryCode(),
     },
     certified: document.getElementById('checkoutCertify').checked,
     shippingMethod: selectedShippingMethod(),
+    paymentPolicyAccepted: document.getElementById('paymentPolicyConfirm')?.checked === true,
     discountCode: appliedDiscount ? appliedDiscount.code : null,
     paymentMethod: 'manual_paypal',
   };
@@ -502,14 +517,34 @@ function validateCheckoutPayload(payload, msgEl) {
     msgEl.textContent = 'Cart is empty.';
     return false;
   }
-  if (!payload.buyer.name || !payload.buyer.email || !payload.buyer.address1 || !payload.buyer.city || !payload.buyer.state || !payload.buyer.zip) {
+  if (!payload.buyer.name || !payload.buyer.email || !payload.buyer.address1 || !payload.buyer.city || !payload.buyer.state || !payload.buyer.zip || !payload.buyer.country) {
     msgEl.style.color = 'var(--danger)';
-    msgEl.textContent = 'Name, email, and full shipping address are required before payment.';
+    msgEl.textContent = 'Name, email, destination country, and full shipping address are required before payment.';
+    return false;
+  }
+  if (!/^[A-Z]{2}$/.test(payload.buyer.country)) {
+    msgEl.style.color = 'var(--danger)';
+    msgEl.textContent = 'Enter a valid 2-letter destination country code, like US, CA, GB, or AU.';
+    return false;
+  }
+  if (payload.shippingMethod === 'domestic' && payload.buyer.country !== 'US') {
+    msgEl.style.color = 'var(--danger)';
+    msgEl.textContent = 'Choose International shipping for destinations outside the U.S.';
+    return false;
+  }
+  if (payload.shippingMethod === 'international' && payload.buyer.country === 'US') {
+    msgEl.style.color = 'var(--danger)';
+    msgEl.textContent = 'International shipping is for destinations outside the U.S. Change the country or select U.S. shipping.';
     return false;
   }
   if (!payload.certified) {
     msgEl.style.color = 'var(--danger)';
     msgEl.textContent = 'You must certify research/business use before payment.';
+    return false;
+  }
+  if (!payload.paymentPolicyAccepted) {
+    msgEl.style.color = 'var(--danger)';
+    msgEl.textContent = 'Confirm the exact-payment and 72-hour mismatch policy before payment.';
     return false;
   }
   msgEl.textContent = '';
@@ -548,6 +583,7 @@ function openCheckoutModal() {
   if (cryptoDetails) cryptoDetails.style.display = 'none';
   const cryptoButton = document.getElementById('cryptoCheckoutBtn');
   if (cryptoButton) cryptoButton.querySelector('strong').innerHTML = 'Crypto <em>5% off</em>';
+  updateShippingCountryNote();
   renderCheckoutSummary();
   renderCryptoPricePreview();
   document.body.classList.add('checkout-modal-open');
@@ -724,7 +760,7 @@ async function submitCryptoCheckout() {
     msgEl.textContent = 'Order submitted. Please send the exact total shown below for manual verification.';
     lastCryptoOrder = { id: result.orderId, email: buyerEmail };
 
-    showManualPaymentShell('Crypto payment instructions', `<strong>Order #${result.orderId}</strong><br>Exact total due: <strong>$${result.total.toFixed(2)}</strong><br><span class="hint">Unique matching cents: $${Number(result.paymentMatchAdjustment || 0).toFixed(2)}</span>`);
+    showManualPaymentShell('Crypto payment instructions', `<strong>Order #${result.orderId}</strong><br>Exact total due: <strong>$${result.total.toFixed(2)}</strong><br><span class="hint">Unique matching cents: $${Number(result.paymentMatchAdjustment || 0).toFixed(2)}</span><br><span class="hint">If the amount sent is incorrect, we will email you for confirmation. If no response is received within 72 hours, fulfillment will not proceed and the payment will not be refunded except where required by law.</span>`);
 
     if (result.crypto) {
       document.getElementById('cryptoAddressText').textContent = result.crypto.address;
@@ -792,7 +828,7 @@ async function submitManualPaypalCheckout() {
     if (cryptoDetails) cryptoDetails.style.display = 'none';
     if (paypalDetails) paypalDetails.style.display = 'block';
     document.getElementById('paypalPaymentEmail').textContent = result.paypal ? result.paypal.email : 'at475756@gmail.com';
-    showManualPaymentShell('PayPal payment instructions', `<strong>Order #${result.orderId}</strong><br>Exact total due: <strong>$${result.total.toFixed(2)}</strong><br>Send payment to: <strong>${result.paypal ? result.paypal.email : 'at475756@gmail.com'}</strong><br><span class="hint">Please send the exact total shown. We manually verify payment, then confirmed orders ship the next business day.</span>`);
+    showManualPaymentShell('PayPal payment instructions', `<strong>Order #${result.orderId}</strong><br>Exact total due: <strong>$${result.total.toFixed(2)}</strong><br>Send payment to: <strong>${result.paypal ? result.paypal.email : 'at475756@gmail.com'}</strong><br><span class="hint">Please send the exact total shown. If the amount is incorrect, we will email you for confirmation. If no response is received within 72 hours, fulfillment will not proceed and the payment will not be refunded except where required by law. Confirmed orders ship the next business day.</span>`);
     clearCartAfterCheckout();
   } catch (err) {
     msgEl.style.color = 'var(--danger)';
@@ -823,10 +859,14 @@ function wireCheckout() {
 
   document.querySelectorAll('input[name="shippingMethod"]').forEach(input => {
     input.addEventListener('change', () => {
+      updateShippingCountryNote();
       renderCheckoutSummary();
       renderCryptoPricePreview();
     });
   });
+
+  const buyerCountryInput = document.getElementById('buyerCountry');
+  if (buyerCountryInput) buyerCountryInput.addEventListener('input', updateShippingCountryNote);
 
   const promoApplyBtn = document.getElementById('promoApplyBtn');
   if (promoApplyBtn) {

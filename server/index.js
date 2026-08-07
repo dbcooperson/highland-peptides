@@ -137,10 +137,13 @@ function checkCheckoutRateLimit(req, res, next) {
 
 // ---------- Checkout (guest, no account) ----------
 function prepareCheckout(body) {
-  const { items: rawItems, buyer, certified, discountCode, paymentMethod, cryptoAsset, shippingMethod } = body || {};
+  const { items: rawItems, buyer, certified, discountCode, paymentMethod, cryptoAsset, shippingMethod, paymentPolicyAccepted } = body || {};
 
   if (certified !== true) {
     return { error: 'You must certify research/business use to place an order.' };
+  }
+  if (paymentPolicyAccepted !== true) {
+    return { error: 'You must confirm the exact-payment and 72-hour mismatch policy before payment.' };
   }
   const cleanBuyer = buyer ? {
     name: cleanText(buyer.name, 100),
@@ -153,8 +156,8 @@ function prepareCheckout(body) {
     country: cleanCountry(buyer.country),
   } : null;
 
-  if (!cleanBuyer || !cleanBuyer.name || !cleanBuyer.email || !cleanBuyer.address1 || !cleanBuyer.city || !cleanBuyer.state || !cleanBuyer.zip) {
-    return { error: 'Name, valid email, and full shipping address are required.' };
+  if (!cleanBuyer || !cleanBuyer.name || !cleanBuyer.email || !cleanBuyer.address1 || !cleanBuyer.city || !cleanBuyer.state || !cleanBuyer.zip || !cleanBuyer.country) {
+    return { error: 'Name, valid email, destination country, and full shipping address are required.' };
   }
 
   const normalizedPaymentMethod = ['paypal', 'manual_paypal', 'crypto'].includes(paymentMethod) ? paymentMethod : 'manual_paypal';
@@ -185,6 +188,12 @@ function prepareCheckout(body) {
 
   const packagingFee = config.PACKAGING_FEE;
   const normalizedShippingMethod = shippingMethod === 'international' ? 'international' : 'domestic';
+  if (normalizedShippingMethod === 'domestic' && cleanBuyer.country !== 'US') {
+    return { error: 'Choose International shipping for destinations outside the U.S.' };
+  }
+  if (normalizedShippingMethod === 'international' && cleanBuyer.country === 'US') {
+    return { error: 'International shipping is for destinations outside the U.S. Change the country or select U.S. shipping.' };
+  }
   const shippingFee = normalizedShippingMethod === 'international' ? config.INTERNATIONAL_SHIPPING_FEE : config.SHIPPING_FEE;
   const feeBase = Math.max(0, subtotal - discountAmount + packagingFee + shippingFee);
   const orderFee = Math.round(feeBase * config.ORDER_FEE_RATE * 100) / 100;

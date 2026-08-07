@@ -76,7 +76,7 @@ async function init() {
   document.title = catalogData.siteName;
   catalog = catalogData.products;
   window.siteCatalog = catalog;
-  window.siteFees = { packagingFee: catalogData.packagingFee, shippingFee: catalogData.shippingFee, internationalShippingFee: catalogData.internationalShippingFee || 30, shippingOptions: catalogData.shippingOptions || [], orderFeeRate: catalogData.orderFeeRate || 0 };
+  window.siteFees = { packagingFee: catalogData.packagingFee, shippingFee: catalogData.shippingFee, internationalShippingFee: catalogData.internationalShippingFee || 35, shippingOptions: catalogData.shippingOptions || [], orderFeeRate: catalogData.orderFeeRate || 0 };
   const statEl = document.getElementById('statCompoundCount');
   if (statEl) statEl.textContent = String(catalog.length);
   renderBestSellers();
