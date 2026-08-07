@@ -145,9 +145,22 @@
       <label>Address Line 2 (optional) <input type="text" id="buyerAddress2"></label>
       <div class="modal-row">
         <label>City <input type="text" id="buyerCity" required></label>
-        <label>State <input type="text" id="buyerState" required></label>
-        <label>ZIP <input type="text" id="buyerZip" required></label>
+        <label>State / Province <input type="text" id="buyerState" required></label>
+        <label>ZIP / Postal <input type="text" id="buyerZip" required></label>
       </div>
+      <label>Country code <input type="text" id="buyerCountry" required maxlength="2" value="US" placeholder="US"></label>
+
+      <fieldset class="shipping-method-fieldset">
+        <legend>Shipping option</legend>
+        <label class="shipping-method-option">
+          <input type="radio" name="shippingMethod" value="domestic" checked>
+          <span><strong>U.S. shipping</strong><em>$10.27</em></span>
+        </label>
+        <label class="shipping-method-option">
+          <input type="radio" name="shippingMethod" value="international">
+          <span><strong>International shipping</strong><em>$30.00 anywhere in the world</em></span>
+        </label>
+      </fieldset>
 
       <label class="checkbox-label">
         <input type="checkbox" id="checkoutCertify" required>

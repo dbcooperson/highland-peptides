@@ -62,6 +62,11 @@ app.get('/api/catalog', (req, res) => {
     products: catalog,
     packagingFee: config.PACKAGING_FEE,
     shippingFee: config.SHIPPING_FEE,
+    internationalShippingFee: config.INTERNATIONAL_SHIPPING_FEE,
+    shippingOptions: [
+      { id: 'domestic', label: 'U.S. shipping', price: config.SHIPPING_FEE },
+      { id: 'international', label: 'International shipping', price: config.INTERNATIONAL_SHIPPING_FEE },
+    ],
     orderFeeRate: config.ORDER_FEE_RATE,
     altPaymentDiscountRate: config.ALT_PAYMENT_DISCOUNT_RATE,
   });
@@ -132,7 +137,7 @@ function checkCheckoutRateLimit(req, res, next) {
 
 // ---------- Checkout (guest, no account) ----------
 function prepareCheckout(body) {
-  const { items: rawItems, buyer, certified, discountCode, paymentMethod, cryptoAsset } = body || {};
+  const { items: rawItems, buyer, certified, discountCode, paymentMethod, cryptoAsset, shippingMethod } = body || {};
 
   if (certified !== true) {
     return { error: 'You must certify research/business use to place an order.' };
@@ -179,7 +184,8 @@ function prepareCheckout(body) {
   const discountLabel = [discountMatch ? discountMatch.code : null, altPaymentDiscount ? 'CRYPTO5' : null].filter(Boolean).join('+') || null;
 
   const packagingFee = config.PACKAGING_FEE;
-  const shippingFee = config.SHIPPING_FEE;
+  const normalizedShippingMethod = shippingMethod === 'international' ? 'international' : 'domestic';
+  const shippingFee = normalizedShippingMethod === 'international' ? config.INTERNATIONAL_SHIPPING_FEE : config.SHIPPING_FEE;
   const feeBase = Math.max(0, subtotal - discountAmount + packagingFee + shippingFee);
   const orderFee = Math.round(feeBase * config.ORDER_FEE_RATE * 100) / 100;
   const total = Math.round((feeBase + orderFee) * 100) / 100;
@@ -192,6 +198,7 @@ function prepareCheckout(body) {
       subtotal,
       packagingFee,
       shippingFee,
+      shippingMethod: normalizedShippingMethod,
       orderFee,
       orderFeeRate: config.ORDER_FEE_RATE,
       discountCode: discountLabel,

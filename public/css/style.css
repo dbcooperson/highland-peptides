@@ -3517,3 +3517,46 @@ body.admin-page .admin-status select,
 body.admin-page select {
   max-width: 100%;
 }
+
+
+.shipping-method-fieldset {
+  border: 1px solid var(--border-on-light);
+  border-radius: 16px;
+  padding: 12px;
+  margin: 10px 0 14px;
+  display: grid;
+  gap: 8px;
+}
+.shipping-method-fieldset legend {
+  padding: 0 6px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 900;
+  color: var(--muted-on-light);
+}
+.shipping-method-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-on-light);
+  border-radius: 14px;
+  background: rgba(255,255,255,0.35);
+  cursor: pointer;
+}
+.shipping-method-option input { width: auto; margin: 0; }
+.shipping-method-option span {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+.shipping-method-option strong { color: var(--ink-on-light); }
+.shipping-method-option em {
+  font-style: normal;
+  font-size: 12px;
+  color: var(--muted-on-light);
+  text-align: right;
+}

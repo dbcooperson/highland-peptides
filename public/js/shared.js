@@ -328,7 +328,7 @@ function getProductSearchCatalog() {
   if (!productSearchCatalogPromise) {
     productSearchCatalogPromise = api('/api/catalog').then(data => {
       window.siteCatalog = data.products;
-      window.siteFees = { packagingFee: data.packagingFee, shippingFee: data.shippingFee, orderFeeRate: data.orderFeeRate || 0, altPaymentDiscountRate: data.altPaymentDiscountRate || 0 };
+      window.siteFees = { packagingFee: data.packagingFee, shippingFee: data.shippingFee, internationalShippingFee: data.internationalShippingFee || 30, shippingOptions: data.shippingOptions || [], orderFeeRate: data.orderFeeRate || 0, altPaymentDiscountRate: data.altPaymentDiscountRate || 0 };
       return data.products;
     });
   }
@@ -417,6 +417,22 @@ function round2(n) {
   return Math.round(n * 100) / 100;
 }
 
+function selectedShippingMethod() {
+  const checked = document.querySelector('input[name="shippingMethod"]:checked');
+  return checked && checked.value === 'international' ? 'international' : 'domestic';
+}
+
+function selectedShippingFee() {
+  const fees = window.siteFees || {};
+  return selectedShippingMethod() === 'international'
+    ? Number(fees.internationalShippingFee || 30)
+    : Number(fees.shippingFee || 0);
+}
+
+function selectedShippingLabel() {
+  return selectedShippingMethod() === 'international' ? 'International shipping' : 'U.S. shipping';
+}
+
 // ---------- Checkout modal (lives on the cart page only) ----------
 
 let appliedDiscount = null; // { code, percentOff } | null
@@ -431,7 +447,7 @@ function renderCheckoutSummary() {
 
   const skus = Object.keys(cart).filter(s => cart[s] > 0);
   const subtotal = round2(cartSubtotal());
-  const shippingFee = (window.siteFees && window.siteFees.shippingFee) || 0;
+  const shippingFee = selectedShippingFee();
   const discountAmount = appliedDiscount ? round2(subtotal * appliedDiscount.percentOff / 100) : 0;
   const orderFeeRate = (window.siteFees && window.siteFees.orderFeeRate) || 0;
   const feeBase = Math.max(0, subtotal - discountAmount + shippingFee);
@@ -447,7 +463,7 @@ function renderCheckoutSummary() {
   const breakdown = [
     `<div class="cart-row"><span>Subtotal</span><span>$${subtotal.toFixed(2)}</span></div>`,
     appliedDiscount ? `<div class="cart-row"><span>Discount (${appliedDiscount.code})</span><span>-$${discountAmount.toFixed(2)}</span></div>` : '',
-    `<div class="cart-row"><span>Shipping</span><span>$${shippingFee.toFixed(2)}</span></div>`,
+    `<div class="cart-row"><span>${selectedShippingLabel()}</span><span>$${shippingFee.toFixed(2)}</span></div>`,
     orderFeeRate ? `<div class="cart-row"><span>Processing fee</span><span>$${orderFee.toFixed(2)}</span></div>` : '',
     `<div class="order-summary-total cart-row"><span>Total</span><span>$${total.toFixed(2)}</span></div>`,
   ].join('');
@@ -471,9 +487,10 @@ function checkoutPayloadFromForm() {
       city: document.getElementById('buyerCity').value.trim(),
       state: document.getElementById('buyerState').value.trim(),
       zip: document.getElementById('buyerZip').value.trim(),
-      country: 'US',
+      country: (document.getElementById('buyerCountry')?.value || 'US').trim().toUpperCase(),
     },
     certified: document.getElementById('checkoutCertify').checked,
+    shippingMethod: selectedShippingMethod(),
     discountCode: appliedDiscount ? appliedDiscount.code : null,
     paymentMethod: 'manual_paypal',
   };
@@ -659,7 +676,7 @@ function renderCryptoPricePreview() {
   if (!previewEl) return;
   const subtotal = round2(cartSubtotal());
   const rate = (window.siteFees && window.siteFees.altPaymentDiscountRate) || 0;
-  const shippingFee = (window.siteFees && window.siteFees.shippingFee) || 0;
+  const shippingFee = selectedShippingFee();
   const orderFeeRate = (window.siteFees && window.siteFees.orderFeeRate) || 0;
   const discount = round2(subtotal * rate);
   const feeBase = Math.max(0, subtotal - discount + shippingFee);
@@ -803,6 +820,13 @@ function wireCheckout() {
     if (e.target.id === 'checkoutModal') closeCheckoutModal();
   });
 
+
+  document.querySelectorAll('input[name="shippingMethod"]').forEach(input => {
+    input.addEventListener('change', () => {
+      renderCheckoutSummary();
+      renderCryptoPricePreview();
+    });
+  });
 
   const promoApplyBtn = document.getElementById('promoApplyBtn');
   if (promoApplyBtn) {

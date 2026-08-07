@@ -60,7 +60,7 @@ function paymentMatchAdjustmentCents(orderId, paymentProvider) {
   return (Number(orderId) % 49) + 1;
 }
 
-function createOrder({ buyer, certifiedAt, items, subtotal, packagingFee, shippingFee, orderFee, orderFeeRate, discountCode, discountAmount, total, paymentProvider, cryptoAsset }) {
+function createOrder({ buyer, certifiedAt, items, subtotal, packagingFee, shippingFee, shippingMethod, orderFee, orderFeeRate, discountCode, discountAmount, total, paymentProvider, cryptoAsset }) {
   const data = load();
   const id = data.nextOrderId++;
   const normalizedProvider = paymentProvider || 'manual';
@@ -82,6 +82,7 @@ function createOrder({ buyer, certifiedAt, items, subtotal, packagingFee, shippi
     subtotal,
     packaging_fee: packagingFee,
     shipping_fee: shippingFee,
+    shipping_method: shippingMethod || 'domestic',
     order_fee: orderFee || 0,
     order_fee_rate: orderFeeRate || 0,
     discount_code: discountCode || null,

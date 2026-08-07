@@ -11,8 +11,11 @@ module.exports = {
   // Packaging is folded into the fixed shipping charge shown to customers.
   PACKAGING_FEE: 0,
 
-  // Fixed shipping charge added to every order.
+  // Fixed U.S. shipping charge added to domestic orders.
   SHIPPING_FEE: 10.27,
+
+  // Flat international shipping option shown at checkout.
+  INTERNATIONAL_SHIPPING_FEE: 30,
 
   // Percentage-based processing fee added to every order (0.03 = 3%).
   ORDER_FEE_RATE: Number(process.env.ORDER_FEE_RATE || 0.03),

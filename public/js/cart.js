@@ -76,7 +76,7 @@ function cartSummaryHTML(subtotal) {
     <div class="cart-summary-trust"><span>Secure checkout</span><span>RUO certification required</span><span>Support: support@highlandpeptides.com</span></div>
     <div class="cart-summary-lines">
       <div><span>Subtotal</span><strong>$${subtotal.toFixed(2)}</strong></div>
-      <div><span>Shipping</span><strong>$${shippingFee.toFixed(2)}</strong></div>
+      <div><span>U.S. shipping</span><strong>$${shippingFee.toFixed(2)}</strong></div>
       ${orderFeeRate ? `<div><span>Processing fee</span><strong>$${orderFee.toFixed(2)}</strong></div>` : ''}
       <div class="cart-summary-total"><span>Estimated total</span><strong>$${estimatedTotal.toFixed(2)}</strong></div>
     </div>
@@ -181,7 +181,7 @@ async function init() {
   }
   const catalogData = await api('/api/catalog');
   window.siteCatalog = catalogData.products;
-  window.siteFees = { packagingFee: catalogData.packagingFee, shippingFee: catalogData.shippingFee, orderFeeRate: catalogData.orderFeeRate || 0, altPaymentDiscountRate: catalogData.altPaymentDiscountRate || 0 };
+  window.siteFees = { packagingFee: catalogData.packagingFee, shippingFee: catalogData.shippingFee, internationalShippingFee: catalogData.internationalShippingFee || 30, shippingOptions: catalogData.shippingOptions || [], orderFeeRate: catalogData.orderFeeRate || 0, altPaymentDiscountRate: catalogData.altPaymentDiscountRate || 0 };
   const activeSkus = new Set(window.siteCatalog.map(p => p.sku));
   const currentCart = getCart();
   let prunedCart = false;
