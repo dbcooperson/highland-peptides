@@ -717,6 +717,10 @@ let cryptoChoiceOpen = false;
 function renderCryptoPricePreview() {
   const previewEl = document.getElementById('cryptoPricePreview');
   if (!previewEl) return;
+  if (appliedDiscount) {
+    previewEl.textContent = 'Crypto discount cannot be combined with a promo code.';
+    return;
+  }
   const subtotal = round2(cartSubtotal());
   const rate = (window.siteFees && window.siteFees.altPaymentDiscountRate) || 0;
   const shippingFee = selectedShippingFee();
@@ -743,11 +747,17 @@ async function submitCryptoCheckout() {
   const choice = document.getElementById('cryptoChoiceDetails');
   const paypalDetails = document.getElementById('paypalPaymentDetails');
 
+  if (appliedDiscount) {
+    msgEl.style.color = 'var(--danger)';
+    msgEl.textContent = 'Crypto discount cannot be combined with promo codes. Remove the promo code or choose PayPal.';
+    return;
+  }
+
   if (!cryptoChoiceOpen) {
     cryptoChoiceOpen = true;
     if (paypalDetails) paypalDetails.style.display = 'none';
     if (choice) choice.style.display = 'block';
-    showManualPaymentShell('Crypto payment', 'Choose BTC or USDC, then submit the order to get the exact payment total and address.');
+    showManualPaymentShell('Crypto payment', 'Choose BTC or USDC, then submit the order to get the exact payment total and address. Crypto discount cannot be combined with promo codes.');
     btn.querySelector('strong').innerHTML = 'Submit Crypto Order <em>5% off</em>';
     return;
   }

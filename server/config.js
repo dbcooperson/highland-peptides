@@ -77,8 +77,8 @@ module.exports = {
     USDC_ERC20: process.env.CRYPTO_USDC_ADDRESS || '0xAD9c0B152064BAFf5A39173a1F68659103ACAEE8',
   },
 
-  // Discount applied for paying via crypto instead of card, as an incentive
-  // (0.05 = 5% off subtotal). Stacks with a promo code if both are used.
+  // Discount applied for paying via crypto instead of card, as an incentive.
+  // This cannot be combined with any promo code.
   ALT_PAYMENT_DISCOUNT_RATE: Number(process.env.ALT_PAYMENT_DISCOUNT_RATE || 0.05),
 
   DISCORD_ORDER_WEBHOOK_URL: process.env.DISCORD_ORDER_WEBHOOK_URL || '',

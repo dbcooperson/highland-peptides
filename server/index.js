@@ -181,10 +181,13 @@ function prepareCheckout(body) {
   subtotal = Math.round(subtotal * 100) / 100;
 
   const discountMatch = resolveDiscountCode(discountCode);
+  if (normalizedPaymentMethod === 'crypto' && discountMatch) {
+    return { error: 'Promo codes cannot be combined with the crypto discount. Remove the promo code or choose PayPal checkout.' };
+  }
   const codeDiscount = discountMatch ? subtotal * discountMatch.rate : 0;
   const altPaymentDiscount = normalizedPaymentMethod === 'crypto' ? subtotal * config.ALT_PAYMENT_DISCOUNT_RATE : 0;
   const discountAmount = Math.round((codeDiscount + altPaymentDiscount) * 100) / 100;
-  const discountLabel = [discountMatch ? discountMatch.code : null, altPaymentDiscount ? 'CRYPTO5' : null].filter(Boolean).join('+') || null;
+  const discountLabel = discountMatch ? discountMatch.code : (altPaymentDiscount ? 'CRYPTO5' : null);
 
   const packagingFee = config.PACKAGING_FEE;
   const normalizedShippingMethod = shippingMethod === 'international' ? 'international' : 'domestic';
