@@ -79,6 +79,12 @@ function statusBadge(status) {
   return `<span class="admin-status admin-status-${escapeHtml(status)}">${escapeHtml(status).replace('_', ' ')}</span>`;
 }
 
+function duplicateTxidWarningHTML(order) {
+  if (!order.payment_reference_duplicate) return '';
+  const ids = (order.payment_reference_duplicate_order_ids || []).map(id => '#' + escapeHtml(id)).join(', ');
+  return '<br><span class="admin-duplicate-txid">Duplicate TXID ' + (ids ? '(' + ids + ')' : '') + '</span>';
+}
+
 function paymentHTML(order) {
   const provider = order.payment_provider || 'manual';
   if (provider === 'paypal') {
@@ -93,13 +99,14 @@ function paymentHTML(order) {
     const txid = rawTxid
       ? `<br><span class="admin-muted admin-payment-ref" title="${escapeHtml(rawTxid)}">TXID: ${escapeHtml(rawTxid)}</span>`
       : '<br><span class="admin-muted">Waiting on TXID</span>';
-    return `<span class="admin-payment admin-payment-crypto">Crypto (${asset})</span>${txid}`;
+    return `<span class="admin-payment admin-payment-crypto">Crypto (${asset})</span>${txid}${duplicateTxidWarningHTML(order)}`;
   }
   return '<span class="admin-payment admin-payment-manual">Manual invoice</span><br><span class="admin-muted">Needs payment link sent</span>';
 }
 
 function summaryHTML(orders) {
   const paid = orders.filter(o => o.status === 'paid').length;
+  const duplicateTxidOrders = orders.filter(o => o.payment_reference_duplicate).length;
   const pending = orders.filter(o => o.status === 'pending_payment').length;
   const fulfilled = orders.filter(o => o.status === 'fulfilled').length;
   const revenue = orders.filter(o => ['paid','fulfilled'].includes(o.status)).reduce((sum, o) => sum + (o.total || 0), 0);
@@ -110,6 +117,7 @@ function summaryHTML(orders) {
       <div><span>Pending</span><strong>${pending}</strong></div>
       <div><span>Fulfilled</span><strong>${fulfilled}</strong></div>
       <div><span>Paid revenue</span><strong>$${revenue.toFixed(2)}</strong></div>
+      <div class="${duplicateTxidOrders ? 'admin-summary-alert' : ''}"><span>Duplicate TXIDs</span><strong>${duplicateTxidOrders}</strong></div>
     </div>
   `;
 }
@@ -237,7 +245,7 @@ let adminOrdersCache = [];
 function orderSearchText(order) {
   const buyer = order.buyer || {};
   const itemText = (order.items || []).map(item => [item.name, item.spec, item.sku].join(' ')).join(' ');
-  return [order.id, order.status, buyer.name, buyer.email, buyer.address1, buyer.address2, buyer.city, buyer.state, buyer.zip, itemText, order.discount_code, order.notes]
+  return [order.id, order.status, buyer.name, buyer.email, buyer.address1, buyer.address2, buyer.city, buyer.state, buyer.zip, itemText, order.discount_code, order.payment_reference, order.notes]
     .filter(Boolean)
     .join(' ')
     .toLowerCase();

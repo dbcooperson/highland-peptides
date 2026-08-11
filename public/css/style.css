@@ -3590,3 +3590,22 @@ body.admin-page select {
   border-color: var(--accent);
   background: var(--card);
 }
+
+
+.admin-duplicate-txid {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 4px 8px;
+  border: 1px solid rgba(255, 99, 99, 0.55);
+  border-radius: 999px;
+  background: rgba(255, 99, 99, 0.14);
+  color: #ffb4b4;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.admin-summary-alert {
+  border-color: rgba(255, 99, 99, 0.55) !important;
+  background: rgba(255, 99, 99, 0.08) !important;
+}

@@ -642,12 +642,35 @@ app.post('/api/admin/orders/:id/notes', requireAdmin, (req, res) => {
   if (!order) return res.status(404).json({ error: 'Order not found' });
   res.json({ ok: true, notes: order.notes || '' });
 });
+function txidDuplicateMap(orders) {
+  const map = new Map();
+  orders.forEach(order => {
+    if (order.payment_provider !== 'crypto' || !order.payment_reference) return;
+    const normalized = String(order.payment_reference).trim().toLowerCase();
+    if (!normalized) return;
+    if (!map.has(normalized)) map.set(normalized, []);
+    map.get(normalized).push(order.id);
+  });
+  return map;
+}
+
 app.get('/api/admin/orders', requireAdmin, (req, res) => {
-  const orders = db.getAllOrders().map(order => ({
-    ...order,
-    financials: orderFinancialSummary(order),
-  }));
-  res.json({ orders });
+  const allOrders = db.getAllOrders();
+  const duplicateMap = txidDuplicateMap(allOrders);
+  const orders = allOrders.map(order => {
+    const normalizedTxid = order.payment_provider === 'crypto' && order.payment_reference
+      ? String(order.payment_reference).trim().toLowerCase()
+      : '';
+    const duplicateOrderIds = normalizedTxid ? (duplicateMap.get(normalizedTxid) || []) : [];
+    return {
+      ...order,
+      payment_reference_duplicate: duplicateOrderIds.length > 1,
+      payment_reference_duplicate_order_ids: duplicateOrderIds,
+      financials: orderFinancialSummary(order),
+    };
+  });
+  const txidDuplicateCount = [...duplicateMap.values()].filter(ids => ids.length > 1).length;
+  res.json({ orders, txidDuplicateCount });
 });
 
 app.post('/api/admin/orders/:id/status', requireAdmin, async (req, res) => {
