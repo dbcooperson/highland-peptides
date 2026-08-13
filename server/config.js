@@ -20,6 +20,11 @@ module.exports = {
   // Percentage-based processing fee added to every order (0.03 = 3%).
   ORDER_FEE_RATE: Number(process.env.ORDER_FEE_RATE || 0.03),
 
+  // Temporary checkout pause during restock. Set CHECKOUT_PAUSED=false to reopen.
+  CHECKOUT_PAUSED: String(process.env.CHECKOUT_PAUSED || 'true').toLowerCase() !== 'false',
+  RESTOCK_DATE: process.env.RESTOCK_DATE || 'August 16',
+  CHECKOUT_PAUSE_MESSAGE: process.env.CHECKOUT_PAUSE_MESSAGE || 'Payments are temporarily down until further notice while we complete restock. Restock is scheduled for August 16.',
+
   // Promo codes: key is the code (case-insensitive), value is the fraction off
   // the subtotal (0.15 = 15% off). Validated server-side at checkout.
   DISCOUNT_CODES: {
