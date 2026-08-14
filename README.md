@@ -131,3 +131,21 @@ SMTP_SECURE=true
 ```
 
 Backups are sent after payment capture. They are also sent if an admin manually changes an order to paid or fulfilled.
+
+## Bitcoin deposit alerts in Discord
+
+The server can poll the public mempool.space API and post a Discord message whenever a watched Bitcoin address receives a new transaction. It stores notified transaction IDs on the persistent data disk, so restarts do not create duplicate alerts.
+
+Configure these environment variables:
+
+```txt
+BTC_MONITOR_ENABLED=true
+BTC_MONITOR_ADDRESSES=bc1q...your-address
+DISCORD_BTC_WEBHOOK_URL=https://discord.com/api/webhooks/...
+BTC_MONITOR_MIN_CONFIRMATIONS=0
+BTC_MONITOR_POLL_INTERVAL_MS=60000
+```
+
+`BTC_MONITOR_ADDRESSES` accepts a comma-separated list. If it is omitted, `CRYPTO_BTC_ADDRESS` is watched. If `DISCORD_BTC_WEBHOOK_URL` is omitted, the existing `DISCORD_ORDER_WEBHOOK_URL` is used. A minimum confirmation count of `0` alerts when a transaction first enters the mempool; use `1` or more to wait for mining confirmations. The minimum polling interval is 15 seconds.
+
+On its first run, the monitor records the address's current transactions without alerting, preventing a flood of old deposits. Set `BTC_MONITOR_ALERT_EXISTING=true` only if you intentionally want the latest existing deposits announced. The state file is `data/btc-monitor-state.json` locally or `${DATA_DIR}/btc-monitor-state.json` on a persistent deployment disk.

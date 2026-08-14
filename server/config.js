@@ -82,6 +82,17 @@ module.exports = {
   ALT_PAYMENT_DISCOUNT_RATE: Number(process.env.ALT_PAYMENT_DISCOUNT_RATE || 0.05),
 
   DISCORD_ORDER_WEBHOOK_URL: process.env.DISCORD_ORDER_WEBHOOK_URL || '',
+  BTC_MONITOR: {
+    ENABLED: String(process.env.BTC_MONITOR_ENABLED || '').toLowerCase() === 'true',
+    ADDRESSES: String(process.env.BTC_MONITOR_ADDRESSES || process.env.CRYPTO_BTC_ADDRESS || 'bc1qvz90rnsmdq3fyefxpcxdj4sp03pcwwyysryu82')
+      .split(',').map(address => address.trim()).filter(Boolean),
+    DISCORD_WEBHOOK_URL: process.env.DISCORD_BTC_WEBHOOK_URL || process.env.DISCORD_ORDER_WEBHOOK_URL || '',
+    API_URL: process.env.BTC_MONITOR_API_URL || 'https://mempool.space/api',
+    EXPLORER_URL: process.env.BTC_MONITOR_EXPLORER_URL || 'https://mempool.space',
+    POLL_INTERVAL_MS: Number(process.env.BTC_MONITOR_POLL_INTERVAL_MS || 60000),
+    MIN_CONFIRMATIONS: Math.max(0, Number(process.env.BTC_MONITOR_MIN_CONFIRMATIONS || 0)),
+    ALERT_EXISTING: String(process.env.BTC_MONITOR_ALERT_EXISTING || '').toLowerCase() === 'true',
+  },
   ORDER_BACKUP_EMAIL_TO: process.env.ORDER_BACKUP_EMAIL_TO || '',
   ORDER_BACKUP_EMAIL_FROM: process.env.ORDER_BACKUP_EMAIL_FROM || process.env.SMTP_USER || 'orders@highlandpeptides.com',
   SMTP_HOST: process.env.SMTP_HOST || '',

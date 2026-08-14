@@ -5,7 +5,8 @@
   "description": "Research-use peptide storefront",
   "main": "server/index.js",
   "scripts": {
-    "start": "node server/index.js"
+    "start": "node server/index.js",
+    "test": "node --test server/*.test.js"
   },
   "dependencies": {
     "express": "^4.19.2",

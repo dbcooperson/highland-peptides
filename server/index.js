@@ -1,3 +1,13 @@
+// Load local secrets for development. Deployment-provided environment variables
+// keep precedence, and a missing .env file is expected in production.
+if (typeof process.loadEnvFile === 'function') {
+  try {
+    process.loadEnvFile();
+  } catch (err) {
+    if (err.code !== 'ENOENT') throw err;
+  }
+}
+
 const path = require('path');
 const crypto = require('crypto');
 const express = require('express');
@@ -10,6 +20,7 @@ const { requireAdmin } = require('./auth');
 const { buildPackingSlip, buildContentsLabel } = require('./labels');
 const { isPayPalConfigured, createPayPalOrder, capturePayPalOrder } = require('./paypal');
 const { sendOrderBackup, sendCustomerPaymentInstructions } = require('./notifications');
+const { createBitcoinMonitor } = require('./btc-monitor');
 
 const isProductionRuntime = Boolean(process.env.RENDER || process.env.RENDER_SERVICE_ID || process.env.NODE_ENV === 'production');
 if (isProductionRuntime) {
@@ -704,7 +715,25 @@ app.get('/api/admin/orders/:id/contents-label.pdf', requireAdmin, (req, res) => 
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`${config.SITE_NAME} running on http://localhost:${PORT}`));
+app.listen(PORT, () => {
+  console.log(`${config.SITE_NAME} running on http://localhost:${PORT}`);
+  if (config.BTC_MONITOR.ENABLED) {
+    try {
+      createBitcoinMonitor({
+        addresses: config.BTC_MONITOR.ADDRESSES,
+        webhookUrl: config.BTC_MONITOR.DISCORD_WEBHOOK_URL,
+        apiUrl: config.BTC_MONITOR.API_URL,
+        explorerUrl: config.BTC_MONITOR.EXPLORER_URL,
+        intervalMs: config.BTC_MONITOR.POLL_INTERVAL_MS,
+        minConfirmations: config.BTC_MONITOR.MIN_CONFIRMATIONS,
+        alertExisting: config.BTC_MONITOR.ALERT_EXISTING,
+      }).start();
+      console.log(`BTC monitor started for ${config.BTC_MONITOR.ADDRESSES.length} address(es).`);
+    } catch (err) {
+      console.error('BTC monitor did not start:', err.message || err);
+    }
+  }
+});
 
 
 
