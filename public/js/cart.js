@@ -93,8 +93,6 @@ function renderCartPage() {
 
   const itemCount = cartItemCount(cart);
   if (itemSummary) itemSummary.textContent = `${itemCount} item${itemCount === 1 ? '' : 's'}`;
-  const checkoutPaused = Boolean(window.siteSettings && window.siteSettings.checkoutPaused);
-  const pauseMessage = (window.siteSettings && window.siteSettings.checkoutPauseMessage) || 'Payments are temporarily down until further notice while we complete restock. Restock is scheduled for August 16.';
 
   if (skus.length === 0) {
     itemsEl.innerHTML = `
@@ -135,18 +133,11 @@ function renderCartPage() {
     `);
   }
   totalEl.innerHTML = cartSummaryHTML(subtotal);
-  if (checkoutPaused) {
-    checkoutBtn.disabled = true;
-    checkoutBtn.textContent = 'Payments Paused Until Restock';
-    checkoutBtn.title = pauseMessage;
-  } else {
-    checkoutBtn.disabled = unavailableCount > 0;
-    checkoutBtn.textContent = 'Checkout Securely';
-    checkoutBtn.title = unavailableCount > 0 ? 'Remove unavailable items before checkout.' : '';
-    if (!unavailableCount) {
-      checkoutBtn.disabled = false;
-      checkoutBtn.title = '';
-    }
+  checkoutBtn.disabled = unavailableCount > 0;
+  checkoutBtn.title = unavailableCount > 0 ? 'Remove unavailable items before checkout.' : '';
+  if (!unavailableCount) {
+    checkoutBtn.disabled = false;
+    checkoutBtn.title = '';
   }
 
   document.getElementById('removeUnavailableCartItems')?.addEventListener('click', () => {
@@ -191,11 +182,6 @@ async function init() {
   const catalogData = await api('/api/catalog');
   window.siteCatalog = catalogData.products;
   window.siteFees = { packagingFee: catalogData.packagingFee, shippingFee: catalogData.shippingFee, internationalShippingFee: catalogData.internationalShippingFee || 35, shippingOptions: catalogData.shippingOptions || [], orderFeeRate: catalogData.orderFeeRate || 0, altPaymentDiscountRate: catalogData.altPaymentDiscountRate || 0 };
-  window.siteSettings = {
-    checkoutPaused: Boolean(catalogData.checkoutPaused),
-    restockDate: catalogData.restockDate,
-    checkoutPauseMessage: catalogData.checkoutPauseMessage,
-  };
   const activeSkus = new Set(window.siteCatalog.map(p => p.sku));
   const currentCart = getCart();
   let prunedCart = false;

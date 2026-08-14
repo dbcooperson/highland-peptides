@@ -91,7 +91,7 @@
       <div>
         <div class="cart-eyebrow">Secure research supply</div>
         <h1>Your Cart</h1>
-        <p>Payments are temporarily down until further notice while we complete restock. Restock is scheduled for August 16.</p>
+        <p>Review your research-use-only order before continuing to secure checkout.</p>
       </div>
       <div class="cart-header-actions">
         <a href="/cart.html?clearCart=1" id="clearCartBtn" class="cart-header-link cart-clear-link">Clear Cart</a>
@@ -111,16 +111,12 @@
       <aside class="cart-summary-card">
         <div class="cart-card-title">
           <span>Order summary</span>
-          <em>Restock August 16</em>
+          <em>Secure checkout</em>
         </div>
         <div id="cartTotalPage"></div>
-        <button id="checkoutBtn" class="checkout-primary-btn" disabled>Payments Paused Until Restock</button>
+        <button id="checkoutBtn" class="checkout-primary-btn">Checkout Securely</button>
         <a href="/index.html#catalogSection" class="checkout-secondary-link">Keep shopping</a>
         <a href="/cart.html?clearCart=1" id="clearCartSummaryBtn" class="checkout-secondary-link cart-clear-link">Clear cart</a>
-        <div class="checkout-paused-card">
-          <strong>Payments paused for restock</strong>
-          <span>Payments will be down until further notice while we restock. Restock is scheduled for August 16.</span>
-        </div>
         <p class="cart-summary-note">For laboratory / research use only. Not for human or veterinary use.</p>
         <p class="form-msg" id="cartMsg"></p>
       </aside>
@@ -429,18 +425,28 @@
         I understand payment must be sent for the exact total shown. If the amount is incorrect, Highland Peptides will send a confirmation email. If no response is received within 72 hours, fulfillment will not proceed and the payment will not be refunded except where required by law.
       </label>
 
-      <div class="payment-divider"><span>Payments paused</span></div>
-      <div class="checkout-paused-card checkout-paused-card-modal">
-        <strong>Payments are down until further notice</strong>
-        <span>We are pausing payments while we complete restock. Restock is scheduled for August 16.</span>
+      <div class="payment-divider"><span>Choose payment method</span></div>
+      <div class="manual-payment-grid">
+        <button type="button" id="manualPaypalCheckoutBtn" class="payment-choice-card">
+          <strong>PayPal</strong>
+          <span>Submit your order, then send the exact total to at475756@gmail.com for manual verification.</span>
+        </button>
+        <button type="button" id="cryptoCheckoutBtn" class="payment-choice-card">
+          <strong>Crypto <em>5% off</em></strong>
+          <span>Submit order and pay by BTC or USDC. Cannot be combined with promo codes.</span>
+        </button>
       </div>
-      <p class="manual-payment-note">Checkout will reopen after restock. No PayPal or crypto payment instructions are available while payments are paused.</p>
+      <p class="manual-payment-note">Each order receives a unique exact total. Payments are manually reviewed, and confirmed orders ship the next business day. Wrong payment amounts require email confirmation within 72 hours before fulfillment can proceed.</p>
       <p class="form-msg" id="checkoutMsg"></p>
 
       <div id="manualPaymentDetails" class="manual-payment-details" style="display:none;">
         <h4 id="manualPaymentTitle">Payment instructions</h4>
         <p id="manualPaymentSummary"></p>
-        <div id="paypalPaymentDetails" style="display:none;"></div>
+        <div id="paypalPaymentDetails" style="display:none;">
+          <p class="crypto-address-label">Send the exact total to PayPal:</p>
+          <p class="crypto-address" id="paypalPaymentEmail"></p>
+          <p class="crypto-network-note">Use the exact total shown so we can match your payment to this order. We manually verify payment before fulfillment; confirmed orders ship the next business day.</p>
+        </div>
         <div id="cryptoChoiceDetails" style="display:none;">
           <label>Pay with
             <select id="cryptoAssetSelect">

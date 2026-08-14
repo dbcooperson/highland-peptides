@@ -67,9 +67,6 @@ app.get('/api/catalog', (req, res) => {
       { id: 'domestic', label: 'U.S. shipping', price: config.SHIPPING_FEE },
       { id: 'international', label: 'International shipping', price: config.INTERNATIONAL_SHIPPING_FEE },
     ],
-    checkoutPaused: config.CHECKOUT_PAUSED,
-    restockDate: config.RESTOCK_DATE,
-    checkoutPauseMessage: config.CHECKOUT_PAUSE_MESSAGE,
     orderFeeRate: config.ORDER_FEE_RATE,
     altPaymentDiscountRate: config.ALT_PAYMENT_DISCOUNT_RATE,
   });
@@ -227,7 +224,7 @@ function prepareCheckout(body) {
 
 app.get('/api/paypal/config', (req, res) => {
   res.json({
-    enabled: !config.CHECKOUT_PAUSED && isPayPalConfigured(),
+    enabled: isPayPalConfigured(),
     clientId: isPayPalConfigured() ? config.PAYPAL_CLIENT_ID : null,
     currency: config.PAYPAL_CURRENCY,
     environment: config.PAYPAL_ENV,
@@ -235,9 +232,6 @@ app.get('/api/paypal/config', (req, res) => {
 });
 
 app.post('/api/paypal/create-order', checkCheckoutRateLimit, async (req, res) => {
-  if (config.CHECKOUT_PAUSED) {
-    return res.status(503).json({ error: config.CHECKOUT_PAUSE_MESSAGE });
-  }
   if (!isPayPalConfigured()) {
     return res.status(503).json({ error: 'PayPal is not configured yet.' });
   }
@@ -260,9 +254,6 @@ app.post('/api/paypal/create-order', checkCheckoutRateLimit, async (req, res) =>
 // instructions directly. Used when PayPal is down/restricted, or as a plain
 // alternative to it.
 app.post('/api/checkout', checkCheckoutRateLimit, async (req, res) => {
-  if (config.CHECKOUT_PAUSED) {
-    return res.status(503).json({ error: config.CHECKOUT_PAUSE_MESSAGE });
-  }
   const prepared = prepareCheckout(req.body);
   if (prepared.error) return res.status(400).json({ error: prepared.error });
 
@@ -577,10 +568,10 @@ app.get('/api/admin/launch-checks', requireAdmin, (req, res) => {
     },
     {
       key: 'paypal',
-      label: 'Payments / PayPal',
-      ok: config.CHECKOUT_PAUSED || (isPayPalConfigured() && config.PAYPAL_ENV === 'live'),
+      label: 'PayPal credentials',
+      ok: isPayPalConfigured() && config.PAYPAL_ENV === 'live',
       detail: isPayPalConfigured()
-        ? (config.CHECKOUT_PAUSED ? `Payments are paused for restock until ${config.RESTOCK_DATE}.` : `PayPal is configured in ${config.PAYPAL_ENV} mode.`)
+        ? `PayPal is configured in ${config.PAYPAL_ENV} mode.`
         : 'PayPal credentials are missing, checkout cannot take online payment yet.',
     },
     {
