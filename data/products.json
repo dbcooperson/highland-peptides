@@ -404,15 +404,6 @@
     "salePrice": 27.817391
   },
   {
-    "sku": "S332",
-    "name": "SLU-PP-332",
-    "spec": "25mg x10ml vial",
-    "cost": 7,
-    "category": "Peptide",
-    "group": "Metabolic",
-    "salePrice": 35.643478
-  },
-  {
     "sku": "KPV5",
     "name": "KPV",
     "spec": "5mg x1 vial",
