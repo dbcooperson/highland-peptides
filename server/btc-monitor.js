@@ -102,7 +102,10 @@ async function postDiscord(webhookUrl, address, payment, explorerUrl, fetchImpl)
           { name: 'Amount', value: `**${btc} BTC**\n${payment.satoshis.toLocaleString('en-US')} sats`, inline: true },
           { name: 'Confirmations', value: String(payment.confirmations), inline: true },
           { name: 'Address', value: `\`${address}\`` },
-          { name: 'Transaction', value: `[View on mempool.space](${explorerUrl}/tx/${payment.txid})` },
+          {
+            name: 'Transaction ID (TXID)',
+            value: `\`${payment.txid}\`\n[View on mempool.space](${explorerUrl}/tx/${payment.txid})`,
+          },
         ],
         timestamp: new Date().toISOString(),
       }],

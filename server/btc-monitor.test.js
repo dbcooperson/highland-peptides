@@ -52,9 +52,11 @@ test('baselines old payments and alerts exactly once for a new payment', async (
     vout: [{ scriptpubkey_address: 'watched', value: 10_000 }],
   }];
   let webhookCalls = 0;
-  const fetchImpl = async (url) => {
+  let webhookPayload = null;
+  const fetchImpl = async (url, options = {}) => {
     if (url === 'https://discord.test/webhook') {
       webhookCalls += 1;
+      webhookPayload = JSON.parse(options.body);
       return new Response(null, { status: 204 });
     }
     return new Response(JSON.stringify(transactions), {
@@ -82,6 +84,9 @@ test('baselines old payments and alerts exactly once for a new payment', async (
     await monitor.check();
     await monitor.check();
     assert.equal(webhookCalls, 1);
+    assert.equal(webhookPayload.embeds[0].fields[3].name, 'Transaction ID (TXID)');
+    assert.match(webhookPayload.embeds[0].fields[3].value, /`new-payment`/);
+    assert.match(webhookPayload.embeds[0].fields[3].value, /mempool\.space\/tx\/new-payment/);
   } finally {
     if (fs.existsSync(statePath)) fs.unlinkSync(statePath);
   }
