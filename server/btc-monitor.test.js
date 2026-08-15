@@ -53,11 +53,19 @@ test('baselines old payments and alerts exactly once for a new payment', async (
   }];
   let webhookCalls = 0;
   let webhookPayload = null;
+  let priceAvailable = true;
   const fetchImpl = async (url, options = {}) => {
     if (url === 'https://discord.test/webhook') {
       webhookCalls += 1;
       webhookPayload = JSON.parse(options.body);
       return new Response(null, { status: 204 });
+    }
+    if (url === 'https://mempool.test/api/v1/prices') {
+      if (!priceAvailable) return new Response(null, { status: 503 });
+      return new Response(JSON.stringify({ USD: 100_000 }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
     return new Response(JSON.stringify(transactions), {
       status: 200,
@@ -84,9 +92,21 @@ test('baselines old payments and alerts exactly once for a new payment', async (
     await monitor.check();
     await monitor.check();
     assert.equal(webhookCalls, 1);
-    assert.equal(webhookPayload.embeds[0].fields[3].name, 'Transaction ID (TXID)');
-    assert.match(webhookPayload.embeds[0].fields[3].value, /`new-payment`/);
-    assert.match(webhookPayload.embeds[0].fields[3].value, /mempool\.space\/tx\/new-payment/);
+    assert.equal(webhookPayload.embeds[0].fields[1].name, 'Approx. USD');
+    assert.equal(webhookPayload.embeds[0].fields[1].value, '**$20.00**');
+    assert.equal(webhookPayload.embeds[0].fields[4].name, 'Transaction ID (TXID)');
+    assert.match(webhookPayload.embeds[0].fields[4].value, /`new-payment`/);
+    assert.match(webhookPayload.embeds[0].fields[4].value, /mempool\.space\/tx\/new-payment/);
+
+    priceAvailable = false;
+    transactions = [{
+      txid: 'price-feed-failure',
+      status: { confirmed: false },
+      vout: [{ scriptpubkey_address: 'watched', value: 30_000 }],
+    }, ...transactions];
+    await monitor.check();
+    assert.equal(webhookCalls, 2);
+    assert.equal(webhookPayload.embeds[0].fields[1].value, '**Temporarily unavailable**');
   } finally {
     if (fs.existsSync(statePath)) fs.unlinkSync(statePath);
   }

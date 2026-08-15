@@ -86,7 +86,25 @@ async function fetchTipHeight(apiUrl, fetchImpl) {
   return height;
 }
 
-async function postDiscord(webhookUrl, address, payment, explorerUrl, fetchImpl) {
+async function fetchBitcoinUsd(apiUrl, fetchImpl) {
+  const prices = await fetchJson(`${apiUrl}/v1/prices`, fetchImpl);
+  const usd = Number(prices && prices.USD);
+  if (!Number.isFinite(usd) || usd <= 0) throw new Error('Blockchain API returned an invalid BTC/USD price.');
+  return usd;
+}
+
+function usdValue(satoshis, bitcoinUsd) {
+  if (!Number.isFinite(bitcoinUsd) || bitcoinUsd <= 0) return 'Temporarily unavailable';
+  const value = (satoshis / SATOSHIS_PER_BTC) * bitcoinUsd;
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
+async function postDiscord(webhookUrl, address, payment, explorerUrl, bitcoinUsd, fetchImpl) {
   const btc = (payment.satoshis / SATOSHIS_PER_BTC).toFixed(8);
   const response = await fetchImpl(webhookUrl, {
     method: 'POST',
@@ -100,6 +118,7 @@ async function postDiscord(webhookUrl, address, payment, explorerUrl, fetchImpl)
         color: 0xf7931a,
         fields: [
           { name: 'Amount', value: `**${btc} BTC**\n${payment.satoshis.toLocaleString('en-US')} sats`, inline: true },
+          { name: 'Approx. USD', value: `**${usdValue(payment.satoshis, bitcoinUsd)}**`, inline: true },
           { name: 'Confirmations', value: String(payment.confirmations), inline: true },
           { name: 'Address', value: `\`${address}\`` },
           {
@@ -139,6 +158,8 @@ function createBitcoinMonitor(options) {
     checking = true;
     try {
       const tipHeight = minConfirmations > 1 ? await fetchTipHeight(apiUrl, fetchImpl) : null;
+      let bitcoinUsd;
+      let priceAttempted = false;
 
       for (const address of watchedAddresses) {
         const transactions = await fetchJson(`${apiUrl}/address/${encodeURIComponent(address)}/txs`, fetchImpl);
@@ -156,7 +177,15 @@ function createBitcoinMonitor(options) {
 
         for (const payment of payments.slice().reverse()) {
           if (addressState[payment.txid]) continue;
-          await postDiscord(webhookUrl, address, payment, explorerUrl, fetchImpl);
+          if (!priceAttempted) {
+            priceAttempted = true;
+            try {
+              bitcoinUsd = await fetchBitcoinUsd(apiUrl, fetchImpl);
+            } catch (err) {
+              console.error('BTC/USD price lookup failed:', err.message || err);
+            }
+          }
+          await postDiscord(webhookUrl, address, payment, explorerUrl, bitcoinUsd, fetchImpl);
           remember(addressState, payment);
           saveState(statePath, state);
           console.log(`BTC payment alert sent: ${payment.txid} (${payment.satoshis} sats).`);
