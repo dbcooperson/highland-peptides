@@ -38,7 +38,7 @@ function wireAddButtons(container) {
 
 let activeFilter = 'All';
 
-const BEST_SELLER_SKUS = ['RT20', 'BT10', 'TR30', 'BC10'];
+const BEST_SELLER_SKUS = ['RT15', 'BT10', 'TR30', 'BC10'];
 
 function renderBestSellers() {
   const grid = document.getElementById('bestSellersGrid');
