@@ -38,9 +38,20 @@ function wireAddButtons(container) {
 
 let activeFilter = 'All';
 
+const BEST_SELLER_SKUS = ['RT20', 'BT10', 'TR30', 'BC10'];
+
 function renderBestSellers() {
   const grid = document.getElementById('bestSellersGrid');
-  const bestSellers = catalog.filter(p => p.popular).slice(0, 4);
+  if (!grid) return;
+
+  const selected = BEST_SELLER_SKUS
+    .map(sku => catalog.find(product => product.sku === sku))
+    .filter(Boolean);
+  const fallback = catalog
+    .filter(product => product.popular && !BEST_SELLER_SKUS.includes(product.sku))
+    .slice(0, Math.max(0, 4 - selected.length));
+  const bestSellers = [...selected, ...fallback].slice(0, 4);
+
   grid.innerHTML = bestSellers.map(cardHTML).join('');
   wireAddButtons(grid);
 }
