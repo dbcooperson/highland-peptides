@@ -843,5 +843,14 @@
     "category": "Peptide",
     "group": "Metabolic",
     "salePrice": 36.513043
+  },
+  {
+    "sku": "LCARN50",
+    "name": "L-Carnitine",
+    "spec": "600mg/ml 50ml",
+    "cost": 12.5,
+    "category": "Research Material",
+    "group": "Aminos",
+    "salePrice": 50
   }
 ]

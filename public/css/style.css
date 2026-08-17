@@ -1598,12 +1598,54 @@ body.search-open { overflow: hidden; }
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
-.hero-commerce-panel h2 {
+.hero-panel-heading-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 154px;
+  gap: 14px;
+  align-items: start;
   margin: 10px 0 18px;
+}
+.hero-commerce-panel h2 {
+  margin: 0;
   max-width: 420px;
   font-size: clamp(26px, 3vw, 38px);
   line-height: 0.98;
   letter-spacing: -0.045em;
+}
+.hero-new-product-card {
+  display: grid;
+  gap: 4px;
+  padding: 13px 14px;
+  border: 1px solid rgba(67,91,69,0.22);
+  border-radius: 18px;
+  background: linear-gradient(145deg, rgba(67,91,69,0.13), rgba(193,121,58,0.10));
+  color: inherit;
+  text-decoration: none;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.45);
+}
+.hero-new-product-card span {
+  color: var(--accent-ink);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+.hero-new-product-card strong {
+  font-size: 17px;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+.hero-new-product-card em {
+  color: var(--muted-on-light);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 800;
+}
+.hero-new-product-card b {
+  margin-top: 2px;
+  color: #223626;
+  font-size: 20px;
+  line-height: 1;
 }
 .hero-mini-products {
   display: grid;
