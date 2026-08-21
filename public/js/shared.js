@@ -845,7 +845,7 @@ async function submitManualPaypalCheckout() {
     if (cryptoDetails) cryptoDetails.style.display = 'none';
     if (paypalDetails) paypalDetails.style.display = 'block';
     document.getElementById('paypalPaymentEmail').textContent = result.paypal ? result.paypal.email : 'at475756@gmail.com';
-    showManualPaymentShell('PayPal payment instructions', `<strong>Order #${result.orderId}</strong><br>Exact total due: <strong>$${result.total.toFixed(2)}</strong><br>Send payment to: <strong>${result.paypal ? result.paypal.email : 'at475756@gmail.com'}</strong><br><span class="hint">Please send the exact total shown. If the amount is incorrect, we will email you for confirmation. If no response is received within 72 hours, fulfillment will not proceed and the payment will not be refunded except where required by law. Confirmed orders ship the next business day.</span>`);
+    showManualPaymentShell('PayPal payment instructions', `<strong>Order #${result.orderId}</strong><br>Exact total due: <strong>$${result.total.toFixed(2)}</strong><br>Send payment to: <strong>${result.paypal ? result.paypal.email : 'at475756@gmail.com'}</strong><br><span class="manual-payment-alert"><strong>Send with PayPal Friends and Family.</strong><br>Include <strong>Order #${result.orderId}</strong> in the PayPal note.</span><br><span class="hint">Please send the exact total shown. If the amount is incorrect, we will email you for confirmation. If no response is received within 72 hours, fulfillment will not proceed and the payment will not be refunded except where required by law. Confirmed orders ship the next business day.</span>`);
     clearCartAfterCheckout();
   } catch (err) {
     msgEl.style.color = 'var(--danger)';

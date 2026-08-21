@@ -173,6 +173,9 @@ function customerInstructionsText(order) {
       `Send the exact total due to PayPal:`,
       config.PAYPAL_MANUAL_EMAIL,
       ``,
+      `IMPORTANT: Send with PayPal Friends and Family.`,
+      `Include your order number ${ref} in the PayPal note.`,
+      ``,
       `Use the exact amount shown above so we can match your payment to ${ref}.`,
       `If the amount is incorrect, we will send a confirmation email. If no response is received within 72 hours, fulfillment will not proceed and the payment will not be refunded except where required by law.`,
       `Payment is manually reviewed before fulfillment. Once confirmed, your order ships the next business day.`,
@@ -206,6 +209,8 @@ function customerInstructionsHtml(order) {
     body = `
       <p>Send the exact total due to PayPal:</p>
       <p style="font-family:monospace; font-size:16px;"><strong>${htmlEscape(config.PAYPAL_MANUAL_EMAIL)}</strong></p>
+      <p><strong>Send with PayPal Friends and Family.</strong></p>
+      <p>Include your order number <strong>${htmlEscape(ref)}</strong> in the PayPal note.</p>
       <p>Use the exact amount shown above so we can match your payment to <strong>${htmlEscape(ref)}</strong>.</p>
       <p>If the amount is incorrect, we will send a confirmation email. If no response is received within 72 hours, fulfillment will not proceed and the payment will not be refunded except where required by law.</p>
       <p>Payment is manually reviewed before fulfillment. Once confirmed, your order ships the next business day.</p>

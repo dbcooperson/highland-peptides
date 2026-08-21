@@ -1160,8 +1160,29 @@ body.search-open { overflow: hidden; }
 .manual-payment-details p {
   margin: 0 0 10px;
 }
+.manual-payment-alert {
+  display: block;
+  margin: 10px 0;
+  padding: 10px 12px;
+  border: 1.5px solid rgba(193, 121, 58, 0.38);
+  border-radius: 14px;
+  background: rgba(193, 121, 58, 0.12);
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.35;
+}
+.manual-payment-alert strong {
+  font-weight: 900;
+}
 @media (max-width: 560px) {
   .manual-payment-grid { grid-template-columns: 1fr; }
+  .manual-payment-details {
+    padding: 12px;
+    border-radius: 14px;
+  }
+  .manual-payment-alert {
+    font-size: 12px;
+  }
 }
 .payment-divider {
   display: flex;
