@@ -42,6 +42,7 @@ module.exports = {
     TORAH: 0.15,
     OGRE: 0.15,
     PEAR: 0.15,
+    CAR: 0.15,
     LANG10: 0.10,
     CNTRL: 0.10,
     BIOMAX: 0.10,
