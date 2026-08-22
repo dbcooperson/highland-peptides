@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin: Highland Peptides</title>
-<link rel="stylesheet" href="/css/style.css?v=admin-dark-fix-20260729">
+<link rel="stylesheet" href="/css/style.css?v=analytics-20260821">
 </head>
 <body class="admin-page">
 <header class="topbar">
@@ -26,6 +26,7 @@
     <div id="adminStorageInfo" class="admin-storage-info"></div>
     <div class="admin-tabs" role="tablist" aria-label="Admin sections">
       <button type="button" class="admin-tab active" data-admin-tab="orders">Orders</button>
+      <button type="button" class="admin-tab" data-admin-tab="analytics">Analytics</button>
       <button type="button" class="admin-tab" data-admin-tab="profit">Profit</button>
       <button type="button" class="admin-tab" data-admin-tab="launch">Launch Checks</button>
     </div>
@@ -50,6 +51,47 @@
       </div>
       <table id="ordersTable" style="width:100%; border-collapse: collapse;"></table>
     </div>
+    <div class="panel admin-tab-panel" id="analyticsPanel" data-admin-panel="analytics" hidden>
+      <div class="analytics-heading-row">
+        <div>
+          <h2>Store Analytics <span class="hint">(first-party, privacy-conscious)</span></h2>
+          <p class="hint" id="analyticsTrackingNote">Traffic tracking starts when this version is deployed.</p>
+        </div>
+        <label class="analytics-range-label">Date range
+          <select id="analyticsRange">
+            <option value="7">Last 7 days</option>
+            <option value="30" selected>Last 30 days</option>
+            <option value="90">Last 90 days</option>
+            <option value="365">Last 12 months</option>
+          </select>
+        </label>
+      </div>
+      <div id="analyticsSummary"></div>
+      <div class="analytics-dashboard-grid">
+        <section class="analytics-card analytics-chart-card">
+          <div class="analytics-card-title"><strong>Daily traffic</strong><span>Page views</span></div>
+          <div id="analyticsDailyChart" class="analytics-bar-chart"></div>
+        </section>
+        <section class="analytics-card">
+          <div class="analytics-card-title"><strong>Conversion funnel</strong><span>Where visitors drop off</span></div>
+          <div id="analyticsFunnel"></div>
+        </section>
+      </div>
+      <section class="analytics-card analytics-insights-card">
+        <div class="analytics-card-title"><strong>CVR opportunities</strong><span>Prioritized from your actual funnel</span></div>
+        <div id="analyticsInsights" class="analytics-insights"></div>
+      </section>
+      <div class="analytics-dashboard-grid analytics-lists-grid">
+        <section class="analytics-card">
+          <div class="analytics-card-title"><strong>Top products</strong><span>Views and cart intent</span></div>
+          <div class="analytics-table-wrap"><table id="analyticsProductsTable"></table></div>
+        </section>
+        <section class="analytics-card">
+          <div class="analytics-card-title"><strong>Traffic sources</strong><span>How visitors found you</span></div>
+          <div class="analytics-table-wrap"><table id="analyticsSourcesTable"></table></div>
+        </section>
+      </div>
+    </div>
     <div class="panel admin-tab-panel" id="profitPanel" data-admin-panel="profit" hidden>
       <h2>Profit <span class="hint">(paid and fulfilled orders only)</span></h2>
       <div id="profitSummary"></div>
@@ -63,7 +105,7 @@
   </section>
 </main>
 
-<script src="/js/admin.js?v=admin-dark-fix-20260729"></script>
+<script src="/js/admin.js?v=analytics-20260821"></script>
 </body>
 </html>
 

@@ -33,6 +33,7 @@ function initAdminTabs() {
       document.querySelectorAll('.admin-tab-panel').forEach(panel => {
         panel.hidden = panel.dataset.adminPanel !== tab.dataset.adminTab;
       });
+      if (tab.dataset.adminTab === 'analytics') loadAnalytics();
     };
   });
 }
@@ -174,6 +175,126 @@ function priceAuditHTML(audit) {
       `).join('')}
     </table>
   `;
+}
+
+function percent(value) {
+  return value == null ? 'Collecting data' : `${Number(value).toFixed(1)}%`;
+}
+
+function analyticsSummaryHTML(data) {
+  const totals = data.totals || {};
+  const sales = data.sales || {};
+  return `
+    <div class="admin-summary-grid analytics-summary-grid">
+      <div><span>Impressions</span><strong>${Number(totals.pageViews || 0).toLocaleString()}</strong><em>page views</em></div>
+      <div><span>Unique visitors</span><strong>${Number(totals.uniqueVisitors || 0).toLocaleString()}</strong><em>anonymous devices</em></div>
+      <div><span>Visitor CVR</span><strong>${percent(data.rates && data.rates.visitorToOrder)}</strong><em>visitor to order</em></div>
+      <div><span>Orders created</span><strong>${Number(totals.ordersCreated || 0).toLocaleString()}</strong><em>tracked funnel</em></div>
+      <div><span>Paid orders</span><strong>${Number(sales.paidOrders || 0).toLocaleString()}</strong><em>selected date range</em></div>
+      <div><span>Paid revenue</span><strong>${money(sales.paidRevenue)}</strong><em>AOV ${money(sales.averageOrderValue)}</em></div>
+    </div>
+  `;
+}
+
+function analyticsChartHTML(daily) {
+  const values = Array.isArray(daily) ? daily : [];
+  const max = Math.max(1, ...values.map(day => Number(day.pageViews || 0)));
+  return values.map((day, index) => {
+    const height = Math.max(day.pageViews ? 5 : 1, Math.round((Number(day.pageViews || 0) / max) * 100));
+    const showLabel = values.length <= 31 || index % Math.ceil(values.length / 16) === 0;
+    const date = new Date(`${day.date}T00:00:00Z`);
+    const label = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' });
+    return `<div class="analytics-bar-column" title="${escapeHtml(label)}: ${day.pageViews} page views, ${day.visitors} visitors">
+      <span class="analytics-bar-value">${day.pageViews || ''}</span>
+      <i style="height:${height}%"></i>
+      <small>${showLabel ? escapeHtml(label) : ''}</small>
+    </div>`;
+  }).join('');
+}
+
+function analyticsFunnelHTML(data) {
+  const totals = data.totals || {};
+  const stages = [
+    ['Page views', totals.pageViews || 0],
+    ['Product views', totals.productViews || 0],
+    ['Added to cart', totals.addToCarts || 0],
+    ['Checkout opened', totals.checkoutStarts || 0],
+    ['Orders created', totals.ordersCreated || 0],
+  ];
+  const base = Math.max(1, Number(stages[0][1] || 0));
+  return `<div class="analytics-funnel">${stages.map(([label, value], index) => {
+    const width = Math.max(value ? 16 : 4, Math.round((Number(value) / base) * 100));
+    const previous = index ? Number(stages[index - 1][1] || 0) : 0;
+    const stepRate = index && previous ? Math.round((Number(value) / previous) * 1000) / 10 : null;
+    return `<div class="analytics-funnel-row">
+      <div><span>${escapeHtml(label)}</span><strong>${Number(value).toLocaleString()}</strong>${index ? `<em>${stepRate == null ? '—' : stepRate + '%'} from prior step</em>` : ''}</div>
+      <i><b style="width:${Math.min(100, width)}%"></b></i>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function analyticsInsightsHTML(data) {
+  const totals = data.totals || {};
+  const rates = data.rates || {};
+  const insights = [];
+  if (!totals.pageViews) {
+    insights.push(['Baseline is starting now', 'The site did not previously record impressions. Let this run for 7–14 days before making major conversion decisions.']);
+  } else {
+    if (rates.productToCart == null || rates.productToCart < 8) {
+      insights.push(['Strengthen product-to-cart intent', 'Use the best-selling strength as the default, keep price and purity proof above the fold, and add one clear Add to Cart action per card.']);
+    }
+    if (rates.checkoutToOrder == null || rates.checkoutToOrder < 45) {
+      insights.push(['Reduce checkout abandonment', 'Keep the form short, show the final delivered total earlier, and make payment instructions visible before the customer submits.']);
+    }
+    if (rates.visitorToOrder == null || rates.visitorToOrder < 2) {
+      insights.push(['Make the first visit more decisive', 'Lead with your three actual best sellers, real lot/COA proof, shipping timing, and a simple first-order path on mobile.']);
+    }
+    if (rates.orderToPaid != null && rates.orderToPaid < 70) {
+      insights.push(['Close more pending orders', 'A high pending-payment rate usually means the payment handoff needs clearer exact-total, order-number, and confirmation instructions.']);
+    }
+    const leader = (data.topProducts || [])[0];
+    if (leader) {
+      insights.push([`${leader.name} is drawing the most product interest`, `${leader.views} views and ${leader.adds} cart adds. Keep it prominent and use it as the anchor for related-product suggestions.`]);
+    }
+  }
+  return insights.slice(0, 4).map(([title, copy], index) => `
+    <article><span>${String(index + 1).padStart(2, '0')}</span><div><strong>${escapeHtml(title)}</strong><p>${escapeHtml(copy)}</p></div></article>
+  `).join('');
+}
+
+function analyticsProductsHTML(products) {
+  const rows = (products || []).map(product => `
+    <tr>${td(`<strong>${escapeHtml(product.name)}</strong><br><span class="admin-muted">${escapeHtml(product.sku)}</span>`)}${td(product.views)}${td(product.adds)}${td(`${product.addRate}%`)}</tr>
+  `).join('');
+  return `<tr>${['Product','Views','Cart adds','Add rate'].map(th).join('')}</tr>${rows || `<tr>${td('Product activity will appear after tracking begins.')}</tr>`}`;
+}
+
+function analyticsSourcesHTML(sources) {
+  const rows = (sources || []).map(source => `<tr>${td(escapeHtml(source.name))}${td(Number(source.count).toLocaleString())}</tr>`).join('');
+  return `<tr>${['Source','Page views'].map(th).join('')}</tr>${rows || `<tr>${td('Traffic sources will appear after tracking begins.')}</tr>`}`;
+}
+
+let analyticsLoading = false;
+async function loadAnalytics() {
+  if (analyticsLoading) return;
+  analyticsLoading = true;
+  const range = document.getElementById('analyticsRange')?.value || '30';
+  try {
+    const data = await api(`/api/admin/analytics?days=${encodeURIComponent(range)}`);
+    document.getElementById('analyticsSummary').innerHTML = analyticsSummaryHTML(data);
+    document.getElementById('analyticsDailyChart').innerHTML = analyticsChartHTML(data.daily);
+    document.getElementById('analyticsFunnel').innerHTML = analyticsFunnelHTML(data);
+    document.getElementById('analyticsInsights').innerHTML = analyticsInsightsHTML(data);
+    document.getElementById('analyticsProductsTable').innerHTML = analyticsProductsHTML(data.topProducts);
+    document.getElementById('analyticsSourcesTable').innerHTML = analyticsSourcesHTML(data.topSources);
+    const started = new Date(data.trackingStartedAt);
+    const storageNote = data.storage && !data.storage.persistent ? ' Local analytics storage is active; production should use the Render persistent disk.' : '';
+    document.getElementById('analyticsTrackingNote').textContent = `Traffic tracking started ${started.toLocaleString()}.${storageNote}`;
+  } catch (err) {
+    document.getElementById('analyticsSummary').innerHTML = `<p class="form-msg">${escapeHtml(err.message)}</p>`;
+  } finally {
+    analyticsLoading = false;
+  }
 }
 
 async function loadLaunchChecks() {
@@ -374,6 +495,8 @@ document.getElementById('adminLogoutBtn').addEventListener('click', async () => 
   await api('/api/admin/logout', { method: 'POST' });
   location.reload();
 });
+
+document.getElementById('analyticsRange')?.addEventListener('change', loadAnalytics);
 
 
 

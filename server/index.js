@@ -21,6 +21,7 @@ const { buildPackingSlip, buildContentsLabel } = require('./labels');
 const { isPayPalConfigured, createPayPalOrder, capturePayPalOrder } = require('./paypal');
 const { sendOrderBackup, sendCustomerPaymentInstructions } = require('./notifications');
 const { createBitcoinMonitor } = require('./btc-monitor');
+const analytics = require('./analytics');
 
 const isProductionRuntime = Boolean(process.env.RENDER || process.env.RENDER_SERVICE_ID || process.env.NODE_ENV === 'production');
 if (isProductionRuntime) {
@@ -87,6 +88,35 @@ app.get('/api/product', (req, res) => {
   const family = getProductFamily({ sku: req.query.sku, slug: req.query.slug });
   if (!family) return res.status(404).json({ error: 'Product not found' });
   res.json({ siteName: config.SITE_NAME, ...family });
+});
+
+const analyticsAttempts = new Map();
+const ANALYTICS_WINDOW_MS = 15 * 60 * 1000;
+const ANALYTICS_MAX_ATTEMPTS = 250;
+
+app.post('/api/analytics/event', (req, res) => {
+  const key = req.ip || req.socket.remoteAddress || 'unknown';
+  const now = Date.now();
+  const current = analyticsAttempts.get(key);
+  const attempt = current && current.firstAt + ANALYTICS_WINDOW_MS > now
+    ? current
+    : { count: 0, firstAt: now };
+  attempt.count += 1;
+  analyticsAttempts.set(key, attempt);
+  if (attempt.count > ANALYTICS_MAX_ATTEMPTS) return res.status(204).end();
+
+  const input = req.body || {};
+  analytics.recordEvent({
+    type: cleanText(input.type, 40),
+    visitorId: cleanText(input.visitorId, 128),
+    sessionId: cleanText(input.sessionId, 128),
+    path: cleanText(input.path, 180),
+    source: cleanText(input.source, 100),
+    sku: cleanText(input.sku, 40),
+    productName: cleanText(input.productName, 100),
+    quantity: Math.max(1, Math.min(99, Number(input.quantity || 1))),
+  });
+  res.status(204).end();
 });
 
 // Clean product URLs, e.g. /product/bpc-157 -- serves the same page as
@@ -214,6 +244,10 @@ function prepareCheckout(body) {
   const total = Math.round((feeBase + orderFee) * 100) / 100;
 
   return {
+    analytics: {
+      visitorId: cleanText(body && body.analyticsVisitorId, 128),
+      sessionId: cleanText(body && body.analyticsSessionId, 128),
+    },
     orderInput: {
       buyer: cleanBuyer,
       certifiedAt: new Date().toISOString(),
@@ -252,6 +286,7 @@ app.post('/api/paypal/create-order', checkCheckoutRateLimit, async (req, res) =>
 
   try {
     const order = db.createOrder({ ...prepared.orderInput, paymentProvider: 'paypal' });
+    analytics.recordEvent({ type: 'order_created', ...prepared.analytics });
     const paypalOrder = await createPayPalOrder(order);
     db.setPayPalOrderId(order.id, paypalOrder.id);
     res.json({ ok: true, orderId: order.id, paypalOrderId: paypalOrder.id, total: order.total });
@@ -270,6 +305,7 @@ app.post('/api/checkout', checkCheckoutRateLimit, async (req, res) => {
 
   const { paymentMethod, cryptoAsset, ...orderInput } = prepared.orderInput;
   const order = db.createOrder({ ...orderInput, paymentProvider: paymentMethod, cryptoAsset });
+  analytics.recordEvent({ type: 'order_created', ...prepared.analytics });
   await backupOrderIfNeeded(order, `${paymentMethod}_submit`);
   await sendCustomerInstructionsIfNeeded(order);
 
@@ -474,6 +510,45 @@ function recordAdminLoginFailure(req) {
 function resetAdminLoginFailures(req) {
   adminLoginAttempts.delete(clientIp(req));
 }
+
+app.get('/api/admin/analytics', requireAdmin, (req, res) => {
+  const allowedRanges = new Set([7, 30, 90, 365]);
+  const requestedRange = Number(req.query.days || 30);
+  const rangeDays = allowedRanges.has(requestedRange) ? requestedRange : 30;
+  const summary = analytics.getSummary(rangeDays);
+  const rangeStart = new Date();
+  rangeStart.setUTCHours(0, 0, 0, 0);
+  rangeStart.setUTCDate(rangeStart.getUTCDate() - (rangeDays - 1));
+
+  const salesOrders = db.getAllOrders().filter(order => {
+    const createdAt = new Date(order.created_at || 0);
+    return createdAt >= rangeStart && ['paid', 'fulfilled'].includes(order.status);
+  });
+  const trackingStartedAt = new Date(summary.trackingStartedAt || 0);
+  const conversionStart = trackingStartedAt > rangeStart ? trackingStartedAt : rangeStart;
+  const trackedPaidOrders = salesOrders.filter(order => new Date(order.created_at || 0) >= conversionStart);
+  const paidRevenue = Math.round(salesOrders.reduce((sum, order) => sum + Number(order.total || 0), 0) * 100) / 100;
+  const totals = summary.totals;
+  const rate = (numerator, denominator) => denominator > 0
+    ? Math.round((numerator / denominator) * 1000) / 10
+    : null;
+
+  res.json({
+    ...summary,
+    sales: {
+      paidOrders: salesOrders.length,
+      paidRevenue,
+      averageOrderValue: salesOrders.length ? Math.round((paidRevenue / salesOrders.length) * 100) / 100 : 0,
+    },
+    rates: {
+      visitorToOrder: rate(totals.ordersCreated, totals.uniqueVisitors),
+      productToCart: rate(totals.addToCarts, totals.productViews),
+      checkoutToOrder: rate(totals.ordersCreated, totals.checkoutStarts),
+      orderToPaid: rate(trackedPaidOrders.length, totals.ordersCreated),
+    },
+    storage: analytics.getStorageInfo(),
+  });
+});
 
 app.get('/api/admin/profit', requireAdmin, (req, res) => {
   const countedStatuses = ['paid', 'fulfilled'];

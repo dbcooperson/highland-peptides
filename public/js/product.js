@@ -3,6 +3,7 @@ const slug = pathMatch ? decodeURIComponent(pathMatch[1]) : null;
 const sku = new URLSearchParams(window.location.search).get('sku');
 let selectedSku = sku;
 let family = null;
+let lastTrackedSku = null;
 
 function variantButtonsHTML() {
   return family.variants.map(v => `
@@ -15,6 +16,13 @@ function variantButtonsHTML() {
 
 function renderProduct() {
   const selected = family.variants.find(v => v.sku === selectedSku) || family.variants[0];
+  if (selected.sku !== lastTrackedSku && window.hpTrack) {
+    window.hpTrack('product_view', {
+      sku: selected.sku,
+      productName: family.name,
+    });
+    lastTrackedSku = selected.sku;
+  }
   document.title = `${family.name} - Highland Peptides`;
   document.getElementById('breadcrumb').innerHTML =
     `<a href="/index.html#catalogSection" style="color:inherit;">Shop</a> / ${escapeHTML(family.group || family.category)} / ${escapeHTML(family.name)}`;

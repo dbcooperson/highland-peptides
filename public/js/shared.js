@@ -32,6 +32,73 @@ async function api(path, opts = {}) {
   return data;
 }
 
+// ---------- First-party storefront analytics ----------
+// Anonymous IDs are generated in the browser. The server hashes them and only
+// stores aggregate behavior; names, emails, addresses, and IPs are not logged.
+const HP_ANALYTICS_VISITOR_KEY = 'hp_analytics_visitor';
+const HP_ANALYTICS_SESSION_KEY = 'hp_analytics_session';
+const HP_ANALYTICS_SOURCE_KEY = 'hp_analytics_source';
+
+function analyticsId(storage, key) {
+  try {
+    let id = storage.getItem(key);
+    if (!id) {
+      id = window.crypto && typeof window.crypto.randomUUID === 'function'
+        ? window.crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
+      storage.setItem(key, id);
+    }
+    return id;
+  } catch {
+    return '';
+  }
+}
+
+function analyticsContext() {
+  return {
+    visitorId: analyticsId(localStorage, HP_ANALYTICS_VISITOR_KEY),
+    sessionId: analyticsId(sessionStorage, HP_ANALYTICS_SESSION_KEY),
+  };
+}
+
+function analyticsSource() {
+  try {
+    const existing = sessionStorage.getItem(HP_ANALYTICS_SOURCE_KEY);
+    if (existing) return existing;
+  } catch {}
+  const params = new URLSearchParams(window.location.search);
+  const campaignSource = params.get('utm_source');
+  let source = campaignSource ? campaignSource.slice(0, 100) : 'Direct / unknown';
+  if (!campaignSource && document.referrer) {
+    try {
+      const referrer = new URL(document.referrer);
+      source = referrer.hostname === window.location.hostname ? 'Direct / unknown' : referrer.hostname;
+    } catch {}
+  }
+  try { sessionStorage.setItem(HP_ANALYTICS_SOURCE_KEY, source); } catch {}
+  return source;
+}
+
+function hpTrack(type, details = {}) {
+  const payload = {
+    type,
+    ...analyticsContext(),
+    path: window.location.pathname,
+    source: analyticsSource(),
+    ...details,
+  };
+  fetch('/api/analytics/event', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+    keepalive: true,
+  }).catch(() => {});
+}
+
+window.hpTrack = hpTrack;
+window.hpAnalyticsContext = analyticsContext;
+hpTrack('page_view');
+
 // ---------- Cart (persisted to localStorage so it survives navigation between pages) ----------
 const CART_KEY = 'hp_cart';
 
@@ -51,6 +118,12 @@ function addToCart(sku, qty = 1) {
   const cart = getCart();
   cart[sku] = (cart[sku] || 0) + qty;
   saveCart(cart);
+  const product = getCatalogProductBySku(sku);
+  hpTrack('add_to_cart', {
+    sku,
+    productName: product ? product.name : '',
+    quantity: qty,
+  });
   setTimeout(() => showAddedToCartPopup(sku, qty), 0);
   return cart;
 }
@@ -498,6 +571,7 @@ function checkoutPayloadFromForm() {
   const items = Object.keys(cart)
     .filter(sku => cart[sku] > 0 && (!activeSkus.size || activeSkus.has(sku)))
     .map(sku => ({ sku, quantity: cart[sku] }));
+  const analytics = analyticsContext();
   return {
     items,
     buyer: {
@@ -515,6 +589,8 @@ function checkoutPayloadFromForm() {
     paymentPolicyAccepted: document.getElementById('paymentPolicyConfirm')?.checked === true,
     discountCode: appliedDiscount ? appliedDiscount.code : null,
     paymentMethod: 'manual_paypal',
+    analyticsVisitorId: analytics.visitorId,
+    analyticsSessionId: analytics.sessionId,
   };
 }
 
@@ -595,6 +671,7 @@ function openCheckoutModal() {
   renderCryptoPricePreview();
   document.body.classList.add('checkout-modal-open');
   document.getElementById('checkoutModal').style.display = 'flex';
+  hpTrack('checkout_start');
 
 }
 
