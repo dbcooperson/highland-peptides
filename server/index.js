@@ -39,7 +39,13 @@ const app = express();
 app.disable('x-powered-by');
 app.set('trust proxy', 1);
 
+const releaseId = process.env.RENDER_GIT_COMMIT
+  || process.env.SOURCE_VERSION
+  || 'local-development';
+const startedAt = new Date().toISOString();
+
 app.use((req, res, next) => {
+  res.setHeader('X-Highland-Release', releaseId);
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
@@ -66,8 +72,22 @@ app.use(session({
 }));
 app.use(express.static(path.join(__dirname, '..', 'public'), {
   maxAge: process.env.NODE_ENV === 'production' ? '1h' : 0,
+  setHeaders(res, filePath) {
+    if (path.extname(filePath).toLowerCase() === '.html') {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    }
+  },
   fallthrough: true,
 }));
+
+app.get('/api/health', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  res.json({
+    status: 'ok',
+    release: releaseId,
+    startedAt,
+  });
+});
 
 // ---------- Public catalog ----------
 app.get('/api/catalog', (req, res) => {
