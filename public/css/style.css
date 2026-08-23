@@ -1978,6 +1978,71 @@ body.search-open { overflow: hidden; }
   max-width: 1180px;
   padding-top: 54px;
 }
+.catalog-request-card {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr) auto;
+  gap: 24px;
+  align-items: center;
+  margin: 0 0 52px;
+  padding: 22px 24px;
+  border: 1px solid rgba(193,121,58,0.38);
+  border-radius: 22px;
+  background:
+    linear-gradient(110deg, rgba(193,121,58,0.16), rgba(67,91,69,0.23)),
+    rgba(18,22,26,0.82);
+  color: var(--offwhite);
+  text-decoration: none;
+  box-shadow: 0 22px 60px rgba(0,0,0,0.24);
+  transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+}
+.catalog-request-card:hover,
+.catalog-request-card:focus-visible {
+  transform: translateY(-2px);
+  border-color: rgba(193,121,58,0.72);
+  background:
+    linear-gradient(110deg, rgba(193,121,58,0.22), rgba(67,91,69,0.3)),
+    rgba(18,22,26,0.9);
+  outline: none;
+}
+.catalog-request-kicker {
+  color: #e3aa72;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.catalog-request-copy {
+  display: grid;
+  gap: 5px;
+}
+.catalog-request-copy strong {
+  font-size: 21px;
+  letter-spacing: -0.025em;
+}
+.catalog-request-copy em {
+  color: var(--muted-on-dark);
+  font-size: 13px;
+  font-style: normal;
+  line-height: 1.5;
+}
+.catalog-request-action {
+  display: inline-flex;
+  gap: 9px;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 999px;
+  background: var(--offwhite);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+.catalog-request-action b {
+  color: var(--accent);
+  font-size: 17px;
+}
 .storefront-section,
 .category-board,
 .standard-section,
@@ -2112,6 +2177,8 @@ body.search-open { overflow: hidden; }
   .category-grid,
   .standard-grid,
   .featured-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .catalog-request-card { grid-template-columns: 1fr auto; }
+  .catalog-request-kicker { grid-column: 1 / -1; }
 }
 @media (max-width: 760px) {
   .trust-dock {
@@ -2141,6 +2208,13 @@ body.search-open { overflow: hidden; }
   .split-heading,
   .catalog-heading-row { align-items: flex-start; flex-direction: column; }
   .catalog-shell { padding: 18px; }
+  .catalog-request-card {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    margin-bottom: 42px;
+    padding: 20px;
+  }
+  .catalog-request-action { width: 100%; }
 }
 
 /* ---------- Dynamic vial label text ---------- */

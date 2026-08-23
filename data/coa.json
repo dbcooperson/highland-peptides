@@ -143,6 +143,33 @@
       "purity": "99.6%",
       "result": "12.24mg quantitative assay",
       "file": "/coa/thymosin-alpha-1-10mg-afi-2026-03-10.png"
+    },
+    {
+      "sku": "CGL10",
+      "lot": "CGL10 · COA-2026-BF8QOU",
+      "lab": "IAS Laboratory",
+      "testedAt": "2026-07-23",
+      "purity": "99.69%",
+      "result": "10.63mg measured quantity",
+      "file": "/coa/cagrilintide-10mg-ias-2026-07-23.png"
+    },
+    {
+      "sku": "KLOW80",
+      "lot": "KLOW 80mg",
+      "lab": "Bioviridian",
+      "testedAt": "2026-04",
+      "purity": "99.7%",
+      "result": "GHK-Cu 50.23mg · BPC-157 10.11mg · TB-500 11.3mg · KPV 9.87mg",
+      "file": "/coa/klow-80mg-bioviridian-2026-04.png"
+    },
+    {
+      "sku": "CP10",
+      "lot": "PUWN · Accession 2601160119",
+      "lab": "Freedom Diagnostics",
+      "testedAt": "2026-01-19",
+      "purity": "99.897%",
+      "result": "Ipamorelin 5.92mg · CJC-1295 5.69mg",
+      "file": "/coa/cjc-ipamorelin-5mg-5mg-freedom-2026-01-19.png"
     }
   ]
 }
