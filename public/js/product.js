@@ -16,22 +16,18 @@ function variantButtonsHTML() {
 
 function coaHTML(selected) {
   const record = family.coaBySku && family.coaBySku[selected.sku];
-  if (!record) {
-    const requestUrl = `/support.html?subject=COA%20request&product=${encodeURIComponent(`${family.name} ${cleanVialSpec(selected.spec)}`)}`;
-    return `
-      <a class="product-coa-cta secondary" href="${requestUrl}">
-        <span>Current-lot documentation</span>
-        <strong>Request COA for this vial</strong>
-      </a>
-    `;
-  }
-  const details = [record.lot ? `Lot ${record.lot}` : '', record.purity ? `${record.purity} purity` : '', record.result || '', record.lab || ''].filter(Boolean).join(' · ');
-  const reportLabel = record.purity ? 'View Certificate of Analysis' : 'View Laboratory Report';
+  const productName = family.name.toLowerCase() === 'mots-c' ? 'MOTS-C' : family.name;
+  const linkTitle = `${productName} COA`;
+  if (!record) return '';
+  const details = [record.lot ? `Batch ${record.lot}` : '', record.purity ? `${record.purity} purity` : '', record.result || '', record.lab || ''].filter(Boolean).join(' · ');
   return `
-    <a class="product-coa-cta" href="${escapeHTML(record.file)}" target="_blank" rel="noopener">
-      <span>Current-lot documentation${record.testedAt ? ` · ${escapeHTML(record.testedAt)}` : ''}</span>
-      <strong>${reportLabel}</strong>
-      ${details ? `<em>${escapeHTML(details)}</em>` : ''}
+    <a class="product-coa-card" href="${escapeHTML(record.file)}" target="_blank" rel="noopener">
+      <span class="product-coa-mark" aria-hidden="true">COA</span>
+      <span class="product-coa-copy">
+        <strong>${escapeHTML(linkTitle)}</strong>
+        <em>${record.testedAt ? `${escapeHTML(record.testedAt)} · ` : ''}${details ? escapeHTML(details) : 'View batch laboratory report'}</em>
+      </span>
+      <span class="product-coa-open" aria-hidden="true">&nearr;</span>
     </a>
   `;
 }
@@ -41,7 +37,7 @@ function renderProduct() {
   const coaRecord = family.coaBySku && family.coaBySku[selected.sku];
   const purityProof = coaRecord
     ? (coaRecord.purity ? `${coaRecord.purity} reported purity` : 'Laboratory report available')
-    : 'Current-lot documentation';
+    : '';
   const availabilityLabel = selected.availabilityLabel || 'Available to order';
   if (selected.sku !== lastTrackedSku && window.hpTrack) {
     window.hpTrack('product_view', {
@@ -56,7 +52,10 @@ function renderProduct() {
 
   document.getElementById('productContent').innerHTML = `
     <div class="product-layout">
-      <div class="product-media photo sku-mockup">${productMockupImageHTML(selected)}</div>
+      <aside class="product-visual-column">
+        <div class="product-media photo sku-mockup">${productMockupImageHTML(selected)}</div>
+        ${coaHTML(selected)}
+      </aside>
       <div class="product-info">
         <div class="product-kicker-row">
           <div class="group">${escapeHTML(family.group || family.category)}</div>
@@ -66,24 +65,21 @@ function renderProduct() {
           </div>
         </div>
         <div class="product-proof-pills" aria-label="Product quality highlights">
-          <span>${escapeHTML(purityProof)}</span>
-          <span>${coaRecord ? 'Exact-strength lab report' : 'COA by current lot'}</span>
-          <span>Fast U.S. fulfillment</span>
+          ${coaRecord ? `<span>${escapeHTML(purityProof)}</span>` : ''}
+          <span>Orders placed before 2:00 PM PDT will ship next day</span>
         </div>
         <h1 class="product-title">${escapeHTML(family.name)}</h1>
         <p class="hint product-description">${escapeHTML(family.description)}</p>
-        <div class="product-availability ${availabilityLabel === 'Low stock' ? 'limited' : ''}"><span aria-hidden="true"></span> ${escapeHTML(availabilityLabel)} · current catalog lot</div>
+        <div class="product-availability ${availabilityLabel === 'Low stock' ? 'limited' : ''}"><span aria-hidden="true"></span>${escapeHTML(availabilityLabel)}</div>
         <div class="product-selected-card">
           <span>Selected vial</span>
           <strong>${escapeHTML(cleanVialSpec(selected.spec))}</strong>
         </div>
         <div class="product-trust-grid">
-          <div><strong>Testing</strong><span>${escapeHTML(purityProof)}</span></div>
-          <div><strong>COA</strong><span>${coaRecord ? 'View exact-strength report below' : 'Available by current lot'}</span></div>
-          <div><strong>Ships</strong><span>Fast fulfillment from California</span></div>
+          ${coaRecord ? `<div><strong>Testing</strong><span>${escapeHTML(purityProof)}</span></div><div><strong>COA</strong><span>View COA below</span></div>` : ''}
+          <div><strong>Ships</strong><span>Orders placed before 2:00 PM PDT will ship next day</span></div>
           <div><strong>Expiry</strong><span>Good for the next 2 years</span></div>
         </div>
-        ${coaHTML(selected)}
 
         <div class="size-label">Choose vial size</div>
         <div class="variant-chips" id="variantChips">${variantButtonsHTML()}</div>

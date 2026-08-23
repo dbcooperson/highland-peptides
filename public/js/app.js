@@ -4,7 +4,7 @@ function cardHTML(p) {
   const variantLabel = p._variantCount > 1 ? `<span class="product-card-variants">${p._variantCount} vial sizes</span>` : '';
   const proofNote = p.coa
     ? (p.coa.purity ? `${p.coa.purity} lab report` : 'Lab report available')
-    : 'COA available by lot';
+    : '';
   const badge = p.salesBadge || 'RUO';
   return `
     <div class="card product-card">
@@ -21,7 +21,7 @@ function cardHTML(p) {
         <p class="product-card-description">${escapeHTML(p.description || 'Research-use compound for laboratory applications.')}</p>
         <div class="product-card-foot">
           <div>
-            <div class="product-card-note">${escapeHTML(proofNote)}</div>
+            ${proofNote ? `<div class="product-card-note">${escapeHTML(proofNote)}</div>` : ''}
             <div class="product-card-availability ${p.availabilityLabel === 'Low stock' ? 'limited' : ''}">${escapeHTML(p.availabilityLabel || 'Available to order')}</div>
             <div class="price">$${p.price.toFixed(2)}</div>
           </div>

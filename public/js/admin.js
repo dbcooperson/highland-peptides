@@ -247,7 +247,7 @@ function analyticsInsightsHTML(data) {
       insights.push(['Reduce checkout abandonment', 'Keep the form short, show the final delivered total earlier, and make payment instructions visible before the customer submits.']);
     }
     if (rates.visitorToOrder == null || rates.visitorToOrder < 2) {
-      insights.push(['Make the first visit more decisive', 'Lead with your three actual best sellers, real lot/COA proof, shipping timing, and a simple first-order path on mobile.']);
+      insights.push(['Make the first visit more decisive', 'Lead with your three actual best sellers, real batch testing, shipping timing, and a simple first-order path on mobile.']);
     }
     if (rates.orderToPaid != null && rates.orderToPaid < 70) {
       insights.push(['Close more pending orders', 'A high pending-payment rate usually means the payment handoff needs clearer exact-total, order-number, and confirmation instructions.']);

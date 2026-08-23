@@ -37,5 +37,5 @@ if (requestedSubject && requestedSubject.toLowerCase().includes('coa')) {
   document.getElementById('supportTopic').value = 'COA request';
 }
 if (requestedProduct) {
-  document.getElementById('supportMessage').value = `Please send the current-lot COA for ${requestedProduct}.`;
+  document.getElementById('supportMessage').value = `Please send the available batch report for ${requestedProduct}.`;
 }
