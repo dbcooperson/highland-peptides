@@ -29,3 +29,13 @@ document.getElementById('supportForm').addEventListener('submit', event => {
   msgEl.style.color = 'var(--success)';
   msgEl.textContent = 'Opening your email app. If nothing opens, email support@highlandpeptides.com directly.';
 });
+
+const supportParams = new URLSearchParams(window.location.search);
+const requestedSubject = supportParams.get('subject');
+const requestedProduct = supportParams.get('product');
+if (requestedSubject && requestedSubject.toLowerCase().includes('coa')) {
+  document.getElementById('supportTopic').value = 'COA request';
+}
+if (requestedProduct) {
+  document.getElementById('supportMessage').value = `Please send the current-lot COA for ${requestedProduct}.`;
+}

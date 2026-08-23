@@ -232,7 +232,7 @@ async function sendCustomerPaymentInstructions(order) {
   const buyer = order.buyer || {};
   if (!transport || !buyer.email) return null;
   await transport.sendMail({
-    from: config.ORDER_BACKUP_EMAIL_FROM,
+    from: config.CUSTOMER_EMAIL_FROM,
     to: buyer.email,
     subject: `${config.SITE_NAME} Order HP-${order.id} - Payment Instructions`,
     text: customerInstructionsText(order),
@@ -241,5 +241,92 @@ async function sendCustomerPaymentInstructions(order) {
   return 'email';
 }
 
-module.exports = { sendOrderBackup, sendCustomerPaymentInstructions, orderText };
+function trackingUrl(carrier, trackingNumber) {
+  const encoded = encodeURIComponent(String(trackingNumber || '').trim());
+  const urls = {
+    USPS: `https://tools.usps.com/go/TrackConfirmAction?tLabels=${encoded}`,
+    UPS: `https://www.ups.com/track?tracknum=${encoded}`,
+    FedEx: `https://www.fedex.com/fedextrack/?trknbr=${encoded}`,
+    DHL: `https://www.dhl.com/global-en/home/tracking.html?tracking-id=${encoded}`,
+    'Canada Post': `https://www.canadapost-postescanada.ca/track-reperage/en#/details/${encoded}`,
+    'Royal Mail': `https://www.royalmail.com/track-your-item#/tracking-results/${encoded}`,
+    'Australia Post': `https://auspost.com.au/mypost/track/#/details/${encoded}`,
+  };
+  return urls[carrier] || '';
+}
+
+async function sendPaymentReminder(order) {
+  const transport = smtpTransport();
+  const buyer = order && order.buyer ? order.buyer : {};
+  if (!transport || !buyer.email) return null;
+  const ref = `HP-${order.id}`;
+  const provider = order.payment_provider === 'crypto'
+    ? `${order.crypto_asset || 'crypto'} payment`
+    : 'PayPal payment';
+  const text = [
+    `Payment reminder for ${ref}`,
+    ``,
+    `We have your Highland Peptides order, but it is still awaiting ${provider}.`,
+    `Exact total due: ${money(order.total)}`,
+    ``,
+    `If you already sent payment, reply to this email with ${order.payment_provider === 'crypto' ? 'the TXID' : 'your PayPal confirmation'} so we can match it.`,
+    `If you no longer want the order, no action is required.`,
+    ``,
+    `Questions? Reply to this email and include ${ref}.`,
+  ].join('\n');
+  const html = `
+    <h2>Payment reminder for ${htmlEscape(ref)}</h2>
+    <p>We have your Highland Peptides order, but it is still awaiting ${htmlEscape(provider)}.</p>
+    <p><strong>Exact total due: ${money(order.total)}</strong></p>
+    <p>If you already sent payment, reply to this email with ${order.payment_provider === 'crypto' ? 'the TXID' : 'your PayPal confirmation'} so we can match it.</p>
+    <p>If you no longer want the order, no action is required.</p>
+    <p>Questions? Reply to this email and include <strong>${htmlEscape(ref)}</strong>.</p>
+  `;
+  await transport.sendMail({
+    from: config.CUSTOMER_EMAIL_FROM,
+    to: buyer.email,
+    replyTo: config.CUSTOMER_EMAIL_FROM,
+    subject: `${config.SITE_NAME} Order ${ref} - Payment Reminder`,
+    text,
+    html,
+  });
+  return 'email';
+}
+
+async function sendTrackingEmail(order, carrier, trackingNumber) {
+  const transport = smtpTransport();
+  const buyer = order && order.buyer ? order.buyer : {};
+  if (!transport || !buyer.email) return null;
+  const ref = `HP-${order.id}`;
+  const url = trackingUrl(carrier, trackingNumber);
+  const text = [
+    `Your Highland Peptides order has shipped`,
+    ``,
+    `Order: ${ref}`,
+    `Carrier: ${carrier}`,
+    `Tracking number: ${trackingNumber}`,
+    url ? `Track shipment: ${url}` : null,
+    ``,
+    `Carrier scans may take up to one business day to appear. Reply to this email if you need help with your shipment.`,
+  ].filter(Boolean).join('\n');
+  const html = `
+    <h2>Your Highland Peptides order has shipped</h2>
+    <p><strong>Order:</strong> ${htmlEscape(ref)}<br>
+    <strong>Carrier:</strong> ${htmlEscape(carrier)}<br>
+    <strong>Tracking number:</strong> ${htmlEscape(trackingNumber)}</p>
+    ${url ? `<p><a href="${htmlEscape(url)}">Track your shipment</a></p>` : ''}
+    <p>Carrier scans may take up to one business day to appear. Reply to this email if you need help with your shipment.</p>
+  `;
+  await transport.sendMail({
+    from: config.CUSTOMER_EMAIL_FROM,
+    to: buyer.email,
+    replyTo: config.CUSTOMER_EMAIL_FROM,
+    subject: `${config.SITE_NAME} Order ${ref} - Tracking Information`,
+    text,
+    html,
+  });
+  return 'email';
+}
+
+module.exports = { sendOrderBackup, sendCustomerPaymentInstructions, sendPaymentReminder, sendTrackingEmail, trackingUrl, orderText };
 

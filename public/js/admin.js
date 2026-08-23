@@ -269,6 +269,13 @@ function analyticsProductsHTML(products) {
   return `<tr>${['Product','Views','Cart adds','Add rate'].map(th).join('')}</tr>${rows || `<tr>${td('Product activity will appear after tracking begins.')}</tr>`}`;
 }
 
+function analyticsSalesHTML(products) {
+  const rows = (products || []).map((product, index) => `
+    <tr>${td(`<strong>${index + 1}. ${escapeHtml(product.name)}</strong><br><span class="admin-muted">${escapeHtml(product.spec)}${product.sku ? ` · ${escapeHtml(product.sku)}` : ''}</span>`)}${td(product.quantity)}${td(product.orderCount)}${td(money(product.revenue))}</tr>
+  `).join('');
+  return `<tr>${['Product','Vials sold','Orders','Gross sales'].map(th).join('')}</tr>${rows || `<tr>${td('Paid product sales will appear here.')}</tr>`}`;
+}
+
 function analyticsSourcesHTML(sources) {
   const rows = (sources || []).map(source => `<tr>${td(escapeHtml(source.name))}${td(Number(source.count).toLocaleString())}</tr>`).join('');
   return `<tr>${['Source','Page views'].map(th).join('')}</tr>${rows || `<tr>${td('Traffic sources will appear after tracking begins.')}</tr>`}`;
@@ -285,6 +292,7 @@ async function loadAnalytics() {
     document.getElementById('analyticsDailyChart').innerHTML = analyticsChartHTML(data.daily);
     document.getElementById('analyticsFunnel').innerHTML = analyticsFunnelHTML(data);
     document.getElementById('analyticsInsights').innerHTML = analyticsInsightsHTML(data);
+    document.getElementById('analyticsSalesTable').innerHTML = analyticsSalesHTML(data.sales && data.sales.topSoldProducts);
     document.getElementById('analyticsProductsTable').innerHTML = analyticsProductsHTML(data.topProducts);
     document.getElementById('analyticsSourcesTable').innerHTML = analyticsSourcesHTML(data.topSources);
     const started = new Date(data.trackingStartedAt);
@@ -402,6 +410,36 @@ function adminNotesHTML(order) {
   `;
 }
 
+function adminFulfillmentHTML(order) {
+  const reminders = Number(order.payment_reminder_count || 0);
+  const reminderStatus = reminders
+    ? `<span class="admin-muted">${reminders} reminder${reminders === 1 ? '' : 's'} sent</span>`
+    : '<span class="admin-muted">No reminder sent</span>';
+  const trackingStatus = order.tracking_number
+    ? `<span class="admin-tracking-sent">Tracking sent: ${escapeHtml(order.tracking_carrier)} ${escapeHtml(order.tracking_number)}</span>`
+    : '';
+  return `
+    <div class="admin-fulfillment-box">
+      ${order.status === 'pending_payment' ? `
+        <button type="button" class="admin-send-reminder" data-id="${order.id}">Send payment reminder</button>
+        ${reminderStatus}
+      ` : ''}
+      ${['paid', 'fulfilled'].includes(order.status) ? `
+        <label>Carrier
+          <select class="admin-tracking-carrier" data-id="${order.id}">
+            ${['USPS','UPS','FedEx','DHL','Canada Post','Royal Mail','Australia Post','Other'].map(carrier => `<option value="${carrier}" ${carrier === order.tracking_carrier ? 'selected' : ''}>${carrier}</option>`).join('')}
+          </select>
+        </label>
+        <label>Tracking number
+          <input class="admin-tracking-number" data-id="${order.id}" value="${escapeHtml(order.tracking_number || '')}" placeholder="Paste tracking ID">
+        </label>
+        <button type="button" class="admin-send-tracking" data-id="${order.id}">Send tracking email</button>
+        ${trackingStatus}
+      ` : ''}
+    </div>
+  `;
+}
+
 function renderOrdersTable() {
   const orders = filteredAdminOrders();
   document.getElementById('ordersTable').innerHTML = `
@@ -423,6 +461,7 @@ function renderOrdersTable() {
         ${td(`<a href="/api/admin/orders/${o.id}/packing-slip.pdf" target="_blank">Packing Slip</a><br>
                <a href="/api/admin/orders/${o.id}/contents-label.pdf" target="_blank">4x6 Label</a><br>
                <a href="#" class="admin-delete-order" data-id="${o.id}" data-label="#${o.id} ${escapeHtml(o.buyer.name)}">Delete order</a>
+               ${adminFulfillmentHTML(o)}
                ${adminNotesHTML(o)}`)}
       </tr>
     `).join('') || `<tr>${td('No orders match your filter.')}</tr>`}
@@ -454,6 +493,41 @@ function renderOrdersTable() {
       await api(`/api/admin/orders/${btn.dataset.id}/notes`, { method: 'POST', body: { notes: input.value } });
       btn.textContent = 'Saved';
       setTimeout(() => { btn.textContent = 'Save note'; }, 1200);
+    };
+  });
+  document.querySelectorAll('.admin-send-reminder').forEach(btn => {
+    btn.onclick = async () => {
+      if (!window.confirm('Send a payment reminder from the configured Highland customer email to this buyer?')) return;
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+      try {
+        await api(`/api/admin/orders/${btn.dataset.id}/payment-reminder`, { method: 'POST' });
+        await loadOrders();
+      } catch (err) {
+        btn.disabled = false;
+        btn.textContent = 'Send payment reminder';
+        window.alert(err.message || 'Could not send reminder.');
+      }
+    };
+  });
+  document.querySelectorAll('.admin-send-tracking').forEach(btn => {
+    btn.onclick = async () => {
+      const id = btn.dataset.id;
+      const carrier = document.querySelector(`.admin-tracking-carrier[data-id="${id}"]`)?.value;
+      const trackingNumber = document.querySelector(`.admin-tracking-number[data-id="${id}"]`)?.value.trim();
+      if (!trackingNumber) return window.alert('Paste a tracking number first.');
+      if (!window.confirm(`Email ${carrier} tracking ${trackingNumber} to this buyer and mark the order fulfilled?`)) return;
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+      try {
+        await api(`/api/admin/orders/${id}/tracking`, { method: 'POST', body: { carrier, trackingNumber } });
+        await loadOrders();
+        loadProfit();
+      } catch (err) {
+        btn.disabled = false;
+        btn.textContent = 'Send tracking email';
+        window.alert(err.message || 'Could not send tracking email.');
+      }
     };
   });
 

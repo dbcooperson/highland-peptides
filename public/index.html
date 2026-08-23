@@ -56,6 +56,11 @@
 </div>
 
 <div class="nav-wrap">
+  <div class="fulfillment-header" role="note">
+    <strong>Fast U.S. fulfillment</strong>
+    <span>Payment-confirmed orders are prepared the next business day.</span>
+    <span>Tracking is emailed after shipment.</span>
+  </div>
   <header class="topbar">
     <div class="brand" id="siteName">
       <div class="brand-seal-wrap"><img src="/images/product-mockups/highland-seal-reference.png" alt="Highland Peptides"></div>
@@ -227,11 +232,43 @@
       <button class="hero-ghost compact" id="catalogSearchShortcut" type="button">Search catalog</button>
     </div>
 
-    <div id="filterChips" class="filter-chips"></div>
+    <div class="catalog-controls" aria-label="Catalog controls">
+      <div id="filterChips" class="filter-chips"></div>
+      <div class="catalog-selectors">
+        <label>View
+          <select id="catalogViewMode">
+            <option value="families">One card per product</option>
+            <option value="variants">All vial sizes</option>
+          </select>
+        </label>
+        <label>Sort
+          <select id="catalogSort">
+            <option value="featured">Featured</option>
+            <option value="name">Name A–Z</option>
+            <option value="price-low">Price: low to high</option>
+            <option value="price-high">Price: high to low</option>
+          </select>
+        </label>
+      </div>
+    </div>
     <div id="catalogGrid" class="grid"></div>
     <div id="catalogEmpty" class="catalog-empty" hidden>
       <h3>No compounds found</h3>
       <p>Try another name, category, or specification.</p>
+    </div>
+  </section>
+
+  <section class="fulfillment-process" aria-label="How Highland fulfills orders">
+    <div class="section-heading">
+      <span>What happens after checkout</span>
+      <h2>A clear handoff from payment to tracking.</h2>
+      <p>A specific, visible process from confirmed payment through carrier tracking.</p>
+    </div>
+    <div class="fulfillment-process-grid">
+      <article><span>01</span><strong>Payment matched</strong><p>Your exact total and order number are reviewed before fulfillment begins.</p></article>
+      <article><span>02</span><strong>Order prepared</strong><p>Confirmed orders are prepared the next business day at our California fulfillment base.</p></article>
+      <article><span>03</span><strong>Tracking emailed</strong><p>Carrier and tracking details are sent to the checkout email after shipment.</p></article>
+      <article><span>04</span><strong>Support stays available</strong><p>Questions can be sent to support@highlandpeptides.com with the Highland order number.</p></article>
     </div>
   </section>
 </main>
@@ -256,7 +293,7 @@
     </details>
     <details>
       <summary>How does checkout work?</summary>
-      <p class="hint">Checkout is structured around secure PayPal payment and research-use certification before order confirmation.</p>
+      <p class="hint">Checkout collects the shipping destination, research-use certification, and payment choice. Orders are prepared after payment is verified.</p>
     </details>
   </div>
 </section>
@@ -266,13 +303,10 @@
   Not evaluated by the FDA.
 </footer>
 
-<script src="/js/shared.js?v=analytics-20260821"></script>
-<script src="/js/app.js?v=sku-img-elements-20260729"></script>
+<script src="/js/shared.js?v=cvr-email-20260821"></script>
+<script src="/js/app.js?v=cvr-email-20260821"></script>
 </body>
 </html>
-
-
-
 
 
 

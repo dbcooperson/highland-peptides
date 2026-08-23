@@ -19,9 +19,11 @@ const { catalog, bySku, costBySku, getProductFamily, priceAudit } = require('./p
 const { requireAdmin } = require('./auth');
 const { buildPackingSlip, buildContentsLabel } = require('./labels');
 const { isPayPalConfigured, createPayPalOrder, capturePayPalOrder } = require('./paypal');
-const { sendOrderBackup, sendCustomerPaymentInstructions } = require('./notifications');
+const { sendOrderBackup, sendCustomerPaymentInstructions, sendPaymentReminder, sendTrackingEmail } = require('./notifications');
 const { createBitcoinMonitor } = require('./btc-monitor');
 const analytics = require('./analytics');
+const coa = require('./coa');
+const { startPaymentReminderScheduler } = require('./reminders');
 
 const isProductionRuntime = Boolean(process.env.RENDER || process.env.RENDER_SERVICE_ID || process.env.NODE_ENV === 'production');
 if (isProductionRuntime) {
@@ -69,9 +71,10 @@ app.use(express.static(path.join(__dirname, '..', 'public'), {
 
 // ---------- Public catalog ----------
 app.get('/api/catalog', (req, res) => {
+  const coaBySku = coa.recordsForSkus(catalog.map(product => product.sku));
   res.json({
     siteName: config.SITE_NAME,
-    products: catalog,
+    products: catalog.map(product => ({ ...product, coa: coaBySku[product.sku] || null })),
     packagingFee: config.PACKAGING_FEE,
     shippingFee: config.SHIPPING_FEE,
     internationalShippingFee: config.INTERNATIONAL_SHIPPING_FEE,
@@ -87,7 +90,8 @@ app.get('/api/catalog', (req, res) => {
 app.get('/api/product', (req, res) => {
   const family = getProductFamily({ sku: req.query.sku, slug: req.query.slug });
   if (!family) return res.status(404).json({ error: 'Product not found' });
-  res.json({ siteName: config.SITE_NAME, ...family });
+  const coaBySku = coa.recordsForSkus(family.variants.map(variant => variant.sku));
+  res.json({ siteName: config.SITE_NAME, ...family, coaBySku });
 });
 
 const analyticsAttempts = new Map();
@@ -511,6 +515,32 @@ function resetAdminLoginFailures(req) {
   adminLoginAttempts.delete(clientIp(req));
 }
 
+function topSoldProducts(orders, limit = 10) {
+  const leaders = new Map();
+  orders.filter(order => ['paid', 'fulfilled'].includes(order.status)).forEach(order => {
+    (order.items || []).forEach(item => {
+      const key = String(item.sku || `${item.name}|${item.spec}`);
+      const current = leaders.get(key) || {
+        sku: item.sku || '',
+        name: item.name || 'Product',
+        spec: item.spec || '',
+        quantity: 0,
+        orderCount: 0,
+        revenue: 0,
+      };
+      const quantity = Number(item.quantity || 0);
+      current.quantity += quantity;
+      current.orderCount += 1;
+      current.revenue += Number(item.unit_price || 0) * quantity;
+      leaders.set(key, current);
+    });
+  });
+  return [...leaders.values()]
+    .map(item => ({ ...item, revenue: Math.round(item.revenue * 100) / 100 }))
+    .sort((a, b) => b.quantity - a.quantity || b.orderCount - a.orderCount || b.revenue - a.revenue)
+    .slice(0, Math.max(1, Math.min(50, Number(limit) || 10)));
+}
+
 app.get('/api/admin/analytics', requireAdmin, (req, res) => {
   const allowedRanges = new Set([7, 30, 90, 365]);
   const requestedRange = Number(req.query.days || 30);
@@ -539,6 +569,7 @@ app.get('/api/admin/analytics', requireAdmin, (req, res) => {
       paidOrders: salesOrders.length,
       paidRevenue,
       averageOrderValue: salesOrders.length ? Math.round((paidRevenue / salesOrders.length) * 100) / 100 : 0,
+      topSoldProducts: topSoldProducts(salesOrders, 10),
     },
     rates: {
       visitorToOrder: rate(totals.ordersCreated, totals.uniqueVisitors),
@@ -548,6 +579,10 @@ app.get('/api/admin/analytics', requireAdmin, (req, res) => {
     },
     storage: analytics.getStorageInfo(),
   });
+});
+
+app.get('/api/admin/top-products', requireAdmin, (req, res) => {
+  res.json({ products: topSoldProducts(db.getAllOrders(), 10) });
 });
 
 app.get('/api/admin/profit', requireAdmin, (req, res) => {
@@ -728,6 +763,41 @@ app.post('/api/admin/orders/:id/notes', requireAdmin, (req, res) => {
   if (!order) return res.status(404).json({ error: 'Order not found' });
   res.json({ ok: true, notes: order.notes || '' });
 });
+
+app.post('/api/admin/orders/:id/payment-reminder', requireAdmin, async (req, res) => {
+  const order = db.getOrderById(req.params.id);
+  if (!order) return res.status(404).json({ error: 'Order not found' });
+  if (order.status !== 'pending_payment') return res.status(400).json({ error: 'Only pending orders can receive a payment reminder.' });
+  try {
+    const channel = await sendPaymentReminder(order);
+    if (!channel) return res.status(503).json({ error: 'Customer email is not configured. Add SMTP settings in Render.' });
+    const updated = db.markPaymentReminderSent(order.id);
+    res.json({ ok: true, sentAt: updated.payment_reminder_last_sent_at, reminderCount: updated.payment_reminder_count });
+  } catch (err) {
+    res.status(502).json({ error: err.message || 'Could not send payment reminder.' });
+  }
+});
+
+const TRACKING_CARRIERS = new Set(['USPS', 'UPS', 'FedEx', 'DHL', 'Canada Post', 'Royal Mail', 'Australia Post', 'Other']);
+
+app.post('/api/admin/orders/:id/tracking', requireAdmin, async (req, res) => {
+  const order = db.getOrderById(req.params.id);
+  if (!order) return res.status(404).json({ error: 'Order not found' });
+  if (!['paid', 'fulfilled'].includes(order.status)) return res.status(400).json({ error: 'Mark the order paid before sending tracking.' });
+  const carrier = cleanText(req.body && req.body.carrier, 60);
+  const trackingNumber = cleanText(req.body && req.body.trackingNumber, 120);
+  if (!TRACKING_CARRIERS.has(carrier)) return res.status(400).json({ error: 'Choose a supported carrier.' });
+  if (!/^[A-Za-z0-9][A-Za-z0-9 -]{5,119}$/.test(trackingNumber)) return res.status(400).json({ error: 'Enter a valid tracking number.' });
+  try {
+    const channel = await sendTrackingEmail(order, carrier, trackingNumber);
+    if (!channel) return res.status(503).json({ error: 'Customer email is not configured. Add SMTP settings in Render.' });
+    const updated = db.markTrackingSent(order.id, carrier, trackingNumber);
+    await backupOrderIfNeeded(updated, 'tracking_sent');
+    res.json({ ok: true, status: updated.status, sentAt: updated.tracking_sent_at });
+  } catch (err) {
+    res.status(502).json({ error: err.message || 'Could not send tracking email.' });
+  }
+});
 function txidDuplicateMap(orders) {
   const map = new Map();
   orders.forEach(order => {
@@ -792,6 +862,7 @@ app.get('/api/admin/orders/:id/contents-label.pdf', requireAdmin, (req, res) => 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`${config.SITE_NAME} running on http://localhost:${PORT}`);
+  startPaymentReminderScheduler({ db, sendPaymentReminder });
   if (config.BTC_MONITOR.ENABLED) {
     try {
       createBitcoinMonitor({

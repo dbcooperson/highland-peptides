@@ -132,6 +132,45 @@ SMTP_SECURE=true
 
 Backups are sent after payment capture. They are also sent if an admin manually changes an order to paid or fulfilled.
 
+### Customer payment reminders and tracking email
+
+The same SMTP connection powers customer-facing email. Set a verified Highland sender address in Render:
+
+```txt
+CUSTOMER_EMAIL_FROM=Highland Peptides <support@highlandpeptides.com>
+PAYMENT_REMINDERS_ENABLED=true
+PAYMENT_REMINDER_FIRST_HOURS=12
+PAYMENT_REMINDER_REPEAT_HOURS=24
+PAYMENT_REMINDER_MAX=2
+PAYMENT_REMINDER_POLL_MINUTES=30
+```
+
+New PayPal/crypto orders created after this feature is deployed receive at most two reminders: the first after 12 hours and the second 24 hours later. Historical pending orders are deliberately excluded to prevent a surprise backlog email blast. Sent timestamps are saved with the order so a restart does not reset the reminder count.
+
+For paid orders, the admin dashboard includes a carrier dropdown and tracking-number field. Clicking **Send tracking email** emails the buyer from the configured Highland sender and marks the order fulfilled. Your SMTP provider must authorize `support@highlandpeptides.com` as a sender; Cloudflare Email Routing by itself only handles incoming mail.
+
+## Current-lot COAs
+
+COA screenshots or PDFs belong in `public/coa/`. Add one record per vial to `data/coa.json`:
+
+```json
+{
+  "records": [
+    {
+      "sku": "RT20",
+      "lot": "LOT-EXAMPLE",
+      "lab": "Testing laboratory",
+      "testedAt": "2026-08-21",
+      "purity": "99.4%",
+      "result": "20.8mg measured quantity",
+      "file": "/coa/retatrutide-20mg-lot-example.pdf"
+    }
+  ]
+}
+```
+
+When a purity result exists, its product page shows a **View Certificate of Analysis** button. Quantity- or identity-only reports are labeled **View Laboratory Report** instead. Without a record, the same location becomes a prefilled COA request link so the site never points to a missing document.
+
 ## Bitcoin deposit alerts in Discord
 
 The server can poll the public mempool.space API and post a Discord message whenever a watched Bitcoin address receives a new transaction. It stores notified transaction IDs on the persistent data disk, so restarts do not create duplicate alerts.

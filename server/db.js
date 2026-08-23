@@ -91,6 +91,12 @@ function createOrder({ buyer, certifiedAt, items, subtotal, packagingFee, shippi
     payment_match_adjustment: paymentMatchAdjustment,
     total: finalTotal,
     notes: '',
+    payment_reminders_enabled: true,
+    payment_reminder_count: 0,
+    payment_reminder_last_sent_at: null,
+    tracking_carrier: null,
+    tracking_number: null,
+    tracking_sent_at: null,
     created_at: new Date().toISOString(),
   };
   data.orders.push(order);
@@ -161,6 +167,28 @@ function updateOrderNotes(id, notes) {
   return order;
 }
 
+function markPaymentReminderSent(id) {
+  const data = load();
+  const order = data.orders.find(o => o.id === Number(id));
+  if (!order) return null;
+  order.payment_reminder_count = Number(order.payment_reminder_count || 0) + 1;
+  order.payment_reminder_last_sent_at = new Date().toISOString();
+  save(data);
+  return order;
+}
+
+function markTrackingSent(id, carrier, trackingNumber) {
+  const data = load();
+  const order = data.orders.find(o => o.id === Number(id));
+  if (!order) return null;
+  order.tracking_carrier = String(carrier || '').slice(0, 60);
+  order.tracking_number = String(trackingNumber || '').slice(0, 120);
+  order.tracking_sent_at = new Date().toISOString();
+  order.status = 'fulfilled';
+  save(data);
+  return order;
+}
+
 function markOrderBackupSent(id, channels = [], errors = []) {
   const data = load();
   const order = data.orders.find(o => o.id === Number(id));
@@ -190,6 +218,6 @@ function getStorageInfo() {
   };
 }
 
-module.exports = { createOrder, getAllOrders, getOrderById, setPayPalOrderId, markOrderPaid, updateOrderStatus, updateOrderNotes, deleteOrder, markOrderBackupSent, getStorageInfo, isTxidUsed, setPaymentReference };
+module.exports = { createOrder, getAllOrders, getOrderById, setPayPalOrderId, markOrderPaid, updateOrderStatus, updateOrderNotes, deleteOrder, markOrderBackupSent, markPaymentReminderSent, markTrackingSent, getStorageInfo, isTxidUsed, setPaymentReference };
 
 

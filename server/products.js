@@ -33,10 +33,20 @@ function compareVariants(a, b) {
   if (specDifference !== 0) return specDifference;
   return a.price - b.price || a.spec.localeCompare(b.spec);
 }
-// Curated by general market popularity, not sales data (this business is new).
-// Sets both catalog order and which items appear in "Best Sellers".
+// Completed-order merchandising snapshot, refreshed from paid and fulfilled
+// Highland orders on 2026-08-22. Keep these labels factual when inventory or
+// sales patterns change.
+const BEST_SELLER_SKUS = new Set([
+  'MS40', 'RT20', 'CU100', 'RT30', 'CP10',
+  'RT15', 'MT1', 'KLOW80', 'GTT600', 'BC20',
+]);
+const LOW_STOCK_SKUS = new Set(BEST_SELLER_SKUS);
+
+// Curated catalog order. Best-seller presentation is handled by the completed-
+// order snapshot above rather than broad market assumptions.
 const POPULAR_SKUS = [
-  'BC10', 'BT10', 'TR30', 'SM10', 'RT20', 'CGL5', 'CP10',
+  'MS40', 'RT20', 'CU100', 'RT30', 'CP10', 'RT15', 'MT1', 'KLOW80', 'GTT600', 'BC20',
+  'BC10', 'BT10', 'TR30', 'SM10', 'CGL5',
   'ML10', 'TA10', 'MS10', 'ET10', 'NJ500',
 ];
 const popularRank = Object.fromEntries(POPULAR_SKUS.map((sku, i) => [sku, i]));
@@ -52,6 +62,10 @@ const pricedCatalog = raw
     group: p.group,
     slug: slugify(p.name),
     popular: popularRank[p.sku] !== undefined,
+    salesBadge: BEST_SELLER_SKUS.has(p.sku) ? 'Best seller' : '',
+    availabilityLabel: LOW_STOCK_SKUS.has(p.sku)
+      ? 'Low stock'
+      : 'Available to order',
     description: descriptions[p.name] || '',
     image: `/images/product-mockups/generated/${p.sku}.webp`,
     price: round((p.salePrice != null ? p.salePrice : p.cost * MARKUP_MULTIPLIER * PRICE_ADJUSTMENT) * PUBLIC_PRICE_MULTIPLIER, PRICE_DECIMALS),

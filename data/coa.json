@@ -1,0 +1,148 @@
+{
+  "records": [
+    {
+      "sku": "BC10",
+      "lot": "Sample 38421",
+      "lab": "Chromate",
+      "testedAt": "2026-08-14",
+      "purity": "99.250%",
+      "result": "10.50mg measured quantity",
+      "file": "/coa/bpc-157-10mg-chromate-2026-08-14.png"
+    },
+    {
+      "sku": "P41",
+      "lot": "Sample 37626",
+      "lab": "Chromate",
+      "testedAt": "2026-07-28",
+      "purity": "99.774% / 99.789%",
+      "result": "10.05mg / 10.05mg measured quantity",
+      "file": "/coa/pt-141-10mg-chromate-2026-07-28.png"
+    },
+    {
+      "sku": "TR30",
+      "lot": "Sample 37321",
+      "lab": "Chromate",
+      "testedAt": "2026-07-07",
+      "purity": "99.728%",
+      "result": "32.51mg measured quantity",
+      "file": "/coa/tirzepatide-30mg-chromate-2026-07-07.png"
+    },
+    {
+      "sku": "RT30",
+      "lot": "Sample 35134",
+      "lab": "Chromate",
+      "testedAt": "2026-05-11",
+      "purity": "99.469%",
+      "result": "33.57mg measured quantity",
+      "file": "/coa/retatrutide-30mg-chromate-2026-05-11.png"
+    },
+    {
+      "sku": "CGL5",
+      "lot": "Cagri5",
+      "lab": "Janoshik",
+      "testedAt": "2026-05-27",
+      "purity": "99.396% / 99.426%",
+      "result": "5.18mg / 5.25mg measured quantity",
+      "file": "/coa/cagrilintide-5mg-janoshik-2026-05-27.png"
+    },
+    {
+      "sku": "MS10",
+      "lot": "Sample 37775",
+      "lab": "Chromate",
+      "testedAt": "2026-07-28",
+      "purity": "99.580%",
+      "result": "10.31mg measured quantity",
+      "file": "/coa/mots-c-10mg-chromate-2026-07-28.png"
+    },
+    {
+      "sku": "RT20",
+      "lot": "Reta20mg · Task 154055",
+      "lab": "Janoshik",
+      "testedAt": "2026-05-11",
+      "purity": "99.610%",
+      "result": "20.81mg measured quantity",
+      "file": "/coa/retatrutide-20mg-janoshik-154055.png"
+    },
+    {
+      "sku": "BB20",
+      "lot": "Task 103116",
+      "lab": "Janoshik",
+      "testedAt": "2026-01-27",
+      "purity": "",
+      "result": "BPC-157 11.03mg · TB-500 10.61mg",
+      "file": "/coa/bpc-tb-blend-20mg-janoshik-103116.png"
+    },
+    {
+      "sku": "G5K",
+      "lot": "Sample 37841",
+      "lab": "Chromate",
+      "testedAt": "2026-08-05",
+      "purity": "",
+      "result": "5415 IU estimated potency",
+      "file": "/coa/hcg-5000iu-chromate-2026-08-05.png"
+    },
+    {
+      "sku": "MS40",
+      "lot": "Sample 37780",
+      "lab": "Chromate",
+      "testedAt": "2026-07-28",
+      "purity": "99.895%",
+      "result": "40.85mg measured quantity",
+      "file": "/coa/mots-c-40mg-chromate-2026-07-28.png"
+    },
+    {
+      "sku": "G10K",
+      "lot": "AFI report 2026-01-26",
+      "lab": "Analytical Formulations, Inc.",
+      "testedAt": "2026-01-26",
+      "purity": "99.2%",
+      "result": "11,148.3 IU quantitative assay",
+      "file": "/coa/hcg-10000iu-afi-2026-01-26.png"
+    },
+    {
+      "sku": "TSM10",
+      "lot": "AFI report 2026-01-26",
+      "lab": "Analytical Formulations, Inc.",
+      "testedAt": "2026-01-26",
+      "purity": "99.6%",
+      "result": "11.69mg quantitative assay",
+      "file": "/coa/tesamorelin-10mg-afi-2026-01-26.png"
+    },
+    {
+      "sku": "IP10",
+      "lot": "Chromate report 2025-07-17",
+      "lab": "Chromate",
+      "testedAt": "2025-07-17",
+      "purity": "99.278%",
+      "result": "10.16mg measured quantity",
+      "file": "/coa/ipamorelin-10mg-chromate-2025-07-17.png"
+    },
+    {
+      "sku": "BBG70",
+      "lot": "Glow70 · Task 73912",
+      "lab": "Janoshik",
+      "testedAt": "2025-08-07",
+      "purity": "",
+      "result": "Three-vial component quantity assessment",
+      "file": "/coa/glow-70mg-janoshik-73912.png"
+    },
+    {
+      "sku": "CU100",
+      "lot": "AFI report 2026-01-26",
+      "lab": "Analytical Formulations, Inc.",
+      "testedAt": "2026-01-26",
+      "purity": "99.4%",
+      "result": "107.35mg quantitative assay",
+      "file": "/coa/ghk-cu-100mg-afi-2026-01-26.png"
+    },
+    {
+      "sku": "TA10",
+      "lot": "AFI report 2026-03-10",
+      "lab": "Analytical Formulations, Inc.",
+      "testedAt": "2026-03-10",
+      "purity": "99.6%",
+      "result": "12.24mg quantitative assay",
+      "file": "/coa/thymosin-alpha-1-10mg-afi-2026-03-10.png"
+    }
+  ]
+}
