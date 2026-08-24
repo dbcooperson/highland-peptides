@@ -25,12 +25,14 @@ test('bundle promotion adds exactly one free Bac Water at five products', () => 
     spec: '10ml x1 vial',
     quantity: 1,
     unit_price: 0,
-    promotion: 'Buy 5+ research products',
+    promotion: 'Buy 5+ paid research products (Bac Water excluded)',
   });
 });
 
 test('supplies do not count and large orders still receive only one reward', () => {
-  assert.equal(qualifyingQuantity([{ sku: 'A', quantity: 4 }, { sku: 'WA10', quantity: 10 }], bySku), 4);
+  const fourProductsPlusWater = applyBundlePromotion([{ sku: 'A', quantity: 4 }, { sku: 'WA10', quantity: 1 }], bySku);
+  assert.equal(fourProductsPlusWater.eligibleQuantity, 4);
+  assert.equal(fourProductsPlusWater.applied, false);
   const result = applyBundlePromotion([{ sku: 'A', quantity: 12 }, { sku: 'WA10', quantity: 2 }], bySku);
   assert.equal(result.applied, true);
   assert.equal(result.items.filter(item => item.promotion).length, 1);

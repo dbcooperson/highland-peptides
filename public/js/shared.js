@@ -170,7 +170,7 @@ function bundlePromotionConfig() {
     qualifyingQuantity: 5,
     freeSku: 'WA10',
     freeQuantity: 1,
-    label: 'Buy 5+ research products and receive a free Bac Water 10ml',
+    label: 'Buy 5+ paid research products and receive a free Bac Water 10ml (Bac Water does not count)',
   };
 }
 
@@ -199,7 +199,7 @@ function bundlePromotionMessage(cart = getCart()) {
   const state = bundlePromotionState(cart);
   return state.unlocked
     ? '<strong>Free Bac Water 10ml unlocked</strong><span>It will be added automatically at checkout.</span>'
-    : `<strong>Buy 5, get Bac Water 10ml free</strong><span>Add ${state.remaining} more paid research product${state.remaining === 1 ? '' : 's'} to unlock the reward.</span>`;
+    : `<strong>Buy 5 research products, get Bac Water 10ml free</strong><span>Add ${state.remaining} more qualifying product${state.remaining === 1 ? '' : 's'}. Bac Water purchases do not count toward the five.</span>`;
 }
 
 function showAddedToCartPopup(sku, qty = 1) {

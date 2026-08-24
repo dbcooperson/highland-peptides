@@ -33,7 +33,7 @@ function applyBundlePromotion(items, bySku) {
         spec: freeProduct.spec,
         quantity: promotion.freeQuantity,
         unit_price: 0,
-        promotion: 'Buy 5+ research products',
+        promotion: 'Buy 5+ paid research products (Bac Water excluded)',
       },
     ],
     applied: true,
@@ -46,7 +46,7 @@ function publicPromotion() {
     qualifyingQuantity: config.BUNDLE_PROMOTION.qualifyingQuantity,
     freeSku: config.BUNDLE_PROMOTION.freeSku,
     freeQuantity: config.BUNDLE_PROMOTION.freeQuantity,
-    label: 'Buy 5+ research products and receive a free Bac Water 10ml',
+    label: 'Buy 5+ paid research products and receive a free Bac Water 10ml (Bac Water does not count)',
   };
 }
 
