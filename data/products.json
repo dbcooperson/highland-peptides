@@ -206,15 +206,6 @@
     "salePrice": 27.817391
   },
   {
-    "sku": "HX5",
-    "name": "Hexarelin Acetate",
-    "spec": "5mg x1 vial",
-    "cost": 6.5,
-    "category": "Peptide",
-    "group": "Growth Hormone",
-    "salePrice": 15.643478
-  },
-  {
     "sku": "HGHFRAG",
     "name": "HGH Frag 176-191",
     "spec": "5mg x1 vial",
@@ -276,15 +267,6 @@
     "category": "Peptide",
     "group": "Skin & Recovery",
     "salePrice": 31.295652
-  },
-  {
-    "sku": "KS10",
-    "name": "Kisspeptin-10",
-    "spec": "10mg x1 vial",
-    "cost": 7,
-    "category": "Peptide",
-    "group": "Hormone",
-    "salePrice": 16.513043
   },
   {
     "sku": "TY10",
@@ -359,22 +341,13 @@
     "salePrice": 26.078261
   },
   {
-    "sku": "10AM",
-    "name": "5-Amino-1MQ",
-    "spec": "10mg x1 vial",
-    "cost": 5.6,
-    "category": "Peptide",
-    "group": "Metabolic",
-    "salePrice": 13.034783
-  },
-  {
     "sku": "50AM",
     "name": "5-Amino-1MQ",
     "spec": "50mg x1 vial",
     "cost": 9,
     "category": "Peptide",
     "group": "Metabolic",
-    "salePrice": 20.86087
+    "salePrice": 25.565217
   },
   {
     "sku": "LC216",
@@ -384,24 +357,6 @@
     "category": "Peptide",
     "group": "Metabolic",
     "salePrice": 17.382609
-  },
-  {
-    "sku": "VIP5",
-    "name": "VIP",
-    "spec": "5mg x1 vial",
-    "cost": 6.5,
-    "category": "Peptide",
-    "group": "Hormone",
-    "salePrice": 15.643478
-  },
-  {
-    "sku": "VIP10",
-    "name": "VIP",
-    "spec": "10mg x1 vial",
-    "cost": 12,
-    "category": "Peptide",
-    "group": "Hormone",
-    "salePrice": 27.817391
   },
   {
     "sku": "KPV5",
@@ -467,15 +422,6 @@
     "salePrice": 19.121739
   },
   {
-    "sku": "FM2",
-    "name": "MGF",
-    "spec": "2ml x1 vial",
-    "cost": 4,
-    "category": "Peptide",
-    "group": "Growth Factor",
-    "salePrice": 14.773913
-  },
-  {
     "sku": "PE10",
     "name": "PE 22-28",
     "spec": "10ml x1 vial",
@@ -501,15 +447,6 @@
     "category": "Peptide",
     "group": "Nootropic",
     "salePrice": 24.33913
-  },
-  {
-    "sku": "CA20",
-    "name": "Cardiogen",
-    "spec": "20ml x1 vial",
-    "cost": 9.3,
-    "category": "Peptide",
-    "group": "Cardiovascular",
-    "salePrice": 21.730435
   },
   {
     "sku": "AD5",
@@ -653,7 +590,7 @@
     "cost": 4,
     "category": "Peptide",
     "group": "Melanocortin",
-    "salePrice": 14.773913
+    "salePrice": 20.46087
   },
   {
     "sku": "ML10",
@@ -662,7 +599,7 @@
     "cost": 4,
     "category": "Peptide",
     "group": "Melanocortin",
-    "salePrice": 14.773913
+    "salePrice": 20.46087
   },
   {
     "sku": "P41",
@@ -791,15 +728,6 @@
     "salePrice": 33.904348
   },
   {
-    "sku": "SUR10",
-    "name": "Survodutide",
-    "spec": "10mg x1 vial",
-    "cost": 18.5,
-    "category": "Peptide",
-    "group": "Metabolic",
-    "salePrice": 41.730435
-  },
-  {
     "sku": "CS10",
     "name": "Cagrilintide + Semaglutide",
     "spec": "5mg+5mg x1 vial",
@@ -825,24 +753,6 @@
     "category": "Peptide",
     "group": "Skin & Recovery",
     "salePrice": 43.469565
-  },
-  {
-    "sku": "MTD5",
-    "name": "Mazdutide",
-    "spec": "5mg x1 vial",
-    "cost": 9,
-    "category": "Peptide",
-    "group": "Metabolic",
-    "salePrice": 20.86087
-  },
-  {
-    "sku": "MTD10",
-    "name": "Mazdutide",
-    "spec": "10mg x1 vial",
-    "cost": 16.5,
-    "category": "Peptide",
-    "group": "Metabolic",
-    "salePrice": 36.513043
   },
   {
     "sku": "LCARN50",
