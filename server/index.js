@@ -23,6 +23,7 @@ const { sendOrderBackup, sendCustomerPaymentInstructions, sendPaymentReminder, s
 const { createBitcoinMonitor } = require('./btc-monitor');
 const analytics = require('./analytics');
 const coa = require('./coa');
+const { applyBundlePromotion, publicPromotion } = require('./promotions');
 const { startPaymentReminderScheduler } = require('./reminders');
 
 const isProductionRuntime = Boolean(process.env.RENDER || process.env.RENDER_SERVICE_ID || process.env.NODE_ENV === 'production');
@@ -104,6 +105,7 @@ app.get('/api/catalog', (req, res) => {
     ],
     orderFeeRate: config.ORDER_FEE_RATE,
     altPaymentDiscountRate: config.ALT_PAYMENT_DISCOUNT_RATE,
+    promotion: publicPromotion(),
   });
 });
 
@@ -245,6 +247,8 @@ function prepareCheckout(body) {
   }
   subtotal = Math.round(subtotal * 100) / 100;
 
+  const promotionResult = applyBundlePromotion(resolved, bySku);
+
   const discountMatch = resolveDiscountCode(discountCode);
   if (normalizedPaymentMethod === 'crypto' && discountMatch) {
     return { error: 'Promo codes cannot be combined with the crypto discount. Remove the promo code or choose PayPal checkout.' };
@@ -275,7 +279,7 @@ function prepareCheckout(body) {
     orderInput: {
       buyer: cleanBuyer,
       certifiedAt: new Date().toISOString(),
-      items: resolved,
+      items: promotionResult.items,
       subtotal,
       packagingFee,
       shippingFee,

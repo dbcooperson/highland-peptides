@@ -17,6 +17,15 @@ module.exports = {
   // Flat international shipping option shown at checkout.
   INTERNATIONAL_SHIPPING_FEE: 35,
 
+  // One complimentary 10ml bacteriostatic water is added when an order
+  // contains at least five paid research products. Supplies do not count
+  // toward the threshold, and the reward is calculated server-side.
+  BUNDLE_PROMOTION: {
+    qualifyingQuantity: 5,
+    freeSku: 'WA10',
+    freeQuantity: 1,
+  },
+
   // Percentage-based processing fee added to every order (0.03 = 3%).
   ORDER_FEE_RATE: Number(process.env.ORDER_FEE_RATE || 0.03),
 

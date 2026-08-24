@@ -165,6 +165,43 @@ function getCatalogProductBySku(sku) {
   return catalog.find(product => product.sku === sku) || null;
 }
 
+function bundlePromotionConfig() {
+  return window.sitePromotion || {
+    qualifyingQuantity: 5,
+    freeSku: 'WA10',
+    freeQuantity: 1,
+    label: 'Buy 5+ research products and receive a free Bac Water 10ml',
+  };
+}
+
+function bundleQualifyingQuantity(cart = getCart()) {
+  const promotion = bundlePromotionConfig();
+  return Object.keys(cart).reduce((total, itemSku) => {
+    const product = getCatalogProductBySku(itemSku);
+    if (!product || product.sku === promotion.freeSku || product.category === 'Supplies' || product.group === 'Supplies') return total;
+    return total + Number(cart[itemSku] || 0);
+  }, 0);
+}
+
+function bundlePromotionState(cart = getCart()) {
+  const promotion = bundlePromotionConfig();
+  const qualifying = bundleQualifyingQuantity(cart);
+  return {
+    ...promotion,
+    qualifying,
+    remaining: Math.max(0, promotion.qualifyingQuantity - qualifying),
+    unlocked: qualifying >= promotion.qualifyingQuantity,
+    freeProduct: getCatalogProductBySku(promotion.freeSku),
+  };
+}
+
+function bundlePromotionMessage(cart = getCart()) {
+  const state = bundlePromotionState(cart);
+  return state.unlocked
+    ? '<strong>Free Bac Water 10ml unlocked</strong><span>It will be added automatically at checkout.</span>'
+    : `<strong>Buy 5, get Bac Water 10ml free</strong><span>Add ${state.remaining} more paid research product${state.remaining === 1 ? '' : 's'} to unlock the reward.</span>`;
+}
+
 function showAddedToCartPopup(sku, qty = 1) {
   if (document.getElementById('entryGate')?.style.display === 'flex') return;
   const product = getCatalogProductBySku(sku);
@@ -184,9 +221,13 @@ function showAddedToCartPopup(sku, qty = 1) {
     return item ? sum + item.price * cart[itemSku] : sum;
   }, 0);
   const count = cartItemCount(cart);
-  const suggestions = (Array.isArray(window.siteCatalog) ? window.siteCatalog : [])
-    .filter(item => item.sku !== sku && item.popular)
-    .slice(0, 2);
+  const suggestionPool = (Array.isArray(window.siteCatalog) ? window.siteCatalog : [])
+    .filter(item => item.sku !== sku);
+  const bacWater = suggestionPool.find(item => item.sku === 'WA10');
+  const suggestions = [
+    ...(bacWater ? [bacWater] : []),
+    ...suggestionPool.filter(item => item.sku !== 'WA10' && item.popular),
+  ].slice(0, 2);
 
   overlay.innerHTML = `
     <div class="cart-popup-card" role="dialog" aria-modal="true" aria-labelledby="cartPopupTitle">
@@ -204,6 +245,9 @@ function showAddedToCartPopup(sku, qty = 1) {
       <div class="cart-popup-totals">
         <span>${count} item${count === 1 ? '' : 's'} in cart</span>
         <strong>Subtotal $${subtotal.toFixed(2)}</strong>
+      </div>
+      <div class="bundle-promo-banner ${bundlePromotionState(cart).unlocked ? 'is-unlocked' : ''}">
+        ${bundlePromotionMessage(cart)}
       </div>
       <div class="cart-popup-actions">
         <button type="button" class="cart-popup-checkout">Checkout</button>
@@ -402,6 +446,7 @@ function getProductSearchCatalog() {
     productSearchCatalogPromise = api('/api/catalog').then(data => {
       window.siteCatalog = data.products;
       window.siteFees = { packagingFee: data.packagingFee, shippingFee: data.shippingFee, internationalShippingFee: data.internationalShippingFee || 35, shippingOptions: data.shippingOptions || [], orderFeeRate: data.orderFeeRate || 0, altPaymentDiscountRate: data.altPaymentDiscountRate || 0 };
+      window.sitePromotion = data.promotion || null;
       return data.products;
     });
   }
@@ -553,6 +598,10 @@ function renderCheckoutSummary() {
     if (!p) return '';
     return `<div class="cart-row"><span>${escapeHTML(p.name)} x${cart[sku]}</span><span>$${(p.price * cart[sku]).toFixed(2)}</span></div>`;
   }).join('');
+  const promotion = bundlePromotionState(cart);
+  const rewardLine = promotion.unlocked && promotion.freeProduct
+    ? `<div class="cart-row bundle-summary-line"><span>${escapeHTML(promotion.freeProduct.name)} 10ml x${promotion.freeQuantity}</span><strong>FREE</strong></div>`
+    : '';
 
   const breakdown = [
     `<div class="cart-row"><span>Subtotal</span><span>$${subtotal.toFixed(2)}</span></div>`,
@@ -562,7 +611,7 @@ function renderCheckoutSummary() {
     `<div class="order-summary-total cart-row"><span>Total</span><span>$${total.toFixed(2)}</span></div>`,
   ].join('');
 
-  summaryEl.innerHTML = lines + '<div style="height:1px; background:var(--border-on-light); margin:10px 0;"></div>' + breakdown;
+  summaryEl.innerHTML = lines + rewardLine + '<div style="height:1px; background:var(--border-on-light); margin:10px 0;"></div>' + breakdown;
 }
 
 function checkoutPayloadFromForm() {

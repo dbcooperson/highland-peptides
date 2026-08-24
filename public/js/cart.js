@@ -48,6 +48,23 @@ function cartLineHTML(sku, qty, p) {
   `;
 }
 
+function freeBundleLineHTML(state) {
+  if (!state.unlocked || !state.freeProduct) return '';
+  const product = state.freeProduct;
+  return `
+    <div class="cart-line cart-line-reward">
+      <div class="cart-line-media photo sku-mockup" aria-hidden="true">${productMockupImageHTML(product)}</div>
+      <div class="cart-line-info">
+        <div class="cart-line-kicker">Bundle reward</div>
+        <strong>${escapeHTML(product.name)}</strong>
+        <span>10ml x${state.freeQuantity} vial &bull; added automatically</span>
+        <em>Unlocked with 5 paid research products</em>
+      </div>
+      <div class="cart-line-reward-badge">FREE</div>
+    </div>
+  `;
+}
+
 function unavailableCartLineHTML(sku, qty) {
   return `
     <div class="cart-line cart-line-unavailable">
@@ -66,7 +83,7 @@ function unavailableCartLineHTML(sku, qty) {
     </div>
   `;
 }
-function cartSummaryHTML(subtotal) {
+function cartSummaryHTML(subtotal, promotionState) {
   const shippingFee = (window.siteFees && window.siteFees.shippingFee) || 0;
   const orderFeeRate = (window.siteFees && window.siteFees.orderFeeRate) || 0;
   const feeBase = subtotal + shippingFee;
@@ -76,6 +93,7 @@ function cartSummaryHTML(subtotal) {
     <div class="cart-summary-trust"><span>Secure checkout</span><span>RUO certification required</span><span>Support: support@highlandpeptides.com</span></div>
     <div class="cart-summary-lines">
       <div><span>Subtotal</span><strong>$${subtotal.toFixed(2)}</strong></div>
+      ${promotionState && promotionState.unlocked ? '<div class="bundle-summary-line"><span>Bac Water 10ml bundle reward</span><strong>FREE</strong></div>' : ''}
       <div><span>U.S. shipping</span><strong>$${shippingFee.toFixed(2)}</strong></div>
       ${orderFeeRate ? `<div><span>Processing fee</span><strong>$${orderFee.toFixed(2)}</strong></div>` : ''}
       <div class="cart-summary-total"><span>Estimated total</span><strong>$${estimatedTotal.toFixed(2)}</strong></div>
@@ -124,6 +142,13 @@ function renderCartPage() {
     subtotal += p.price * cart[sku];
     return cartLineHTML(sku, cart[sku], p);
   }).join('');
+  const promotionState = bundlePromotionState(cart);
+  itemsEl.insertAdjacentHTML('afterbegin', `
+    <div class="bundle-promo-banner cart-bundle-promo ${promotionState.unlocked ? 'is-unlocked' : ''}">
+      ${bundlePromotionMessage(cart)}
+    </div>
+  `);
+  itemsEl.insertAdjacentHTML('beforeend', freeBundleLineHTML(promotionState));
   if (unavailableCount) {
     itemsEl.insertAdjacentHTML('afterbegin', `
       <div class="cart-cleanup-notice">
@@ -132,7 +157,7 @@ function renderCartPage() {
       </div>
     `);
   }
-  totalEl.innerHTML = cartSummaryHTML(subtotal);
+  totalEl.innerHTML = cartSummaryHTML(subtotal, promotionState);
   checkoutBtn.disabled = unavailableCount > 0;
   checkoutBtn.title = unavailableCount > 0 ? 'Remove unavailable items before checkout.' : '';
   if (!unavailableCount) {
@@ -182,6 +207,7 @@ async function init() {
   const catalogData = await api('/api/catalog');
   window.siteCatalog = catalogData.products;
   window.siteFees = { packagingFee: catalogData.packagingFee, shippingFee: catalogData.shippingFee, internationalShippingFee: catalogData.internationalShippingFee || 35, shippingOptions: catalogData.shippingOptions || [], orderFeeRate: catalogData.orderFeeRate || 0, altPaymentDiscountRate: catalogData.altPaymentDiscountRate || 0 };
+  window.sitePromotion = catalogData.promotion || null;
   const activeSkus = new Set(window.siteCatalog.map(p => p.sku));
   const currentCart = getCart();
   let prunedCart = false;

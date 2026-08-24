@@ -146,6 +146,7 @@ async function init() {
   ]);
   window.siteCatalog = catalogData.products;
   window.siteFees = { packagingFee: catalogData.packagingFee, shippingFee: catalogData.shippingFee, internationalShippingFee: catalogData.internationalShippingFee || 35, shippingOptions: catalogData.shippingOptions || [], orderFeeRate: catalogData.orderFeeRate || 0 };
+  window.sitePromotion = catalogData.promotion || null;
   family = productData;
   selectedSku = sku || family.variants[0].sku;
   renderProduct();
