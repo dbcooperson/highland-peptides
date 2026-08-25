@@ -37,4 +37,5 @@ test('Ridge Current labels include deterministic contour artwork', () => {
   assert.match(js, /ridge-current-label-base-v2\.png/);
   assert.match(css, /\.label-design-ridge-current/);
   assert.match(css, /\.ridge-current-artwork/);
+  assert.match(css, /\.label-design-ridge-current \.highland-label-footer[\s\S]*bottom:\s*0\.27in/);
 });
