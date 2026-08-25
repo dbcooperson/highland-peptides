@@ -195,15 +195,12 @@ function buildHighlandLabel({ name, dosage, design = 'ridge-current' }) {
   label.className = `highland-print-label label-design-${design}`;
 
   if (design === 'ridge-current') {
-    const current = document.createElement('div');
-    current.className = 'ridge-current-flow';
-    current.setAttribute('aria-hidden', 'true');
-    current.append(
-      Object.assign(document.createElement('span'), { className: 'ridge-current-line ridge-current-line-one' }),
-      Object.assign(document.createElement('span'), { className: 'ridge-current-line ridge-current-line-two' }),
-      Object.assign(document.createElement('span'), { className: 'ridge-current-line ridge-current-line-three' })
-    );
-    label.appendChild(current);
+    const artwork = document.createElement('img');
+    artwork.className = 'ridge-current-artwork';
+    artwork.src = '/images/branding/ridge-current-label-base-v2.png';
+    artwork.alt = '';
+    artwork.setAttribute('aria-hidden', 'true');
+    label.appendChild(artwork);
   }
 
   const identity = document.createElement('div');

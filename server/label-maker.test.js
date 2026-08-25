@@ -34,7 +34,7 @@ test('free-form label text is inserted as text, not executable markup', () => {
 });
 
 test('Ridge Current labels include deterministic contour artwork', () => {
-  assert.match(js, /ridge-current-flow/);
+  assert.match(js, /ridge-current-label-base-v2\.png/);
   assert.match(css, /\.label-design-ridge-current/);
-  assert.match(css, /\.ridge-current-line/);
+  assert.match(css, /\.ridge-current-artwork/);
 });
