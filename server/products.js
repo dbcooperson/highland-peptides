@@ -4,6 +4,7 @@ const { MARKUP_MULTIPLIER, PRICE_ADJUSTMENT, PUBLIC_PRICE_MULTIPLIER, PRICE_DECI
 
 const raw = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'products.json'), 'utf8'));
 const descriptions = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'descriptions.json'), 'utf8'));
+const PRODUCT_IMAGE_REVISION = 'offwhite-closeup-20260825';
 
 function round(n, d) {
   const f = Math.pow(10, d);
@@ -67,7 +68,7 @@ const pricedCatalog = raw
       ? 'Low stock'
       : 'Available to order',
     description: descriptions[p.name] || '',
-    image: `/images/product-mockups/generated/${p.sku}.webp`,
+    image: `/images/product-mockups/generated/${p.sku}.webp?v=${PRODUCT_IMAGE_REVISION}`,
     price: round((p.salePrice != null ? p.salePrice : p.cost * MARKUP_MULTIPLIER * PRICE_ADJUSTMENT) * PUBLIC_PRICE_MULTIPLIER, PRICE_DECIMALS),
   }));
 

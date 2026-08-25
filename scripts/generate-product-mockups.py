@@ -10,6 +10,12 @@ OUT = ROOT / "public" / "images" / "product-mockups" / "generated"
 DATA = ROOT / "data" / "products.json"
 OUT.mkdir(parents=True, exist_ok=True)
 
+# The reference is intentionally spacious, but product cards and the square
+# product-detail frame need the vial to read clearly at smaller sizes. Zoom the
+# finished composition (rather than only the bottle) so the vertical purity
+# line, label typography, shadow, and vial remain proportionally consistent.
+COMPOSITION_ZOOM = 1.28
+
 
 FONT_NAME_CANDIDATES = [
     Path("C:/Windows/Fonts/impact.ttf"),
@@ -164,9 +170,23 @@ def add_variable_label(base, product):
     )
 
 
+def zoom_composition(image):
+    width, height = image.size
+    crop_width = round(width / COMPOSITION_ZOOM)
+    crop_height = round(height / COMPOSITION_ZOOM)
+    left = (width - crop_width) // 2
+
+    # Bias the crop slightly upward from dead center: this preserves the full
+    # cap, keeps the vial base visible, and removes mostly empty outer space.
+    top = max(0, (height - crop_height) // 2 - 12)
+    crop = image.crop((left, top, left + crop_width, top + crop_height))
+    return crop.resize((width, height), Image.Resampling.LANCZOS)
+
+
 def make_mockup(product, master):
     image = master.copy()
     add_variable_label(image, product)
+    image = zoom_composition(image)
     output = OUT / f"{product['sku']}.webp"
     image.save(output, "WEBP", quality=94, method=6)
     return output
