@@ -181,6 +181,123 @@ function percent(value) {
   return value == null ? 'Collecting data' : `${Number(value).toFixed(1)}%`;
 }
 
+function labelTextSizeClass(name) {
+  const length = String(name || '').trim().length;
+  if (length > 30) return 'label-name-xxlong';
+  if (length > 22) return 'label-name-xlong';
+  if (length > 15) return 'label-name-long';
+  if (length > 10) return 'label-name-medium';
+  return 'label-name-short';
+}
+
+function buildHighlandLabel({ name, dosage, design = 'ridge' }) {
+  const label = document.createElement('div');
+  label.className = `highland-print-label label-design-${design}`;
+
+  const identity = document.createElement('div');
+  identity.className = 'highland-label-identity';
+  const mark = document.createElement('span');
+  mark.className = 'highland-label-mark';
+  mark.textContent = design === 'ridge' ? 'HP' : 'H';
+  const brand = document.createElement('span');
+  brand.className = 'highland-label-brand';
+  brand.innerHTML = '<strong>HIGHLAND</strong><small>PEPTIDES</small>';
+  identity.append(mark, brand);
+
+  const compound = document.createElement('strong');
+  compound.className = `highland-label-compound ${labelTextSizeClass(name)}`;
+  compound.textContent = String(name || '').trim().toUpperCase();
+
+  const footer = document.createElement('div');
+  footer.className = 'highland-label-footer';
+  const dose = document.createElement('strong');
+  dose.className = 'highland-label-dose';
+  dose.textContent = String(dosage || '').trim().toUpperCase();
+  const ruo = document.createElement('span');
+  ruo.textContent = 'RESEARCH USE ONLY';
+  footer.append(dose, ruo);
+
+  label.append(identity, compound, footer);
+  return label;
+}
+
+function getLabelMakerValues() {
+  const name = document.getElementById('labelProductName')?.value.trim() || '';
+  const dosage = document.getElementById('labelDosage')?.value.trim() || '';
+  const design = document.querySelector('input[name="labelDesign"]:checked')?.value || 'ridge';
+  const start = Math.max(1, Math.min(48, Number(document.getElementById('labelStartPosition')?.value || 1)));
+  const requested = Math.max(1, Math.min(48, Number(document.getElementById('labelQuantity')?.value || 1)));
+  const quantity = Math.min(requested, 49 - start);
+  return { name, dosage, design, start, quantity };
+}
+
+function renderLabelMaker() {
+  const values = getLabelMakerValues();
+  const preview = document.getElementById('labelLivePreview');
+  if (!preview) return;
+  preview.replaceChildren(buildHighlandLabel(values));
+  document.querySelectorAll('.label-design-option').forEach(option => {
+    option.classList.toggle('selected', Boolean(option.querySelector('input:checked')));
+  });
+  const quantityInput = document.getElementById('labelQuantity');
+  if (quantityInput) quantityInput.max = String(49 - values.start);
+  const message = document.getElementById('labelMakerMessage');
+  if (message) message.textContent = values.quantity < Number(quantityInput?.value || 1)
+    ? `This starting position leaves room for ${values.quantity} labels on the sheet.`
+    : '';
+}
+
+function buildLabelPrintSheet(values) {
+  const portal = document.getElementById('labelPrintPortal');
+  if (!portal) return;
+  portal.replaceChildren();
+  for (let position = 1; position <= 48; position += 1) {
+    const cell = document.createElement('div');
+    cell.className = 'label-print-cell';
+    const shouldPrint = position >= values.start && position < values.start + values.quantity;
+    if (shouldPrint) cell.appendChild(buildHighlandLabel(values));
+    portal.appendChild(cell);
+  }
+}
+
+async function loadLabelProductNames() {
+  const list = document.getElementById('labelProductNames');
+  if (!list || list.dataset.loaded) return;
+  try {
+    const catalogData = await api('/api/catalog');
+    const names = [...new Set((catalogData.products || []).map(product => product.name).filter(Boolean))]
+      .sort((a, b) => a.localeCompare(b));
+    list.replaceChildren(...names.map(name => {
+      const option = document.createElement('option');
+      option.value = name;
+      return option;
+    }));
+    list.dataset.loaded = 'true';
+  } catch {
+    // Free-form typing still works if the catalog request is unavailable.
+  }
+}
+
+function initLabelMaker() {
+  const form = document.getElementById('labelMakerForm');
+  if (!form || form.dataset.initialized) return;
+  form.dataset.initialized = 'true';
+  form.querySelectorAll('input').forEach(input => input.addEventListener('input', renderLabelMaker));
+  form.querySelectorAll('input[name="labelDesign"]').forEach(input => input.addEventListener('change', renderLabelMaker));
+  form.addEventListener('submit', event => {
+    event.preventDefault();
+    const values = getLabelMakerValues();
+    if (!values.name || !values.dosage) return;
+    buildLabelPrintSheet(values);
+    document.body.classList.add('label-printing');
+    const cleanup = () => document.body.classList.remove('label-printing');
+    window.addEventListener('afterprint', cleanup, { once: true });
+    requestAnimationFrame(() => requestAnimationFrame(() => window.print()));
+  });
+  loadLabelProductNames();
+  renderLabelMaker();
+}
+
 function analyticsSummaryHTML(data) {
   const totals = data.totals || {};
   const sales = data.sales || {};
@@ -560,6 +677,7 @@ document.getElementById('adminLoginForm').addEventListener('submit', async (e) =
     loadOrders();
     loadProfit();
     loadLaunchChecks();
+    initLabelMaker();
   } catch (err) {
     document.getElementById('adminLoginMsg').textContent = err.message;
   }

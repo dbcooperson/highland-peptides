@@ -3988,6 +3988,418 @@ body.admin-page select {
   .analytics-card-title { display: grid; gap: 4px; }
 }
 
+/* ---------- Exact-size Highland vial label maker ---------- */
+.label-maker-panel {
+  overflow: hidden;
+}
+.label-maker-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 22px;
+}
+.label-maker-heading h2 { margin: 4px 0 7px; }
+.label-maker-heading p { max-width: 720px; margin: 0; }
+.label-maker-kicker,
+.label-preview-caption {
+  display: block;
+  color: #d99a60;
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+.label-concept-link {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  min-height: 42px;
+  padding: 0 16px;
+  border: 1px solid rgba(217,154,96,0.4);
+  border-radius: 999px;
+  color: #f3efe6;
+  font-weight: 900;
+  text-decoration: none;
+}
+.label-maker-grid {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.85fr) minmax(440px, 1.15fr);
+  gap: 22px;
+}
+.label-maker-form,
+.label-preview-stage {
+  border: 1px solid rgba(243,239,230,0.16);
+  border-radius: 22px;
+  background: rgba(250,247,241,0.055);
+}
+.label-maker-form {
+  display: grid;
+  gap: 15px;
+  padding: 20px;
+}
+.label-maker-form > label,
+.label-maker-row label {
+  display: grid;
+  gap: 7px;
+  color: rgba(243,239,230,0.78);
+  font-size: 12px;
+  font-weight: 850;
+}
+.label-maker-form input[type="text"],
+.label-maker-form input[type="number"] {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 13px;
+  border: 1px solid rgba(243,239,230,0.2);
+  border-radius: 12px;
+  background: rgba(18,22,26,0.78);
+  color: #f3efe6;
+  font: inherit;
+  font-size: 15px;
+}
+.label-maker-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.label-design-picker {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.label-design-picker legend {
+  grid-column: 1 / -1;
+  margin-bottom: 7px;
+  color: rgba(243,239,230,0.78);
+  font-size: 12px;
+  font-weight: 900;
+}
+.label-design-option {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  min-height: 112px;
+  padding: 12px 8px;
+  border: 1px solid rgba(243,239,230,0.15);
+  border-radius: 14px;
+  background: rgba(18,22,26,0.6);
+  text-align: center;
+  cursor: pointer;
+}
+.label-design-option.selected {
+  border-color: rgba(217,154,96,0.82);
+  box-shadow: inset 0 0 0 1px rgba(217,154,96,0.3);
+}
+.label-design-option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.label-design-option strong { font-size: 12px; }
+.label-design-option small { color: rgba(243,239,230,0.55); font-size: 10px; line-height: 1.2; }
+.mini-mark {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  color: #f3efe6;
+  font-size: 18px;
+  font-weight: 950;
+}
+.mini-mark-ridge::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  width: 26px;
+  height: 10px;
+  background: #d99a60;
+  clip-path: polygon(0 100%, 26% 35%, 43% 66%, 64% 0, 100% 100%, 64% 48%, 44% 100%, 27% 67%);
+}
+.mini-mark-signal {
+  border-right: 4px solid #d99a60;
+}
+.mini-mark-signal::after {
+  content: '';
+  position: absolute;
+  right: -7px;
+  top: 4px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #d99a60;
+  box-shadow: 0 13px 0 #d99a60, 0 26px 0 #d99a60;
+}
+.mini-mark-cairn {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  margin: 4px;
+}
+.mini-mark-cairn::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 2px solid #d99a60;
+  transform: rotate(45deg);
+}
+.label-print-note {
+  display: grid;
+  gap: 3px;
+  padding: 12px 14px;
+  border-left: 3px solid #d99a60;
+  border-radius: 5px 12px 12px 5px;
+  background: rgba(217,154,96,0.08);
+  color: rgba(243,239,230,0.7);
+  font-size: 11px;
+  line-height: 1.45;
+}
+.label-print-note strong { font-size: 12px; }
+.label-print-button {
+  min-height: 50px;
+  border: 0;
+  border-radius: 999px;
+  background: #f3efe6;
+  color: #1c1a17;
+  font-weight: 950;
+  cursor: pointer;
+}
+.label-preview-stage {
+  display: grid;
+  place-items: center;
+  min-height: 450px;
+  padding: 36px;
+  background:
+    radial-gradient(circle at 78% 22%, rgba(193,121,58,0.15), transparent 34%),
+    linear-gradient(145deg, rgba(20,33,29,0.96), rgba(9,13,16,0.98));
+}
+.label-preview-stage > div { width: min(100%, 660px); }
+.label-preview-caption { margin-bottom: 14px; }
+.label-preview-stage p {
+  max-width: 560px;
+  margin: 16px 0 0;
+  color: rgba(243,239,230,0.6);
+  font-size: 11px;
+  line-height: 1.5;
+}
+#labelLivePreview {
+  display: grid;
+  place-items: center;
+  min-height: 240px;
+  padding: 28px;
+  border-radius: 20px;
+  background: #d8d2c6;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.45), 0 28px 55px rgba(0,0,0,0.3);
+}
+#labelLivePreview .highland-print-label {
+  transform: scale(3.25);
+  transform-origin: center;
+}
+
+.highland-print-label {
+  box-sizing: border-box;
+  position: relative;
+  display: grid;
+  grid-template-columns: 0.43in 1fr;
+  grid-template-rows: 0.24in 0.27in 0.24in;
+  width: 1.75in;
+  height: 0.75in;
+  overflow: hidden;
+  border-radius: 0.09in;
+  background: #f7f2e9;
+  color: #1c1a17;
+  font-family: Arial, Helvetica, sans-serif;
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+.highland-print-label::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(100deg, rgba(255,255,255,0.2), transparent 36%, rgba(255,255,255,0.13) 68%, transparent);
+}
+.highland-label-identity {
+  grid-column: 1;
+  grid-row: 1 / 4;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 0.03in;
+  padding: 0.04in 0.025in;
+  background: #274735;
+  color: #f7f2e9;
+}
+.highland-label-mark {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 0.30in;
+  height: 0.27in;
+  font-size: 10pt;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.08em;
+}
+.label-design-ridge .highland-label-mark::before {
+  content: '';
+  position: absolute;
+  top: -0.01in;
+  width: 0.26in;
+  height: 0.095in;
+  background: #d08a4b;
+  clip-path: polygon(0 100%, 25% 34%, 43% 67%, 64% 0, 100% 100%, 64% 48%, 44% 100%, 27% 67%);
+}
+.label-design-signal .highland-label-mark {
+  width: 0.18in;
+  border-right: 0.025in solid #d08a4b;
+  font-size: 13pt;
+  letter-spacing: 0;
+}
+.label-design-signal .highland-label-mark::after {
+  content: '';
+  position: absolute;
+  right: -0.043in;
+  top: 0.015in;
+  width: 0.045in;
+  height: 0.045in;
+  border-radius: 50%;
+  background: #d08a4b;
+  box-shadow: 0 0.09in 0 #d08a4b, 0 0.18in 0 #d08a4b;
+}
+.label-design-cairn .highland-label-mark {
+  width: 0.22in;
+  height: 0.22in;
+  font-size: 10pt;
+  letter-spacing: 0;
+}
+.label-design-cairn .highland-label-mark::before {
+  content: '';
+  position: absolute;
+  inset: 0.025in;
+  border: 0.018in solid #d08a4b;
+  transform: rotate(45deg);
+}
+.highland-label-brand {
+  display: grid;
+  justify-items: center;
+  line-height: 0.95;
+}
+.highland-label-brand strong {
+  color: #f7f2e9 !important;
+  font-size: 3.6pt;
+  letter-spacing: 0.09em;
+}
+.highland-label-brand small {
+  font-size: 2.8pt;
+  letter-spacing: 0.18em;
+}
+.highland-label-compound {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  align-self: end;
+  padding: 0 0.08in 0.025in 0.08in;
+  color: #1c1a17 !important;
+  font-weight: 950;
+  line-height: 0.92;
+  letter-spacing: -0.045em;
+  overflow-wrap: anywhere;
+}
+body.admin-page .highland-print-label .highland-label-compound {
+  color: #1c1a17 !important;
+}
+.label-name-short { font-size: 11pt; }
+.label-name-medium { font-size: 9.2pt; }
+.label-name-long { font-size: 7.7pt; }
+.label-name-xlong { font-size: 6.5pt; line-height: 0.9; }
+.label-name-xxlong { font-size: 5.7pt; line-height: 0.88; }
+.highland-label-footer {
+  grid-column: 2;
+  grid-row: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.04in;
+  padding: 0.035in 0.075in 0.04in;
+  border-top: 0.012in solid rgba(39,71,53,0.28);
+}
+.highland-label-dose {
+  flex: 0 1 auto;
+  max-width: 0.78in;
+  overflow: hidden;
+  padding: 0.025in 0.055in;
+  border-radius: 999px;
+  background: #274735;
+  color: #f7f2e9 !important;
+  font-size: 5.6pt;
+  line-height: 1;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.highland-label-footer span {
+  color: #4b5b4e;
+  font-size: 3.4pt;
+  font-weight: 900;
+  letter-spacing: 0.075em;
+  white-space: nowrap;
+}
+
+.label-print-sheet { display: none; }
+@media (max-width: 980px) {
+  .label-maker-grid { grid-template-columns: 1fr; }
+  .label-preview-stage { min-height: 400px; }
+}
+@media (max-width: 620px) {
+  .label-maker-heading { display: grid; }
+  .label-concept-link { justify-self: start; }
+  .label-maker-row,
+  .label-design-picker { grid-template-columns: 1fr; }
+  .label-design-option {
+    grid-template-columns: 48px 1fr;
+    grid-template-rows: auto auto;
+    justify-items: start;
+    min-height: 0;
+    text-align: left;
+  }
+  .label-design-option .mini-mark { grid-row: 1 / 3; }
+  .label-preview-stage { min-height: 320px; padding: 18px; overflow: hidden; }
+  #labelLivePreview { min-height: 200px; }
+  #labelLivePreview .highland-print-label { transform: scale(2); }
+}
+@media print {
+  @page { size: Letter portrait; margin: 0; }
+  body.label-printing {
+    width: 8.5in !important;
+    height: 11in !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+  body.label-printing > *:not(#labelPrintPortal) { display: none !important; }
+  body.label-printing #labelPrintPortal {
+    box-sizing: border-box;
+    display: grid !important;
+    grid-template-columns: repeat(4, 1.75in);
+    grid-template-rows: repeat(12, 0.75in);
+    column-gap: 0.333in;
+    row-gap: 0.136in;
+    width: 8.5in;
+    height: 11in;
+    padding: 0.25in;
+    background: #fff;
+  }
+  .label-print-cell {
+    width: 1.75in;
+    height: 0.75in;
+    overflow: hidden;
+  }
+}
+
 /* ---------- CVR and fulfillment pass ---------- */
 .nav-wrap {
   flex-direction: row;

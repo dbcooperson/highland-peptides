@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin: Highland Peptides</title>
-<link rel="stylesheet" href="/css/style.css?v=site-20260823">
+<link rel="stylesheet" href="/css/style.css?v=label-maker-20260824">
 </head>
 <body class="admin-page">
 <header class="topbar">
@@ -28,6 +28,7 @@
       <button type="button" class="admin-tab active" data-admin-tab="orders">Orders</button>
       <button type="button" class="admin-tab" data-admin-tab="analytics">Analytics</button>
       <button type="button" class="admin-tab" data-admin-tab="profit">Profit</button>
+      <button type="button" class="admin-tab" data-admin-tab="labels">Label Maker</button>
       <button type="button" class="admin-tab" data-admin-tab="launch">Launch Checks</button>
     </div>
     <div class="panel admin-tab-panel" id="ordersPanel" data-admin-panel="orders">
@@ -101,6 +102,73 @@
       <div id="profitSummary"></div>
       <table id="profitTable" style="width:100%; border-collapse: collapse;"></table>
     </div>
+    <div class="panel admin-tab-panel label-maker-panel" id="labelsPanel" data-admin-panel="labels" hidden>
+      <div class="label-maker-heading">
+        <div>
+          <span class="label-maker-kicker">OL1735WG · 1.75 × 0.75 in</span>
+          <h2>Highland Label Maker</h2>
+          <p class="hint">Enter the compound and strength, choose a Highland mark, then print up to 48 aligned labels on one letter-size sheet.</p>
+        </div>
+        <a class="label-concept-link" href="/images/branding/highland-label-concepts-v1.png" target="_blank" rel="noopener">Open AI concept board</a>
+      </div>
+
+      <div class="label-maker-grid">
+        <form id="labelMakerForm" class="label-maker-form">
+          <label>Compound name
+            <input id="labelProductName" list="labelProductNames" type="text" value="Retatrutide" maxlength="42" autocomplete="off" required>
+            <datalist id="labelProductNames"></datalist>
+          </label>
+          <label>Dosage / strength
+            <input id="labelDosage" type="text" value="20 MG" maxlength="24" autocomplete="off" required>
+          </label>
+          <div class="label-maker-row">
+            <label>Labels to print
+              <input id="labelQuantity" type="number" value="48" min="1" max="48" inputmode="numeric" required>
+            </label>
+            <label>Start at position
+              <input id="labelStartPosition" type="number" value="1" min="1" max="48" inputmode="numeric" required>
+            </label>
+          </div>
+
+          <fieldset class="label-design-picker">
+            <legend>Logo direction</legend>
+            <label class="label-design-option selected">
+              <input type="radio" name="labelDesign" value="ridge" checked>
+              <span class="mini-mark mini-mark-ridge">HP</span>
+              <strong>HP Ridge</strong>
+              <small>Best at vial size</small>
+            </label>
+            <label class="label-design-option">
+              <input type="radio" name="labelDesign" value="signal">
+              <span class="mini-mark mini-mark-signal">H</span>
+              <strong>Highland Signal</strong>
+              <small>Modern molecular cue</small>
+            </label>
+            <label class="label-design-option">
+              <input type="radio" name="labelDesign" value="cairn">
+              <span class="mini-mark mini-mark-cairn">H</span>
+              <strong>Cairn</strong>
+              <small>Rugged geometric mark</small>
+            </label>
+          </fieldset>
+
+          <div class="label-print-note">
+            <strong>Printer setting</strong>
+            <span>Use Letter paper, Actual Size / 100% scale, and turn browser headers and footers off.</span>
+          </div>
+          <button type="submit" class="label-print-button">Print labels</button>
+          <p id="labelMakerMessage" class="form-msg" aria-live="polite"></p>
+        </form>
+
+        <section class="label-preview-stage" aria-label="Live label preview">
+          <div>
+            <span class="label-preview-caption">Live print preview</span>
+            <div id="labelLivePreview"></div>
+            <p>Printed at the exact OL1735WG label size. The label stays crisp because the logo and type are rendered as vector-like browser elements, not AI text.</p>
+          </div>
+        </section>
+      </div>
+    </div>
     <div class="panel admin-tab-panel" id="launchPanel" data-admin-panel="launch" hidden>
       <h2>Launch Checks <span class="hint">(things to verify before pushing traffic)</span></h2>
       <div id="launchChecks"></div>
@@ -109,7 +177,9 @@
   </section>
 </main>
 
-<script src="/js/admin.js?v=cvr-email-20260821"></script>
+<div id="labelPrintPortal" class="label-print-sheet" aria-hidden="true"></div>
+
+<script src="/js/admin.js?v=label-maker-20260824"></script>
 </body>
 </html>
 
