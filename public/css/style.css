@@ -4121,6 +4121,31 @@ body.admin-page select {
   background: #d99a60;
   clip-path: polygon(0 100%, 26% 35%, 43% 66%, 64% 0, 100% 100%, 64% 48%, 44% 100%, 27% 67%);
 }
+.mini-mark-ridge-current {
+  color: #2f5a42;
+  font-size: 20px;
+  letter-spacing: -0.16em;
+}
+.mini-mark-ridge-current::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 18px;
+  width: 27px;
+  height: 11px;
+  background: #f3efe6;
+  clip-path: polygon(0 55%, 26% 15%, 43% 53%, 65% 0, 100% 62%, 100% 100%, 0 100%);
+}
+.mini-mark-ridge-current::after {
+  content: '';
+  position: absolute;
+  right: 7px;
+  top: 7px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #c1793a;
+}
 .mini-mark-signal {
   border-right: 4px solid #d99a60;
 }
@@ -4224,6 +4249,10 @@ body.admin-page select {
   pointer-events: none;
   background: linear-gradient(100deg, rgba(255,255,255,0.2), transparent 36%, rgba(255,255,255,0.13) 68%, transparent);
 }
+.highland-print-label > * {
+  position: relative;
+  z-index: 1;
+}
 .highland-label-identity {
   grid-column: 1;
   grid-row: 1 / 4;
@@ -4255,6 +4284,120 @@ body.admin-page select {
   background: #d08a4b;
   clip-path: polygon(0 100%, 25% 34%, 43% 67%, 64% 0, 100% 100%, 64% 48%, 44% 100%, 27% 67%);
 }
+
+/* Ridge Current: white substrate, mountain-cut HP and contour flow. */
+.label-design-ridge-current {
+  grid-template-columns: 0.48in 1fr;
+  grid-template-rows: 0.18in 0.33in 0.24in;
+  background: #fffdfa;
+  color: #17231c;
+  box-shadow: inset 0 0 0 0.008in rgba(39,71,53,0.2);
+}
+.label-design-ridge-current::after {
+  z-index: 4;
+  background: linear-gradient(100deg, rgba(255,255,255,0.12), transparent 42%, rgba(255,255,255,0.08) 72%, transparent);
+}
+.label-design-ridge-current .highland-label-identity {
+  grid-column: 1;
+  grid-row: 1 / 4;
+  align-content: center;
+  gap: 0.014in;
+  padding: 0.025in 0.018in 0.06in;
+  background: transparent;
+  color: #274735;
+}
+.label-design-ridge-current .highland-label-mark {
+  width: 0.37in;
+  height: 0.31in;
+  color: #274735;
+  font-size: 16pt;
+  letter-spacing: -0.17em;
+  text-indent: -0.025in;
+}
+.label-design-ridge-current .highland-label-mark::before {
+  content: '';
+  position: absolute;
+  left: 0.035in;
+  top: 0.135in;
+  width: 0.29in;
+  height: 0.105in;
+  background: #fffdfa;
+  clip-path: polygon(0 55%, 25% 12%, 42% 51%, 64% 0, 100% 62%, 100% 100%, 0 100%);
+}
+.label-design-ridge-current .highland-label-mark::after {
+  content: '';
+  position: absolute;
+  right: 0.035in;
+  top: 0.035in;
+  width: 0.055in;
+  height: 0.055in;
+  border-radius: 50%;
+  background: #c1793a;
+}
+.label-design-ridge-current .highland-label-brand strong {
+  color: #17231c !important;
+  font-size: 3.4pt;
+  letter-spacing: 0.105em;
+}
+.label-design-ridge-current .highland-label-brand small {
+  color: #274735;
+  font-size: 2.8pt;
+  font-weight: 800;
+  letter-spacing: 0.19em;
+}
+.label-design-ridge-current .highland-label-compound {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  align-self: center;
+  justify-self: stretch;
+  padding: 0.035in 0.055in 0 0.025in;
+  color: #17231c !important;
+  text-align: center;
+  line-height: 0.9;
+  letter-spacing: -0.055em;
+}
+.label-design-ridge-current .label-name-short { font-size: 13pt; }
+.label-design-ridge-current .label-name-medium { font-size: 11.2pt; }
+.label-design-ridge-current .label-name-long { font-size: 9.1pt; }
+.label-design-ridge-current .label-name-xlong { font-size: 7.5pt; }
+.label-design-ridge-current .label-name-xxlong { font-size: 6.4pt; }
+.label-design-ridge-current .highland-label-footer {
+  grid-column: 2;
+  grid-row: 3;
+  align-items: center;
+  padding: 0.018in 0.07in 0.045in 0.045in;
+  border: 0;
+}
+.label-design-ridge-current .highland-label-dose {
+  padding: 0.03in 0.065in;
+  background: #274735;
+  color: #fffdfa !important;
+  font-size: 6.2pt;
+}
+.label-design-ridge-current .highland-label-footer span {
+  color: #274735;
+  font-size: 3.2pt;
+  letter-spacing: 0.095em;
+}
+.ridge-current-flow {
+  position: absolute !important;
+  inset: 0;
+  z-index: 0 !important;
+  pointer-events: none;
+  overflow: hidden;
+}
+.ridge-current-line {
+  position: absolute;
+  left: -0.05in;
+  width: 1.92in;
+  height: 0.18in;
+  border-top: 0.009in solid rgba(39,71,53,0.78);
+  border-radius: 52% 44% 48% 42%;
+  transform: rotate(2deg) skewX(-12deg);
+}
+.ridge-current-line-one { bottom: 0.16in; }
+.ridge-current-line-two { bottom: 0.125in; opacity: 0.82; }
+.ridge-current-line-three { bottom: 0.09in; opacity: 0.6; }
 .label-design-signal .highland-label-mark {
   width: 0.18in;
   border-right: 0.025in solid #d08a4b;

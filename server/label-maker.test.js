@@ -15,6 +15,8 @@ test('admin includes the protected label maker controls', () => {
   assert.match(html, /id="labelQuantity"/);
   assert.match(html, /id="labelStartPosition"/);
   assert.match(html, /id="labelPrintPortal"/);
+  assert.match(html, /value="ridge-current" checked/);
+  assert.match(html, /Do not feed inkjet-only OL1735WG sheets/);
 });
 
 test('label sheet matches the OL1735WG 48-up geometry', () => {
@@ -29,4 +31,10 @@ test('label sheet matches the OL1735WG 48-up geometry', () => {
 test('free-form label text is inserted as text, not executable markup', () => {
   assert.match(js, /compound\.textContent\s*=/);
   assert.match(js, /dose\.textContent\s*=/);
+});
+
+test('Ridge Current labels include deterministic contour artwork', () => {
+  assert.match(js, /ridge-current-flow/);
+  assert.match(css, /\.label-design-ridge-current/);
+  assert.match(css, /\.ridge-current-line/);
 });

@@ -190,15 +190,27 @@ function labelTextSizeClass(name) {
   return 'label-name-short';
 }
 
-function buildHighlandLabel({ name, dosage, design = 'ridge' }) {
+function buildHighlandLabel({ name, dosage, design = 'ridge-current' }) {
   const label = document.createElement('div');
   label.className = `highland-print-label label-design-${design}`;
+
+  if (design === 'ridge-current') {
+    const current = document.createElement('div');
+    current.className = 'ridge-current-flow';
+    current.setAttribute('aria-hidden', 'true');
+    current.append(
+      Object.assign(document.createElement('span'), { className: 'ridge-current-line ridge-current-line-one' }),
+      Object.assign(document.createElement('span'), { className: 'ridge-current-line ridge-current-line-two' }),
+      Object.assign(document.createElement('span'), { className: 'ridge-current-line ridge-current-line-three' })
+    );
+    label.appendChild(current);
+  }
 
   const identity = document.createElement('div');
   identity.className = 'highland-label-identity';
   const mark = document.createElement('span');
   mark.className = 'highland-label-mark';
-  mark.textContent = design === 'ridge' ? 'HP' : 'H';
+  mark.textContent = ['ridge', 'ridge-current'].includes(design) ? 'HP' : 'H';
   const brand = document.createElement('span');
   brand.className = 'highland-label-brand';
   brand.innerHTML = '<strong>HIGHLAND</strong><small>PEPTIDES</small>';
@@ -224,7 +236,7 @@ function buildHighlandLabel({ name, dosage, design = 'ridge' }) {
 function getLabelMakerValues() {
   const name = document.getElementById('labelProductName')?.value.trim() || '';
   const dosage = document.getElementById('labelDosage')?.value.trim() || '';
-  const design = document.querySelector('input[name="labelDesign"]:checked')?.value || 'ridge';
+  const design = document.querySelector('input[name="labelDesign"]:checked')?.value || 'ridge-current';
   const start = Math.max(1, Math.min(48, Number(document.getElementById('labelStartPosition')?.value || 1)));
   const requested = Math.max(1, Math.min(48, Number(document.getElementById('labelQuantity')?.value || 1)));
   const quantity = Math.min(requested, 49 - start);
