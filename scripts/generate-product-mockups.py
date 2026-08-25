@@ -1,120 +1,203 @@
-from PIL import Image, ImageDraw, ImageFont, ImageFilter
+from PIL import Image, ImageDraw, ImageFont
 from pathlib import Path
-import json, math, re
+import json
+import re
+
 
 ROOT = Path(__file__).resolve().parents[1]
-BASE = ROOT / 'public' / 'images' / 'product-mockups' / 'highland-vial-label-template.png'
-OUT = ROOT / 'public' / 'images' / 'product-mockups' / 'generated'
-DATA = ROOT / 'data' / 'products.json'
+BASE = ROOT / "public" / "images" / "product-mockups" / "highland-vial-offwhite-master-v1.png"
+OUT = ROOT / "public" / "images" / "product-mockups" / "generated"
+DATA = ROOT / "data" / "products.json"
 OUT.mkdir(parents=True, exist_ok=True)
 
-FONT_CANDIDATES = [
-    Path('C:/Windows/Fonts/arialbd.ttf'),
-    Path('C:/Windows/Fonts/Arialbd.ttf'),
-    Path('C:/Windows/Fonts/segoeuib.ttf'),
-    Path('C:/Windows/Fonts/seguisb.ttf'),
-]
-FONT_REGULAR_CANDIDATES = [
-    Path('C:/Windows/Fonts/arial.ttf'),
-    Path('C:/Windows/Fonts/segoeui.ttf'),
-]
-FONT_BOLD = next((p for p in FONT_CANDIDATES if p.exists()), None)
-FONT_REG = next((p for p in FONT_REGULAR_CANDIDATES if p.exists()), FONT_BOLD)
 
+FONT_NAME_CANDIDATES = [
+    Path("C:/Windows/Fonts/impact.ttf"),
+    Path("C:/Windows/Fonts/bahnschrift.ttf"),
+    Path("C:/Windows/Fonts/arialn.ttf"),
+    Path("C:/Windows/Fonts/arialbd.ttf"),
+]
+FONT_BOLD_CANDIDATES = [
+    Path("C:/Windows/Fonts/arialbd.ttf"),
+    Path("C:/Windows/Fonts/segoeuib.ttf"),
+    Path("C:/Windows/Fonts/bahnschrift.ttf"),
+]
+
+FONT_NAME = next((path for path in FONT_NAME_CANDIDATES if path.exists()), None)
+FONT_BOLD = next((path for path in FONT_BOLD_CANDIDATES if path.exists()), FONT_NAME)
+
+if not FONT_NAME or not FONT_BOLD:
+    raise RuntimeError("A suitable Windows font could not be located.")
+
+
+# Only abbreviate names that cannot remain readable on the physical label face.
 ALIASES = {
-    'BPC-157 + GHK-Cu + TB-500 + KPV Blend (Klow)': 'KLOW BLEND',
-    'BPC-157 + GHK-Cu + TB-500 Blend (Glow)': 'GLOW BLEND',
-    'BPC-157 + TB-500 Blend': 'BPC + TB-500',
-    'Bacteriostatic Water': 'BAC WATER',
-    'CJC-1295 without DAC + Ipamorelin': 'CJC W/O DAC + IPA',
-    '5-Amino-1MQ': '5-AMINO-1MQ',
-    'SLU-PP-332': 'SLU-PP-332',
+    "BPC-157 + GHK-Cu + TB-500 + KPV Blend (Klow)": "KLOW BLEND",
+    "BPC-157 + GHK-Cu + TB-500 Blend (Glow)": "GLOW BLEND",
+    "BPC-157 + TB-500 Blend": "BPC + TB-500",
+    "Bacteriostatic Water": "BAC WATER",
+    "CJC-1295 without DAC + Ipamorelin": "CJC W/O DAC + IPA",
+    "CJC-1295 without DAC": "CJC-1295 W/O DAC",
+    "CJC-1295 with DAC": "CJC-1295 W/ DAC",
+    "Cagrilintide + Semaglutide": "CAGRI + SEMA",
+    "Semax 10mg + Selank 10mg": "SEMAX + SELANK",
+    "Semax 5mg + Selank 5mg": "SEMAX + SELANK",
+    "GHRP-2 Acetate": "GHRP-2",
+    "GHRP-6 Acetate": "GHRP-6",
+    "Oxytocin Acetate": "OXYTOCIN",
+    "NA-Selank Amidate": "NA-SELANK",
 }
 
-def clean_spec(spec):
-    s = str(spec or '')
-    s = re.sub(r'\s*x\s*1\s*vial', '', s, flags=re.I)
-    s = re.sub(r'\s*vial', '', s, flags=re.I).strip()
-    return s.upper().replace(' ', '')
+
+def font(path, size):
+    return ImageFont.truetype(str(path), size=size)
+
+
+def text_size(draw, text, selected_font):
+    box = draw.textbbox((0, 0), text, font=selected_font)
+    return box[2] - box[0], box[3] - box[1]
+
+
+def fit_font(draw, text, max_width, font_path, max_size, min_size):
+    for size in range(max_size, min_size - 1, -1):
+        selected = font(font_path, size)
+        if text_size(draw, text, selected)[0] <= max_width:
+            return selected
+    return font(font_path, min_size)
+
+
+def split_name(draw, text, max_width):
+    """Keep short names on one line and split long phrases into two balanced lines."""
+    one_line = fit_font(draw, text, max_width, FONT_NAME, 61, 26)
+    if text_size(draw, text, one_line)[0] <= max_width and one_line.size >= 36:
+        return [text], one_line
+
+    words = text.split()
+    if len(words) == 1:
+        return [text], one_line
+
+    candidates = []
+    for index in range(1, len(words)):
+        lines = [" ".join(words[:index]), " ".join(words[index:])]
+        selected = min(
+            fit_font(draw, line, max_width, FONT_NAME, 39, 22).size
+            for line in lines
+        )
+        widths = [text_size(draw, line, font(FONT_NAME, selected))[0] for line in lines]
+        candidates.append((selected, -abs(widths[0] - widths[1]), lines))
+
+    selected_size, _, lines = max(candidates, key=lambda item: (item[0], item[1]))
+    return lines, font(FONT_NAME, selected_size)
+
 
 def label_name(name):
     return ALIASES.get(name, name).upper()
 
-def font(size, bold=True):
-    return ImageFont.truetype(str(FONT_BOLD if bold else FONT_REG), size=size)
 
-def text_bbox(draw, xy, text, f):
-    return draw.textbbox(xy, text, font=f, stroke_width=0)
+def clean_spec(spec):
+    value = str(spec or "")
+    value = re.sub(r"\s*x\s*1\s*vial", "", value, flags=re.I)
+    value = re.sub(r"\s*vial", "", value, flags=re.I).strip().upper()
+    value = re.sub(r"(?<=\d)\s*MG", " MG", value)
+    value = re.sub(r"(?<=\d)\s*ML", " ML", value)
+    value = re.sub(r"(?<=\d)\s*IU", " IU", value)
+    value = value.replace("MG/ ML", "MG/ML")
+    value = re.sub(r"\s*\+\s*", " + ", value)
+    value = re.sub(r"\s+", " ", value).strip()
+    value = re.sub(
+        r"^(\d+(?:\.\d+)?\s+MG/ML)\s+(.+)$",
+        r"\1 · \2",
+        value,
+    )
+    return value
 
-def fit_font(draw, text, max_width, max_size=54, min_size=18):
-    size = max_size
-    while size >= min_size:
-        f = font(size, True)
-        bbox = text_bbox(draw, (0,0), text, f)
-        if bbox[2] - bbox[0] <= max_width:
-            return f
-        size -= 2
-    return font(min_size, True)
 
-def cylindrical_warp(src, strength=0.18):
-    src = src.convert('RGBA')
-    w, h = src.size
-    out = Image.new('RGBA', (w, h), (0,0,0,0))
-    sp = src.load(); op = out.load()
-    cx = (w - 1) / 2
-    for y in range(h):
-        for x in range(w):
-            n = (x - cx) / cx
-            # sample a slightly wider flat label into a narrower curved face
-            sx = cx + math.sin(n * math.pi / 2) * cx
-            sy = y + (abs(n) ** 2) * strength * 3
-            ix, iy = int(round(sx)), int(round(sy))
-            if 0 <= ix < w and 0 <= iy < h:
-                r,g,b,a = sp[ix,iy]
-                if a:
-                    shade = 0.86 + 0.14 * math.cos(n * math.pi / 2)
-                    op[x,y] = (int(r*shade), int(g*shade), int(b*shade), a)
-    return out.filter(ImageFilter.GaussianBlur(0.15))
+def draw_centered(draw, text, selected_font, center_x, top_y, fill):
+    width, height = text_size(draw, text, selected_font)
+    draw.text((center_x - width / 2, top_y), text, font=selected_font, fill=fill)
+    return height
 
-def draw_label(name, spec):
-    W, H = 430, 185
-    label = Image.new('RGBA', (W, H), (0,0,0,0))
-    d = ImageDraw.Draw(label)
-    product = label_name(name)
-    strength = clean_spec(spec)
 
-    # Product name, constrained to the vial face.
-    name_font = fit_font(d, product, max_width=330, max_size=46, min_size=20)
-    bbox = d.textbbox((0,0), product, font=name_font)
-    tw, th = bbox[2]-bbox[0], bbox[3]-bbox[1]
-    x = (W - tw) / 2
-    y = 24
-    d.text((x+1, y+1), product, font=name_font, fill=(250,247,241,130))
-    d.text((x, y), product, font=name_font, fill=(35,56,43,255))
+def add_variable_label(base, product):
+    draw = ImageDraw.Draw(base)
+    center_x = 768
+    max_name_width = 292
+    product_name = label_name(product["name"])
+    lines, name_font = split_name(draw, product_name, max_name_width)
 
-    # Dosage pill.
-    dose_font = fit_font(d, strength, max_width=145, max_size=36, min_size=20)
-    bbox = d.textbbox((0,0), strength, font=dose_font)
-    dtw, dth = bbox[2]-bbox[0], bbox[3]-bbox[1]
-    pad_x, pad_y = 28, 12
-    pill_w, pill_h = dtw + pad_x*2, dth + pad_y*2
-    px, py = (W-pill_w)/2, 88
-    d.rounded_rectangle((px, py, px+pill_w, py+pill_h), radius=pill_h/2, fill=(54,58,56,238), outline=(243,239,230,120), width=2)
-    d.text(((W-dtw)/2, py + (pill_h-dth)/2 - 2), strength, font=dose_font, fill=(243,239,230,255))
-    return cylindrical_warp(label)
+    if len(lines) == 1:
+        name_top = 590
+        line_gap = 0
+    else:
+        name_top = 568
+        line_gap = 4
 
-def make_mockup(product):
-    base = Image.open(BASE).convert('RGBA')
-    overlay = draw_label(product['name'], product['spec'])
-    # Tuned to the printable label face on the master 1254x1254 vial image.
-    x = 412
-    y = 720
-    base.alpha_composite(overlay, (x, y))
-    out = OUT / f"{product['sku']}.webp"
-    base.save(out, 'WEBP', quality=88, method=6)
-    return out
+    heights = [text_size(draw, line, name_font)[1] for line in lines]
+    current_y = name_top
+    for line, height in zip(lines, heights):
+        draw_centered(draw, line, name_font, center_x, current_y, "#111411")
+        current_y += height + line_gap
 
-products = json.loads(DATA.read_text(encoding='utf-8'))
-for p in products:
-    make_mockup(p)
-print(f"Generated {len(products)} SKU mockups in {OUT}")
+    dose_text = clean_spec(product["spec"])
+    dose_font = fit_font(draw, dose_text, 190, FONT_BOLD, 40, 22)
+    dose_width, dose_height = text_size(draw, dose_text, dose_font)
+    pill_width = max(166, dose_width + 46)
+    pill_height = max(58, dose_height + 22)
+    pill_left = center_x - pill_width / 2
+    pill_top = 692 if len(lines) == 1 else 700
+    pill_right = center_x + pill_width / 2
+    pill_bottom = pill_top + pill_height
+    draw.rounded_rectangle(
+        (pill_left, pill_top, pill_right, pill_bottom),
+        radius=pill_height / 2,
+        fill="#145039",
+        outline="#0d3b2a",
+        width=2,
+    )
+    draw_centered(
+        draw,
+        dose_text,
+        dose_font,
+        center_x,
+        pill_top + (pill_height - dose_height) / 2 - 2,
+        "#faf7f1",
+    )
+
+
+def make_mockup(product, master):
+    image = master.copy()
+    add_variable_label(image, product)
+    output = OUT / f"{product['sku']}.webp"
+    image.save(output, "WEBP", quality=94, method=6)
+    return output
+
+
+def make_contact_sheet(products):
+    thumb_width, thumb_height = 360, 240
+    columns = 4
+    rows = (len(products) + columns - 1) // columns
+    sheet = Image.new("RGB", (columns * thumb_width, rows * thumb_height), "#f3efe6")
+    for index, product in enumerate(products):
+        image_path = OUT / f"{product['sku']}.webp"
+        thumb = Image.open(image_path).convert("RGB")
+        thumb.thumbnail((thumb_width, thumb_height), Image.Resampling.LANCZOS)
+        x = (index % columns) * thumb_width + (thumb_width - thumb.width) // 2
+        y = (index // columns) * thumb_height + (thumb_height - thumb.height) // 2
+        sheet.paste(thumb, (x, y))
+    contact_path = OUT.parent / "offwhite-catalog-contact-sheet.jpg"
+    sheet.save(contact_path, "JPEG", quality=90, optimize=True)
+    return contact_path
+
+
+def main():
+    products = json.loads(DATA.read_text(encoding="utf-8"))
+    master = Image.open(BASE).convert("RGB")
+    for product in products:
+        make_mockup(product, master)
+    contact_sheet = make_contact_sheet(products)
+    print(f"Generated {len(products)} off-white SKU mockups in {OUT}")
+    print(f"Contact sheet: {contact_sheet}")
+
+
+if __name__ == "__main__":
+    main()
