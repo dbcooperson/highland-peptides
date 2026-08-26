@@ -1641,6 +1641,17 @@ body.search-open { overflow: hidden; }
   text-decoration: none;
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.45);
 }
+.hero-new-product-image {
+  display: block;
+  width: 100%;
+  height: 58px;
+  margin-bottom: 5px;
+  border: 1px solid rgba(67,91,69,0.14);
+  border-radius: 11px;
+  background: #faf7f1;
+  object-fit: cover;
+  object-position: center;
+}
 .hero-new-product-card span {
   color: var(--accent-ink);
   font-size: 9px;
@@ -1689,14 +1700,14 @@ body.search-open { overflow: hidden; }
   background: rgba(255,255,255,0.66);
 }
 .mini-vial {
+  display: block;
   width: 74px;
   height: 66px;
   border-radius: 14px;
   border: 1px solid var(--border-on-light);
-  background-color: #efe7d8;
-  background-image: url('/images/product-mockups/highland-vial-label-template.png');
-  background-size: 170%;
-  background-position: center 26%;
+  background-color: #faf7f1;
+  object-fit: cover;
+  object-position: center;
 }
 .hero-mini-product strong,
 .hero-mini-product em {
