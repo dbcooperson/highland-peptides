@@ -57,6 +57,7 @@ module.exports = {
     BIOMAX: 0.10,
     PHARMACODE: 0.15,
     NOOR: 0.15,
+    GJ: 0.15,
   },
 
 
