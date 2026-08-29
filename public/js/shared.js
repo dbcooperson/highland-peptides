@@ -32,6 +32,36 @@ async function api(path, opts = {}) {
   return data;
 }
 
+let hpAccountState = { authenticated: false, account: null };
+
+async function refreshAccountState() {
+  try {
+    hpAccountState = await api('/api/account/me');
+  } catch {
+    hpAccountState = { authenticated: false, account: null };
+  }
+  window.hpAccountState = hpAccountState;
+  return hpAccountState;
+}
+
+async function initAccountNavigation() {
+  const actions = document.querySelector('.header-actions');
+  if (!actions || actions.querySelector('.account-nav-link')) return;
+  const link = document.createElement('a');
+  link.href = '/account.html';
+  link.className = 'account-nav-link';
+  link.setAttribute('aria-label', 'Customer account');
+  link.innerHTML = '<span class="account-nav-icon" aria-hidden="true"></span><span class="account-nav-text">Account</span>';
+  const cartNav = actions.querySelector('.cart-nav');
+  actions.insertBefore(link, cartNav || null);
+  const state = await refreshAccountState();
+  if (state.authenticated && state.account) {
+    link.classList.add('signed-in');
+    link.querySelector('.account-nav-text').textContent = state.account.name.split(/\s+/)[0] || 'Account';
+    link.title = `Signed in as ${state.account.email}`;
+  }
+}
+
 // ---------- First-party storefront analytics ----------
 // Anonymous IDs are generated in the browser. The server hashes them and only
 // stores aggregate behavior; names, emails, addresses, and IPs are not logged.
@@ -521,6 +551,7 @@ function initProductSearch() {
 
 document.addEventListener('DOMContentLoaded', () => {
   initProductSearch();
+  initAccountNavigation();
   updateCartBadge();
 });
 function cartSubtotal() {
@@ -588,8 +619,15 @@ function renderCheckoutSummary() {
   const subtotal = round2(cartSubtotal());
   const shippingFee = selectedShippingFee();
   const discountAmount = appliedDiscount ? round2(subtotal * appliedDiscount.percentOff / 100) : 0;
+  const creditToggle = document.getElementById('applyStoreCredit');
+  const availableCredit = hpAccountState.authenticated && hpAccountState.account
+    ? Number(hpAccountState.account.creditBalance || 0)
+    : 0;
+  const storeCreditAmount = creditToggle && creditToggle.checked
+    ? round2(Math.min(availableCredit, Math.max(0, subtotal - discountAmount)))
+    : 0;
   const orderFeeRate = (window.siteFees && window.siteFees.orderFeeRate) || 0;
-  const feeBase = Math.max(0, subtotal - discountAmount + shippingFee);
+  const feeBase = Math.max(0, subtotal - discountAmount - storeCreditAmount + shippingFee);
   const orderFee = round2(feeBase * orderFeeRate);
   const total = round2(feeBase + orderFee);
 
@@ -606,6 +644,7 @@ function renderCheckoutSummary() {
   const breakdown = [
     `<div class="cart-row"><span>Subtotal</span><span>$${subtotal.toFixed(2)}</span></div>`,
     appliedDiscount ? `<div class="cart-row"><span>Discount (${appliedDiscount.code})</span><span>-$${discountAmount.toFixed(2)}</span></div>` : '',
+    storeCreditAmount ? `<div class="cart-row account-credit-summary"><span>Store credit</span><span>-$${storeCreditAmount.toFixed(2)}</span></div>` : '',
     `<div class="cart-row"><span>${selectedShippingLabel()}</span><span>$${shippingFee.toFixed(2)}</span></div>`,
     orderFeeRate ? `<div class="cart-row"><span>Processing fee</span><span>$${orderFee.toFixed(2)}</span></div>` : '',
     `<div class="order-summary-total cart-row"><span>Total</span><span>$${total.toFixed(2)}</span></div>`,
@@ -637,6 +676,7 @@ function checkoutPayloadFromForm() {
     shippingMethod: selectedShippingMethod(),
     paymentPolicyAccepted: document.getElementById('paymentPolicyConfirm')?.checked === true,
     discountCode: appliedDiscount ? appliedDiscount.code : null,
+    applyStoreCredit: document.getElementById('applyStoreCredit')?.checked === true,
     paymentMethod: 'manual_paypal',
     analyticsVisitorId: analytics.visitorId,
     analyticsSessionId: analytics.sessionId,
@@ -691,6 +731,33 @@ function clearCartAfterCheckout() {
   document.getElementById('checkoutForm').reset();
 }
 
+async function refreshCheckoutAccountStatus() {
+  const container = document.getElementById('checkoutAccountStatus');
+  if (!container) return;
+  const state = await refreshAccountState();
+  if (!state.authenticated || !state.account) {
+    container.className = 'checkout-account-status guest';
+    container.innerHTML = '<div><strong>Checkout as a guest</strong><span>Optional: <a href="/account.html?return=cart">sign in</a> to use store credit and view order history.</span></div>';
+    renderCheckoutSummary();
+    return;
+  }
+  const balance = Number(state.account.creditBalance || 0);
+  container.className = 'checkout-account-status signed-in';
+  container.innerHTML = `
+    <div>
+      <strong>Signed in as ${escapeHTML(state.account.name)}</strong>
+      <span>${escapeHTML(state.account.email)}</span>
+    </div>
+    ${balance > 0 ? `<label class="store-credit-toggle"><input id="applyStoreCredit" type="checkbox"> Apply up to <strong>$${balance.toFixed(2)}</strong> store credit</label>` : '<span class="store-credit-empty">Referral store credit will appear here after a referred order is paid.</span>'}`;
+  const toggle = document.getElementById('applyStoreCredit');
+  if (toggle) toggle.addEventListener('change', renderCheckoutSummary);
+  const nameInput = document.getElementById('buyerName');
+  const emailInput = document.getElementById('buyerEmail');
+  if (nameInput && !nameInput.value) nameInput.value = state.account.name;
+  if (emailInput && !emailInput.value) emailInput.value = state.account.email;
+  renderCheckoutSummary();
+}
+
 function openCheckoutModal() {
   appliedDiscount = null;
   lastCryptoOrder = null;
@@ -717,6 +784,7 @@ function openCheckoutModal() {
   if (cryptoButton) cryptoButton.querySelector('strong').innerHTML = 'Crypto <em>5% off</em>';
   updateShippingCountryNote();
   renderCheckoutSummary();
+  refreshCheckoutAccountStatus();
   renderCryptoPricePreview();
   document.body.classList.add('checkout-modal-open');
   document.getElementById('checkoutModal').style.display = 'flex';

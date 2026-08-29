@@ -41,6 +41,7 @@ function orderText(order, source = 'payment') {
     ``,
     `Subtotal: ${money(order.subtotal)}`,
     order.discount_code ? `Discount (${order.discount_code}): -${money(order.discount_amount)}` : `Discount: ${money(0)}`,
+    order.store_credit_amount ? `Store credit used: -${money(order.store_credit_amount)}` : null,
     `Shipping: ${money(order.shipping_fee)}${order.shipping_method === 'international' ? ' (international)' : ' (U.S.)'}`,
     order.order_fee ? `Processing: ${money(order.order_fee)}` : null,
     `Total: ${money(order.total)}`,
@@ -80,6 +81,7 @@ function orderHtml(order, source = 'payment') {
     <h3>Total</h3>
     <p>Subtotal: ${money(order.subtotal)}<br>
     ${order.discount_code ? `Discount (${htmlEscape(order.discount_code)}): -${money(order.discount_amount)}<br>` : ''}
+    ${order.store_credit_amount ? `Store credit used: -${money(order.store_credit_amount)}<br>` : ''}
     Shipping: ${money(order.shipping_fee)} ${order.shipping_method === 'international' ? '(international)' : '(U.S.)'}<br>
     ${order.order_fee ? `Processing: ${money(order.order_fee)}<br>` : ''}
     <strong>Total: ${money(order.total)}</strong></p>
@@ -328,5 +330,84 @@ async function sendTrackingEmail(order, carrier, trackingNumber) {
   return 'email';
 }
 
-module.exports = { sendOrderBackup, sendCustomerPaymentInstructions, sendPaymentReminder, sendTrackingEmail, trackingUrl, orderText };
+function accountEmailLayout(title, body) {
+  return `
+    <div style="background:#f3efe6;padding:32px 18px;font-family:Arial,sans-serif;color:#1c1a17;">
+      <div style="max-width:560px;margin:0 auto;background:#faf7f1;border:1px solid #d9d0c1;border-radius:18px;padding:30px;">
+        <div style="font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#315b43;font-weight:700;">Highland Peptides</div>
+        <h1 style="font-size:26px;line-height:1.15;margin:12px 0 16px;">${htmlEscape(title)}</h1>
+        ${body}
+        <p style="margin:26px 0 0;font-size:12px;color:#756c60;line-height:1.5;">If you did not request this, you can safely ignore this email. For help, reply to this message.</p>
+      </div>
+    </div>`;
+}
+
+async function sendAccountVerificationEmail(account, verificationUrl) {
+  const transport = smtpTransport();
+  if (!transport || !account || !account.email) return null;
+  const text = [
+    `Verify your Highland Peptides account`,
+    ``,
+    `Hi ${account.name || 'there'},`,
+    `Open this link to verify your email and finish creating your account:`,
+    verificationUrl,
+    ``,
+    `This link expires in 24 hours.`,
+  ].join('\n');
+  const html = accountEmailLayout('Verify your email', `
+    <p style="font-size:16px;line-height:1.6;">Hi ${htmlEscape(account.name || 'there')}, confirm this email address to activate your account and create your one personal referral code.</p>
+    <p style="margin:24px 0;"><a href="${htmlEscape(verificationUrl)}" style="display:inline-block;background:#173d2b;color:#fff;text-decoration:none;border-radius:999px;padding:13px 22px;font-weight:700;">Verify email</a></p>
+    <p style="font-size:13px;color:#756c60;line-height:1.5;">This secure link expires in 24 hours.</p>`);
+  await transport.sendMail({
+    from: config.CUSTOMER_EMAIL_FROM,
+    to: account.email,
+    replyTo: config.CUSTOMER_EMAIL_FROM,
+    subject: `Verify your ${config.SITE_NAME} account`,
+    text,
+    html,
+  });
+  return 'email';
+}
+
+async function sendPasswordResetEmail(account, resetUrl) {
+  const transport = smtpTransport();
+  if (!transport || !account || !account.email) return null;
+  const text = [
+    `Reset your Highland Peptides password`,
+    ``,
+    `Open this link to choose a new password:`,
+    resetUrl,
+    ``,
+    `This link expires in 60 minutes.`,
+  ].join('\n');
+  const html = accountEmailLayout('Reset your password', `
+    <p style="font-size:16px;line-height:1.6;">Use the secure link below to choose a new password for your Highland Peptides account.</p>
+    <p style="margin:24px 0;"><a href="${htmlEscape(resetUrl)}" style="display:inline-block;background:#173d2b;color:#fff;text-decoration:none;border-radius:999px;padding:13px 22px;font-weight:700;">Reset password</a></p>
+    <p style="font-size:13px;color:#756c60;line-height:1.5;">This link expires in 60 minutes and can only be used once.</p>`);
+  await transport.sendMail({
+    from: config.CUSTOMER_EMAIL_FROM,
+    to: account.email,
+    replyTo: config.CUSTOMER_EMAIL_FROM,
+    subject: `Reset your ${config.SITE_NAME} password`,
+    text,
+    html,
+  });
+  return 'email';
+}
+
+function isCustomerEmailConfigured() {
+  return Boolean(config.SMTP_HOST && config.CUSTOMER_EMAIL_FROM);
+}
+
+module.exports = {
+  sendOrderBackup,
+  sendCustomerPaymentInstructions,
+  sendPaymentReminder,
+  sendTrackingEmail,
+  sendAccountVerificationEmail,
+  sendPasswordResetEmail,
+  isCustomerEmailConfigured,
+  trackingUrl,
+  orderText,
+};
 

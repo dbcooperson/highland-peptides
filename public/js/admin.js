@@ -34,8 +34,78 @@ function initAdminTabs() {
         panel.hidden = panel.dataset.adminPanel !== tab.dataset.adminTab;
       });
       if (tab.dataset.adminTab === 'analytics') loadAnalytics();
+      if (tab.dataset.adminTab === 'referrals') loadReferrals();
     };
   });
+}
+
+function referralAdminSummaryHTML(accounts, payouts) {
+  const verified = accounts.filter(account => account.verifiedAt).length;
+  const activeCodes = accounts.filter(account => account.referralCode).length;
+  const totalCredit = accounts.reduce((sum, account) => sum + Number(account.creditBalance || 0), 0);
+  const pendingPayouts = payouts.filter(request => ['pending', 'approved'].includes(request.status));
+  return `<div class="admin-summary-grid">
+    <div><span>Total accounts</span><strong>${accounts.length}</strong></div>
+    <div><span>Verified</span><strong>${verified}</strong></div>
+    <div><span>Active codes</span><strong>${activeCodes}</strong></div>
+    <div><span>Store credit</span><strong>${money(totalCredit)}</strong></div>
+    <div><span>Payouts to review</span><strong>${pendingPayouts.length}</strong></div>
+  </div>`;
+}
+
+function referralAccountsHTML(accounts) {
+  const table = document.getElementById('referralAccountsTable');
+  table.innerHTML = `<tr>${['Account','Code','Paid customers','Referral spend','Available credit','Payout status','Created'].map(th).join('')}</tr>` + (accounts.length ? accounts.map(account => `
+    <tr>
+      ${td(`<strong>${escapeHtml(account.name)}</strong><br><a href="${mailtoHref(account.email)}">${escapeHtml(account.email)}</a><br><span class="admin-muted">${account.verifiedAt ? 'Verified' : 'Unverified'}</span>`)}
+      ${td(account.referralCode ? `<strong>${escapeHtml(account.referralCode)}</strong><br><span class="admin-muted">10% customer / 10% credit</span>` : '<span class="admin-muted">Not created</span>')}
+      ${td(`<strong>${account.uniqueCustomers}</strong> / ${account.minCustomers}`)}
+      ${td(`<strong>${money(account.totalSpend)}</strong> / ${money(account.minSpend)}`)}
+      ${td(`<strong>${money(account.creditBalance)}</strong>${account.payoutReserved ? `<br><span class="admin-muted">${money(account.payoutReserved)} reserved</span>` : ''}`)}
+      ${td(account.payoutEligible ? '<span class="admin-status admin-status-paid">Eligible</span>' : '<span class="admin-muted">Building</span>')}
+      ${td(escapeHtml(new Date(account.createdAt).toLocaleDateString()))}
+    </tr>`).join('') : `<tr>${td('No customer accounts yet.')}</tr>`);
+}
+
+function payoutRequestsHTML(requests) {
+  const table = document.getElementById('payoutRequestsTable');
+  table.innerHTML = `<tr>${['Request','Account','Amount','Status','Review note','Created','Action'].map(th).join('')}</tr>` + (requests.length ? requests.map(request => `
+    <tr>
+      ${td(`<strong>#${request.id}</strong><br><span class="admin-muted">${escapeHtml(request.referralCode || 'No code')}</span>`)}
+      ${td(`<strong>${escapeHtml(request.accountName)}</strong><br><a href="${mailtoHref(request.accountEmail)}">${escapeHtml(request.accountEmail)}</a>`)}
+      ${td(`<strong>${money(request.amount)}</strong>`)}
+      ${td(statusBadge(request.status))}
+      ${td(`<input class="payout-note-input" data-payout-note="${request.id}" type="text" maxlength="500" value="${escapeHtml(request.admin_note || '')}" placeholder="Internal review note">`)}
+      ${td(escapeHtml(new Date(request.created_at).toLocaleString()))}
+      ${td(['paid','rejected'].includes(request.status) ? '<span class="admin-muted">Complete</span>' : `<div class="payout-actions"><button type="button" data-payout-id="${request.id}" data-payout-status="approved">Approve</button><button type="button" data-payout-id="${request.id}" data-payout-status="paid">Mark paid</button><button type="button" data-payout-id="${request.id}" data-payout-status="rejected">Reject</button></div>`)}
+    </tr>`).join('') : `<tr>${td('No payout requests yet.')}</tr>`);
+
+  table.querySelectorAll('[data-payout-id]').forEach(button => {
+    button.onclick = async () => {
+      const id = button.dataset.payoutId;
+      const status = button.dataset.payoutStatus;
+      if (!confirm(`${status === 'paid' ? 'Mark' : status} payout request #${id}?`)) return;
+      const note = table.querySelector(`[data-payout-note="${id}"]`)?.value || '';
+      try {
+        await api(`/api/admin/payouts/${id}/status`, { method: 'POST', body: { status, note } });
+        await loadReferrals();
+      } catch (err) {
+        document.getElementById('referralAdminMessage').textContent = err.message;
+      }
+    };
+  });
+}
+
+async function loadReferrals() {
+  try {
+    const data = await api('/api/admin/referrals');
+    document.getElementById('referralAdminSummary').innerHTML = referralAdminSummaryHTML(data.accounts, data.payouts);
+    referralAccountsHTML(data.accounts);
+    payoutRequestsHTML(data.payouts);
+    document.getElementById('referralAdminMessage').textContent = '';
+  } catch (err) {
+    document.getElementById('referralAdminMessage').textContent = err.message;
+  }
 }
 
 function orderItemsHTML(order) {
@@ -61,6 +131,8 @@ function orderTotalHTML(order) {
   const totalSpent = Number(financials.totalSpent || order.total || 0);
   const cogs = Number(financials.cogs || 0);
   const productRevenue = Number(financials.productRevenueAfterDiscount || Math.max(0, subtotal - saved));
+  const storeCreditUsed = Number(financials.storeCreditUsed ?? order.store_credit_amount ?? 0);
+  const referralReward = Number(financials.referralReward ?? (Number(order.referral_credit_cents || 0) / 100));
   const grossProfit = Number(financials.grossProfit ?? (productRevenue - cogs));
   const grossMargin = Number(financials.grossMargin || 0);
   return `
@@ -68,9 +140,11 @@ function orderTotalHTML(order) {
       <div><span>Before code</span><strong>${money(beforeDiscountTotal)}</strong></div>
       ${saved > 0 ? `<div class="admin-savings"><span>Code saved</span><strong>-${money(saved)}</strong></div>` : '<div><span>Code saved</span><strong>$0.00</strong></div>'}
       <div class="admin-final-total"><span>Customer spent</span><strong>${money(totalSpent)}</strong></div>
+      ${storeCreditUsed > 0 ? `<div><span>Store credit used</span><strong>${money(storeCreditUsed)}</strong></div>` : ''}
       <div><span>Product revenue</span><strong>${money(productRevenue)}</strong></div>
       <div><span>COGS</span><strong>${money(cogs)}</strong></div>
-      <div class="admin-profit-line"><span>Profit after code</span><strong>${money(grossProfit)}</strong></div>
+      ${referralReward > 0 ? `<div><span>Referral reward</span><strong>-${money(referralReward)}</strong></div>` : ''}
+      <div class="admin-profit-line"><span>Profit after rewards</span><strong>${money(grossProfit)}</strong></div>
       <div><span>Margin</span><strong>${grossMargin}%</strong></div>
     </div>
   `;
@@ -130,6 +204,7 @@ function profitSummaryHTML(totals) {
       <div><span>Vials sold</span><strong>${totals.vialCount}</strong></div>
       <div><span>Product revenue</span><strong>${money(totals.productRevenue)}</strong></div>
       <div><span>COGS</span><strong>${money(totals.cogs)}</strong></div>
+      <div><span>Referral rewards</span><strong>${money(totals.referralRewards)}</strong></div>
       <div><span>Gross profit</span><strong>${money(totals.grossProfit)}</strong></div>
       <div><span>Gross margin</span><strong>${totals.grossMargin}%</strong></div>
       <div><span>Discounts</span><strong>${money(totals.discounts)}</strong></div>
@@ -442,7 +517,7 @@ async function loadProfit() {
   const { totals, lines } = await api('/api/admin/profit');
   document.getElementById('profitSummary').innerHTML = profitSummaryHTML(totals);
   document.getElementById('profitTable').innerHTML = `
-    <tr>${['SKU','Product','Qty','Revenue','COGS','Gross profit','Margin','Order'].map(th).join('')}</tr>
+    <tr>${['SKU','Product','Qty','Revenue','COGS','Referral reward','Gross profit','Margin','Order'].map(th).join('')}</tr>
     ${lines.map(line => `
       <tr>
         ${td(escapeHtml(line.sku))}
@@ -450,6 +525,7 @@ async function loadProfit() {
         ${td(line.quantity)}
         ${td(money(line.revenue))}
         ${td(money(line.cogs) + `<br><span class="admin-muted">${money(line.unitCost)} ea</span>`)}
+        ${td(line.referralReward ? '-' + money(line.referralReward) : '$0.00')}
         ${td(money(line.grossProfit))}
         ${td(`${line.margin}%`)}
         ${td('#' + line.orderId)}
@@ -698,6 +774,7 @@ document.getElementById('adminLogoutBtn').addEventListener('click', async () => 
 });
 
 document.getElementById('analyticsRange')?.addEventListener('change', loadAnalytics);
+document.getElementById('refreshReferralsButton')?.addEventListener('click', loadReferrals);
 
 
 

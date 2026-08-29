@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Optional Highland Peptides customer account, referral rewards, store credit, and order history.">
+  <title>Account & Referral Rewards - Highland Peptides</title>
+  <link rel="stylesheet" href="/css/style.css?v=accounts-v2-20260829">
+</head>
+<body class="account-page">
+  <div class="mountain-bg account-mountain-bg" aria-hidden="true"></div>
+  <div class="mountain-scrim" aria-hidden="true"></div>
+
+  <div class="nav-wrap">
+    <header class="topbar">
+      <div class="brand"><a href="/index.html" style="color:inherit;text-decoration:none;display:flex;align-items:center;gap:10px;">
+        <div class="brand-seal-wrap"><img src="/images/branding/highland-hp-ridge-mark-v1.png" alt=""></div>
+        Highland Peptides
+      </a></div>
+      <nav class="site-nav">
+        <a href="/index.html#catalogSection">Shop</a>
+        <a href="/about.html">About Us</a>
+        <a href="/calculator.html">Research Calculator</a>
+        <a href="/support.html">Support</a>
+      </nav>
+      <div class="header-actions">
+        <button id="openProductSearch" class="nav-search-button" type="button" aria-label="Search products"><span class="nav-search-icon" aria-hidden="true"></span></button>
+        <nav class="cart-nav"><a href="/cart.html" class="cart-link" aria-label="View cart"><span class="cart-icon" aria-hidden="true"></span><span class="cart-label">Cart</span><span id="cartCount" class="cart-count">0</span></a></nav>
+      </div>
+    </header>
+  </div>
+
+  <main class="account-main">
+    <section class="account-hero">
+      <div>
+        <span class="account-kicker">Optional customer accounts</span>
+        <h1>Rewards that stay simple.</h1>
+        <p>Checkout as a guest anytime, or create a verified account to choose one personal referral code, earn store credit, and keep your orders in one place.</p>
+      </div>
+      <div class="account-benefit-strip">
+        <div><strong>10% off</strong><span>for friends using your code</span></div>
+        <div><strong>10% credit</strong><span>for you after paid referred orders</span></div>
+        <div><strong>One code</strong><span>per verified account</span></div>
+      </div>
+    </section>
+
+    <section id="accountAuth" class="account-auth-shell">
+      <div class="account-auth-copy">
+        <span class="account-kicker">Highland referral rewards</span>
+        <h2>Create your code. Share it once. Track it here.</h2>
+        <ol>
+          <li>Verify your email and choose one unique referral code.</li>
+          <li>Friends receive 10% off qualifying merchandise.</li>
+          <li>You receive 10% of paid referred merchandise revenue as store credit.</li>
+        </ol>
+        <div class="account-rule-note"><strong>Payout eligibility</strong><span>Cash-out requests unlock after 5 unique referred customers and $500 total paid referral spend. Self-referrals do not qualify, and cancelled or refunded orders reverse their reward. Requests are reviewed manually.</span></div>
+      </div>
+      <div class="account-auth-card">
+        <div class="account-auth-tabs" role="tablist">
+          <button type="button" class="active" data-auth-view="login">Sign in</button>
+          <button type="button" data-auth-view="register">Create account</button>
+        </div>
+
+        <form id="accountLoginForm" class="account-form" data-auth-panel="login">
+          <h2>Welcome back</h2>
+          <label>Email <input id="loginEmail" type="email" autocomplete="email" required></label>
+          <label>Password <input id="loginPassword" type="password" autocomplete="current-password" required></label>
+          <button type="submit" class="account-primary-button">Sign in</button>
+          <button type="button" id="forgotPasswordButton" class="account-text-button">Forgot password?</button>
+          <p id="loginMessage" class="form-msg" aria-live="polite"></p>
+        </form>
+
+        <form id="accountRegisterForm" class="account-form" data-auth-panel="register" hidden>
+          <h2>Create an account</h2>
+          <label>Name <input id="registerName" type="text" autocomplete="name" maxlength="100" required></label>
+          <label>Email <input id="registerEmail" type="email" autocomplete="email" required></label>
+          <label>Password <input id="registerPassword" type="password" autocomplete="new-password" minlength="8" maxlength="128" required></label>
+          <small>At least 8 characters with a letter and a number.</small>
+          <button type="submit" class="account-primary-button">Create account</button>
+          <button type="button" id="resendVerificationButton" class="account-text-button">Resend verification email</button>
+          <p id="registerMessage" class="form-msg" aria-live="polite"></p>
+        </form>
+
+        <form id="accountResetForm" class="account-form" hidden>
+          <h2>Choose a new password</h2>
+          <label>New password <input id="resetPassword" type="password" minlength="8" maxlength="128" required></label>
+          <button type="submit" class="account-primary-button">Update password</button>
+          <p id="resetMessage" class="form-msg" aria-live="polite"></p>
+        </form>
+      </div>
+    </section>
+
+    <section id="accountDashboard" class="account-dashboard" hidden>
+      <div class="account-dashboard-heading">
+        <div><span class="account-kicker">Verified customer account</span><h2 id="accountWelcome">Your Highland account</h2><p id="accountEmail"></p></div>
+        <button id="accountLogoutButton" type="button" class="account-outline-button">Sign out</button>
+      </div>
+
+      <div class="account-summary-grid">
+        <article><span>Available store credit</span><strong id="creditBalance">$0.00</strong><small>Can be applied at checkout</small></article>
+        <article><span>Referred customers</span><strong id="referralCustomers">0 / 5</strong><small>Paid customers with your code</small></article>
+        <article><span>Paid referral spend</span><strong id="referralSpend">$0 / $500</strong><small>Net qualifying merchandise</small></article>
+      </div>
+
+      <div class="account-dashboard-grid">
+        <article class="account-panel referral-code-panel">
+          <span class="account-kicker">Your one personal code</span>
+          <div id="referralCodeEmpty">
+            <h3>Choose it carefully—it cannot be replaced.</h3>
+            <form id="referralCodeForm" class="referral-code-form"><input id="referralCodeInput" type="text" maxlength="18" placeholder="YOURCODE" autocomplete="off" required><button type="submit">Create code</button></form>
+            <p class="account-fine-print">3–18 letters or numbers. One code per verified account.</p>
+          </div>
+          <div id="referralCodeReady" hidden>
+            <div class="referral-code-display"><strong id="referralCodeText"></strong><button id="copyReferralCode" type="button">Copy</button></div>
+            <p>Friends save 10%. You earn 10% store credit when their order is marked paid.</p>
+          </div>
+          <p id="referralCodeMessage" class="form-msg" aria-live="polite"></p>
+        </article>
+
+        <article class="account-panel payout-panel">
+          <span class="account-kicker">Cash-out progress</span>
+          <h3 id="payoutTitle">Build toward payout eligibility</h3>
+          <div class="progress-block"><div><span>Unique customers</span><strong id="customerProgressLabel">0 of 5</strong></div><div class="account-progress"><i id="customerProgressBar"></i></div></div>
+          <div class="progress-block"><div><span>Paid referral spend</span><strong id="spendProgressLabel">$0 of $500</strong></div><div class="account-progress"><i id="spendProgressBar"></i></div></div>
+          <button id="payoutRequestButton" class="account-primary-button" type="button" disabled>Request cash payout</button>
+          <p id="payoutMessage" class="account-fine-print">Store credit remains available before cash-out eligibility.</p>
+        </article>
+      </div>
+
+      <div class="account-dashboard-grid lower">
+        <article class="account-panel"><div class="account-panel-heading"><h3>Referral activity</h3><span>Paid orders only</span></div><div id="referralActivity" class="account-activity-list"></div></article>
+        <article class="account-panel"><div class="account-panel-heading"><h3>Your orders</h3><span>Verified email history</span></div><div id="accountOrders" class="account-activity-list"></div></article>
+      </div>
+    </section>
+  </main>
+
+  <script src="/js/shared.js?v=accounts-v2-20260829"></script>
+  <script src="/js/account.js?v=accounts-v2-20260829"></script>
+</body>
+</html>

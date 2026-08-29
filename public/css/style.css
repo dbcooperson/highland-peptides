@@ -84,6 +84,113 @@ body {
   background: rgba(250,247,241,0.96);
   flex-shrink: 0;
 }
+
+/* ---------- Optional customer accounts + referral rewards ---------- */
+.account-nav-link {
+  min-width: 42px;
+  height: 42px;
+  padding: 0 13px;
+  border: 1px solid rgba(243,239,230,.18);
+  border-radius: 999px;
+  color: var(--cream, #f3efe6);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 800;
+}
+.account-nav-link:hover,.account-nav-link.signed-in { background: rgba(49,91,67,.24); border-color: rgba(126,176,143,.45); }
+.account-nav-icon { width: 17px; height: 17px; border: 1.8px solid currentColor; border-radius: 50%; position: relative; display: inline-block; }
+.account-nav-icon::after { content:""; position:absolute; width:11px; height:6px; border:1.8px solid currentColor; border-bottom:0; border-radius:9px 9px 0 0; left:1px; bottom:-6px; }
+
+.checkout-account-status { margin: 12px 0 14px; border-radius: 12px; border: 1px solid #d9d0c1; background: #f5f0e6; padding: 12px 14px; color: #1c1a17; display:flex; align-items:center; justify-content:space-between; gap:14px; }
+.checkout-account-status:empty { display:none; }
+.checkout-account-status > div { display:flex; flex-direction:column; gap:3px; }
+.checkout-account-status strong { font-size:13px; }
+.checkout-account-status span { font-size:11px; color:#756c60; line-height:1.35; }
+.checkout-account-status a { color:#315b43; font-weight:800; }
+.checkout-account-status.signed-in { background:#e9f0e8; border-color:#b8ccb9; }
+.store-credit-toggle { display:flex; flex-direction:row !important; align-items:center; gap:7px; font-size:12px !important; cursor:pointer; }
+.store-credit-toggle input { width:17px !important; height:17px; margin:0; }
+.store-credit-empty { max-width:220px; text-align:right; }
+.account-credit-summary { color:#315b43; font-weight:800; }
+
+.account-page { min-height:100vh; background:#0e1417; color:#f3efe6; }
+.account-mountain-bg { background:
+  radial-gradient(circle at 76% 20%, rgba(193,121,58,.17), transparent 26%),
+  radial-gradient(circle at 20% 65%, rgba(70,105,85,.25), transparent 30%),
+  linear-gradient(155deg,#0b1012 0%,#182126 54%,#0b1012 100%); }
+.account-mountain-bg::after { content:""; position:absolute; inset:auto 0 0; height:58%; opacity:.34; background:linear-gradient(145deg,transparent 0 24%,#2a3539 24.2% 42%,transparent 42.2%),linear-gradient(215deg,transparent 0 31%,#172126 31.2% 54%,transparent 54.2%); }
+.account-main { position:relative; z-index:2; max-width:1180px; margin:0 auto; padding:72px 24px 100px; display:block; }
+.account-hero { display:grid; grid-template-columns:1.05fr .95fr; gap:56px; align-items:end; margin-bottom:34px; }
+.account-kicker { display:block; color:#d09a61; text-transform:uppercase; letter-spacing:.16em; font-size:11px; font-weight:900; margin-bottom:10px; }
+.account-hero h1 { margin:0; font-size:clamp(46px,6vw,78px); letter-spacing:-.055em; line-height:.95; max-width:650px; }
+.account-hero > div > p { max-width:650px; color:#c7c5bf; font-size:17px; line-height:1.6; }
+.account-benefit-strip { display:grid; grid-template-columns:repeat(3,1fr); background:rgba(10,17,19,.68); border:1px solid rgba(243,239,230,.16); border-radius:20px; overflow:hidden; backdrop-filter:blur(12px); }
+.account-benefit-strip div { padding:20px 16px; border-right:1px solid rgba(243,239,230,.12); }
+.account-benefit-strip div:last-child { border:0; }
+.account-benefit-strip strong,.account-benefit-strip span { display:block; }
+.account-benefit-strip strong { font-size:20px; color:#f3efe6; }
+.account-benefit-strip span { margin-top:5px; color:#9fa7a2; font-size:11px; line-height:1.4; }
+
+.account-auth-shell { display:grid; grid-template-columns:1fr .82fr; background:#f7f2e9; color:#1c1a17; border-radius:28px; overflow:hidden; box-shadow:0 28px 70px rgba(0,0,0,.32); }
+.account-auth-shell[hidden] { display:none; }
+.account-auth-copy { padding:50px; background:linear-gradient(145deg,#eef1e7,#dedfcf); }
+.account-auth-copy h2 { font-size:38px; line-height:1.05; letter-spacing:-.04em; margin:0 0 28px; max-width:540px; }
+.account-auth-copy ol { margin:0; padding:0; list-style:none; counter-reset:account-steps; display:grid; gap:18px; }
+.account-auth-copy li { counter-increment:account-steps; display:grid; grid-template-columns:36px 1fr; align-items:center; font-size:14px; line-height:1.5; }
+.account-auth-copy li::before { content:counter(account-steps); display:grid; place-items:center; width:28px; height:28px; border-radius:50%; background:#173d2b; color:#fff; font-weight:900; font-size:12px; }
+.account-rule-note { margin-top:34px; padding:16px 18px; border:1px solid rgba(23,61,43,.22); border-radius:14px; background:rgba(255,255,255,.48); }
+.account-rule-note strong,.account-rule-note span { display:block; }
+.account-rule-note span { margin-top:5px; color:#625d54; font-size:12px; line-height:1.5; }
+.account-auth-card { padding:38px 42px 44px; background:#faf7f1; }
+.account-auth-tabs { display:grid; grid-template-columns:1fr 1fr; padding:4px; border-radius:999px; background:#e9e2d6; margin-bottom:28px; }
+.account-auth-tabs button { border:0; border-radius:999px; padding:11px; background:transparent; color:#6f675c; font-weight:850; cursor:pointer; }
+.account-auth-tabs button.active { background:#fff; color:#1c1a17; box-shadow:0 3px 12px rgba(28,26,23,.1); }
+.account-form { display:grid; gap:14px; }
+.account-form[hidden] { display:none; }
+.account-form h2 { margin:0 0 5px; font-size:28px; }
+.account-form label { display:grid; gap:6px; font-size:12px; font-weight:800; color:#534c42; }
+.account-form input,.referral-code-form input { width:100%; box-sizing:border-box; border:1px solid #d3c8b7; background:#fff; border-radius:11px; padding:13px 14px; color:#1c1a17; font:inherit; outline:none; }
+.account-form input:focus,.referral-code-form input:focus { border-color:#315b43; box-shadow:0 0 0 3px rgba(49,91,67,.12); }
+.account-form small { color:#756c60; font-size:11px; margin-top:-7px; }
+.account-primary-button { border:0; border-radius:999px; padding:14px 20px; background:#173d2b; color:#fff; font-weight:900; cursor:pointer; font:inherit; }
+.account-primary-button:disabled { opacity:.45; cursor:not-allowed; }
+.account-text-button { border:0; background:none; color:#315b43; font-weight:800; cursor:pointer; padding:3px; }
+.account-form .form-msg { min-height:18px; margin:0; font-size:12px; line-height:1.45; }
+.form-msg.success { color:#2b7447 !important; }.form-msg.error { color:#a64336 !important; }
+
+.account-dashboard { color:#1c1a17; background:#f7f2e9; border-radius:28px; padding:34px; box-shadow:0 28px 70px rgba(0,0,0,.32); }
+.account-dashboard[hidden] { display:none; }
+.account-dashboard-heading { display:flex; justify-content:space-between; align-items:center; gap:20px; margin-bottom:24px; }
+.account-dashboard-heading h2 { margin:0; font-size:36px; letter-spacing:-.04em; }.account-dashboard-heading p { color:#756c60; margin:5px 0 0; }
+.account-outline-button { border:1px solid #c7bdaf; background:transparent; border-radius:999px; padding:10px 16px; font-weight:800; cursor:pointer; }
+.account-summary-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:12px; }
+.account-summary-grid article { padding:20px; border-radius:16px; background:#1a2823; color:#f3efe6; }
+.account-summary-grid span,.account-summary-grid strong,.account-summary-grid small { display:block; }
+.account-summary-grid span { color:#a8b5ae; font-size:11px; text-transform:uppercase; letter-spacing:.1em; font-weight:850; }
+.account-summary-grid strong { margin:8px 0 4px; font-size:30px; }.account-summary-grid small { color:#b9c0bc; }
+.account-dashboard-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }.account-dashboard-grid.lower { margin-top:12px; }
+.account-panel { min-width:0; padding:24px; border:1px solid #d9d0c1; border-radius:18px; background:#fffaf2; }
+.account-panel h3 { margin:0 0 12px; font-size:22px; }.account-panel p { color:#6d655b; font-size:13px; line-height:1.55; }
+.referral-code-form { display:flex; gap:8px; }.referral-code-form input { text-transform:uppercase; font-weight:900; letter-spacing:.08em; }.referral-code-form button,.referral-code-display button { border:0; border-radius:10px; padding:10px 16px; background:#173d2b; color:#fff; font-weight:850; cursor:pointer; }
+.referral-code-display { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:16px; border-radius:14px; background:#e7eee5; border:1px dashed #7a9c82; }.referral-code-display > strong { font-size:28px; letter-spacing:.12em; color:#173d2b; }
+.account-fine-print { font-size:11px !important; color:#81786d !important; }
+.progress-block { margin:15px 0; }.progress-block > div:first-child { display:flex; justify-content:space-between; font-size:12px; margin-bottom:7px; }
+.account-progress { height:9px; overflow:hidden; border-radius:999px; background:#e5ded2; }.account-progress i { display:block; width:0; height:100%; border-radius:inherit; background:linear-gradient(90deg,#315b43,#7ba083); transition:width .45s ease; }
+.payout-panel .account-primary-button { width:100%; margin-top:10px; }
+.account-panel-heading { display:flex; align-items:center; justify-content:space-between; gap:10px; border-bottom:1px solid #e3dbcf; padding-bottom:12px; }.account-panel-heading h3 { margin:0; }.account-panel-heading span { font-size:10px; color:#81786d; text-transform:uppercase; letter-spacing:.08em; }
+.account-activity-list { display:grid; }.account-activity-row { display:flex; justify-content:space-between; gap:16px; padding:13px 0; border-bottom:1px solid #eee6da; }.account-activity-row:last-child { border-bottom:0; }.account-activity-row > div { display:flex; flex-direction:column; gap:3px; }.account-activity-row > div:last-child { text-align:right; }.account-activity-row strong { font-size:13px; }.account-activity-row span { color:#7b7369; font-size:11px; }.account-order-status { color:#315b43 !important; font-weight:800; }.account-empty-state { padding:22px 0; color:#81786d; font-size:12px; }
+.payout-note-input { min-width:180px; width:100%; box-sizing:border-box; border:1px solid #555; border-radius:8px; background:#202322; color:#f3efe6; padding:8px; }
+.payout-actions { display:flex; flex-wrap:wrap; gap:5px; }.payout-actions button { border:1px solid #5f665f; border-radius:999px; background:#303530; color:#f3efe6; padding:6px 9px; font-size:10px; font-weight:800; cursor:pointer; }.payout-actions button:last-child { border-color:#9d5750; color:#ffc3bc; }
+
+@media (max-width: 850px) {
+  .account-nav-text { display:none; }.account-nav-link { width:42px; padding:0; justify-content:center; }
+  .account-main { padding:42px 14px 70px; }.account-hero,.account-auth-shell { grid-template-columns:1fr; }.account-hero { gap:24px; }.account-hero h1 { font-size:48px; }.account-benefit-strip { grid-template-columns:1fr; }.account-benefit-strip div { border-right:0; border-bottom:1px solid rgba(243,239,230,.12); }
+  .account-auth-copy,.account-auth-card { padding:28px 22px; }.account-auth-copy h2 { font-size:31px; }.account-dashboard { padding:20px 14px; }.account-dashboard-heading { align-items:flex-start; }.account-dashboard-heading h2 { font-size:30px; }
+  .account-summary-grid,.account-dashboard-grid { grid-template-columns:1fr; }.referral-code-form,.referral-code-display { flex-direction:column; align-items:stretch; }.referral-code-display > strong { font-size:22px; overflow-wrap:anywhere; }.checkout-account-status { align-items:flex-start; flex-direction:column; }.store-credit-empty { text-align:left; }
+}
 .brand-seal-wrap img {
   display: block;
   width: 100%;
@@ -3161,6 +3268,7 @@ body.search-open { overflow: hidden; }
     border-radius: 18px;
   }
   .promo-row { grid-template-columns: 1fr; display: grid; }
+  .promo-row button { min-height: 42px; padding: 10px 18px; }
   .purchase-row { flex-direction: column; }
   .add-to-cart-btn { min-height: 48px; }
   .qty-stepper { justify-content: center; }
@@ -3653,6 +3761,19 @@ body.admin-page main {
 body.admin-page .topbar {
   margin: 14px auto 10px;
 }
+body.admin-page #adminLogoutBtn,
+body.admin-page #refreshReferralsButton {
+  min-height: 36px;
+  padding: 8px 14px;
+  border: 1px solid rgba(243,239,230,0.22);
+  border-radius: 999px;
+  background: rgba(250,247,241,0.08);
+  color: var(--offwhite);
+  font: 800 11px/1 Inter, sans-serif;
+  cursor: pointer;
+}
+body.admin-page #adminLogoutBtn:hover,
+body.admin-page #refreshReferralsButton:hover { background: rgba(250,247,241,0.15); }
 body.admin-page .panel,
 body.admin-page .admin-tab-panel {
   background: rgba(250, 247, 241, 0.055) !important;

@@ -149,6 +149,20 @@ New PayPal/crypto orders created after this feature is deployed receive at most 
 
 For paid orders, the admin dashboard includes a carrier dropdown and tracking-number field. Clicking **Send tracking email** emails the buyer from the configured Highland sender and marks the order fulfilled. Your SMTP provider must authorize `support@highlandpeptides.com` as a sender; Cloudflare Email Routing by itself only handles incoming mail.
 
+## Optional customer accounts and referral rewards
+
+Customer accounts are optional; guest checkout remains available. Verified customers can create one permanent referral code. The code gives another customer 10% off qualifying merchandise and credits the owner with 10% of that order's paid merchandise revenue. Self-referrals are blocked, rewards are issued only once when an order reaches paid or fulfilled status, and cancelled orders reverse the reward.
+
+Store credit can be applied at checkout before cash-payout eligibility. Cash-payout requests unlock after five unique paid referred customers and $500 in aggregate paid referral merchandise spend, then appear in the admin dashboard for manual review. Configure the public URL used in verification and password-reset emails:
+
+```txt
+ACCOUNT_SITE_URL=https://highlandpeptides.com
+ACCOUNT_VERIFICATION_TTL_HOURS=24
+PASSWORD_RESET_TTL_MINUTES=60
+```
+
+Account email verification and password resets use the same SMTP settings as customer order email. On Render, `/var/data/db.json` must remain on the persistent disk because it now stores orders, accounts, hashed verification/reset tokens, referral ledgers, and payout requests.
+
 ## Current-lot COAs
 
 COA screenshots or PDFs belong in `public/coa/`. Add one record per vial to `data/coa.json`:

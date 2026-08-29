@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin: Highland Peptides</title>
-<link rel="stylesheet" href="/css/style.css?v=ridge-current-v3-20260825">
+<link rel="stylesheet" href="/css/style.css?v=accounts-v2-20260829">
 </head>
 <body class="admin-page">
 <header class="topbar">
@@ -28,11 +28,12 @@
       <button type="button" class="admin-tab active" data-admin-tab="orders">Orders</button>
       <button type="button" class="admin-tab" data-admin-tab="analytics">Analytics</button>
       <button type="button" class="admin-tab" data-admin-tab="profit">Profit</button>
+      <button type="button" class="admin-tab" data-admin-tab="referrals">Accounts & Referrals</button>
       <button type="button" class="admin-tab" data-admin-tab="labels">Label Maker</button>
       <button type="button" class="admin-tab" data-admin-tab="launch">Launch Checks</button>
     </div>
     <div class="panel admin-tab-panel" id="ordersPanel" data-admin-panel="orders">
-      <h2>Orders <span class="hint">(guest checkout, no accounts to review)</span></h2>
+      <h2>Orders <span class="hint">(guest and optional-account checkout)</span></h2>
       <div class="admin-order-toolbar">
         <input id="adminOrderSearch" type="search" placeholder="Search name, email, SKU, address, notes">
         <select id="adminStatusFilter">
@@ -101,6 +102,21 @@
       <h2>Profit <span class="hint">(paid and fulfilled orders only)</span></h2>
       <div id="profitSummary"></div>
       <table id="profitTable" style="width:100%; border-collapse: collapse;"></table>
+    </div>
+    <div class="panel admin-tab-panel" id="referralsPanel" data-admin-panel="referrals" hidden>
+      <div class="analytics-heading-row">
+        <div>
+          <h2>Accounts & Referral Rewards</h2>
+          <p class="hint">Verified accounts, one-code enforcement, store credit, qualification progress, and manual payout review.</p>
+        </div>
+        <button type="button" id="refreshReferralsButton">Refresh</button>
+      </div>
+      <div id="referralAdminSummary"></div>
+      <h3>Customer referral accounts</h3>
+      <div class="analytics-table-wrap"><table id="referralAccountsTable"></table></div>
+      <h3 style="margin-top:28px;">Payout requests</h3>
+      <div class="analytics-table-wrap"><table id="payoutRequestsTable"></table></div>
+      <p id="referralAdminMessage" class="form-msg" aria-live="polite"></p>
     </div>
     <div class="panel admin-tab-panel label-maker-panel" id="labelsPanel" data-admin-panel="labels" hidden>
       <div class="label-maker-heading">
@@ -179,7 +195,7 @@
 
 <div id="labelPrintPortal" class="label-print-sheet" aria-hidden="true"></div>
 
-<script src="/js/admin.js?v=ridge-current-v2-20260825"></script>
+<script src="/js/admin.js?v=accounts-v2-20260829"></script>
 </body>
 </html>
 

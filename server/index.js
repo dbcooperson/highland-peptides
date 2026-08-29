@@ -19,12 +19,13 @@ const { catalog, bySku, costBySku, getProductFamily, priceAudit } = require('./p
 const { requireAdmin } = require('./auth');
 const { buildPackingSlip, buildContentsLabel } = require('./labels');
 const { isPayPalConfigured, createPayPalOrder, capturePayPalOrder } = require('./paypal');
-const { sendOrderBackup, sendCustomerPaymentInstructions, sendPaymentReminder, sendTrackingEmail } = require('./notifications');
+const { sendOrderBackup, sendCustomerPaymentInstructions, sendPaymentReminder, sendTrackingEmail, isCustomerEmailConfigured } = require('./notifications');
 const { createBitcoinMonitor } = require('./btc-monitor');
 const analytics = require('./analytics');
 const coa = require('./coa');
 const { applyBundlePromotion, publicPromotion } = require('./promotions');
 const { startPaymentReminderScheduler } = require('./reminders');
+const { registerAccountRoutes } = require('./accounts');
 
 const isProductionRuntime = Boolean(process.env.RENDER || process.env.RENDER_SERVICE_ID || process.env.NODE_ENV === 'production');
 if (isProductionRuntime) {
@@ -154,14 +155,23 @@ app.get('/product/:slug', (req, res) => {
 // Looks up a discount code without exposing the full code list to the client.
 function resolveDiscountCode(code) {
   if (!code) return null;
-  const rate = config.DISCOUNT_CODES[String(code).trim().toUpperCase()];
-  return rate != null ? { code: String(code).trim().toUpperCase(), rate } : null;
+  const normalized = String(code).trim().toUpperCase();
+  const rate = config.DISCOUNT_CODES[normalized];
+  if (rate != null) return { code: normalized, rate, type: 'promotion', referralAccountId: null };
+  const referralAccount = db.getAccountByReferralCode(normalized);
+  return referralAccount ? {
+    code: normalized,
+    rate: config.REFERRAL_DISCOUNT_RATE,
+    type: 'referral',
+    referralAccountId: referralAccount.id,
+    referralEmail: referralAccount.email,
+  } : null;
 }
 
 app.get('/api/discount-code', (req, res) => {
   const match = resolveDiscountCode(req.query.code);
   if (!match) return res.json({ valid: false });
-  res.json({ valid: true, code: match.code, percentOff: Math.round(match.rate * 100) });
+  res.json({ valid: true, code: match.code, percentOff: Math.round(match.rate * 100), referral: match.type === 'referral' });
 });
 
 function cleanText(value, maxLength) {
@@ -181,6 +191,8 @@ function cleanCountry(value) {
   const country = cleanText(value || 'US', 2).toUpperCase();
   return /^[A-Z]{2}$/.test(country) ? country : 'US';
 }
+
+registerAccountRoutes(app, requireAdmin);
 
 const checkoutAttempts = new Map();
 const CHECKOUT_WINDOW_MS = 15 * 60 * 1000;
@@ -202,9 +214,9 @@ function checkCheckoutRateLimit(req, res, next) {
   next();
 }
 
-// ---------- Checkout (guest, no account) ----------
-function prepareCheckout(body) {
-  const { items: rawItems, buyer, certified, discountCode, paymentMethod, cryptoAsset, shippingMethod, paymentPolicyAccepted } = body || {};
+// ---------- Checkout (guest checkout remains available; accounts are optional) ----------
+function prepareCheckout(body, accountId = null) {
+  const { items: rawItems, buyer, certified, discountCode, paymentMethod, cryptoAsset, shippingMethod, paymentPolicyAccepted, applyStoreCredit } = body || {};
 
   if (certified !== true) {
     return { error: 'You must certify research/business use to place an order.' };
@@ -250,6 +262,14 @@ function prepareCheckout(body) {
   const promotionResult = applyBundlePromotion(resolved, bySku);
 
   const discountMatch = resolveDiscountCode(discountCode);
+  const customerAccount = accountId ? db.getAccountById(accountId) : null;
+  if (discountMatch && discountMatch.type === 'referral') {
+    const isSameAccount = customerAccount && customerAccount.id === discountMatch.referralAccountId;
+    const isSameEmail = cleanBuyer.email === cleanEmail(discountMatch.referralEmail);
+    if (isSameAccount || isSameEmail) {
+      return { error: 'Referral codes are for other customers and cannot be used on your own order.' };
+    }
+  }
   if (normalizedPaymentMethod === 'crypto' && discountMatch) {
     return { error: 'Promo codes cannot be combined with the crypto discount. Remove the promo code or choose PayPal checkout.' };
   }
@@ -257,6 +277,13 @@ function prepareCheckout(body) {
   const altPaymentDiscount = normalizedPaymentMethod === 'crypto' ? subtotal * config.ALT_PAYMENT_DISCOUNT_RATE : 0;
   const discountAmount = Math.round((codeDiscount + altPaymentDiscount) * 100) / 100;
   const discountLabel = discountMatch ? discountMatch.code : (altPaymentDiscount ? 'CRYPTO5' : null);
+  const availableCredit = customerAccount && customerAccount.verified_at
+    ? Math.max(0, Number(customerAccount.credit_balance_cents || 0) / 100)
+    : 0;
+  const merchandiseAfterDiscount = Math.max(0, subtotal - discountAmount);
+  const storeCreditAmount = applyStoreCredit === true
+    ? Math.round(Math.min(availableCredit, merchandiseAfterDiscount) * 100) / 100
+    : 0;
 
   const packagingFee = config.PACKAGING_FEE;
   const normalizedShippingMethod = shippingMethod === 'international' ? 'international' : 'domestic';
@@ -267,7 +294,7 @@ function prepareCheckout(body) {
     return { error: 'International shipping is for destinations outside the U.S. Change the country or select U.S. shipping.' };
   }
   const shippingFee = normalizedShippingMethod === 'international' ? config.INTERNATIONAL_SHIPPING_FEE : config.SHIPPING_FEE;
-  const feeBase = Math.max(0, subtotal - discountAmount + packagingFee + shippingFee);
+  const feeBase = Math.max(0, subtotal - discountAmount - storeCreditAmount + packagingFee + shippingFee);
   const orderFee = Math.round(feeBase * config.ORDER_FEE_RATE * 100) / 100;
   const total = Math.round((feeBase + orderFee) * 100) / 100;
 
@@ -288,6 +315,10 @@ function prepareCheckout(body) {
       orderFeeRate: config.ORDER_FEE_RATE,
       discountCode: discountLabel,
       discountAmount,
+      storeCreditAmount,
+      customerAccountId: customerAccount && customerAccount.verified_at ? customerAccount.id : null,
+      referralAccountId: discountMatch && discountMatch.type === 'referral' ? discountMatch.referralAccountId : null,
+      referralCreditRate: discountMatch && discountMatch.type === 'referral' ? config.REFERRAL_CREDIT_RATE : 0,
       total,
       paymentMethod: normalizedPaymentMethod,
       cryptoAsset: normalizedCryptoAsset,
@@ -309,16 +340,18 @@ app.post('/api/paypal/create-order', checkCheckoutRateLimit, async (req, res) =>
     return res.status(503).json({ error: 'PayPal is not configured yet.' });
   }
 
-  const prepared = prepareCheckout(req.body);
+  const prepared = prepareCheckout(req.body, req.session && req.session.accountId);
   if (prepared.error) return res.status(400).json({ error: prepared.error });
 
+  let order = null;
   try {
-    const order = db.createOrder({ ...prepared.orderInput, paymentProvider: 'paypal' });
+    order = db.createOrder({ ...prepared.orderInput, paymentProvider: 'paypal' });
     analytics.recordEvent({ type: 'order_created', ...prepared.analytics });
     const paypalOrder = await createPayPalOrder(order);
     db.setPayPalOrderId(order.id, paypalOrder.id);
     res.json({ ok: true, orderId: order.id, paypalOrderId: paypalOrder.id, total: order.total });
   } catch (err) {
+    if (order && !order.paypal_order_id) db.deleteOrder(order.id);
     res.status(502).json({ error: err.message || 'Could not start PayPal checkout.' });
   }
 });
@@ -328,11 +361,16 @@ app.post('/api/paypal/create-order', checkCheckoutRateLimit, async (req, res) =>
 // instructions directly. Used when PayPal is down/restricted, or as a plain
 // alternative to it.
 app.post('/api/checkout', checkCheckoutRateLimit, async (req, res) => {
-  const prepared = prepareCheckout(req.body);
+  const prepared = prepareCheckout(req.body, req.session && req.session.accountId);
   if (prepared.error) return res.status(400).json({ error: prepared.error });
 
   const { paymentMethod, cryptoAsset, ...orderInput } = prepared.orderInput;
-  const order = db.createOrder({ ...orderInput, paymentProvider: paymentMethod, cryptoAsset });
+  let order;
+  try {
+    order = db.createOrder({ ...orderInput, paymentProvider: paymentMethod, cryptoAsset });
+  } catch (err) {
+    return res.status(409).json({ error: err.message || 'Could not create the order.' });
+  }
   analytics.recordEvent({ type: 'order_created', ...prepared.analytics });
   await backupOrderIfNeeded(order, `${paymentMethod}_submit`);
   await sendCustomerInstructionsIfNeeded(order);
@@ -475,7 +513,9 @@ function orderFinancialSummary(order) {
 
   productRevenueAfterDiscount = Math.round(productRevenueAfterDiscount * 100) / 100;
   cogs = Math.round(cogs * 100) / 100;
-  const grossProfit = Math.round((productRevenueAfterDiscount - cogs) * 100) / 100;
+  const referralReward = Math.round((Number(order.referral_credit_cents || 0) / 100) * 100) / 100;
+  const storeCreditUsed = Math.round(Number(order.store_credit_amount || 0) * 100) / 100;
+  const grossProfit = Math.round((productRevenueAfterDiscount - cogs - referralReward) * 100) / 100;
   const grossMargin = productRevenueAfterDiscount > 0 ? Math.round((grossProfit / productRevenueAfterDiscount) * 1000) / 10 : 0;
 
   return {
@@ -487,6 +527,8 @@ function orderFinancialSummary(order) {
     totalSpent,
     productRevenueAfterDiscount,
     cogs,
+    referralReward,
+    storeCreditUsed,
     grossProfit,
     grossMargin,
   };
@@ -622,6 +664,7 @@ app.get('/api/admin/profit', requireAdmin, (req, res) => {
     shippingCollected: 0,
     processingCollected: 0,
     cogs: 0,
+    referralRewards: 0,
     grossProfit: 0,
     grossMargin: 0,
   };
@@ -634,6 +677,9 @@ app.get('/api/admin/profit', requireAdmin, (req, res) => {
     totals.discounts += discount;
     totals.shippingCollected += Number(order.shipping_fee || 0);
     totals.processingCollected += Number(order.order_fee || 0);
+    const orderReferralReward = Number(order.referral_credit_cents || 0) / 100;
+    totals.referralRewards += orderReferralReward;
+    const orderProductRevenue = Math.max(0, subtotal - discount);
 
     (order.items || []).forEach(item => {
       const quantity = Number(item.quantity || 0);
@@ -643,7 +689,10 @@ app.get('/api/admin/profit', requireAdmin, (req, res) => {
       const lineRevenue = Math.round((lineRevenueBeforeDiscount - allocatedDiscount) * 100) / 100;
       const unitCost = Number(costBySku[item.sku] || 0);
       const lineCost = Math.round(unitCost * quantity * 100) / 100;
-      const lineProfit = Math.round((lineRevenue - lineCost) * 100) / 100;
+      const allocatedReferralReward = orderProductRevenue > 0
+        ? Math.round(orderReferralReward * (lineRevenue / orderProductRevenue) * 100) / 100
+        : 0;
+      const lineProfit = Math.round((lineRevenue - lineCost - allocatedReferralReward) * 100) / 100;
 
       totals.vialCount += quantity;
       totals.productRevenue += lineRevenue;
@@ -659,6 +708,7 @@ app.get('/api/admin/profit', requireAdmin, (req, res) => {
         unitCost,
         revenue: lineRevenue,
         cogs: lineCost,
+        referralReward: allocatedReferralReward,
         grossProfit: lineProfit,
         margin: lineRevenue > 0 ? Math.round((lineProfit / lineRevenue) * 1000) / 10 : 0,
       });
@@ -671,7 +721,8 @@ app.get('/api/admin/profit', requireAdmin, (req, res) => {
   totals.processingCollected = Math.round(totals.processingCollected * 100) / 100;
   totals.totalCollected = Math.round(totals.totalCollected * 100) / 100;
   totals.cogs = Math.round(totals.cogs * 100) / 100;
-  totals.grossProfit = Math.round((totals.productRevenue - totals.cogs) * 100) / 100;
+  totals.referralRewards = Math.round(totals.referralRewards * 100) / 100;
+  totals.grossProfit = Math.round((totals.productRevenue - totals.cogs - totals.referralRewards) * 100) / 100;
   totals.grossMargin = totals.productRevenue > 0 ? Math.round((totals.grossProfit / totals.productRevenue) * 1000) / 10 : 0;
 
   res.json({ totals, lines: lines.sort((a, b) => b.grossProfit - a.grossProfit) });
@@ -734,6 +785,14 @@ app.get('/api/admin/launch-checks', requireAdmin, (req, res) => {
       detail: config.SMTP_HOST && config.ORDER_BACKUP_EMAIL_TO
         ? 'SMTP email backup is configured.'
         : 'Optional: add SMTP settings if you want email copies too. Cloudflare routing alone is inbound-only.',
+    },
+    {
+      key: 'account-email',
+      label: 'Account verification email',
+      ok: isCustomerEmailConfigured(),
+      detail: isCustomerEmailConfigured()
+        ? 'Verification, password-reset, and account emails are configured.'
+        : 'Add SMTP settings in Render before enabling customer account registration.',
     },
     {
       key: 'price-audit',

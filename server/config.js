@@ -119,6 +119,17 @@ module.exports = {
   PAYMENT_REMINDER_MAX: Math.max(1, Number(process.env.PAYMENT_REMINDER_MAX || 2)),
   PAYMENT_REMINDER_POLL_MINUTES: Math.max(5, Number(process.env.PAYMENT_REMINDER_POLL_MINUTES || 30)),
 
+  // Optional customer accounts and referral rewards. Referral codes give the
+  // shopper 10% off and credit the code owner with 10% of net merchandise
+  // revenue once the order is paid. Cash-out requests are manually reviewed.
+  ACCOUNT_SITE_URL: String(process.env.ACCOUNT_SITE_URL || 'https://highlandpeptides.com').replace(/\/$/, ''),
+  ACCOUNT_VERIFICATION_TTL_HOURS: Math.max(1, Number(process.env.ACCOUNT_VERIFICATION_TTL_HOURS || 24)),
+  PASSWORD_RESET_TTL_MINUTES: Math.max(10, Number(process.env.PASSWORD_RESET_TTL_MINUTES || 60)),
+  REFERRAL_DISCOUNT_RATE: 0.10,
+  REFERRAL_CREDIT_RATE: 0.10,
+  REFERRAL_PAYOUT_MIN_CUSTOMERS: 5,
+  REFERRAL_PAYOUT_MIN_SPEND: 500,
+
   SITE_NAME: process.env.SITE_NAME || 'Highland Peptides',
 };
 
