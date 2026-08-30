@@ -560,10 +560,9 @@ function showAccountWelcomePrompt() {
   overlay.className = 'account-welcome-overlay';
   overlay.innerHTML = `<section class="account-welcome-card" role="dialog" aria-modal="true" aria-labelledby="accountWelcomeTitle">
     <button class="account-welcome-close" type="button" aria-label="Continue as guest">&times;</button>
-    <span class="account-kicker">Free Highland account</span>
     <h2 id="accountWelcomeTitle">A little more value, without slowing checkout.</h2>
-    <p>Create a verified account to choose one personal referral code, get an extra <strong>5% off crypto orders</strong>, and submit a weekly TikTok video for a <strong>$5 store-credit review</strong>.</p>
-    <div class="account-welcome-benefits"><span>One personal code</span><span>Member crypto savings</span><span>Weekly creator credit</span></div>
+    <p>Create a verified account to <strong>track your order progress</strong>, choose one personal referral code, get an extra <strong>5% off crypto orders</strong>, and submit a weekly TikTok video for a <strong>$5 store-credit review</strong>.</p>
+    <div class="account-welcome-benefits"><span>Track order progress</span><span>Member crypto savings</span><span>Weekly creator credit</span></div>
     <a class="account-welcome-cta" href="/account.html?view=register">Create my account</a>
     <button class="account-welcome-skip" type="button">Continue as guest</button>
     <small>Accounts are optional. Referral and creator credits are reviewed by Highland before being added.</small>
