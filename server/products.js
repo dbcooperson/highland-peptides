@@ -67,9 +67,12 @@ const pricedCatalog = raw
     availabilityLabel: LOW_STOCK_SKUS.has(p.sku)
       ? 'Low stock'
       : 'Available to order',
+    promoEligible: p.promoEligible !== false,
     description: descriptions[p.name] || '',
     image: `/images/product-mockups/generated/${p.sku}.webp?v=${PRODUCT_IMAGE_REVISION}`,
-    price: round((p.salePrice != null ? p.salePrice : p.cost * MARKUP_MULTIPLIER * PRICE_ADJUSTMENT) * PUBLIC_PRICE_MULTIPLIER, PRICE_DECIMALS),
+    price: p.fixedPublicPrice != null
+      ? round(p.fixedPublicPrice, PRICE_DECIMALS)
+      : round((p.salePrice != null ? p.salePrice : p.cost * MARKUP_MULTIPLIER * PRICE_ADJUSTMENT) * PUBLIC_PRICE_MULTIPLIER, PRICE_DECIMALS),
   }));
 
 const byNameForPricing = new Map();

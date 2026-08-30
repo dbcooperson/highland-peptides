@@ -600,6 +600,14 @@ function cartSubtotal() {
   }, 0);
 }
 
+function cartPromoEligibleSubtotal() {
+  const cart = getCart();
+  return Object.keys(cart).filter(s => cart[s] > 0).reduce((sum, sku) => {
+    const p = window.siteCatalog.find(x => x.sku === sku);
+    return p && p.promoEligible !== false ? sum + p.price * cart[sku] : sum;
+  }, 0);
+}
+
 function round2(n) {
   return Math.round(n * 100) / 100;
 }
@@ -655,8 +663,9 @@ function renderCheckoutSummary() {
 
   const skus = Object.keys(cart).filter(s => cart[s] > 0);
   const subtotal = round2(cartSubtotal());
+  const promoEligibleSubtotal = round2(cartPromoEligibleSubtotal());
   const shippingFee = selectedShippingFee();
-  const discountAmount = appliedDiscount ? round2(subtotal * appliedDiscount.percentOff / 100) : 0;
+  const discountAmount = appliedDiscount ? round2(promoEligibleSubtotal * appliedDiscount.percentOff / 100) : 0;
   const creditToggle = document.getElementById('applyStoreCredit');
   const availableCredit = hpAccountState.authenticated && hpAccountState.account
     ? Number(hpAccountState.account.creditBalance || 0)

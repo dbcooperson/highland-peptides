@@ -248,6 +248,7 @@ function prepareCheckout(body, accountId = null) {
   if (items.length > 50) return { error: 'Cart has too many line items.' };
 
   let subtotal = 0;
+  let promoEligibleSubtotal = 0;
   const resolved = [];
   for (const item of items) {
     const product = bySku[item.sku];
@@ -255,10 +256,13 @@ function prepareCheckout(body, accountId = null) {
     if (!product || !qty || qty < 1 || qty > 99) {
       return { error: `Invalid item: ${item.sku}` };
     }
-    subtotal += product.price * qty;
-    resolved.push({ sku: product.sku, name: product.name, spec: product.spec, quantity: qty, unit_price: product.price });
+    const lineTotal = product.price * qty;
+    subtotal += lineTotal;
+    if (product.promoEligible !== false) promoEligibleSubtotal += lineTotal;
+    resolved.push({ sku: product.sku, name: product.name, spec: product.spec, quantity: qty, unit_price: product.price, promo_eligible: product.promoEligible !== false });
   }
   subtotal = Math.round(subtotal * 100) / 100;
+  promoEligibleSubtotal = Math.round(promoEligibleSubtotal * 100) / 100;
 
   const promotionResult = applyBundlePromotion(resolved, bySku);
 
@@ -274,7 +278,7 @@ function prepareCheckout(body, accountId = null) {
   if (normalizedPaymentMethod === 'crypto' && discountMatch) {
     return { error: 'Promo codes cannot be combined with the crypto discount. Remove the promo code or choose PayPal checkout.' };
   }
-  const codeDiscount = discountMatch ? subtotal * discountMatch.rate : 0;
+  const codeDiscount = discountMatch ? promoEligibleSubtotal * discountMatch.rate : 0;
   const altPaymentDiscount = normalizedPaymentMethod === 'crypto' ? subtotal * config.ALT_PAYMENT_DISCOUNT_RATE : 0;
   const memberCryptoDiscount = normalizedPaymentMethod === 'crypto' && customerAccount && customerAccount.verified_at ? subtotal * config.ACCOUNT_CRYPTO_DISCOUNT_RATE : 0;
   const discountAmount = Math.round((codeDiscount + altPaymentDiscount + memberCryptoDiscount) * 100) / 100;
@@ -310,6 +314,7 @@ function prepareCheckout(body, accountId = null) {
       certifiedAt: new Date().toISOString(),
       items: promotionResult.items,
       subtotal,
+      promoEligibleSubtotal,
       packagingFee,
       shippingFee,
       shippingMethod: normalizedShippingMethod,
@@ -494,13 +499,27 @@ async function backupOrderIfNeeded(order, source) {
 
 // ---------- Admin ----------
 
+function orderDiscountAllocation(order, subtotal, discount) {
+  const cryptoDiscount = String(order.discount_code || '').startsWith('CRYPTO');
+  const eligibleSubtotal = cryptoDiscount
+    ? subtotal
+    : Number(order.promo_eligible_subtotal == null ? subtotal : order.promo_eligible_subtotal);
+  return {
+    eligibleSubtotal,
+    lineDiscount(item, lineRevenue) {
+      if (!cryptoDiscount && item.promo_eligible === false) return 0;
+      return eligibleSubtotal > 0 ? Math.round(lineRevenue * (discount / eligibleSubtotal) * 100) / 100 : 0;
+    },
+  };
+}
+
 function orderFinancialSummary(order) {
   const subtotal = Number(order.subtotal || 0);
   const discount = Number(order.discount_amount || 0);
   const shipping = Number(order.shipping_fee || 0);
   const processing = Number(order.order_fee || 0);
   const totalSpent = Number(order.total || 0);
-  const discountRate = subtotal > 0 ? discount / subtotal : 0;
+  const discountAllocation = orderDiscountAllocation(order, subtotal, discount);
   let cogs = 0;
   let productRevenueAfterDiscount = 0;
 
@@ -508,7 +527,7 @@ function orderFinancialSummary(order) {
     const quantity = Number(item.quantity || 0);
     const unitPrice = Number(item.unit_price || 0);
     const lineRevenueBeforeDiscount = unitPrice * quantity;
-    const allocatedDiscount = Math.round(lineRevenueBeforeDiscount * discountRate * 100) / 100;
+    const allocatedDiscount = discountAllocation.lineDiscount(item, lineRevenueBeforeDiscount);
     productRevenueAfterDiscount += lineRevenueBeforeDiscount - allocatedDiscount;
     cogs += Number(costBySku[item.sku] || 0) * quantity;
   });
@@ -674,7 +693,7 @@ app.get('/api/admin/profit', requireAdmin, (req, res) => {
   orders.forEach(order => {
     const subtotal = Number(order.subtotal || 0);
     const discount = Number(order.discount_amount || 0);
-    const discountRate = subtotal > 0 ? discount / subtotal : 0;
+    const discountAllocation = orderDiscountAllocation(order, subtotal, discount);
     totals.totalCollected += Number(order.total || 0);
     totals.discounts += discount;
     totals.shippingCollected += Number(order.shipping_fee || 0);
@@ -687,7 +706,7 @@ app.get('/api/admin/profit', requireAdmin, (req, res) => {
       const quantity = Number(item.quantity || 0);
       const unitPrice = Number(item.unit_price || 0);
       const lineRevenueBeforeDiscount = unitPrice * quantity;
-      const allocatedDiscount = Math.round(lineRevenueBeforeDiscount * discountRate * 100) / 100;
+      const allocatedDiscount = discountAllocation.lineDiscount(item, lineRevenueBeforeDiscount);
       const lineRevenue = Math.round((lineRevenueBeforeDiscount - allocatedDiscount) * 100) / 100;
       const unitCost = Number(costBySku[item.sku] || 0);
       const lineCost = Math.round(unitCost * quantity * 100) / 100;

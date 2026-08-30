@@ -242,7 +242,7 @@ function paymentMatchAdjustmentCents(orderId, paymentProvider) {
   return (Number(orderId) % 49) + 1;
 }
 
-function createOrder({ buyer, certifiedAt, items, subtotal, packagingFee, shippingFee, shippingMethod, orderFee, orderFeeRate, discountCode, discountAmount, total, paymentProvider, cryptoAsset, customerAccountId, referralAccountId, referralCreditRate, storeCreditAmount }) {
+function createOrder({ buyer, certifiedAt, items, subtotal, promoEligibleSubtotal, packagingFee, shippingFee, shippingMethod, orderFee, orderFeeRate, discountCode, discountAmount, total, paymentProvider, cryptoAsset, customerAccountId, referralAccountId, referralCreditRate, storeCreditAmount }) {
   const data = load();
   const id = data.nextOrderId++;
   const normalizedProvider = paymentProvider || 'manual';
@@ -275,6 +275,7 @@ function createOrder({ buyer, certifiedAt, items, subtotal, packagingFee, shippi
     certified_at: certifiedAt,
     items,
     subtotal,
+    promo_eligible_subtotal: promoEligibleSubtotal == null ? subtotal : promoEligibleSubtotal,
     packaging_fee: packagingFee,
     shipping_fee: shippingFee,
     shipping_method: shippingMethod || 'domestic',
@@ -323,7 +324,8 @@ function syncReferralCredit(data, order) {
   const account = accountById(data, order.referral_account_id);
   if (!account) return;
   const paid = ['paid', 'fulfilled'].includes(order.status);
-  const merchandiseCents = Math.max(0, cents(order.subtotal) - cents(order.discount_amount));
+  const eligibleSubtotal = order.promo_eligible_subtotal == null ? order.subtotal : order.promo_eligible_subtotal;
+  const merchandiseCents = Math.max(0, cents(eligibleSubtotal) - cents(order.discount_amount));
   const rewardCents = Math.round(merchandiseCents * Number(order.referral_credit_rate || 0.10));
   if (paid && ['pending', null, undefined].includes(order.referral_credit_status) && rewardCents > 0) {
     order.referral_credit_cents = rewardCents;
