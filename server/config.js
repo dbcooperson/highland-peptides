@@ -129,6 +129,11 @@ module.exports = {
   REFERRAL_CREDIT_RATE: 0.10,
   REFERRAL_PAYOUT_MIN_CUSTOMERS: 5,
   REFERRAL_PAYOUT_MIN_SPEND: 500,
+  ACCOUNT_CRYPTO_DISCOUNT_RATE: 0.05,
+  TIKTOK_CREDIT_CENTS: 500,
+  TIKTOK_SUBMISSION_COOLDOWN_DAYS: 7,
+  TIKTOK_HANDLE: '@highlandoffical',
+  TIKTOK_PROFILE_URL: 'https://www.tiktok.com/@highlandoffical',
 
   SITE_NAME: process.env.SITE_NAME || 'Highland Peptides',
 };

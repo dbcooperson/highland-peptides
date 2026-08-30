@@ -59,7 +59,19 @@ function dashboardOptions() {
   return {
     minCustomers: config.REFERRAL_PAYOUT_MIN_CUSTOMERS,
     minSpend: config.REFERRAL_PAYOUT_MIN_SPEND,
+    socialCooldownDays: config.TIKTOK_SUBMISSION_COOLDOWN_DAYS,
   };
+}
+
+function cleanTikTokUrl(value) {
+  try {
+    const url = new URL(cleanText(value, 500));
+    const host = url.hostname.toLowerCase();
+    if (url.protocol !== 'https:' || !(host === 'tiktok.com' || host.endsWith('.tiktok.com'))) return '';
+    return url.toString();
+  } catch {
+    return '';
+  }
 }
 
 async function issueVerificationEmail(account) {
@@ -158,8 +170,14 @@ function registerAccountRoutes(app, requireAdmin) {
       referral: {
         customerDiscountPercent: Math.round(config.REFERRAL_DISCOUNT_RATE * 100),
         creditPercent: Math.round(config.REFERRAL_CREDIT_RATE * 100),
+        cryptoMemberPercent: Math.round(config.ACCOUNT_CRYPTO_DISCOUNT_RATE * 100),
         payoutMinCustomers: config.REFERRAL_PAYOUT_MIN_CUSTOMERS,
         payoutMinSpend: config.REFERRAL_PAYOUT_MIN_SPEND,
+        manualCreditReview: true,
+        tiktokCredit: config.TIKTOK_CREDIT_CENTS / 100,
+        tiktokCooldownDays: config.TIKTOK_SUBMISSION_COOLDOWN_DAYS,
+        tiktokHandle: config.TIKTOK_HANDLE,
+        tiktokProfileUrl: config.TIKTOK_PROFILE_URL,
       },
     });
   });
@@ -204,11 +222,34 @@ function registerAccountRoutes(app, requireAdmin) {
       orders: dashboard.orders,
       ledger: dashboard.ledger,
       payouts: dashboard.payouts,
+      socialSubmissions: dashboard.socialSubmissions,
+      nextSocialEligibleAt: dashboard.nextSocialEligibleAt,
       referral: {
         customerDiscountPercent: Math.round(config.REFERRAL_DISCOUNT_RATE * 100),
         creditPercent: Math.round(config.REFERRAL_CREDIT_RATE * 100),
+        cryptoMemberPercent: Math.round(config.ACCOUNT_CRYPTO_DISCOUNT_RATE * 100),
+        manualCreditReview: true,
+        tiktokCredit: config.TIKTOK_CREDIT_CENTS / 100,
+        tiktokCooldownDays: config.TIKTOK_SUBMISSION_COOLDOWN_DAYS,
+        tiktokHandle: config.TIKTOK_HANDLE,
+        tiktokProfileUrl: config.TIKTOK_PROFILE_URL,
       },
     });
+  });
+
+  app.post('/api/account/tiktok-submissions', requireAccount, (req, res) => {
+    if (!allowAttempt(req, 'tiktok-submit', 8)) return res.status(429).json({ error: 'Too many attempts. Please try again later.' });
+    const videoUrl = cleanTikTokUrl(req.body && req.body.videoUrl);
+    if (!videoUrl) return res.status(400).json({ error: 'Paste a valid TikTok video link.' });
+    try {
+      const submission = db.createSocialCreditSubmission(req.account.id, videoUrl, {
+        cooldownDays: config.TIKTOK_SUBMISSION_COOLDOWN_DAYS,
+        creditCents: config.TIKTOK_CREDIT_CENTS,
+      });
+      res.status(201).json({ ok: true, submission, message: 'Video submitted. Highland will review the tag before adding store credit.' });
+    } catch (err) {
+      res.status(400).json({ error: err.message || 'Could not submit the video.' });
+    }
   });
 
   app.post('/api/account/referral-code', requireAccount, (req, res) => {
@@ -246,6 +287,26 @@ function registerAccountRoutes(app, requireAdmin) {
       res.json({ ok: true, status: request.status });
     } catch (err) {
       res.status(400).json({ error: err.message || 'Could not update payout request.' });
+    }
+  });
+
+  app.post('/api/admin/referral-rewards/:orderId/status', requireAdmin, (req, res) => {
+    try {
+      const order = db.reviewReferralCredit(req.params.orderId, cleanText(req.body && req.body.status, 30), cleanText(req.body && req.body.note, 500));
+      if (!order) return res.status(404).json({ error: 'Referral reward not found.' });
+      res.json({ ok: true, status: order.referral_credit_status });
+    } catch (err) {
+      res.status(400).json({ error: err.message || 'Could not review referral credit.' });
+    }
+  });
+
+  app.post('/api/admin/tiktok-submissions/:id/status', requireAdmin, (req, res) => {
+    try {
+      const submission = db.reviewSocialCreditSubmission(req.params.id, cleanText(req.body && req.body.status, 30), cleanText(req.body && req.body.note, 500));
+      if (!submission) return res.status(404).json({ error: 'TikTok submission not found.' });
+      res.json({ ok: true, status: submission.status });
+    } catch (err) {
+      res.status(400).json({ error: err.message || 'Could not review the TikTok submission.' });
     }
   });
 }

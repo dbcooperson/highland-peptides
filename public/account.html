@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Optional Highland Peptides customer account, referral rewards, store credit, and order history.">
   <title>Account & Referral Rewards - Highland Peptides</title>
-  <link rel="stylesheet" href="/css/style.css?v=accounts-v2-20260829">
+  <link rel="stylesheet" href="/css/style.css?v=account-rewards-v3-20260829">
 </head>
 <body class="account-page">
   <div class="mountain-bg account-mountain-bg" aria-hidden="true"></div>
@@ -35,12 +35,12 @@
       <div>
         <span class="account-kicker">Optional customer accounts</span>
         <h1>Rewards that stay simple.</h1>
-        <p>Checkout as a guest anytime, or create a verified account to choose one personal referral code, earn store credit, and keep your orders in one place.</p>
+        <p>Checkout as a guest anytime, or create a verified account for member crypto savings, one personal referral code, creator rewards, store credit, and order history.</p>
       </div>
       <div class="account-benefit-strip">
-        <div><strong>10% off</strong><span>for friends using your code</span></div>
-        <div><strong>10% credit</strong><span>for you after paid referred orders</span></div>
-        <div><strong>One code</strong><span>per verified account</span></div>
+        <div><strong>+5% crypto</strong><span>extra member savings on crypto only</span></div>
+        <div><strong>One code</strong><span>10% off for friends; rewards reviewed manually</span></div>
+        <div><strong>$5 creator credit</strong><span>one TikTok submission every 7 days</span></div>
       </div>
     </section>
 
@@ -51,9 +51,9 @@
         <ol>
           <li>Verify your email and choose one unique referral code.</li>
           <li>Friends receive 10% off qualifying merchandise.</li>
-          <li>You receive 10% of paid referred merchandise revenue as store credit.</li>
+          <li>Paid referral rewards enter Highland's manual approval queue.</li>
         </ol>
-        <div class="account-rule-note"><strong>Payout eligibility</strong><span>Cash-out requests unlock after 5 unique referred customers and $500 total paid referral spend. Self-referrals do not qualify, and cancelled or refunded orders reverse their reward. Requests are reviewed manually.</span></div>
+        <div class="account-rule-note"><strong>Manual credit review</strong><span>Referral and TikTok rewards are added only after Highland approval. Cash-out requests unlock after 5 unique referred customers and $500 total paid referral spend. Self-referrals do not qualify.</span></div>
       </div>
       <div class="account-auth-card">
         <div class="account-auth-tabs" role="tablist">
@@ -112,7 +112,7 @@
           </div>
           <div id="referralCodeReady" hidden>
             <div class="referral-code-display"><strong id="referralCodeText"></strong><button id="copyReferralCode" type="button">Copy</button></div>
-            <p>Friends save 10%. You earn 10% store credit when their order is marked paid.</p>
+            <p>Friends save 10%. Paid referral rewards are sent to Highland for manual store-credit approval.</p>
           </div>
           <p id="referralCodeMessage" class="form-msg" aria-live="polite"></p>
         </article>
@@ -127,14 +127,28 @@
         </article>
       </div>
 
+      <article id="creator-credit" class="account-panel creator-credit-panel">
+        <div>
+          <span class="account-kicker">Weekly creator reward</span>
+          <h3>Post, tag Highland, and submit your video.</h3>
+          <p>Make a TikTok about Highland Peptides and tag <a href="https://www.tiktok.com/@highlandoffical" target="_blank" rel="noopener">@highlandoffical</a>. Submit the public video link below for a $5 store-credit review. One submission is allowed every 7 days.</p>
+        </div>
+        <form id="tiktokCreditForm" class="creator-credit-form">
+          <label for="tiktokVideoUrl">TikTok video link</label>
+          <div><input id="tiktokVideoUrl" type="url" inputmode="url" placeholder="https://www.tiktok.com/@you/video/..." required><button id="tiktokSubmitButton" class="account-primary-button" type="submit">Submit for review</button></div>
+          <p id="tiktokCreditMessage" class="form-msg" aria-live="polite"></p>
+        </form>
+        <div><div class="account-panel-heading"><h3>Creator submissions</h3><span>Manual review</span></div><div id="tiktokActivity" class="account-activity-list"></div></div>
+      </article>
+
       <div class="account-dashboard-grid lower">
-        <article class="account-panel"><div class="account-panel-heading"><h3>Referral activity</h3><span>Paid orders only</span></div><div id="referralActivity" class="account-activity-list"></div></article>
+        <article class="account-panel"><div class="account-panel-heading"><h3>Referral activity</h3><span>Paid orders · manual review</span></div><div id="referralActivity" class="account-activity-list"></div></article>
         <article class="account-panel"><div class="account-panel-heading"><h3>Your orders</h3><span>Verified email history</span></div><div id="accountOrders" class="account-activity-list"></div></article>
       </div>
     </section>
   </main>
 
-  <script src="/js/shared.js?v=accounts-v2-20260829"></script>
-  <script src="/js/account.js?v=accounts-v2-20260829"></script>
+  <script src="/js/shared.js?v=account-rewards-v3-20260829"></script>
+  <script src="/js/account.js?v=account-rewards-v3-20260829"></script>
 </body>
 </html>

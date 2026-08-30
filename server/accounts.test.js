@@ -60,12 +60,18 @@ test('verification is single-use and one referral code is enforced', async () =>
   assert.equal(db.getAccountByReferralCode('ridge10').id, account.id);
 });
 
-test('paid referral orders award credit once and cancelled credit orders are restored', async () => {
+test('paid referral orders wait for approval, award credit once, and cancelled credit orders are restored', async () => {
   const owner = db.getAccountByEmail('owner@example.com');
   const order = referredOrder(owner, 'friend1@example.com');
   db.markOrderPaid(order.id, 'payment-1');
   db.markOrderPaid(order.id, 'payment-1');
   let dashboard = db.getAccountDashboard(owner.id, { minCustomers: 5, minSpend: 500 });
+  assert.equal(dashboard.stats.creditBalance, 0);
+  assert.equal(db.getOrderById(order.id).referral_credit_status, 'pending_review');
+
+  db.reviewReferralCredit(order.id, 'approved', 'Verified by admin');
+  assert.throws(() => db.reviewReferralCredit(order.id, 'approved'), /no longer awaiting review/i);
+  dashboard = db.getAccountDashboard(owner.id, { minCustomers: 5, minSpend: 500 });
   assert.equal(dashboard.stats.creditBalance, 9);
   assert.equal(dashboard.stats.uniqueCustomers, 1);
   assert.equal(dashboard.stats.totalSpend, 90);
@@ -98,6 +104,7 @@ test('payout unlocks at five unique customers and $500 aggregate paid spend', ()
   for (let index = 2; index <= 5; index += 1) {
     const order = referredOrder(owner, `friend${index}@example.com`, 115, 11.5);
     db.markOrderPaid(order.id, `payment-${index}`);
+    db.reviewReferralCredit(order.id, 'approved');
   }
   const dashboard = db.getAccountDashboard(owner.id, { minCustomers: 5, minSpend: 500 });
   assert.equal(dashboard.stats.uniqueCustomers, 5);
@@ -111,6 +118,35 @@ test('payout unlocks at five unique customers and $500 aggregate paid spend', ()
   db.updatePayoutRequest(payout.id, 'rejected', 'Test rejection');
   const restored = db.getAccountDashboard(owner.id, { minCustomers: 5, minSpend: 500 });
   assert.equal(restored.stats.creditBalance, 50.4);
+});
+
+test('TikTok creator credit is manually approved, unique, and limited to one submission every seven days', async () => {
+  const owner = db.getAccountByEmail('owner@example.com');
+  const submission = db.createSocialCreditSubmission(
+    owner.id,
+    'https://www.tiktok.com/@highlandoffical/video/1234567890',
+    { creditCents: 500, cooldownDays: 7 }
+  );
+
+  let dashboard = db.getAccountDashboard(owner.id, { minCustomers: 5, minSpend: 500, socialCooldownDays: 7 });
+  assert.equal(submission.status, 'pending_review');
+  assert.equal(dashboard.stats.creditBalance, 50.4);
+  assert.equal(dashboard.socialSubmissions[0].creditAmount, 5);
+  assert.throws(
+    () => db.createSocialCreditSubmission(owner.id, 'https://www.tiktok.com/@highlandoffical/video/999', { creditCents: 500, cooldownDays: 7 }),
+    /every 7 days/i
+  );
+  const secondOwner = await verifiedAccount('Second Creator', 'second-creator@example.com');
+  assert.throws(
+    () => db.createSocialCreditSubmission(secondOwner.id, submission.video_url, { creditCents: 500, cooldownDays: 7 }),
+    /already been submitted/i
+  );
+
+  db.reviewSocialCreditSubmission(submission.id, 'approved', 'Verified tag');
+  assert.throws(() => db.reviewSocialCreditSubmission(submission.id, 'approved'), /no longer awaiting review/i);
+  dashboard = db.getAccountDashboard(owner.id, { minCustomers: 5, minSpend: 500, socialCooldownDays: 7 });
+  assert.equal(dashboard.stats.creditBalance, 55.4);
+  assert.equal(dashboard.socialSubmissions[0].status, 'approved');
 });
 
 test.after(() => {

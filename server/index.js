@@ -106,6 +106,7 @@ app.get('/api/catalog', (req, res) => {
     ],
     orderFeeRate: config.ORDER_FEE_RATE,
     altPaymentDiscountRate: config.ALT_PAYMENT_DISCOUNT_RATE,
+    accountCryptoDiscountRate: config.ACCOUNT_CRYPTO_DISCOUNT_RATE,
     promotion: publicPromotion(),
   });
 });
@@ -275,8 +276,9 @@ function prepareCheckout(body, accountId = null) {
   }
   const codeDiscount = discountMatch ? subtotal * discountMatch.rate : 0;
   const altPaymentDiscount = normalizedPaymentMethod === 'crypto' ? subtotal * config.ALT_PAYMENT_DISCOUNT_RATE : 0;
-  const discountAmount = Math.round((codeDiscount + altPaymentDiscount) * 100) / 100;
-  const discountLabel = discountMatch ? discountMatch.code : (altPaymentDiscount ? 'CRYPTO5' : null);
+  const memberCryptoDiscount = normalizedPaymentMethod === 'crypto' && customerAccount && customerAccount.verified_at ? subtotal * config.ACCOUNT_CRYPTO_DISCOUNT_RATE : 0;
+  const discountAmount = Math.round((codeDiscount + altPaymentDiscount + memberCryptoDiscount) * 100) / 100;
+  const discountLabel = discountMatch ? discountMatch.code : (memberCryptoDiscount ? 'CRYPTO5+MEMBER5' : (altPaymentDiscount ? 'CRYPTO5' : null));
   const availableCredit = customerAccount && customerAccount.verified_at
     ? Math.max(0, Number(customerAccount.credit_balance_cents || 0) / 100)
     : 0;
@@ -513,7 +515,7 @@ function orderFinancialSummary(order) {
 
   productRevenueAfterDiscount = Math.round(productRevenueAfterDiscount * 100) / 100;
   cogs = Math.round(cogs * 100) / 100;
-  const referralReward = Math.round((Number(order.referral_credit_cents || 0) / 100) * 100) / 100;
+  const referralReward = ['approved', 'earned'].includes(order.referral_credit_status) ? Math.round((Number(order.referral_credit_cents || 0) / 100) * 100) / 100 : 0;
   const storeCreditUsed = Math.round(Number(order.store_credit_amount || 0) * 100) / 100;
   const grossProfit = Math.round((productRevenueAfterDiscount - cogs - referralReward) * 100) / 100;
   const grossMargin = productRevenueAfterDiscount > 0 ? Math.round((grossProfit / productRevenueAfterDiscount) * 1000) / 10 : 0;
@@ -677,7 +679,7 @@ app.get('/api/admin/profit', requireAdmin, (req, res) => {
     totals.discounts += discount;
     totals.shippingCollected += Number(order.shipping_fee || 0);
     totals.processingCollected += Number(order.order_fee || 0);
-    const orderReferralReward = Number(order.referral_credit_cents || 0) / 100;
+    const orderReferralReward = ['approved', 'earned'].includes(order.referral_credit_status) ? Number(order.referral_credit_cents || 0) / 100 : 0;
     totals.referralRewards += orderReferralReward;
     const orderProductRevenue = Math.max(0, subtotal - discount);
 

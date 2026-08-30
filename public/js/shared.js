@@ -475,7 +475,7 @@ function getProductSearchCatalog() {
   if (!productSearchCatalogPromise) {
     productSearchCatalogPromise = api('/api/catalog').then(data => {
       window.siteCatalog = data.products;
-      window.siteFees = { packagingFee: data.packagingFee, shippingFee: data.shippingFee, internationalShippingFee: data.internationalShippingFee || 35, shippingOptions: data.shippingOptions || [], orderFeeRate: data.orderFeeRate || 0, altPaymentDiscountRate: data.altPaymentDiscountRate || 0 };
+      window.siteFees = { packagingFee: data.packagingFee, shippingFee: data.shippingFee, internationalShippingFee: data.internationalShippingFee || 35, shippingOptions: data.shippingOptions || [], orderFeeRate: data.orderFeeRate || 0, altPaymentDiscountRate: data.altPaymentDiscountRate || 0, accountCryptoDiscountRate: data.accountCryptoDiscountRate || 0 };
       window.sitePromotion = data.promotion || null;
       return data.products;
     });
@@ -549,9 +549,48 @@ function initProductSearch() {
   });
 }
 
+function showAccountWelcomePrompt() {
+  if (hpAccountState.authenticated || document.getElementById('accountWelcomePrompt')) return;
+  const key = 'hp_account_prompt_seen_at';
+  const lastSeen = Number(localStorage.getItem(key) || 0);
+  if (lastSeen && Date.now() - lastSeen < 7 * 86400000) return;
+  localStorage.setItem(key, String(Date.now()));
+  const overlay = document.createElement('div');
+  overlay.id = 'accountWelcomePrompt';
+  overlay.className = 'account-welcome-overlay';
+  overlay.innerHTML = `<section class="account-welcome-card" role="dialog" aria-modal="true" aria-labelledby="accountWelcomeTitle">
+    <button class="account-welcome-close" type="button" aria-label="Continue as guest">&times;</button>
+    <span class="account-kicker">Free Highland account</span>
+    <h2 id="accountWelcomeTitle">A little more value, without slowing checkout.</h2>
+    <p>Create a verified account to choose one personal referral code, get an extra <strong>5% off crypto orders</strong>, and submit a weekly TikTok video for a <strong>$5 store-credit review</strong>.</p>
+    <div class="account-welcome-benefits"><span>One personal code</span><span>Member crypto savings</span><span>Weekly creator credit</span></div>
+    <a class="account-welcome-cta" href="/account.html?view=register">Create my account</a>
+    <button class="account-welcome-skip" type="button">Continue as guest</button>
+    <small>Accounts are optional. Referral and creator credits are reviewed by Highland before being added.</small>
+  </section>`;
+  const close = () => { overlay.remove(); document.body.classList.remove('account-welcome-open'); };
+  overlay.querySelector('.account-welcome-close').onclick = close;
+  overlay.querySelector('.account-welcome-skip').onclick = close;
+  overlay.onclick = event => { if (event.target === overlay) close(); };
+  document.body.appendChild(overlay);
+  document.body.classList.add('account-welcome-open');
+}
+
+async function initAccountWelcomePrompt() {
+  if (!['/', '/index.html'].includes(location.pathname)) return;
+  await refreshAccountState();
+  if (hpAccountState.authenticated) return;
+  const launch = () => setTimeout(showAccountWelcomePrompt, 650);
+  const gate = document.getElementById('entryGate');
+  if (gate && getComputedStyle(gate).display !== 'none') {
+    document.getElementById('entryAgreeBtn')?.addEventListener('click', launch, { once: true });
+  } else launch();
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   initProductSearch();
   initAccountNavigation();
+  initAccountWelcomePrompt();
   updateCartBadge();
 });
 function cartSubtotal() {
@@ -748,7 +787,8 @@ async function refreshCheckoutAccountStatus() {
       <strong>Signed in as ${escapeHTML(state.account.name)}</strong>
       <span>${escapeHTML(state.account.email)}</span>
     </div>
-    ${balance > 0 ? `<label class="store-credit-toggle"><input id="applyStoreCredit" type="checkbox"> Apply up to <strong>$${balance.toFixed(2)}</strong> store credit</label>` : '<span class="store-credit-empty">Referral store credit will appear here after a referred order is paid.</span>'}`;
+    ${balance > 0 ? `<label class="store-credit-toggle"><input id="applyStoreCredit" type="checkbox"> Apply up to <strong>$${balance.toFixed(2)}</strong> store credit</label>` : '<span class="store-credit-empty">Approved referral and creator credit will appear here.</span>'}
+    <span class="member-crypto-note">Verified member benefit: an extra 5% off crypto orders. It does not apply to PayPal.</span>`;
   const toggle = document.getElementById('applyStoreCredit');
   if (toggle) toggle.addEventListener('change', renderCheckoutSummary);
   const nameInput = document.getElementById('buyerName');
@@ -781,7 +821,7 @@ function openCheckoutModal() {
   if (cryptoChoice) cryptoChoice.style.display = 'none';
   if (cryptoDetails) cryptoDetails.style.display = 'none';
   const cryptoButton = document.getElementById('cryptoCheckoutBtn');
-  if (cryptoButton) cryptoButton.querySelector('strong').innerHTML = 'Crypto <em>5% off</em>';
+  if (cryptoButton) cryptoButton.querySelector('strong').innerHTML = hpAccountState.authenticated ? 'Crypto <em>10% total savings</em>' : 'Crypto <em>5% off</em>';
   updateShippingCountryNote();
   renderCheckoutSummary();
   refreshCheckoutAccountStatus();
@@ -917,13 +957,14 @@ function renderCryptoPricePreview() {
   }
   const subtotal = round2(cartSubtotal());
   const rate = (window.siteFees && window.siteFees.altPaymentDiscountRate) || 0;
+  const memberRate = hpAccountState.authenticated ? ((window.siteFees && window.siteFees.accountCryptoDiscountRate) || 0) : 0;
   const shippingFee = selectedShippingFee();
   const orderFeeRate = (window.siteFees && window.siteFees.orderFeeRate) || 0;
-  const discount = round2(subtotal * rate);
+  const discount = round2(subtotal * (rate + memberRate));
   const feeBase = Math.max(0, subtotal - discount + shippingFee);
   const orderFee = round2(feeBase * orderFeeRate);
   const total = round2(feeBase + orderFee);
-  previewEl.textContent = rate ? `Crypto price: $${total.toFixed(2)} (saves $${discount.toFixed(2)})` : '';
+  previewEl.textContent = rate ? `Crypto price: $${total.toFixed(2)} (saves $${discount.toFixed(2)}${memberRate ? ' — includes your 5% member benefit' : ''})` : '';
 }
 
 function showManualPaymentShell(title, summary) {
@@ -952,7 +993,7 @@ async function submitCryptoCheckout() {
     if (paypalDetails) paypalDetails.style.display = 'none';
     if (choice) choice.style.display = 'block';
     showManualPaymentShell('Crypto payment', 'Choose BTC or USDC, then submit the order to get the exact payment total and address. Crypto discount cannot be combined with promo codes.');
-    btn.querySelector('strong').innerHTML = 'Submit Crypto Order <em>5% off</em>';
+    btn.querySelector('strong').innerHTML = hpAccountState.authenticated ? 'Submit Crypto Order <em>10% total savings</em>' : 'Submit Crypto Order <em>5% off</em>';
     return;
   }
 

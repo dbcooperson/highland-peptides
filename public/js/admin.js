@@ -39,18 +39,51 @@ function initAdminTabs() {
   });
 }
 
-function referralAdminSummaryHTML(accounts, payouts) {
+function referralAdminSummaryHTML(accounts, payouts, rewards = [], social = []) {
   const verified = accounts.filter(account => account.verifiedAt).length;
   const activeCodes = accounts.filter(account => account.referralCode).length;
   const totalCredit = accounts.reduce((sum, account) => sum + Number(account.creditBalance || 0), 0);
   const pendingPayouts = payouts.filter(request => ['pending', 'approved'].includes(request.status));
+  const pendingRewards = rewards.filter(item => item.status === 'pending_review').length;
+  const pendingSocial = social.filter(item => item.status === 'pending_review').length;
   return `<div class="admin-summary-grid">
     <div><span>Total accounts</span><strong>${accounts.length}</strong></div>
     <div><span>Verified</span><strong>${verified}</strong></div>
     <div><span>Active codes</span><strong>${activeCodes}</strong></div>
     <div><span>Store credit</span><strong>${money(totalCredit)}</strong></div>
     <div><span>Payouts to review</span><strong>${pendingPayouts.length}</strong></div>
+    <div><span>Credits to review</span><strong>${pendingRewards + pendingSocial}</strong></div>
   </div>`;
+}
+
+function reviewQueueHTML(tableId, rows, kind) {
+  const table = document.getElementById(tableId);
+  const isReferral = kind === 'referral';
+  table.innerHTML = `<tr>${['Item','Account','Evidence','Credit','Status','Review note','Action'].map(th).join('')}</tr>` + (rows.length ? rows.map(item => `
+    <tr>
+      ${td(isReferral ? `<strong>Order HP-${item.orderId}</strong><br><span class="admin-muted">${escapeHtml(item.customerName || '')}</span>` : `<strong>TikTok #${item.id}</strong><br><span class="admin-muted">${escapeHtml(new Date(item.created_at).toLocaleString())}</span>`)}
+      ${td(`<strong>${escapeHtml(item.accountName)}</strong><br><a href="${mailtoHref(item.accountEmail)}">${escapeHtml(item.accountEmail)}</a>`)}
+      ${td(isReferral ? `${money(item.productSpend)} paid merchandise<br><span class="admin-muted">${escapeHtml(item.referralCode || '')}</span>` : `<a href="${escapeHtml(item.video_url)}" target="_blank" rel="noopener">Open TikTok video</a>`)}
+      ${td(`<strong>${money(isReferral ? item.amount : item.creditAmount)}</strong>`)}
+      ${td(statusBadge(item.status))}
+      ${td(`<input class="payout-note-input" data-review-note="${isReferral ? item.orderId : item.id}" type="text" maxlength="500" value="${escapeHtml(item.adminNote || item.admin_note || '')}" placeholder="Internal review note">`)}
+      ${td(item.status === 'pending_review' ? `<div class="payout-actions"><button type="button" data-review-id="${isReferral ? item.orderId : item.id}" data-review-status="approved">Approve</button><button type="button" data-review-id="${isReferral ? item.orderId : item.id}" data-review-status="rejected">Reject</button></div>` : '<span class="admin-muted">Complete</span>')}
+    </tr>`).join('') : `<tr>${td(`No ${isReferral ? 'referral credits' : 'TikTok submissions'} yet.`)}</tr>`);
+  table.querySelectorAll('[data-review-id]').forEach(button => {
+    button.onclick = async () => {
+      const id = button.dataset.reviewId;
+      const status = button.dataset.reviewStatus;
+      if (!confirm(`${status === 'approved' ? 'Approve' : 'Reject'} this ${isReferral ? 'referral credit' : 'TikTok credit'}?`)) return;
+      const note = table.querySelector(`[data-review-note="${id}"]`)?.value || '';
+      const path = isReferral ? `/api/admin/referral-rewards/${id}/status` : `/api/admin/tiktok-submissions/${id}/status`;
+      try {
+        await api(path, { method: 'POST', body: { status, note } });
+        await loadReferrals();
+      } catch (err) {
+        document.getElementById('referralAdminMessage').textContent = err.message;
+      }
+    };
+  });
 }
 
 function referralAccountsHTML(accounts) {
@@ -99,7 +132,9 @@ function payoutRequestsHTML(requests) {
 async function loadReferrals() {
   try {
     const data = await api('/api/admin/referrals');
-    document.getElementById('referralAdminSummary').innerHTML = referralAdminSummaryHTML(data.accounts, data.payouts);
+    document.getElementById('referralAdminSummary').innerHTML = referralAdminSummaryHTML(data.accounts, data.payouts, data.referralRewards, data.socialSubmissions);
+    reviewQueueHTML('referralRewardsTable', data.referralRewards || [], 'referral');
+    reviewQueueHTML('socialCreditTable', data.socialSubmissions || [], 'social');
     referralAccountsHTML(data.accounts);
     payoutRequestsHTML(data.payouts);
     document.getElementById('referralAdminMessage').textContent = '';
