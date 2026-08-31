@@ -58,6 +58,7 @@ module.exports = {
     PHARMACODE: 0.15,
     NOOR: 0.15,
     GJ: 0.15,
+    SUPERMAN: 0.15,
   },
 
 
