@@ -4563,12 +4563,16 @@ body.admin-page .highland-print-label .highland-label-compound {
 }
 .highland-label-side-storage {
   left: 0.02in;
+  color: #111;
 }
 .highland-label-side-storage span {
   transform: rotate(180deg);
 }
 .highland-label-side-batch {
   right: 0.02in;
+}
+.highland-label-side-batch span:last-child {
+  color: #111;
 }
 .highland-label-footer {
   left: 0;
