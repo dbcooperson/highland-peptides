@@ -343,7 +343,7 @@ function buildHighlandLabel({ name, dosage, design = 'ridge-current' }) {
 function getLabelMakerValues() {
   const name = document.getElementById('labelProductName')?.value.trim() || '';
   const dosage = document.getElementById('labelDosage')?.value.trim() || '';
-  const design = document.querySelector('input[name="labelDesign"]:checked')?.value || 'ridge-current';
+  const design = document.querySelector('[name="labelDesign"]')?.value || 'ridge-current';
   const start = Math.max(1, Math.min(48, Number(document.getElementById('labelStartPosition')?.value || 1)));
   const requested = Math.max(1, Math.min(48, Number(document.getElementById('labelQuantity')?.value || 1)));
   const quantity = Math.min(requested, 49 - start);
@@ -355,9 +355,6 @@ function renderLabelMaker() {
   const preview = document.getElementById('labelLivePreview');
   if (!preview) return;
   preview.replaceChildren(buildHighlandLabel(values));
-  document.querySelectorAll('.label-design-option').forEach(option => {
-    option.classList.toggle('selected', Boolean(option.querySelector('input:checked')));
-  });
   const quantityInput = document.getElementById('labelQuantity');
   if (quantityInput) quantityInput.max = String(49 - values.start);
   const message = document.getElementById('labelMakerMessage');
@@ -379,21 +376,41 @@ function buildLabelPrintSheet(values) {
   }
 }
 
-async function loadLabelProductNames() {
-  const list = document.getElementById('labelProductNames');
-  if (!list || list.dataset.loaded) return;
+function applyCatalogLabelSelection() {
+  const select = document.getElementById('labelCatalogProduct');
+  const option = select?.selectedOptions?.[0];
+  if (!option?.value) return;
+  const nameInput = document.getElementById('labelProductName');
+  const doseInput = document.getElementById('labelDosage');
+  if (nameInput) nameInput.value = option.dataset.labelName || '';
+  if (doseInput) doseInput.value = option.dataset.labelDose || '';
+  renderLabelMaker();
+}
+
+async function loadLabelCatalogProducts() {
+  const select = document.getElementById('labelCatalogProduct');
+  if (!select || select.dataset.loaded) return;
   try {
     const catalogData = await api('/api/catalog');
-    const names = [...new Set((catalogData.products || []).map(product => product.name).filter(Boolean))]
-      .sort((a, b) => a.localeCompare(b));
-    list.replaceChildren(...names.map(name => {
+    const products = (catalogData.products || []).filter(product => product.sku && product.labelName && product.labelDose);
+    const options = products.map(product => {
       const option = document.createElement('option');
-      option.value = name;
+      option.value = product.sku;
+      option.dataset.labelName = product.labelName;
+      option.dataset.labelDose = product.labelDose;
+      option.textContent = `${product.name} — ${product.labelDose} · ${product.sku}`;
       return option;
-    }));
-    list.dataset.loaded = 'true';
+    });
+    select.replaceChildren(...options);
+    const defaultProduct = products.find(product => product.sku === 'RT20') || products[0];
+    if (defaultProduct) select.value = defaultProduct.sku;
+    select.dataset.loaded = 'true';
+    applyCatalogLabelSelection();
   } catch {
-    // Free-form typing still works if the catalog request is unavailable.
+    const option = document.createElement('option');
+    option.value = 'manual';
+    option.textContent = 'Catalog unavailable — enter label text manually';
+    select.replaceChildren(option);
   }
 }
 
@@ -402,7 +419,7 @@ function initLabelMaker() {
   if (!form || form.dataset.initialized) return;
   form.dataset.initialized = 'true';
   form.querySelectorAll('input').forEach(input => input.addEventListener('input', renderLabelMaker));
-  form.querySelectorAll('input[name="labelDesign"]').forEach(input => input.addEventListener('change', renderLabelMaker));
+  document.getElementById('labelCatalogProduct')?.addEventListener('change', applyCatalogLabelSelection);
   form.addEventListener('submit', event => {
     event.preventDefault();
     const values = getLabelMakerValues();
@@ -413,7 +430,7 @@ function initLabelMaker() {
     window.addEventListener('afterprint', cleanup, { once: true });
     requestAnimationFrame(() => requestAnimationFrame(() => window.print()));
   });
-  loadLabelProductNames();
+  loadLabelCatalogProducts();
   renderLabelMaker();
 }
 

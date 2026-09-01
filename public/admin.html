@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin: Highland Peptides</title>
-<link rel="stylesheet" href="/css/style.css?v=account-rewards-v3-20260829">
+<link rel="stylesheet" href="/css/style.css?v=admin-label-catalog-v1-20260901">
 </head>
 <body class="admin-page">
 <header class="topbar">
@@ -125,20 +125,25 @@
     <div class="panel admin-tab-panel label-maker-panel" id="labelsPanel" data-admin-panel="labels" hidden>
       <div class="label-maker-heading">
         <div>
-          <span class="label-maker-kicker">OL1735 · 1.75 × 0.75 in · 48 per sheet</span>
+          <span class="label-maker-kicker">OL1735WS · 1.75 × 0.75 in · 48 per sheet</span>
           <h2>Highland Label Maker</h2>
-          <p class="hint">Enter the compound and strength, choose a Highland mark, then print up to 48 aligned labels on one letter-size sheet.</p>
+          <p class="hint">Choose any current storefront SKU and its approved name and strength will be loaded automatically for printing.</p>
         </div>
         <a class="label-concept-link" href="/images/branding/highland-ridge-current-front-v2.png" target="_blank" rel="noopener">Open Ridge Current mockup</a>
       </div>
 
       <div class="label-maker-grid">
         <form id="labelMakerForm" class="label-maker-form">
-          <label>Compound name
-            <input id="labelProductName" list="labelProductNames" type="text" value="Retatrutide" maxlength="42" autocomplete="off" required>
-            <datalist id="labelProductNames"></datalist>
+          <label>Current storefront product
+            <select id="labelCatalogProduct" required>
+              <option value="">Loading current catalog…</option>
+            </select>
+            <small class="label-field-note">Every active SKU and strength from the storefront appears here.</small>
           </label>
-          <label>Dosage / strength
+          <label>Printed compound name
+            <input id="labelProductName" type="text" value="Retatrutide" maxlength="42" autocomplete="off" required>
+          </label>
+          <label>Printed dosage / strength
             <input id="labelDosage" type="text" value="20 MG" maxlength="24" autocomplete="off" required>
           </label>
           <div class="label-maker-row">
@@ -150,31 +155,15 @@
             </label>
           </div>
 
-          <fieldset class="label-design-picker">
-            <legend>Logo direction</legend>
-            <label class="label-design-option selected">
-              <input type="radio" name="labelDesign" value="ridge-current" checked>
-              <span class="mini-mark mini-mark-ridge-current">HP</span>
-              <strong>Ridge Current</strong>
-              <small>Featured white-label design</small>
-            </label>
-            <label class="label-design-option">
-              <input type="radio" name="labelDesign" value="signal">
-              <span class="mini-mark mini-mark-signal">H</span>
-              <strong>Highland Signal</strong>
-              <small>Modern molecular cue</small>
-            </label>
-            <label class="label-design-option">
-              <input type="radio" name="labelDesign" value="cairn">
-              <span class="mini-mark mini-mark-cairn">H</span>
-              <strong>Cairn</strong>
-              <small>Rugged geometric mark</small>
-            </label>
-          </fieldset>
+          <input type="hidden" name="labelDesign" value="ridge-current">
+          <div class="label-current-design" aria-label="Current approved label design">
+            <span class="mini-mark mini-mark-ridge-current">HP</span>
+            <span><strong>Current Highland production label</strong><small>Ridge Current · approved white-label design</small></span>
+          </div>
 
           <div class="label-print-note">
             <strong>Canon laser-printer setup</strong>
-            <span>Use laser-compatible OL1735 stock, Letter paper, Actual Size / 100% scale, and turn browser headers and footers off. Do not feed inkjet-only OL1735WG sheets through this printer.</span>
+            <span>Use your laser-compatible OL1735WS White Gloss sheets, Letter paper, Actual Size / 100% scale, and turn browser headers and footers off. Do not use inkjet-only OL1735WG stock.</span>
           </div>
           <button type="submit" class="label-print-button">Print labels</button>
           <p id="labelMakerMessage" class="form-msg" aria-live="polite"></p>
@@ -184,7 +173,7 @@
           <div>
             <span class="label-preview-caption">Live print preview</span>
             <div id="labelLivePreview"></div>
-            <p>Printed at the exact OL1735WG label size. The label stays crisp because the logo and type are rendered as vector-like browser elements, not AI text.</p>
+            <p>Printed at the exact OL1735WS label size. The label stays crisp because the logo and type are rendered as vector-like browser elements, not AI text.</p>
           </div>
         </section>
       </div>
@@ -199,7 +188,7 @@
 
 <div id="labelPrintPortal" class="label-print-sheet" aria-hidden="true"></div>
 
-<script src="/js/admin.js?v=account-rewards-v3-20260829"></script>
+<script src="/js/admin.js?v=admin-label-catalog-v1-20260901"></script>
 </body>
 </html>
 

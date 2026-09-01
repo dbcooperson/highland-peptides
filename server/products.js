@@ -6,6 +6,37 @@ const raw = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'produ
 const descriptions = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'descriptions.json'), 'utf8'));
 const PRODUCT_IMAGE_REVISION = 'offwhite-closeup-20260825';
 
+const LABEL_NAME_OVERRIDES = {
+  'CJC-1295 without DAC + Ipamorelin': 'CJC W/O DAC + IPA',
+  'CJC-1295 without DAC': 'CJC W/O DAC',
+  'Cagrilintide + Semaglutide': 'CAGRI + SEMA',
+  'Semax 10mg + Selank 10mg': 'SEMAX + SELANK',
+  'Semax 5mg + Selank 5mg': 'SEMAX + SELANK',
+  'BPC-157 + GHK-Cu + TB-500 + KPV Blend (Klow)': 'KLOW BLEND',
+  'BPC-157 + GHK-Cu + TB-500 Blend (Glow)': 'GLOW BLEND',
+  'BPC-157 + TB-500 Blend': 'BPC + TB-500',
+  'Bacteriostatic Water': 'BAC WATER',
+  'MOTS-c': 'MOTS-C',
+};
+
+function labelNameForProduct(name) {
+  const cleanName = String(name || '').trim();
+  return LABEL_NAME_OVERRIDES[cleanName] || cleanName;
+}
+
+function labelDoseFromSpec(spec) {
+  let dose = String(spec || '')
+    .replace(/\s*x\s*1\s*vial\s*$/i, '')
+    .trim()
+    .replace(/(\d)\s*(mcg|mg|iu|ml)\b/gi, '$1 $2')
+    .replace(/\s*\+\s*/g, ' + ')
+    .replace(/\s+/g, ' ')
+    .toUpperCase();
+
+  dose = dose.replace(/^(\d+(?:\.\d+)?) MG\/ML\s+(\d+(?:\.\d+)?) ML$/, '$1 MG/ML · $2 ML');
+  return dose;
+}
+
 function round(n, d) {
   const f = Math.pow(10, d);
   return Math.round(n * f) / f;
@@ -70,6 +101,8 @@ const pricedCatalog = raw
     promoEligible: p.promoEligible !== false,
     description: descriptions[p.name] || '',
     image: `/images/product-mockups/generated/${p.sku}.webp?v=${PRODUCT_IMAGE_REVISION}`,
+    labelName: labelNameForProduct(p.name),
+    labelDose: labelDoseFromSpec(p.spec),
     price: p.fixedPublicPrice != null
       ? round(p.fixedPublicPrice, PRICE_DECIMALS)
       : round((p.salePrice != null ? p.salePrice : p.cost * MARKUP_MULTIPLIER * PRICE_ADJUSTMENT) * PUBLIC_PRICE_MULTIPLIER, PRICE_DECIMALS),
@@ -135,7 +168,16 @@ function getProductFamily({ sku, slug }) {
   };
 }
 
-module.exports = { catalog, bySku, bySlug, costBySku, getProductFamily, priceAudit };
+module.exports = {
+  catalog,
+  bySku,
+  bySlug,
+  costBySku,
+  getProductFamily,
+  priceAudit,
+  labelNameForProduct,
+  labelDoseFromSpec,
+};
 
 
 
