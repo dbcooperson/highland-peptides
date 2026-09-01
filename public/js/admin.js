@@ -449,7 +449,7 @@ function openLabelPrintWindow(values) {
 </head>
 <body>
   <header class="label-sheet-toolbar">
-    <div><strong>Highland label sheet</strong><span>OL1735WS · Letter · Actual Size / 100%</span></div>
+    <div><strong>Highland label sheet · ${values.quantity} label${values.quantity === 1 ? '' : 's'}</strong><span>Copies 1 · Page 1 only · Single-sided · Letter · Actual Size / 100%</span></div>
     <button id="printSheetButton" type="button">Print labels</button>
   </header>
   ${portal.outerHTML}
@@ -457,7 +457,7 @@ function openLabelPrintWindow(values) {
 </body>
 </html>`);
   printWindow.document.close();
-  if (message) message.textContent = 'Label-only print sheet opened. Tap Print labels in the new page.';
+  if (message) message.textContent = `${values.quantity} label${values.quantity === 1 ? '' : 's'} prepared on page 1. Tap Print labels in the new page.`;
 }
 
 let labelCatalogProducts = [];

@@ -21,6 +21,7 @@ test('admin includes the protected label maker controls', () => {
   assert.match(html, /id="labelExpiryDate"[^>]*value="9\/1\/2027"/);
   assert.match(html, /id="labelStorage"[^>]*value="36–46°F"/);
   assert.match(html, /id="labelQuantity"/);
+  assert.match(html, /id="labelQuantity"[^>]*value="1"/);
   assert.match(html, /id="labelStartPosition"/);
   assert.match(html, /id="labelPrintPortal"/);
   assert.match(html, /name="labelDesign" value="vial-current"/);
