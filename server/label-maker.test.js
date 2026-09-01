@@ -15,6 +15,9 @@ test('admin includes the protected label maker controls', () => {
   assert.match(html, /id="labelCatalogProduct"/);
   assert.match(html, /id="labelProductName"/);
   assert.match(html, /id="labelDosage"/);
+  assert.match(html, /id="labelLotNumber"[^>]*value="314"/);
+  assert.match(html, /id="labelExpiryDate"[^>]*value="9\/1\/2027"/);
+  assert.match(html, /id="labelStorage"[^>]*value="36–46°F"/);
   assert.match(html, /id="labelQuantity"/);
   assert.match(html, /id="labelStartPosition"/);
   assert.match(html, /id="labelPrintPortal"/);
@@ -61,9 +64,14 @@ test('print labels match the current photographed vial hierarchy', () => {
   assert.match(js, /highland-hp-ridge-mark-v1\.png/);
   assert.match(js, /purity\.textContent\s*=\s*'99% PURITY'/);
   assert.match(js, /ruo\.textContent\s*=\s*'RESEARCH USE ONLY'/);
+  assert.match(js, /storageTitle\.textContent\s*=\s*'STORE AT'/);
+  assert.match(js, /`LOT \$\{String\(lot/);
+  assert.match(js, /`EXP \$\{String\(expiry/);
   assert.match(css, /\.label-design-vial-current/);
   assert.match(css, /\.highland-label-divider/);
   assert.match(css, /\.highland-label-accent/);
   assert.match(css, /\.highland-label-footer-dot/);
+  assert.match(css, /\.highland-label-side-storage/);
+  assert.match(css, /\.highland-label-side-batch/);
   assert.doesNotMatch(js, /ridge-current-label-base-v2\.png/);
 });

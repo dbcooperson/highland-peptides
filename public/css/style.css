@@ -4541,6 +4541,35 @@ body.admin-page .highland-print-label .highland-label-compound {
   text-overflow: ellipsis;
   transform: translateX(-50%);
 }
+.highland-label-side {
+  top: 0.025in;
+  bottom: 0.165in;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.018in;
+  width: 0.1in;
+  color: #07563f;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 2.55pt;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.015em;
+}
+.highland-label-side span {
+  display: block;
+  writing-mode: vertical-rl;
+  white-space: nowrap;
+}
+.highland-label-side-storage {
+  left: 0.02in;
+}
+.highland-label-side-storage span {
+  transform: rotate(180deg);
+}
+.highland-label-side-batch {
+  right: 0.02in;
+}
 .highland-label-footer {
   left: 0;
   right: 0;

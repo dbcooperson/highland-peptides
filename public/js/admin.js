@@ -300,7 +300,7 @@ function labelTextSizeClass(name) {
   return 'label-name-short';
 }
 
-function buildHighlandLabel({ name, dosage, design = 'vial-current' }) {
+function buildHighlandLabel({ name, dosage, lot, expiry, storage, design = 'vial-current' }) {
   const label = document.createElement('div');
   label.className = `highland-print-label label-design-${design}`;
 
@@ -332,6 +332,22 @@ function buildHighlandLabel({ name, dosage, design = 'vial-current' }) {
   dose.className = 'highland-label-dose';
   dose.textContent = String(dosage || '').trim().toUpperCase();
 
+  const storageSide = document.createElement('div');
+  storageSide.className = 'highland-label-side highland-label-side-storage';
+  const storageTitle = document.createElement('span');
+  storageTitle.textContent = 'STORE AT';
+  const storageValue = document.createElement('span');
+  storageValue.textContent = String(storage || '').trim().toUpperCase();
+  storageSide.append(storageTitle, storageValue);
+
+  const batchSide = document.createElement('div');
+  batchSide.className = 'highland-label-side highland-label-side-batch';
+  const lotValue = document.createElement('span');
+  lotValue.textContent = `LOT ${String(lot || '').trim().toUpperCase()}`;
+  const expiryValue = document.createElement('span');
+  expiryValue.textContent = `EXP ${String(expiry || '').trim().toUpperCase()}`;
+  batchSide.append(lotValue, expiryValue);
+
   const footer = document.createElement('div');
   footer.className = 'highland-label-footer';
   const purity = document.createElement('span');
@@ -343,18 +359,21 @@ function buildHighlandLabel({ name, dosage, design = 'vial-current' }) {
   ruo.textContent = 'RESEARCH USE ONLY';
   footer.append(purity, footerDot, ruo);
 
-  label.append(identity, divider, compound, accent, dose, footer);
+  label.append(identity, divider, compound, accent, dose, storageSide, batchSide, footer);
   return label;
 }
 
 function getLabelMakerValues() {
   const name = document.getElementById('labelProductName')?.value.trim() || '';
   const dosage = document.getElementById('labelDosage')?.value.trim() || '';
+  const lot = document.getElementById('labelLotNumber')?.value.trim() || '';
+  const expiry = document.getElementById('labelExpiryDate')?.value.trim() || '';
+  const storage = document.getElementById('labelStorage')?.value.trim() || '';
   const design = document.querySelector('[name="labelDesign"]')?.value || 'vial-current';
   const start = Math.max(1, Math.min(48, Number(document.getElementById('labelStartPosition')?.value || 1)));
   const requested = Math.max(1, Math.min(48, Number(document.getElementById('labelQuantity')?.value || 1)));
   const quantity = Math.min(requested, 49 - start);
-  return { name, dosage, design, start, quantity };
+  return { name, dosage, lot, expiry, storage, design, start, quantity };
 }
 
 function renderLabelMaker() {
