@@ -3728,6 +3728,15 @@ body.search-open { overflow: hidden; }
   z-index: 1;
   pointer-events: none;
 }
+.product-card .card-media.sku-mockup {
+  border: 0;
+  background: #fff;
+  box-shadow: none;
+}
+.product-card .sku-mockup-img {
+  object-fit: cover;
+  object-position: center;
+}
 .product-card-badge {
   position: absolute;
   z-index: 2;
