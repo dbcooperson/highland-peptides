@@ -402,6 +402,64 @@ function buildLabelPrintSheet(values) {
   }
 }
 
+function openLabelPrintWindow(values) {
+  const printWindow = window.open('', '_blank');
+  const message = document.getElementById('labelMakerMessage');
+  if (!printWindow) {
+    if (message) message.textContent = 'Safari blocked the print sheet. Allow pop-ups for this site, then tap Print labels again.';
+    return;
+  }
+
+  buildLabelPrintSheet(values);
+  const portal = document.getElementById('labelPrintPortal');
+  if (!portal) {
+    printWindow.close();
+    return;
+  }
+
+  printWindow.document.open();
+  printWindow.document.write(`<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Highland Label Print Sheet</title>
+  <link rel="stylesheet" href="/css/style.css?v=admin-label-sheet-v4-20260901">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: #e9e6de; color: #171a18; font-family: Arial, Helvetica, sans-serif; }
+    .label-sheet-toolbar { position: sticky; z-index: 20; top: 0; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 13px 18px; background: #153e31; color: #fff; box-shadow: 0 8px 24px rgba(0,0,0,.22); }
+    .label-sheet-toolbar strong { font-size: 14px; }
+    .label-sheet-toolbar span { display: block; margin-top: 2px; color: rgba(255,255,255,.68); font-size: 10px; }
+    .label-sheet-toolbar button { min-height: 42px; padding: 0 22px; border: 0; border-radius: 999px; background: #fff; color: #153e31; font: 900 13px/1 Arial, sans-serif; cursor: pointer; }
+    #labelPrintPortal { box-sizing: border-box; display: grid !important; grid-template-columns: repeat(4, 1.75in); grid-template-rows: repeat(12, .75in); column-gap: .333in; row-gap: .136in; width: 8.5in; height: 11in; margin: 18px auto; padding: .25in; background: #fff; box-shadow: 0 18px 55px rgba(0,0,0,.2); }
+    .label-print-cell { width: 1.75in; height: .75in; overflow: hidden; }
+    @media (max-width: 850px) {
+      .label-sheet-toolbar { align-items: stretch; flex-direction: column; }
+      .label-sheet-toolbar button { width: 100%; }
+      #labelPrintPortal { margin: 12px 0; transform: scale(.48); transform-origin: top left; }
+    }
+    @media print {
+      @page { size: Letter portrait; margin: 0; }
+      html, body { width: 8.5in !important; height: 11in !important; background: #fff !important; }
+      .label-sheet-toolbar { display: none !important; }
+      #labelPrintPortal { display: grid !important; margin: 0 !important; transform: none !important; box-shadow: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <header class="label-sheet-toolbar">
+    <div><strong>Highland label sheet</strong><span>OL1735WS · Letter · Actual Size / 100%</span></div>
+    <button id="printSheetButton" type="button">Print labels</button>
+  </header>
+  ${portal.outerHTML}
+  <script>document.getElementById('printSheetButton').addEventListener('click', function () { window.print(); });<\/script>
+</body>
+</html>`);
+  printWindow.document.close();
+  if (message) message.textContent = 'Label-only print sheet opened. Tap Print labels in the new page.';
+}
+
 let labelCatalogProducts = [];
 
 function labelProductSearchText(product) {
@@ -561,20 +619,7 @@ function initLabelMaker() {
     event.preventDefault();
     const values = getLabelMakerValues();
     if (!values.name || !values.dosage) return;
-    buildLabelPrintSheet(values);
-    document.body.classList.add('label-printing');
-    const cleanup = () => document.body.classList.remove('label-printing');
-    window.addEventListener('afterprint', cleanup, { once: true });
-    const printPortal = document.getElementById('labelPrintPortal');
-    if (printPortal) void printPortal.offsetHeight;
-    try {
-      window.print();
-      window.setTimeout(cleanup, 30000);
-    } catch {
-      cleanup();
-      const message = document.getElementById('labelMakerMessage');
-      if (message) message.textContent = 'Printer options could not open. In Safari, tap Share and then Print.';
-    }
+    openLabelPrintWindow(values);
   });
   loadLabelCatalogProducts();
   renderLabelMaker();

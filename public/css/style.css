@@ -4610,6 +4610,7 @@ body.admin-page .highland-print-label .highland-label-compound {
   border-radius: 0.045in;
   background: #fff;
   color: #07563f !important;
+  -webkit-text-fill-color: #07563f;
   font-size: 6.2pt;
   font-weight: 900;
   line-height: 1;

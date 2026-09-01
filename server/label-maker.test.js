@@ -34,9 +34,12 @@ test('label sheet matches the OL1735WS 48-up geometry', () => {
   assert.match(css, /row-gap:\s*0\.136in/);
   assert.match(css, /padding:\s*0\.25in/);
   assert.match(js, /position\s*<=\s*48/);
-  assert.match(js, /void printPortal\.offsetHeight/);
+  assert.match(js, /openLabelPrintWindow/);
+  assert.match(js, /Highland Label Print Sheet/);
+  assert.match(js, /id="printSheetButton"/);
   assert.match(js, /window\.print\(\)/);
-  assert.doesNotMatch(js, /requestAnimationFrame\(\(\)\s*=>\s*requestAnimationFrame\(\(\)\s*=>\s*window\.print/);
+  assert.match(js, /#labelPrintPortal \{ box-sizing: border-box; display: grid !important/);
+  assert.match(css, /\.highland-label-dose[\s\S]*?-webkit-text-fill-color:\s*#07563f/);
 });
 
 test('label maker receives every current storefront SKU and strength', () => {
