@@ -119,43 +119,58 @@ body {
 .store-credit-empty { max-width:220px; text-align:right; }
 .account-credit-summary { color:#315b43; font-weight:800; }
 
-.account-page { min-height:100vh; background:#0e1417; color:#f3efe6; }
+.account-page { min-height:100vh; background:#fff; color:#13261d; }
+.account-page .mountain-scrim { display:none; }
 .account-mountain-bg { background:
-  radial-gradient(circle at 76% 20%, rgba(193,121,58,.17), transparent 26%),
-  radial-gradient(circle at 20% 65%, rgba(70,105,85,.25), transparent 30%),
-  linear-gradient(155deg,#0b1012 0%,#182126 54%,#0b1012 100%); }
-.account-mountain-bg::after { content:""; position:absolute; inset:auto 0 0; height:58%; opacity:.34; background:linear-gradient(145deg,transparent 0 24%,#2a3539 24.2% 42%,transparent 42.2%),linear-gradient(215deg,transparent 0 31%,#172126 31.2% 54%,transparent 54.2%); }
-.account-main { position:relative; z-index:2; max-width:1180px; margin:0 auto; padding:72px 24px 100px; display:block; }
-.account-hero { display:grid; grid-template-columns:1.05fr .95fr; gap:56px; align-items:end; margin-bottom:34px; }
-.account-kicker { display:block; color:#d09a61; text-transform:uppercase; letter-spacing:.16em; font-size:11px; font-weight:900; margin-bottom:10px; }
-.account-hero h1 { margin:0; font-size:clamp(46px,6vw,78px); letter-spacing:-.055em; line-height:.95; max-width:650px; }
-.account-hero > div > p { max-width:650px; color:#c7c5bf; font-size:17px; line-height:1.6; }
-.account-benefit-strip { display:grid; grid-template-columns:repeat(3,1fr); background:rgba(10,17,19,.68); border:1px solid rgba(243,239,230,.16); border-radius:20px; overflow:hidden; backdrop-filter:blur(12px); }
-.account-benefit-strip div { padding:20px 16px; border-right:1px solid rgba(243,239,230,.12); }
-.account-benefit-strip div:last-child { border:0; }
-.account-benefit-strip strong,.account-benefit-strip span { display:block; }
-.account-benefit-strip strong { font-size:20px; color:#f3efe6; }
-.account-benefit-strip span { margin-top:5px; color:#9fa7a2; font-size:11px; line-height:1.4; }
-
-.account-auth-shell { display:grid; grid-template-columns:1fr .82fr; background:#f7f2e9; color:#1c1a17; border-radius:28px; overflow:hidden; box-shadow:0 28px 70px rgba(0,0,0,.32); }
-.account-auth-shell[hidden] { display:none; }
-.account-auth-copy { padding:50px; background:linear-gradient(145deg,#eef1e7,#dedfcf); }
-.account-auth-copy h2 { font-size:38px; line-height:1.05; letter-spacing:-.04em; margin:0 0 28px; max-width:540px; }
-.account-auth-copy ol { margin:0; padding:0; list-style:none; counter-reset:account-steps; display:grid; gap:18px; }
-.account-auth-copy li { counter-increment:account-steps; display:grid; grid-template-columns:36px 1fr; align-items:center; font-size:14px; line-height:1.5; }
-.account-auth-copy li::before { content:counter(account-steps); display:grid; place-items:center; width:28px; height:28px; border-radius:50%; background:#173d2b; color:#fff; font-weight:900; font-size:12px; }
-.account-rule-note { margin-top:34px; padding:16px 18px; border:1px solid rgba(23,61,43,.22); border-radius:14px; background:rgba(255,255,255,.48); }
+  radial-gradient(circle at 50% 10%, rgba(50,105,74,.075), transparent 24%),
+  linear-gradient(180deg,#ffffff 0%,#f8faf7 74%,#ffffff 100%); }
+.account-mountain-bg::after { content:none; }
+.account-main { position:relative; z-index:2; max-width:1100px; margin:0 auto; padding:78px 24px 110px; display:block; }
+.account-kicker { display:block; color:#b8772b; text-transform:uppercase; letter-spacing:.16em; font-size:11px; font-weight:900; margin-bottom:10px; }
+.account-program-landing { color:#13261d; }
+.account-program-landing[hidden] { display:none; }
+.account-program-hero { max-width:870px; margin:0 auto; text-align:center; }
+.account-program-badge { display:inline-flex; align-items:center; gap:8px; padding:7px 12px; border:1px solid #c9ddce; border-radius:999px; background:#f4faf5; color:#24583a; text-transform:uppercase; letter-spacing:.13em; font-size:10px; font-weight:900; }
+.account-program-badge i { width:6px; height:6px; border-radius:50%; background:#c48a32; box-shadow:0 0 0 4px rgba(196,138,50,.12); }
+.account-program-hero h1 { margin:26px auto 16px; color:#102319; font-size:clamp(46px,6.4vw,76px); line-height:.98; letter-spacing:-.062em; }
+.account-program-hero h1 span { color:#2e6948; }
+.account-program-hero > p { max-width:720px; margin:0 auto; color:#637066; font-size:16px; line-height:1.7; }
+.account-trust-row { display:flex; flex-wrap:wrap; justify-content:center; gap:12px 24px; margin-top:25px; }
+.account-trust-row span { display:inline-flex; align-items:center; gap:7px; color:#5e6b62; font-size:11px; font-weight:750; }
+.account-trust-row span::before { content:"✓"; display:grid; place-items:center; width:15px; height:15px; border-radius:50%; background:#e3f0e6; color:#2e6948; font-size:9px; font-weight:950; }
+.account-metric-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; max-width:780px; margin:68px auto 92px; }
+.account-metric-grid article { min-height:142px; padding:28px 22px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; border:1px solid #d9e6dc; border-radius:16px; background:linear-gradient(145deg,#fbfdfb,#f5faf6); box-shadow:0 14px 34px rgba(24,69,44,.05); }
+.account-metric-grid strong { color:#2e6948; font-size:35px; line-height:1; letter-spacing:-.04em; }
+.account-metric-grid span { max-width:190px; margin-top:11px; color:#607067; font-size:11px; line-height:1.45; }
+.account-program-section { max-width:900px; margin:0 auto 66px; }
+.account-section-label { display:block; color:#b8772b; text-align:center; text-transform:uppercase; letter-spacing:.18em; font-size:9px; font-weight:950; }
+.account-program-section h2,.account-join-heading h2 { margin:11px 0 28px; color:#12251a; text-align:center; font-size:clamp(30px,4vw,44px); line-height:1.05; letter-spacing:-.045em; }
+.account-step-list { display:grid; gap:10px; margin:0; padding:0; list-style:none; }
+.account-step-list li { display:grid; grid-template-columns:38px 1fr; gap:18px; align-items:center; min-height:86px; padding:17px 20px; border:1px solid #d8e5db; border-radius:15px; background:#fff; box-shadow:0 8px 24px rgba(24,69,44,.035); }
+.account-step-list > li > span { display:grid; place-items:center; width:32px; height:32px; border-radius:10px; background:#2e6948; color:#fff; font-size:13px; font-weight:900; box-shadow:0 8px 16px rgba(46,105,72,.22); }
+.account-step-list strong { color:#183023; font-size:13px; }
+.account-step-list p { margin:4px 0 0; color:#6d786f; font-size:11px; line-height:1.5; }
+.account-feature-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; max-width:900px; margin:0 auto 82px; }
+.account-feature-grid article { min-height:178px; padding:25px; border:1px solid #d8e5db; border-radius:16px; background:#f8fbf8; }
+.account-feature-icon { display:grid; place-items:center; width:34px; height:34px; border-radius:10px; background:#2e6948; color:#fff; font-size:17px; font-weight:800; box-shadow:0 8px 16px rgba(46,105,72,.18); }
+.account-feature-grid h3 { margin:22px 0 7px; color:#172d21; font-size:14px; }
+.account-feature-grid p { margin:0; max-width:360px; color:#6a766d; font-size:11px; line-height:1.55; }
+.account-join-section { display:grid; grid-template-columns:1fr .82fr; gap:48px; align-items:center; padding-top:64px; border-top:1px solid #d9e6dc; }
+.account-join-heading .account-section-label,.account-join-heading h2 { text-align:left; }
+.account-join-heading h2 { margin-bottom:14px; }
+.account-join-heading > p { margin:0; max-width:480px; color:#69756c; font-size:13px; line-height:1.65; }
+.account-rule-note { margin-top:26px; padding:16px 18px; border:1px solid #d2e1d6; border-radius:14px; background:#f6faf6; }
 .account-rule-note strong,.account-rule-note span { display:block; }
 .account-rule-note span { margin-top:5px; color:#625d54; font-size:12px; line-height:1.5; }
-.account-auth-card { padding:38px 42px 44px; background:#faf7f1; }
-.account-auth-tabs { display:grid; grid-template-columns:1fr 1fr; padding:4px; border-radius:999px; background:#e9e2d6; margin-bottom:28px; }
+.account-auth-card { padding:32px 34px 34px; border:1px solid #d6e4d9; border-radius:22px; background:#fff; box-shadow:0 26px 70px rgba(25,69,45,.12); }
+.account-auth-tabs { display:grid; grid-template-columns:1fr 1fr; padding:4px; border-radius:999px; background:#edf3ee; margin-bottom:28px; }
 .account-auth-tabs button { border:0; border-radius:999px; padding:11px; background:transparent; color:#6f675c; font-weight:850; cursor:pointer; }
-.account-auth-tabs button.active { background:#fff; color:#1c1a17; box-shadow:0 3px 12px rgba(28,26,23,.1); }
+.account-auth-tabs button.active { background:#fff; color:#173d2b; box-shadow:0 3px 12px rgba(28,61,40,.1); }
 .account-form { display:grid; gap:14px; }
 .account-form[hidden] { display:none; }
-.account-form h2 { margin:0 0 5px; font-size:28px; }
+.account-form h2 { margin:0 0 5px; color:#14291e; font-size:28px; }
 .account-form label { display:grid; gap:6px; font-size:12px; font-weight:800; color:#534c42; }
-.account-form input,.referral-code-form input { width:100%; box-sizing:border-box; border:1px solid #d3c8b7; background:#fff; border-radius:11px; padding:13px 14px; color:#1c1a17; font:inherit; outline:none; }
+.account-form input,.referral-code-form input { width:100%; box-sizing:border-box; border:1px solid #cad9ce; background:#fff; border-radius:11px; padding:13px 14px; color:#1c1a17; font:inherit; outline:none; }
 .account-form input:focus,.referral-code-form input:focus { border-color:#315b43; box-shadow:0 0 0 3px rgba(49,91,67,.12); }
 .account-form small { color:#756c60; font-size:11px; margin-top:-7px; }
 .account-primary-button { border:0; border-radius:999px; padding:14px 20px; background:#173d2b; color:#fff; font-weight:900; cursor:pointer; font:inherit; }
@@ -196,9 +211,30 @@ body {
 
 @media (max-width: 850px) {
   .account-nav-text { display:none; }.account-nav-link { width:42px; padding:0; justify-content:center; }
-  .account-main { padding:42px 14px 70px; }.account-hero,.account-auth-shell { grid-template-columns:1fr; }.account-hero { gap:24px; }.account-hero h1 { font-size:48px; }.account-benefit-strip { grid-template-columns:1fr; }.account-benefit-strip div { border-right:0; border-bottom:1px solid rgba(243,239,230,.12); }
-  .account-auth-copy,.account-auth-card { padding:28px 22px; }.account-auth-copy h2 { font-size:31px; }.account-dashboard { padding:20px 14px; }.account-dashboard-heading { align-items:flex-start; }.account-dashboard-heading h2 { font-size:30px; }
+  .account-main { padding:54px 18px 76px; }
+  .account-program-hero h1 { font-size:54px; }
+  .account-metric-grid { margin:52px auto 72px; }
+  .account-join-section { grid-template-columns:1fr; gap:28px; }
+  .account-join-heading { max-width:640px; }
+  .account-auth-card { padding:28px 22px; }
+  .account-dashboard { padding:20px 14px; }.account-dashboard-heading { align-items:flex-start; }.account-dashboard-heading h2 { font-size:30px; }
   .account-summary-grid,.account-dashboard-grid,.creator-credit-panel { grid-template-columns:1fr; }.referral-code-form,.referral-code-display { flex-direction:column; align-items:stretch; }.referral-code-display > strong { font-size:22px; overflow-wrap:anywhere; }.checkout-account-status { align-items:flex-start; flex-direction:column; }.store-credit-empty { text-align:left; }.checkout-creator-credit { grid-template-columns:1fr; }.checkout-creator-credit > a { grid-column:1; grid-row:auto; }.account-welcome-card { padding:30px 20px 22px; }.account-welcome-card h2 { font-size:30px; }.account-welcome-benefits { grid-template-columns:1fr; }
+}
+@media (max-width: 620px) {
+  .account-main { padding:42px 14px 64px; }
+  .account-program-hero h1 { font-size:clamp(40px,12.5vw,52px); }
+  .account-program-hero > p { font-size:14px; }
+  .account-trust-row { max-width:340px; margin-left:auto; margin-right:auto; justify-content:flex-start; gap:10px 16px; }
+  .account-trust-row span { width:calc(50% - 8px); }
+  .account-metric-grid,.account-feature-grid { grid-template-columns:1fr; }
+  .account-metric-grid { margin:42px auto 64px; }
+  .account-metric-grid article { min-height:116px; }
+  .account-program-section { margin-bottom:52px; }
+  .account-step-list li { grid-template-columns:34px 1fr; gap:13px; padding:15px; }
+  .account-feature-grid { margin-bottom:64px; }
+  .account-feature-grid article { min-height:154px; }
+  .account-join-section { padding-top:50px; }
+  .account-auth-card { padding:22px 17px 24px; border-radius:18px; }
 }
 .brand-seal-wrap img {
   display: block;

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Optional Highland Peptides customer account, referral rewards, store credit, and order history.">
   <title>Account & Referral Rewards - Highland Peptides</title>
-  <link rel="stylesheet" href="/css/style.css?v=account-rewards-v3-20260829">
+  <link rel="stylesheet" href="/css/style.css?v=account-referral-landing-v1-20260831">
 </head>
 <body class="account-page">
   <div class="mountain-bg account-mountain-bg" aria-hidden="true"></div>
@@ -31,63 +31,84 @@
   </div>
 
   <main class="account-main">
-    <section class="account-hero">
-      <div>
-        <span class="account-kicker">Optional customer accounts</span>
-        <h1>Rewards that stay simple.</h1>
-        <p>Checkout as a guest anytime, or create a verified account for member crypto savings, one personal referral code, creator rewards, store credit, and order history.</p>
-      </div>
-      <div class="account-benefit-strip">
-        <div><strong>+5% crypto</strong><span>extra member savings on crypto only</span></div>
-        <div><strong>One code</strong><span>10% off for friends; rewards reviewed manually</span></div>
-        <div><strong>$5 creator credit</strong><span>one TikTok submission every 7 days</span></div>
-      </div>
-    </section>
+    <section id="accountAuth" class="account-program-landing">
+      <header class="account-program-hero">
+        <span class="account-program-badge"><i aria-hidden="true"></i> Highland member program</span>
+        <h1>Share Highland.<br><span>Earn credit when your code helps.</span></h1>
+        <p>Create one personal referral code. Friends save 10% on qualifying merchandise, and you earn that same 10% as store credit after Highland reviews the paid order.</p>
+        <div class="account-trust-row" aria-label="Member account benefits">
+          <span>Free to join</span>
+          <span>Order tracking</span>
+          <span>Member crypto savings</span>
+          <span>Weekly creator credit</span>
+        </div>
+      </header>
 
-    <section id="accountAuth" class="account-auth-shell">
-      <div class="account-auth-copy">
-        <span class="account-kicker">Highland referral rewards</span>
-        <h2>Create your code. Share it once. Track it here.</h2>
-        <ol>
-          <li>Verify your email and choose one unique referral code.</li>
-          <li>Friends receive 10% off qualifying merchandise.</li>
-          <li>Paid referral rewards enter Highland's manual approval queue.</li>
-        </ol>
-        <div class="account-rule-note"><strong>Manual credit review</strong><span>Referral and TikTok rewards are added only after Highland approval. Cash-out requests unlock after 5 unique referred customers and $500 total paid referral spend. Self-referrals do not qualify.</span></div>
+      <div class="account-metric-grid" aria-label="Referral program highlights">
+        <article><strong>10%</strong><span>Friends save on qualifying merchandise</span></article>
+        <article><strong>10%</strong><span>You earn as reviewed store credit</span></article>
+        <article><strong>5 + $500</strong><span>Customers and paid spend for cash-out eligibility</span></article>
       </div>
-      <div class="account-auth-card">
-        <div class="account-auth-tabs" role="tablist">
-          <button type="button" class="active" data-auth-view="login">Sign in</button>
-          <button type="button" data-auth-view="register">Create account</button>
+
+      <section class="account-program-section" aria-labelledby="accountHowTitle">
+        <span class="account-section-label">How it works</span>
+        <h2 id="accountHowTitle">Three steps to your first referral credit</h2>
+        <ol class="account-step-list">
+          <li><span>1</span><div><strong>Create your account</strong><p>Verify your email, then choose one personal referral code that is yours to keep.</p></div></li>
+          <li><span>2</span><div><strong>Share your code</strong><p>Friends enter it at checkout to receive 10% off qualifying merchandise.</p></div></li>
+          <li><span>3</span><div><strong>Earn reviewed credit</strong><p>After the order is paid, Highland reviews it before adding the 10% reward to your store-credit balance.</p></div></li>
+        </ol>
+      </section>
+
+      <section class="account-feature-grid" aria-label="Member account features">
+        <article><span class="account-feature-icon" aria-hidden="true">↗</span><h3>One personal code</h3><p>Create a memorable code your community can use at checkout. One code is available per verified account.</p></article>
+        <article><span class="account-feature-icon" aria-hidden="true">%</span><h3>10% both ways</h3><p>Your referred customer saves 10%, and you receive the same 10% as store credit after review.</p></article>
+        <article><span class="account-feature-icon" aria-hidden="true">◇</span><h3>Member extras</h3><p>Get an extra 5% off crypto orders and submit one TikTok every seven days for a $5 credit review.</p></article>
+        <article><span class="account-feature-icon" aria-hidden="true">◎</span><h3>Track all packages</h3><p>Follow order progress and see your Highland purchase history from one verified account.</p></article>
+      </section>
+
+      <section class="account-join-section" aria-labelledby="accountJoinTitle">
+        <div class="account-join-heading">
+          <span class="account-section-label">Create your account</span>
+          <h2 id="accountJoinTitle">Ready to get started?</h2>
+          <p>Join in under a minute. Accounts are optional, and guest checkout will always remain available.</p>
+          <div class="account-rule-note"><strong>Transparent review process</strong><span>Referral and creator rewards are added only after Highland approval. Cash-out requests unlock after 5 unique referred customers and $500 total paid referral spend. Self-referrals do not qualify.</span></div>
         </div>
 
-        <form id="accountLoginForm" class="account-form" data-auth-panel="login">
-          <h2>Welcome back</h2>
-          <label>Email <input id="loginEmail" type="email" autocomplete="email" required></label>
-          <label>Password <input id="loginPassword" type="password" autocomplete="current-password" required></label>
-          <button type="submit" class="account-primary-button">Sign in</button>
-          <button type="button" id="forgotPasswordButton" class="account-text-button">Forgot password?</button>
-          <p id="loginMessage" class="form-msg" aria-live="polite"></p>
-        </form>
+        <div class="account-auth-card">
+          <div class="account-auth-tabs" role="tablist" aria-label="Account access">
+            <button type="button" class="active" data-auth-view="login">Sign in</button>
+            <button type="button" data-auth-view="register">Create account</button>
+          </div>
 
-        <form id="accountRegisterForm" class="account-form" data-auth-panel="register" hidden>
-          <h2>Create an account</h2>
-          <label>Name <input id="registerName" type="text" autocomplete="name" maxlength="100" required></label>
-          <label>Email <input id="registerEmail" type="email" autocomplete="email" required></label>
-          <label>Password <input id="registerPassword" type="password" autocomplete="new-password" minlength="8" maxlength="128" required></label>
-          <small>At least 8 characters with a letter and a number.</small>
-          <button type="submit" class="account-primary-button">Create account</button>
-          <button type="button" id="resendVerificationButton" class="account-text-button">Resend verification email</button>
-          <p id="registerMessage" class="form-msg" aria-live="polite"></p>
-        </form>
+          <form id="accountLoginForm" class="account-form" data-auth-panel="login">
+            <h2>Welcome back</h2>
+            <label>Email <input id="loginEmail" type="email" autocomplete="email" required></label>
+            <label>Password <input id="loginPassword" type="password" autocomplete="current-password" required></label>
+            <button type="submit" class="account-primary-button">Sign in</button>
+            <button type="button" id="forgotPasswordButton" class="account-text-button">Forgot password?</button>
+            <p id="loginMessage" class="form-msg" aria-live="polite"></p>
+          </form>
 
-        <form id="accountResetForm" class="account-form" hidden>
-          <h2>Choose a new password</h2>
-          <label>New password <input id="resetPassword" type="password" minlength="8" maxlength="128" required></label>
-          <button type="submit" class="account-primary-button">Update password</button>
-          <p id="resetMessage" class="form-msg" aria-live="polite"></p>
-        </form>
-      </div>
+          <form id="accountRegisterForm" class="account-form" data-auth-panel="register" hidden>
+            <h2>Create your account</h2>
+            <label>Name <input id="registerName" type="text" autocomplete="name" maxlength="100" required></label>
+            <label>Email <input id="registerEmail" type="email" autocomplete="email" required></label>
+            <label>Password <input id="registerPassword" type="password" autocomplete="new-password" minlength="8" maxlength="128" required></label>
+            <small>At least 8 characters with a letter and a number.</small>
+            <button type="submit" class="account-primary-button">Create account</button>
+            <button type="button" id="resendVerificationButton" class="account-text-button">Resend verification email</button>
+            <p id="registerMessage" class="form-msg" aria-live="polite"></p>
+          </form>
+
+          <form id="accountResetForm" class="account-form" hidden>
+            <h2>Choose a new password</h2>
+            <label>New password <input id="resetPassword" type="password" minlength="8" maxlength="128" required></label>
+            <button type="submit" class="account-primary-button">Update password</button>
+            <p id="resetMessage" class="form-msg" aria-live="polite"></p>
+          </form>
+        </div>
+      </section>
     </section>
 
     <section id="accountDashboard" class="account-dashboard" hidden>
