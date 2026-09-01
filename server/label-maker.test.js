@@ -74,6 +74,6 @@ test('print labels match the current photographed vial hierarchy', () => {
   assert.match(css, /\.highland-label-side-storage/);
   assert.match(css, /\.highland-label-side-batch/);
   assert.match(css, /\.highland-label-side-storage[\s\S]*?color:\s*#111/);
-  assert.match(css, /\.highland-label-side-batch span:last-child[\s\S]*?color:\s*#111/);
+  assert.match(css, /\.highland-label-side-batch[\s\S]*?color:\s*#111/);
   assert.doesNotMatch(js, /ridge-current-label-base-v2\.png/);
 });

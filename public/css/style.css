@@ -4570,8 +4570,6 @@ body.admin-page .highland-print-label .highland-label-compound {
 }
 .highland-label-side-batch {
   right: 0.02in;
-}
-.highland-label-side-batch span:last-child {
   color: #111;
 }
 .highland-label-footer {
