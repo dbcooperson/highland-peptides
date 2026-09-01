@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin: Highland Peptides</title>
-<link rel="stylesheet" href="/css/style.css?v=admin-label-catalog-v1-20260901">
+<link rel="stylesheet" href="/css/style.css?v=admin-label-search-v2-20260901">
 </head>
 <body class="admin-page">
 <header class="topbar">
@@ -134,12 +134,18 @@
 
       <div class="label-maker-grid">
         <form id="labelMakerForm" class="label-maker-form">
-          <label>Current storefront product
-            <select id="labelCatalogProduct" required>
+          <div class="label-product-picker">
+            <label for="labelProductSearch">Search current storefront products</label>
+            <div class="label-product-search-control">
+              <input id="labelProductSearch" type="search" placeholder="Search name, strength, or SKU" autocomplete="off" autocapitalize="none" spellcheck="false" aria-controls="labelProductResults" aria-expanded="false">
+              <button id="labelProductSearchClear" type="button" aria-label="Clear product search" hidden>Clear</button>
+            </div>
+            <div id="labelProductResults" class="label-product-results" role="listbox" aria-label="Matching storefront products" hidden></div>
+            <select id="labelCatalogProduct" hidden aria-hidden="true" tabindex="-1">
               <option value="">Loading current catalog…</option>
             </select>
-            <small class="label-field-note">Every active SKU and strength from the storefront appears here.</small>
-          </label>
+            <small class="label-field-note">Type any part of the product name, dosage, or SKU, then tap the matching product.</small>
+          </div>
           <label>Printed compound name
             <input id="labelProductName" type="text" value="Retatrutide" maxlength="42" autocomplete="off" required>
           </label>
@@ -200,7 +206,7 @@
 
 <div id="labelPrintPortal" class="label-print-sheet" aria-hidden="true"></div>
 
-<script src="/js/admin.js?v=admin-label-catalog-v1-20260901"></script>
+<script src="/js/admin.js?v=admin-label-search-v2-20260901"></script>
 </body>
 </html>
 

@@ -402,6 +402,75 @@ function buildLabelPrintSheet(values) {
   }
 }
 
+let labelCatalogProducts = [];
+
+function labelProductSearchText(product) {
+  return [product.name, product.labelName, product.labelDose, product.sku]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+}
+
+function selectedLabelProductDisplay() {
+  const select = document.getElementById('labelCatalogProduct');
+  const option = select?.selectedOptions?.[0];
+  if (!option?.value) return '';
+  return `${option.dataset.productName || option.dataset.labelName || ''} — ${option.dataset.labelDose || ''}`.trim();
+}
+
+function renderLabelProductResults(query = '') {
+  const results = document.getElementById('labelProductResults');
+  const search = document.getElementById('labelProductSearch');
+  if (!results || !search) return;
+  const normalized = String(query || '').trim().toLowerCase();
+  const matches = labelCatalogProducts
+    .filter(product => !normalized || labelProductSearchText(product).includes(normalized))
+    .slice(0, 10);
+
+  results.replaceChildren();
+  matches.forEach(product => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'label-product-result';
+    button.dataset.sku = product.sku;
+    button.setAttribute('role', 'option');
+    const name = document.createElement('strong');
+    name.textContent = product.name;
+    const details = document.createElement('span');
+    details.textContent = `${product.labelDose} · ${product.sku}`;
+    button.append(name, details);
+    results.appendChild(button);
+  });
+
+  if (!matches.length) {
+    const empty = document.createElement('p');
+    empty.className = 'label-product-results-empty';
+    empty.textContent = 'No matching products. Try a shorter search.';
+    results.appendChild(empty);
+  }
+  results.hidden = false;
+  search.setAttribute('aria-expanded', 'true');
+}
+
+function closeLabelProductResults() {
+  const results = document.getElementById('labelProductResults');
+  const search = document.getElementById('labelProductSearch');
+  if (results) results.hidden = true;
+  if (search) search.setAttribute('aria-expanded', 'false');
+}
+
+function selectLabelCatalogProduct(sku) {
+  const select = document.getElementById('labelCatalogProduct');
+  const search = document.getElementById('labelProductSearch');
+  const clear = document.getElementById('labelProductSearchClear');
+  if (!select || !sku) return;
+  select.value = sku;
+  applyCatalogLabelSelection();
+  if (search) search.value = selectedLabelProductDisplay();
+  if (clear) clear.hidden = !search?.value;
+  closeLabelProductResults();
+}
+
 function applyCatalogLabelSelection() {
   const select = document.getElementById('labelCatalogProduct');
   const option = select?.selectedOptions?.[0];
@@ -419,9 +488,11 @@ async function loadLabelCatalogProducts() {
   try {
     const catalogData = await api('/api/catalog');
     const products = (catalogData.products || []).filter(product => product.sku && product.labelName && product.labelDose);
+    labelCatalogProducts = products;
     const options = products.map(product => {
       const option = document.createElement('option');
       option.value = product.sku;
+      option.dataset.productName = product.name;
       option.dataset.labelName = product.labelName;
       option.dataset.labelDose = product.labelDose;
       option.textContent = `${product.name} — ${product.labelDose} · ${product.sku}`;
@@ -432,7 +503,12 @@ async function loadLabelCatalogProducts() {
     if (defaultProduct) select.value = defaultProduct.sku;
     select.dataset.loaded = 'true';
     applyCatalogLabelSelection();
+    const search = document.getElementById('labelProductSearch');
+    const clear = document.getElementById('labelProductSearchClear');
+    if (search) search.value = selectedLabelProductDisplay();
+    if (clear) clear.hidden = !search?.value;
   } catch {
+    labelCatalogProducts = [];
     const option = document.createElement('option');
     option.value = 'manual';
     option.textContent = 'Catalog unavailable — enter label text manually';
@@ -446,6 +522,41 @@ function initLabelMaker() {
   form.dataset.initialized = 'true';
   form.querySelectorAll('input').forEach(input => input.addEventListener('input', renderLabelMaker));
   document.getElementById('labelCatalogProduct')?.addEventListener('change', applyCatalogLabelSelection);
+  const productSearch = document.getElementById('labelProductSearch');
+  const productResults = document.getElementById('labelProductResults');
+  const productSearchClear = document.getElementById('labelProductSearchClear');
+  productSearch?.addEventListener('input', () => {
+    if (productSearchClear) productSearchClear.hidden = !productSearch.value;
+    renderLabelProductResults(productSearch.value);
+  });
+  productSearch?.addEventListener('focus', () => {
+    productSearch.select();
+    renderLabelProductResults('');
+  });
+  productSearch?.addEventListener('keydown', event => {
+    if (event.key === 'Escape') closeLabelProductResults();
+    if (event.key === 'Enter') {
+      const firstMatch = productResults?.querySelector('.label-product-result');
+      if (firstMatch) {
+        event.preventDefault();
+        selectLabelCatalogProduct(firstMatch.dataset.sku);
+      }
+    }
+  });
+  productResults?.addEventListener('click', event => {
+    const result = event.target.closest('.label-product-result');
+    if (result?.dataset.sku) selectLabelCatalogProduct(result.dataset.sku);
+  });
+  productSearchClear?.addEventListener('click', () => {
+    if (!productSearch) return;
+    productSearch.value = '';
+    productSearchClear.hidden = true;
+    productSearch.focus();
+    renderLabelProductResults('');
+  });
+  document.addEventListener('click', event => {
+    if (!event.target.closest('.label-product-picker')) closeLabelProductResults();
+  });
   form.addEventListener('submit', event => {
     event.preventDefault();
     const values = getLabelMakerValues();

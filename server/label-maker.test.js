@@ -13,6 +13,8 @@ const { catalog, labelDoseFromSpec, labelNameForProduct } = require('./products'
 test('admin includes the protected label maker controls', () => {
   assert.match(html, /data-admin-panel="labels"/);
   assert.match(html, /id="labelCatalogProduct"/);
+  assert.match(html, /id="labelProductSearch"[^>]*type="search"/);
+  assert.match(html, /id="labelProductResults"[^>]*role="listbox"/);
   assert.match(html, /id="labelProductName"/);
   assert.match(html, /id="labelDosage"/);
   assert.match(html, /id="labelLotNumber"[^>]*value="314"/);
@@ -43,6 +45,9 @@ test('label maker receives every current storefront SKU and strength', () => {
   });
   assert.match(js, /products\.map\(product\s*=>/);
   assert.match(js, /option\.value\s*=\s*product\.sku/);
+  assert.match(js, /labelProductSearchText/);
+  assert.match(js, /labelProductResults/);
+  assert.match(js, /selectLabelCatalogProduct/);
   assert.doesNotMatch(js, /new Set\(\(catalogData\.products/);
 });
 
