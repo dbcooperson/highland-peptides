@@ -4,13 +4,10 @@ const assert = require('node:assert/strict');
 const { bySku } = require('./products');
 const { recordsForSkus } = require('./coa');
 
-test('L-Carnitine is $40 after a 15% promo code', () => {
+test('L-Carnitine has a fixed $46.99 pre-code price', () => {
   const product = bySku.LCARN50;
   assert.ok(product);
-  assert.equal(product.price, 47.06);
-
-  const discount = Math.round(product.price * 0.15 * 100) / 100;
-  assert.equal(product.price - discount, 40);
+  assert.equal(product.price, 46.99);
 });
 
 test('Bacteriostatic Water 10ml has a fixed $8.99 non-promo price', () => {
@@ -18,6 +15,19 @@ test('Bacteriostatic Water 10ml has a fixed $8.99 non-promo price', () => {
   assert.ok(product);
   assert.equal(product.price, 8.99);
   assert.equal(product.promoEligible, false);
+});
+
+test('GHK-Cu variants have fixed .99 pre-code prices', () => {
+  const variants = [
+    { sku: 'CU', publicPrice: 25.99 },
+    { sku: 'CU100', publicPrice: 34.99 },
+  ];
+
+  variants.forEach(({ sku, publicPrice }) => {
+    const product = bySku[sku];
+    assert.ok(product);
+    assert.equal(product.price, publicPrice);
+  });
 });
 
 test('Retatrutide 20mg uses the older Janoshik report', () => {
