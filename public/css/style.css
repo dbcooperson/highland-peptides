@@ -119,39 +119,37 @@ body {
 .store-credit-empty { max-width:220px; text-align:right; }
 .account-credit-summary { color:#315b43; font-weight:800; }
 
-.account-page { min-height:100vh; background:#fff; color:#13261d; }
+.account-page { min-height:100vh; background:#f6f2e9; color:#13261d; }
 .account-page .mountain-scrim { display:none; }
 .account-mountain-bg { background:
-  radial-gradient(circle at 50% 10%, rgba(50,105,74,.075), transparent 24%),
-  linear-gradient(180deg,#ffffff 0%,#f8faf7 74%,#ffffff 100%); }
+  radial-gradient(circle at 50% 10%, rgba(50,105,74,.07), transparent 25%),
+  linear-gradient(180deg,#fbf8f2 0%,#f3f0e7 72%,#f8f5ee 100%); }
 .account-mountain-bg::after { content:none; }
 .account-main { position:relative; z-index:2; max-width:1100px; margin:0 auto; padding:78px 24px 110px; display:block; }
 .account-kicker { display:block; color:#b8772b; text-transform:uppercase; letter-spacing:.16em; font-size:11px; font-weight:900; margin-bottom:10px; }
 .account-program-landing { color:#13261d; }
 .account-program-landing[hidden] { display:none; }
 .account-program-hero { max-width:870px; margin:0 auto; text-align:center; }
-.account-program-badge { display:inline-flex; align-items:center; gap:8px; padding:7px 12px; border:1px solid #c9ddce; border-radius:999px; background:#f4faf5; color:#24583a; text-transform:uppercase; letter-spacing:.13em; font-size:10px; font-weight:900; }
-.account-program-badge i { width:6px; height:6px; border-radius:50%; background:#c48a32; box-shadow:0 0 0 4px rgba(196,138,50,.12); }
-.account-program-hero h1 { margin:26px auto 16px; color:#102319; font-size:clamp(46px,6.4vw,76px); line-height:.98; letter-spacing:-.062em; }
+.account-program-hero h1 { margin:0 auto 16px; color:#102319; font-size:clamp(46px,6.4vw,76px); line-height:.98; letter-spacing:-.062em; }
 .account-program-hero h1 span { color:#2e6948; }
 .account-program-hero > p { max-width:720px; margin:0 auto; color:#637066; font-size:16px; line-height:1.7; }
 .account-trust-row { display:flex; flex-wrap:wrap; justify-content:center; gap:12px 24px; margin-top:25px; }
 .account-trust-row span { display:inline-flex; align-items:center; gap:7px; color:#5e6b62; font-size:11px; font-weight:750; }
 .account-trust-row span::before { content:"✓"; display:grid; place-items:center; width:15px; height:15px; border-radius:50%; background:#e3f0e6; color:#2e6948; font-size:9px; font-weight:950; }
 .account-metric-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; max-width:780px; margin:68px auto 92px; }
-.account-metric-grid article { min-height:142px; padding:28px 22px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; border:1px solid #d9e6dc; border-radius:16px; background:linear-gradient(145deg,#fbfdfb,#f5faf6); box-shadow:0 14px 34px rgba(24,69,44,.05); }
+.account-metric-grid article { min-height:142px; padding:28px 22px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; border:1px solid #d7e1d8; border-radius:16px; background:linear-gradient(145deg,#fffdf8,#f5f7f1); box-shadow:0 14px 34px rgba(24,69,44,.05); }
 .account-metric-grid strong { color:#2e6948; font-size:35px; line-height:1; letter-spacing:-.04em; }
 .account-metric-grid span { max-width:190px; margin-top:11px; color:#607067; font-size:11px; line-height:1.45; }
 .account-program-section { max-width:900px; margin:0 auto 66px; }
 .account-section-label { display:block; color:#b8772b; text-align:center; text-transform:uppercase; letter-spacing:.18em; font-size:9px; font-weight:950; }
 .account-program-section h2,.account-join-heading h2 { margin:11px 0 28px; color:#12251a; text-align:center; font-size:clamp(30px,4vw,44px); line-height:1.05; letter-spacing:-.045em; }
 .account-step-list { display:grid; gap:10px; margin:0; padding:0; list-style:none; }
-.account-step-list li { display:grid; grid-template-columns:38px 1fr; gap:18px; align-items:center; min-height:86px; padding:17px 20px; border:1px solid #d8e5db; border-radius:15px; background:#fff; box-shadow:0 8px 24px rgba(24,69,44,.035); }
+.account-step-list li { display:grid; grid-template-columns:38px 1fr; gap:18px; align-items:center; min-height:86px; padding:17px 20px; border:1px solid #d8e1d9; border-radius:15px; background:#fffdf9; box-shadow:0 8px 24px rgba(24,69,44,.035); }
 .account-step-list > li > span { display:grid; place-items:center; width:32px; height:32px; border-radius:10px; background:#2e6948; color:#fff; font-size:13px; font-weight:900; box-shadow:0 8px 16px rgba(46,105,72,.22); }
 .account-step-list strong { color:#183023; font-size:13px; }
 .account-step-list p { margin:4px 0 0; color:#6d786f; font-size:11px; line-height:1.5; }
 .account-feature-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; max-width:900px; margin:0 auto 82px; }
-.account-feature-grid article { min-height:178px; padding:25px; border:1px solid #d8e5db; border-radius:16px; background:#f8fbf8; }
+.account-feature-grid article { min-height:178px; padding:25px; border:1px solid #d8e1d9; border-radius:16px; background:#faf9f4; }
 .account-feature-icon { display:grid; place-items:center; width:34px; height:34px; border-radius:10px; background:#2e6948; color:#fff; font-size:17px; font-weight:800; box-shadow:0 8px 16px rgba(46,105,72,.18); }
 .account-feature-grid h3 { margin:22px 0 7px; color:#172d21; font-size:14px; }
 .account-feature-grid p { margin:0; max-width:360px; color:#6a766d; font-size:11px; line-height:1.55; }
@@ -162,7 +160,7 @@ body {
 .account-rule-note { margin-top:26px; padding:16px 18px; border:1px solid #d2e1d6; border-radius:14px; background:#f6faf6; }
 .account-rule-note strong,.account-rule-note span { display:block; }
 .account-rule-note span { margin-top:5px; color:#625d54; font-size:12px; line-height:1.5; }
-.account-auth-card { padding:32px 34px 34px; border:1px solid #d6e4d9; border-radius:22px; background:#fff; box-shadow:0 26px 70px rgba(25,69,45,.12); }
+.account-auth-card { padding:32px 34px 34px; border:1px solid #d6e1d8; border-radius:22px; background:#fffdf9; box-shadow:0 26px 70px rgba(25,69,45,.1); }
 .account-auth-tabs { display:grid; grid-template-columns:1fr 1fr; padding:4px; border-radius:999px; background:#edf3ee; margin-bottom:28px; }
 .account-auth-tabs button { border:0; border-radius:999px; padding:11px; background:transparent; color:#6f675c; font-weight:850; cursor:pointer; }
 .account-auth-tabs button.active { background:#fff; color:#173d2b; box-shadow:0 3px 12px rgba(28,61,40,.1); }
