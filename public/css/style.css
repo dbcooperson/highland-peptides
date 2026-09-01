@@ -1649,6 +1649,13 @@ body.search-open { overflow: hidden; }
   font-size: 11px;
   line-height: 1.35;
 }
+.shipping-countdown-card {
+  border-color: #c8d9ca !important;
+  background: linear-gradient(145deg, #f7f6ef, #edf3eb) !important;
+}
+.shipping-countdown-card [data-shipping-countdown] {
+  color: #53665a;
+}
 .product-use-note {
   margin: 8px 0 0;
   color: var(--muted-on-light);
@@ -4717,6 +4724,9 @@ body.admin-page .highland-print-label .highland-label-compound {
 .fulfillment-header strong {
   color: #fff8ef;
   font-weight: 900;
+}
+.fulfillment-header [data-shipping-countdown] {
+  line-height: 1.45;
 }
 .catalog-controls {
   display: flex;

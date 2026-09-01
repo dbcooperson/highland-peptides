@@ -66,7 +66,7 @@ function renderProduct() {
         </div>
         <div class="product-proof-pills" aria-label="Product quality highlights">
           ${coaRecord ? `<span>${escapeHTML(purityProof)}</span>` : ''}
-          <span>Orders placed before 2:00 PM PDT will ship next day</span>
+          <span data-shipping-countdown="pill">Calculating local cutoff…</span>
         </div>
         <h1 class="product-title">${escapeHTML(family.name)}</h1>
         <p class="hint product-description">${escapeHTML(family.description)}</p>
@@ -77,7 +77,7 @@ function renderProduct() {
         </div>
         <div class="product-trust-grid">
           ${coaRecord ? `<div><strong>Testing</strong><span>${escapeHTML(purityProof)}</span></div><div><strong>COA</strong><span>View COA below</span></div>` : ''}
-          <div><strong>Ships</strong><span>Orders placed before 2:00 PM PDT will ship next day</span></div>
+          <div class="shipping-countdown-card"><strong>Ships</strong><span data-shipping-countdown="card">Calculating your local shipping cutoff…</span></div>
           <div><strong>Expiry</strong><span>Good for the next 2 years</span></div>
         </div>
 
@@ -132,6 +132,7 @@ function renderProduct() {
   };
   document.getElementById('addToCartBtn').onclick = addSelectedToCart;
   document.getElementById('mobileAddToCartBtn').onclick = addSelectedToCart;
+  if (window.updateShippingCountdowns) window.updateShippingCountdowns();
 }
 
 async function init() {
