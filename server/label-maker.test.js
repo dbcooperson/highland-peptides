@@ -18,7 +18,7 @@ test('admin includes the protected label maker controls', () => {
   assert.match(html, /id="labelQuantity"/);
   assert.match(html, /id="labelStartPosition"/);
   assert.match(html, /id="labelPrintPortal"/);
-  assert.match(html, /name="labelDesign" value="ridge-current"/);
+  assert.match(html, /name="labelDesign" value="vial-current"/);
   assert.match(html, /OL1735WS White Gloss sheets/);
 });
 
@@ -57,9 +57,13 @@ test('free-form label text is inserted as text, not executable markup', () => {
   assert.match(js, /dose\.textContent\s*=/);
 });
 
-test('Ridge Current labels include deterministic contour artwork', () => {
-  assert.match(js, /ridge-current-label-base-v2\.png/);
-  assert.match(css, /\.label-design-ridge-current/);
-  assert.match(css, /\.ridge-current-artwork/);
-  assert.match(css, /\.label-design-ridge-current \.highland-label-footer[\s\S]*bottom:\s*0\.27in/);
+test('print labels match the current photographed vial hierarchy', () => {
+  assert.match(js, /highland-hp-ridge-mark-v1\.png/);
+  assert.match(js, /purity\.textContent\s*=\s*'99% PURITY'/);
+  assert.match(js, /ruo\.textContent\s*=\s*'RESEARCH USE ONLY'/);
+  assert.match(css, /\.label-design-vial-current/);
+  assert.match(css, /\.highland-label-divider/);
+  assert.match(css, /\.highland-label-accent/);
+  assert.match(css, /\.highland-label-footer-dot/);
+  assert.doesNotMatch(js, /ridge-current-label-base-v2\.png/);
 });

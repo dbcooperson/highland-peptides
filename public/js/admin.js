@@ -300,50 +300,57 @@ function labelTextSizeClass(name) {
   return 'label-name-short';
 }
 
-function buildHighlandLabel({ name, dosage, design = 'ridge-current' }) {
+function buildHighlandLabel({ name, dosage, design = 'vial-current' }) {
   const label = document.createElement('div');
   label.className = `highland-print-label label-design-${design}`;
 
-  if (design === 'ridge-current') {
-    const artwork = document.createElement('img');
-    artwork.className = 'ridge-current-artwork';
-    artwork.src = '/images/branding/ridge-current-label-base-v2.png';
-    artwork.alt = '';
-    artwork.setAttribute('aria-hidden', 'true');
-    label.appendChild(artwork);
-  }
-
   const identity = document.createElement('div');
   identity.className = 'highland-label-identity';
-  const mark = document.createElement('span');
+  const mark = document.createElement('img');
   mark.className = 'highland-label-mark';
-  mark.textContent = ['ridge', 'ridge-current'].includes(design) ? 'HP' : 'H';
+  mark.src = '/images/branding/highland-hp-ridge-mark-v1.png';
+  mark.alt = '';
+  mark.setAttribute('aria-hidden', 'true');
   const brand = document.createElement('span');
   brand.className = 'highland-label-brand';
   brand.innerHTML = '<strong>HIGHLAND</strong><small>PEPTIDES</small>';
   identity.append(mark, brand);
 
+  const divider = document.createElement('span');
+  divider.className = 'highland-label-divider';
+  divider.setAttribute('aria-hidden', 'true');
+
   const compound = document.createElement('strong');
   compound.className = `highland-label-compound ${labelTextSizeClass(name)}`;
   compound.textContent = String(name || '').trim().toUpperCase();
 
-  const footer = document.createElement('div');
-  footer.className = 'highland-label-footer';
+  const accent = document.createElement('span');
+  accent.className = 'highland-label-accent';
+  accent.setAttribute('aria-hidden', 'true');
+
   const dose = document.createElement('strong');
   dose.className = 'highland-label-dose';
   dose.textContent = String(dosage || '').trim().toUpperCase();
+
+  const footer = document.createElement('div');
+  footer.className = 'highland-label-footer';
+  const purity = document.createElement('span');
+  purity.textContent = '99% PURITY';
+  const footerDot = document.createElement('i');
+  footerDot.className = 'highland-label-footer-dot';
+  footerDot.setAttribute('aria-hidden', 'true');
   const ruo = document.createElement('span');
   ruo.textContent = 'RESEARCH USE ONLY';
-  footer.append(dose, ruo);
+  footer.append(purity, footerDot, ruo);
 
-  label.append(identity, compound, footer);
+  label.append(identity, divider, compound, accent, dose, footer);
   return label;
 }
 
 function getLabelMakerValues() {
   const name = document.getElementById('labelProductName')?.value.trim() || '';
   const dosage = document.getElementById('labelDosage')?.value.trim() || '';
-  const design = document.querySelector('[name="labelDesign"]')?.value || 'ridge-current';
+  const design = document.querySelector('[name="labelDesign"]')?.value || 'vial-current';
   const start = Math.max(1, Math.min(48, Number(document.getElementById('labelStartPosition')?.value || 1)));
   const requested = Math.max(1, Math.min(48, Number(document.getElementById('labelQuantity')?.value || 1)));
   const quantity = Math.min(requested, 49 - start);
