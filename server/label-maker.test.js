@@ -34,6 +34,9 @@ test('label sheet matches the OL1735WS 48-up geometry', () => {
   assert.match(css, /row-gap:\s*0\.136in/);
   assert.match(css, /padding:\s*0\.25in/);
   assert.match(js, /position\s*<=\s*48/);
+  assert.match(js, /void printPortal\.offsetHeight/);
+  assert.match(js, /window\.print\(\)/);
+  assert.doesNotMatch(js, /requestAnimationFrame\(\(\)\s*=>\s*requestAnimationFrame\(\(\)\s*=>\s*window\.print/);
 });
 
 test('label maker receives every current storefront SKU and strength', () => {

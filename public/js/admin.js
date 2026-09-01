@@ -565,7 +565,16 @@ function initLabelMaker() {
     document.body.classList.add('label-printing');
     const cleanup = () => document.body.classList.remove('label-printing');
     window.addEventListener('afterprint', cleanup, { once: true });
-    requestAnimationFrame(() => requestAnimationFrame(() => window.print()));
+    const printPortal = document.getElementById('labelPrintPortal');
+    if (printPortal) void printPortal.offsetHeight;
+    try {
+      window.print();
+      window.setTimeout(cleanup, 30000);
+    } catch {
+      cleanup();
+      const message = document.getElementById('labelMakerMessage');
+      if (message) message.textContent = 'Printer options could not open. In Safari, tap Share and then Print.';
+    }
   });
   loadLabelCatalogProducts();
   renderLabelMaker();
