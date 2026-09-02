@@ -905,9 +905,21 @@ app.post('/api/admin/logout', (req, res) => {
 });
 
 
-app.get('/api/admin/launch-checks', requireAdmin, (req, res) => {
+app.get('/api/admin/launch-checks', requireAdmin, async (req, res) => {
   const storage = db.getStorageInfo();
   const paidOrders = db.getAllOrders().filter(order => CONFIRMED_ORDER_STATUSES.has(order.status));
+  let fulfillmentConnection = null;
+  if (String(req.query.checkShipping || '') === '1') {
+    try {
+      fulfillmentConnection = await checkFulfillmentDiscordConnection();
+    } catch (err) {
+      fulfillmentConnection = {
+        configured: Boolean(config.DISCORD_FULFILLMENT_WEBHOOK_URL),
+        authorized: false,
+        error: err.message || 'Could not verify the Discord shipping webhook.',
+      };
+    }
+  }
   const checks = [
     {
       key: 'storage',
@@ -936,10 +948,16 @@ app.get('/api/admin/launch-checks', requireAdmin, (req, res) => {
     {
       key: 'fulfillment-discord',
       label: 'Pending-tracking address channel',
-      ok: Boolean(config.DISCORD_FULFILLMENT_WEBHOOK_URL),
-      detail: config.DISCORD_FULFILLMENT_WEBHOOK_URL
-        ? `A webhook is configured and will be verified against shipping channel ${config.DISCORD_FULFILLMENT_CHANNEL_ID} before customer addresses are posted.`
-        : 'Add DISCORD_FULFILLMENT_WEBHOOK_URL for the authorized shipping channel. No customer address is posted without it.',
+      ok: fulfillmentConnection
+        ? Boolean(fulfillmentConnection.authorized)
+        : Boolean(config.DISCORD_FULFILLMENT_WEBHOOK_URL),
+      detail: fulfillmentConnection
+        ? (fulfillmentConnection.authorized
+          ? `Live connection verified for authorized shipping channel ${fulfillmentConnection.channelId}.`
+          : (fulfillmentConnection.error || 'The Discord shipping webhook is not configured.'))
+        : (config.DISCORD_FULFILLMENT_WEBHOOK_URL
+          ? `A webhook is configured and will be verified against shipping channel ${config.DISCORD_FULFILLMENT_CHANNEL_ID} before customer addresses are posted.`
+          : 'Add DISCORD_FULFILLMENT_WEBHOOK_URL for the authorized shipping channel. No customer address is posted without it.'),
     },
     {
       key: 'address-autocomplete',
@@ -1124,23 +1142,6 @@ app.post('/api/admin/orders/:id/fulfillment-discord', requireAdmin, async (req, 
     return res.status(502).json({ error: result.warning || 'Could not post the shipping address to Discord.' });
   }
   res.json({ ok: true, fulfillmentDispatch: result });
-});
-
-app.get('/api/admin/fulfillment-channel/health', requireAdmin, async (req, res) => {
-  try {
-    const result = await checkFulfillmentDiscordConnection();
-    if (!result.configured) {
-      return res.status(503).json({ error: 'The authorized Discord shipping webhook is not configured.' });
-    }
-    res.json({
-      ok: true,
-      authorized: result.authorized,
-      channelId: result.channelId,
-      webhookName: result.webhookName,
-    });
-  } catch (err) {
-    res.status(502).json({ error: err.message || 'Could not verify the Discord shipping webhook.' });
-  }
 });
 
 app.delete('/api/admin/orders/:id', requireAdmin, (req, res) => {

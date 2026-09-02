@@ -761,10 +761,12 @@ function initLabelMaker() {
     button.disabled = true;
     button.textContent = 'Checking…';
     try {
-      const result = await api('/api/admin/fulfillment-channel/health');
+      const result = await api('/api/admin/launch-checks?checkShipping=1');
+      const shippingCheck = (result.checks || []).find(check => check.key === 'fulfillment-discord');
+      if (!shippingCheck?.ok) throw new Error(shippingCheck?.detail || 'Discord shipping could not be verified.');
       if (message) {
         message.style.color = 'var(--success)';
-        message.textContent = `Discord shipping is connected to the authorized channel${result.webhookName ? ` as ${result.webhookName}` : ''}. No customer data was sent during this check.`;
+        message.textContent = `${shippingCheck.detail} No customer data was sent during this check.`;
       }
     } catch (err) {
       if (message) {
