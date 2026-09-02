@@ -379,7 +379,7 @@ function buildHighlandLabel({ name, dosage, lot, expiry, storage, design = 'vial
 }
 
 const LABEL_NEXT_POSITION_KEY = 'highland-label-next-position-v1';
-const LABEL_CALIBRATION_KEY = 'highland-label-calibration-v4';
+const LABEL_CALIBRATION_KEY = 'highland-label-calibration-v5';
 const LABEL_SHEET_GEOMETRY_MM = Object.freeze({
   marginX: 6.35,
   marginY: 6.35,
