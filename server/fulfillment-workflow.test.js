@@ -14,7 +14,7 @@ test('fulfillment workflow recognizes pending tracking as a confirmed order stat
   assert.match(adminSource, /\['pending_payment','paid','pending_tracking','fulfilled','cancelled'\]/);
   assert.match(indexSource, /dispatchPendingTrackingAddress/);
   assert.match(indexSource, /claimFulfillmentDiscordPost/);
-  assert.match(adminSource, /copy-ready address was sent to Discord/);
+  assert.match(adminSource, /copy-ready address is in Discord/);
 });
 
 test('tracking cannot be emailed twice and fulfills only an awaiting order', () => {

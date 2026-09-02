@@ -725,22 +725,12 @@ function initLabelMaker() {
     if (event.data?.type !== 'highland-order-labels-printed') return;
     const order = adminOrdersCache.find(item => String(item.id) === String(event.data.orderId));
     if (!order || order.status !== 'paid') return;
-    try {
-      const result = await api(`/api/admin/orders/${order.id}/status`, { method: 'POST', body: { status: 'pending_tracking' } });
-      const message = document.getElementById('labelMakerMessage');
-      if (message) {
-        if (result.fulfillmentDispatch?.sent || result.fulfillmentDispatch?.alreadySent) {
-          message.style.color = 'var(--success)';
-          message.textContent = `${order.buyer?.name || `Order #${order.id}`} is now Pending tracking and the copy-ready address was sent to Discord.`;
-        } else if (result.fulfillmentDispatch?.warning) {
-          message.style.color = 'var(--warning, #f0ae66)';
-          message.textContent = result.fulfillmentDispatch.warning;
-        }
-      }
-      await loadOrders();
-      loadProfit();
-    } catch (err) {
-      window.alert(err.message || 'The labels printed, but the order could not be moved to Pending tracking.');
+    printedPaidOrderIds.add(String(order.id));
+    renderPaidOrderLabelQueue();
+    const message = document.getElementById('labelMakerMessage');
+    if (message) {
+      message.style.color = 'var(--success)';
+      message.textContent = `${paidOrderBuyerDisplayName(order)} stays Paid. Check the printed labels, then use the separate Pending tracking button when you are ready.`;
     }
   });
   form.addEventListener('submit', event => {
@@ -955,6 +945,8 @@ document.addEventListener('click', (event) => {
 });
 let adminOrdersCache = [];
 const PAID_LABEL_QUEUE_WINDOW_MS = 3 * 24 * 60 * 60 * 1000;
+const printedPaidOrderIds = new Set();
+let confirmingPendingTrackingOrderId = '';
 
 function orderLabelCount(order) {
   return (order.items || []).reduce((sum, item) => sum + Math.max(0, Number(item.quantity) || 0), 0);
@@ -977,6 +969,59 @@ function paidOrderLabelItemSummary(order) {
   }).join(' · ');
 }
 
+function paidOrderBuyerDisplayName(order) {
+  const buyer = order?.buyer || {};
+  const fullName = String(buyer.name || [buyer.firstName, buyer.lastName].filter(Boolean).join(' ')).trim();
+  if (fullName) return fullName;
+  const email = String(buyer.email || '').trim();
+  return email || `HP-${order?.id || 'order'}`;
+}
+
+function beginPendingTrackingConfirmation(button) {
+  confirmingPendingTrackingOrderId = String(button.dataset.id || '');
+  renderPaidOrderLabelQueue();
+  document.querySelector(`.paid-label-confirm-pending[data-id="${CSS.escape(confirmingPendingTrackingOrderId)}"]`)?.focus();
+}
+
+function cancelPendingTrackingConfirmation() {
+  confirmingPendingTrackingOrderId = '';
+  renderPaidOrderLabelQueue();
+}
+
+async function confirmOrderPendingTracking(button) {
+  const order = adminOrdersCache.find(item => String(item.id) === String(button.dataset.id));
+  if (!order || order.status !== 'paid') {
+    confirmingPendingTrackingOrderId = '';
+    return window.alert('Only paid, unfulfilled orders can be moved to Pending tracking.');
+  }
+  button.disabled = true;
+  button.textContent = 'Updating…';
+  try {
+    const result = await api(`/api/admin/orders/${order.id}/status`, { method: 'POST', body: { status: 'pending_tracking' } });
+    printedPaidOrderIds.delete(String(order.id));
+    confirmingPendingTrackingOrderId = '';
+    const message = document.getElementById('labelMakerMessage');
+    if (message) {
+      if (result.fulfillmentDispatch?.sent || result.fulfillmentDispatch?.alreadySent) {
+        message.style.color = 'var(--success)';
+        message.textContent = `${paidOrderBuyerDisplayName(order)} is now Pending tracking. The copy-ready address is in Discord.`;
+      } else if (result.fulfillmentDispatch?.warning) {
+        message.style.color = 'var(--warning, #f0ae66)';
+        message.textContent = result.fulfillmentDispatch.warning;
+      } else {
+        message.style.color = 'var(--success)';
+        message.textContent = `${paidOrderBuyerDisplayName(order)} is now Pending tracking.`;
+      }
+    }
+    await loadOrders();
+    loadProfit();
+  } catch (err) {
+    button.disabled = false;
+    button.textContent = 'Yes, mark pending';
+    window.alert(err.message || 'Could not move this order to Pending tracking.');
+  }
+}
+
 function renderPaidOrderLabelQueue() {
   const queue = document.getElementById('paidLabelOrderQueue');
   if (!queue) return;
@@ -992,17 +1037,42 @@ function renderPaidOrderLabelQueue() {
 
   queue.innerHTML = paidOrders.map(order => {
     const count = orderLabelCount(order);
+    const orderId = String(order.id);
+    const isPrinted = printedPaidOrderIds.has(orderId);
+    const isConfirming = confirmingPendingTrackingOrderId === orderId;
+    const buyerName = paidOrderBuyerDisplayName(order);
+    const buyerEmail = String(order.buyer?.email || '').trim();
     return `<article class="paid-label-order-card">
-      <button type="button" class="admin-print-order-labels paid-label-customer-button" data-id="${escapeHtml(order.id)}">
-        <span class="paid-label-order-meta"><small>Order #${escapeHtml(order.id)}</small><strong>${escapeHtml(order.buyer?.name || 'Customer')}</strong></span>
-        <span class="paid-label-order-summary">${escapeHtml(paidOrderLabelItemSummary(order))}</span>
-        <span class="paid-label-order-count"><strong>${count}</strong> label${count === 1 ? '' : 's'} <i aria-hidden="true">→</i></span>
-      </button>
+      <div class="paid-label-order-row">
+        <button type="button" class="admin-print-order-labels paid-label-customer-button" data-id="${escapeHtml(order.id)}">
+          <span class="paid-label-order-meta"><small>HP-${escapeHtml(order.id)}</small><strong>${escapeHtml(buyerName)}</strong>${buyerEmail ? `<em>${escapeHtml(buyerEmail)}</em>` : ''}</span>
+          <span class="paid-label-order-summary">${escapeHtml(paidOrderLabelItemSummary(order))}</span>
+          <span class="paid-label-order-count"><strong>${count}</strong> label${count === 1 ? '' : 's'} <i aria-hidden="true">→</i></span>
+        </button>
+        <button type="button" class="paid-label-pending-button${isPrinted ? ' is-ready' : ''}" data-id="${escapeHtml(order.id)}">${isPrinted ? 'Printed · mark pending' : 'Mark pending tracking'}</button>
+      </div>
+      <div class="paid-label-inline-confirm" ${isConfirming ? '' : 'hidden'}>
+        <strong>Move HP-${escapeHtml(order.id)} · ${escapeHtml(buyerName)} to Pending tracking?</strong>
+        <span>This removes it from this paid-label list and sends the shipping address to Discord.</span>
+        <div>
+          <button type="button" class="paid-label-confirm-pending" data-id="${escapeHtml(order.id)}">Yes, mark pending</button>
+          <button type="button" class="paid-label-cancel-pending">Cancel</button>
+        </div>
+      </div>
     </article>`;
   }).join('');
 
   queue.querySelectorAll('.admin-print-order-labels').forEach(button => {
     button.onclick = () => printAdminOrderLabels(button);
+  });
+  queue.querySelectorAll('.paid-label-pending-button').forEach(button => {
+    button.onclick = () => beginPendingTrackingConfirmation(button);
+  });
+  queue.querySelectorAll('.paid-label-confirm-pending').forEach(button => {
+    button.onclick = () => confirmOrderPendingTracking(button);
+  });
+  queue.querySelectorAll('.paid-label-cancel-pending').forEach(button => {
+    button.onclick = cancelPendingTrackingConfirmation;
   });
   updatePaidLabelQueuePosition();
 }

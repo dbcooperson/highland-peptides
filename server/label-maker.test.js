@@ -67,7 +67,12 @@ test('paid orders can print all vial labels into consecutive unused positions', 
   assert.match(js, /paid_at \|\| b\.created_at/);
   assert.match(js, /paid-label-customer-button/);
   assert.match(js, /highland-order-labels-printed/);
+  assert.match(js, /printedPaidOrderIds\.add/);
+  assert.match(js, /paid-label-pending-button/);
+  assert.match(js, /paid-label-inline-confirm/);
+  assert.match(js, /confirmOrderPendingTracking/);
   assert.match(js, /status: 'pending_tracking'/);
+  assert.match(html, /It stays in this list until you separately confirm Pending tracking/);
   assert.match(js, /window\.addEventListener\('afterprint', notifyPrintComplete\)/);
   assert.match(js, /window\.setTimeout\(startOrderPrint, 250\)/);
   assert.match(js, /renderOrdersTable\(\);\s*renderPaidOrderLabelQueue\(\);/);
