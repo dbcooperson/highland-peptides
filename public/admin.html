@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin: Highland Peptides</title>
-<link rel="stylesheet" href="/css/style.css?v=admin-label-sheet-v4-20260901">
+<link rel="stylesheet" href="/css/style.css?v=admin-label-calibration-v5-20260901">
 </head>
 <body class="admin-page">
 <header class="topbar">
@@ -165,6 +165,16 @@
             <small class="label-field-note">Printed vertically on the opposite side from the lot and expiration date.</small>
           </label>
           <div class="label-maker-row">
+            <label>Horizontal correction (mm)
+              <input id="labelOffsetX" type="number" value="-4" min="-10" max="10" step="0.5" inputmode="decimal" required>
+              <small class="label-field-note">Negative moves the print left.</small>
+            </label>
+            <label>Vertical correction (mm)
+              <input id="labelOffsetY" type="number" value="-4" min="-10" max="10" step="0.5" inputmode="decimal" required>
+              <small class="label-field-note">Negative moves the print up.</small>
+            </label>
+          </div>
+          <div class="label-maker-row">
             <label>Labels to print
               <input id="labelQuantity" type="number" value="1" min="1" max="48" inputmode="numeric" required>
             </label>
@@ -206,7 +216,7 @@
 
 <div id="labelPrintPortal" class="label-print-sheet" aria-hidden="true"></div>
 
-<script src="/js/admin.js?v=admin-label-sheet-v4-20260901"></script>
+<script src="/js/admin.js?v=admin-label-calibration-v5-20260901"></script>
 </body>
 </html>
 

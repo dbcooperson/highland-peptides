@@ -20,6 +20,8 @@ test('admin includes the protected label maker controls', () => {
   assert.match(html, /id="labelLotNumber"[^>]*value="314"/);
   assert.match(html, /id="labelExpiryDate"[^>]*value="9\/1\/2027"/);
   assert.match(html, /id="labelStorage"[^>]*value="36–46°F"/);
+  assert.match(html, /id="labelOffsetX"[^>]*value="-4"/);
+  assert.match(html, /id="labelOffsetY"[^>]*value="-4"/);
   assert.match(html, /id="labelQuantity"/);
   assert.match(html, /id="labelQuantity"[^>]*value="1"/);
   assert.match(html, /id="labelStartPosition"/);
@@ -37,9 +39,11 @@ test('label sheet matches the OL1735WS 48-up geometry', () => {
   assert.match(js, /position\s*<=\s*48/);
   assert.match(js, /openLabelPrintWindow/);
   assert.match(js, /Highland Label Print Sheet/);
+  assert.match(js, /left:\s*\$\{values\.offsetX\}mm/);
+  assert.match(js, /top:\s*\$\{values\.offsetY\}mm/);
   assert.match(js, /id="printSheetButton"/);
   assert.match(js, /window\.print\(\)/);
-  assert.match(js, /#labelPrintPortal \{ box-sizing: border-box; display: grid !important/);
+  assert.match(js, /display: grid !important; grid-template-columns: repeat\(4, 1\.75in\)/);
   assert.match(css, /\.highland-label-dose[\s\S]*?-webkit-text-fill-color:\s*#07563f/);
 });
 

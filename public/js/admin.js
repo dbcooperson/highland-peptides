@@ -369,11 +369,13 @@ function getLabelMakerValues() {
   const lot = document.getElementById('labelLotNumber')?.value.trim() || '';
   const expiry = document.getElementById('labelExpiryDate')?.value.trim() || '';
   const storage = document.getElementById('labelStorage')?.value.trim() || '';
+  const offsetX = Math.max(-10, Math.min(10, Number(document.getElementById('labelOffsetX')?.value || 0)));
+  const offsetY = Math.max(-10, Math.min(10, Number(document.getElementById('labelOffsetY')?.value || 0)));
   const design = document.querySelector('[name="labelDesign"]')?.value || 'vial-current';
   const start = Math.max(1, Math.min(48, Number(document.getElementById('labelStartPosition')?.value || 1)));
   const requested = Math.max(1, Math.min(48, Number(document.getElementById('labelQuantity')?.value || 1)));
   const quantity = Math.min(requested, 49 - start);
-  return { name, dosage, lot, expiry, storage, design, start, quantity };
+  return { name, dosage, lot, expiry, storage, offsetX, offsetY, design, start, quantity };
 }
 
 function renderLabelMaker() {
@@ -424,7 +426,7 @@ function openLabelPrintWindow(values) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Highland Label Print Sheet</title>
-  <link rel="stylesheet" href="/css/style.css?v=admin-label-sheet-v4-20260901">
+  <link rel="stylesheet" href="/css/style.css?v=admin-label-calibration-v5-20260901">
   <style>
     * { box-sizing: border-box; }
     html, body { margin: 0; min-height: 100%; background: #e9e6de; color: #171a18; font-family: Arial, Helvetica, sans-serif; }
@@ -432,7 +434,7 @@ function openLabelPrintWindow(values) {
     .label-sheet-toolbar strong { font-size: 14px; }
     .label-sheet-toolbar span { display: block; margin-top: 2px; color: rgba(255,255,255,.68); font-size: 10px; }
     .label-sheet-toolbar button { min-height: 42px; padding: 0 22px; border: 0; border-radius: 999px; background: #fff; color: #153e31; font: 900 13px/1 Arial, sans-serif; cursor: pointer; }
-    #labelPrintPortal { box-sizing: border-box; display: grid !important; grid-template-columns: repeat(4, 1.75in); grid-template-rows: repeat(12, .75in); column-gap: .333in; row-gap: .136in; width: 8.5in; height: 11in; margin: 18px auto; padding: .25in; background: #fff; box-shadow: 0 18px 55px rgba(0,0,0,.2); }
+    #labelPrintPortal { box-sizing: border-box; position: relative; left: ${values.offsetX}mm; top: ${values.offsetY}mm; display: grid !important; grid-template-columns: repeat(4, 1.75in); grid-template-rows: repeat(12, .75in); column-gap: .333in; row-gap: .136in; width: 8.5in; height: 11in; margin: 18px auto; padding: .25in; background: #fff; box-shadow: 0 18px 55px rgba(0,0,0,.2); }
     .label-print-cell { width: 1.75in; height: .75in; overflow: hidden; }
     @media (max-width: 850px) {
       .label-sheet-toolbar { align-items: stretch; flex-direction: column; }
@@ -449,7 +451,7 @@ function openLabelPrintWindow(values) {
 </head>
 <body>
   <header class="label-sheet-toolbar">
-    <div><strong>Highland label sheet · ${values.quantity} label${values.quantity === 1 ? '' : 's'}</strong><span>Copies 1 · Page 1 only · Single-sided · Letter · Actual Size / 100%</span></div>
+    <div><strong>Highland label sheet · ${values.quantity} label${values.quantity === 1 ? '' : 's'}</strong><span>Copies 1 · Page 1 only · Letter · 100% · correction ${values.offsetX} mm / ${values.offsetY} mm</span></div>
     <button id="printSheetButton" type="button">Print labels</button>
   </header>
   ${portal.outerHTML}
