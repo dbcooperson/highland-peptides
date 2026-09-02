@@ -25,7 +25,7 @@ const {
 } = require('./auth');
 const { buildPackingSlip, buildContentsLabel } = require('./labels');
 const { isPayPalConfigured, createPayPalOrder, capturePayPalOrder } = require('./paypal');
-const { sendOrderBackup, sendPendingTrackingDiscord, sendCustomerPaymentInstructions, sendPaymentReminder, sendTrackingEmail, isCustomerEmailConfigured } = require('./notifications');
+const { sendOrderBackup, sendPendingTrackingDiscord, checkFulfillmentDiscordConnection, sendCustomerPaymentInstructions, sendPaymentReminder, sendTrackingEmail, isCustomerEmailConfigured } = require('./notifications');
 const { createBitcoinMonitor } = require('./btc-monitor');
 const { validateShippingAddress } = require('./address-validation');
 const analytics = require('./analytics');
@@ -1124,6 +1124,23 @@ app.post('/api/admin/orders/:id/fulfillment-discord', requireAdmin, async (req, 
     return res.status(502).json({ error: result.warning || 'Could not post the shipping address to Discord.' });
   }
   res.json({ ok: true, fulfillmentDispatch: result });
+});
+
+app.get('/api/admin/discord/fulfillment-health', requireAdmin, async (req, res) => {
+  try {
+    const result = await checkFulfillmentDiscordConnection();
+    if (!result.configured) {
+      return res.status(503).json({ error: 'The authorized Discord shipping webhook is not configured.' });
+    }
+    res.json({
+      ok: true,
+      authorized: result.authorized,
+      channelId: result.channelId,
+      webhookName: result.webhookName,
+    });
+  } catch (err) {
+    res.status(502).json({ error: err.message || 'Could not verify the Discord shipping webhook.' });
+  }
 });
 
 app.delete('/api/admin/orders/:id', requireAdmin, (req, res) => {

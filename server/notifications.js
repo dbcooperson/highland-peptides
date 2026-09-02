@@ -156,7 +156,7 @@ function discordWaitUrl(webhookUrl) {
   return url.toString();
 }
 
-async function sendPendingTrackingDiscord(order, options = {}) {
+async function verifyFulfillmentDiscordWebhook(options = {}) {
   const webhookUrl = String(options.webhookUrl || config.DISCORD_FULFILLMENT_WEBHOOK_URL || '').trim();
   const expectedChannelId = String(options.expectedChannelId || config.DISCORD_FULFILLMENT_CHANNEL_ID || '').trim();
   const fetchImpl = options.fetchImpl || fetch;
@@ -172,7 +172,32 @@ async function sendPendingTrackingDiscord(order, options = {}) {
     throw new Error('Discord fulfillment webhook is not attached to the authorized shipping channel.');
   }
 
-  const response = await fetchImpl(discordWaitUrl(webhookUrl), {
+  return {
+    webhookUrl,
+    fetchImpl,
+    channelId: String(metadata.channel_id || ''),
+    webhookId: String(metadata.id || ''),
+    webhookName: String(metadata.name || ''),
+  };
+}
+
+async function checkFulfillmentDiscordConnection(options = {}) {
+  const verified = await verifyFulfillmentDiscordWebhook(options);
+  if (!verified) return { configured: false, authorized: false };
+  return {
+    configured: true,
+    authorized: true,
+    channelId: verified.channelId,
+    webhookId: verified.webhookId,
+    webhookName: verified.webhookName,
+  };
+}
+
+async function sendPendingTrackingDiscord(order, options = {}) {
+  const verified = await verifyFulfillmentDiscordWebhook(options);
+  if (!verified) return null;
+
+  const response = await verified.fetchImpl(discordWaitUrl(verified.webhookUrl), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -459,6 +484,7 @@ function isCustomerEmailConfigured() {
 module.exports = {
   sendOrderBackup,
   sendPendingTrackingDiscord,
+  checkFulfillmentDiscordConnection,
   sendCustomerPaymentInstructions,
   sendPaymentReminder,
   sendTrackingEmail,

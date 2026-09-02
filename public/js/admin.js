@@ -755,6 +755,27 @@ function initLabelMaker() {
       button.textContent = 'Refresh orders';
     }
   });
+  document.getElementById('checkFulfillmentDiscord')?.addEventListener('click', async event => {
+    const button = event.currentTarget;
+    const message = document.getElementById('labelMakerMessage');
+    button.disabled = true;
+    button.textContent = 'Checking…';
+    try {
+      const result = await api('/api/admin/discord/fulfillment-health');
+      if (message) {
+        message.style.color = 'var(--success)';
+        message.textContent = `Discord shipping is connected to the authorized channel${result.webhookName ? ` as ${result.webhookName}` : ''}. No customer data was sent during this check.`;
+      }
+    } catch (err) {
+      if (message) {
+        message.style.color = 'var(--danger)';
+        message.textContent = err.message || 'Discord shipping could not be verified.';
+      }
+    } finally {
+      button.disabled = false;
+      button.textContent = 'Check Discord';
+    }
+  });
   document.getElementById('restoreRemovedLabelOrders')?.addEventListener('click', restoreRemovedLabelOrders);
   window.addEventListener('message', async event => {
     if (event.origin !== window.location.origin) return;

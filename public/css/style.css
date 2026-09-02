@@ -4313,6 +4313,7 @@ body.admin-page select {
   white-space: nowrap;
 }
 #refreshPaidLabelOrders,
+#checkFulfillmentDiscord,
 #restoreRemovedLabelOrders {
   min-height: 34px;
   padding: 0 11px;
@@ -4323,7 +4324,8 @@ body.admin-page select {
   font: 800 10px/1 Inter, sans-serif;
   cursor: pointer;
 }
-#refreshPaidLabelOrders:disabled { opacity: 0.55; cursor: wait; }
+#refreshPaidLabelOrders:disabled,
+#checkFulfillmentDiscord:disabled { opacity: 0.55; cursor: wait; }
 #restoreRemovedLabelOrders[hidden] { display: none; }
 .paid-label-order-list {
   display: grid;
@@ -4971,6 +4973,7 @@ body.admin-page .highland-print-label .highland-label-compound {
   .paid-label-queue-controls { display: grid; grid-template-columns: 1fr 1fr; }
   .paid-label-next-position,
   #refreshPaidLabelOrders,
+  #checkFulfillmentDiscord,
   #restoreRemovedLabelOrders { justify-content: center; width: 100%; }
   #restoreRemovedLabelOrders { grid-column: 1 / -1; }
   .paid-label-customer-button {

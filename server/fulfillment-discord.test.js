@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { fulfillmentAddressText, sendPendingTrackingDiscord } = require('./notifications');
+const { fulfillmentAddressText, sendPendingTrackingDiscord, checkFulfillmentDiscordConnection } = require('./notifications');
 
 const order = {
   id: 314,
@@ -44,6 +44,27 @@ test('fulfillment webhook verifies the authorized channel before posting once', 
   assert.match(payload.embeds[0].description, /July Customer/);
   assert.deepEqual(payload.allowed_mentions, { parse: [] });
   assert.doesNotMatch(JSON.stringify(payload), /private@example\.com|Retatrutide|99\.99/);
+});
+
+test('fulfillment connection check verifies the channel without posting a message', async () => {
+  const calls = [];
+  const result = await checkFulfillmentDiscordConnection({
+    webhookUrl: 'https://discord.test/api/webhooks/1/token',
+    expectedChannelId: '1544575715024965633',
+    fetchImpl: async (url, options = {}) => {
+      calls.push({ url, options });
+      return {
+        ok: true,
+        json: async () => ({ id: 'webhook-1', name: 'Highland Shipping', channel_id: '1544575715024965633' }),
+      };
+    },
+  });
+  assert.equal(result.configured, true);
+  assert.equal(result.authorized, true);
+  assert.equal(result.channelId, '1544575715024965633');
+  assert.equal(result.webhookName, 'Highland Shipping');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].options.method, 'GET');
 });
 
 test('fulfillment webhook refuses to send PII to a different channel', async () => {
