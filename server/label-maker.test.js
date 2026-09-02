@@ -23,7 +23,7 @@ test('admin includes the protected label maker controls', () => {
   assert.match(html, /id="labelOffsetX"[^>]*value="-4"/);
   assert.match(html, /id="labelOffsetY"[^>]*value="0"/);
   assert.match(html, /id="labelPitchX"[^>]*value="2\.3"/);
-  assert.match(html, /id="labelPitchY"[^>]*value="0"/);
+  assert.match(html, /id="labelPitchY"[^>]*value="1"/);
   assert.match(html, /id="labelQuantity"/);
   assert.match(html, /id="labelQuantity"[^>]*value="1"/);
   assert.match(html, /id="labelSheetRow"/);
@@ -51,7 +51,7 @@ test('label sheet matches the OL1735WS 48-up geometry', () => {
   assert.match(js, /Highland Label Print Sheet/);
   assert.match(js, /left:\s*\$\{values\.offsetX\}mm/);
   assert.match(js, /top:\s*\$\{values\.offsetY\}mm/);
-  assert.match(js, /highland-label-calibration-v2/);
+  assert.match(js, /highland-label-calibration-v3/);
   assert.match(js, /id="printSheetButton"/);
   assert.match(js, /window\.print\(\)/);
   assert.match(js, /display: block !important/);
