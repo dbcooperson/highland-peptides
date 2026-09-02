@@ -761,7 +761,7 @@ function initLabelMaker() {
     button.disabled = true;
     button.textContent = 'Checking…';
     try {
-      const result = await api('/api/admin/discord/fulfillment-health');
+      const result = await api('/api/admin/fulfillment-channel/health');
       if (message) {
         message.style.color = 'var(--success)';
         message.textContent = `Discord shipping is connected to the authorized channel${result.webhookName ? ` as ${result.webhookName}` : ''}. No customer data was sent during this check.`;

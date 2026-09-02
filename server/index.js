@@ -1126,7 +1126,7 @@ app.post('/api/admin/orders/:id/fulfillment-discord', requireAdmin, async (req, 
   res.json({ ok: true, fulfillmentDispatch: result });
 });
 
-app.get('/api/admin/discord/fulfillment-health', requireAdmin, async (req, res) => {
+app.get('/api/admin/fulfillment-channel/health', requireAdmin, async (req, res) => {
   try {
     const result = await checkFulfillmentDiscordConnection();
     if (!result.configured) {
