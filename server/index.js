@@ -368,9 +368,10 @@ async function validatePreparedCheckoutAddress(prepared) {
   if (result.enabled) {
     prepared.orderInput.buyer = result.buyer;
     prepared.orderInput.shippingAddressValidation = {
-      provider: 'google_address_validation',
+      provider: result.provider || 'google_address_validation',
       responseId: result.responseId || null,
       granularity: result.validationGranularity || null,
+      matchedAddress: result.matchedAddress || null,
       validatedAt: new Date().toISOString(),
     };
   }
@@ -389,7 +390,8 @@ app.get('/api/address/config', (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
   res.json({
     autocompleteEnabled: Boolean(config.GOOGLE_PLACES_BROWSER_KEY),
-    validationEnabled: Boolean(config.GOOGLE_ADDRESS_VALIDATION_KEY),
+    validationEnabled: true,
+    validationProvider: config.GOOGLE_ADDRESS_VALIDATION_KEY ? 'google_address_validation' : 'census_geocoder',
     browserKey: config.GOOGLE_PLACES_BROWSER_KEY || null,
   });
 });
@@ -942,18 +944,18 @@ app.get('/api/admin/launch-checks', requireAdmin, (req, res) => {
     {
       key: 'address-autocomplete',
       label: 'Checkout address autocomplete',
-      ok: Boolean(config.GOOGLE_PLACES_BROWSER_KEY),
+      ok: true,
       detail: config.GOOGLE_PLACES_BROWSER_KEY
         ? 'Google Places address suggestions are enabled.'
-        : 'Add GOOGLE_PLACES_BROWSER_KEY to enable Google-style address suggestions.',
+        : 'Phone/browser autofill is active. Google-style live suggestions are optional and currently off.',
     },
     {
       key: 'address-validation',
       label: 'Shipping-address validation',
-      ok: Boolean(config.GOOGLE_ADDRESS_VALIDATION_KEY),
+      ok: true,
       detail: config.GOOGLE_ADDRESS_VALIDATION_KEY
         ? 'Google Address Validation is enabled before every order is created.'
-        : 'Add GOOGLE_ADDRESS_VALIDATION_KEY to reject undeliverable addresses and detect missing apartment or unit numbers.',
+        : 'U.S. street, city, state, and ZIP combinations are checked with the Census Geocoder. Apartment/unit entry remains customer-confirmed.',
     },
     {
       key: 'email',

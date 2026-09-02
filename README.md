@@ -131,6 +131,11 @@ GOOGLE_ADDRESS_VALIDATION_KEY=server-key-restricted-to-address-validation-api
 
 The browser key supplies address suggestions on mobile and desktop. The server key validates every address again before creating an order, standardizes the saved address for shipping labels, rejects incomplete or undeliverable addresses, and prompts for a missing or unconfirmed apartment/unit on supported U.S. addresses. The server-side check applies even when the shopper skips autocomplete and types the address manually.
 
+Both Google keys are optional. Without them, checkout keeps native phone/browser
+address autofill and automatically checks U.S. street/city/state/ZIP combinations
+against the Census Bureau's current public address-range geocoder. Google adds live
+suggestions and stronger USPS apartment/unit deliverability checks when configured.
+
 ### Email order backup
 
 To email yourself a copy of every paid order, configure SMTP in Render:

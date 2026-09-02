@@ -1,4 +1,5 @@
 const GOOGLE_VALIDATE_ENDPOINT = 'https://addressvalidation.googleapis.com/v1:validateAddress';
+const CENSUS_GEOCODER_ENDPOINT = 'https://geocoding.geo.census.gov/geocoder/locations/address';
 
 function clean(value, max = 160) {
   return String(value || '').trim().replace(/[\u0000-\u001f\u007f]/g, '').slice(0, max);
@@ -34,6 +35,80 @@ function normalizedBuyer(original, postalAddress) {
 
 function invalidResult(code, error, details = {}) {
   return { enabled: true, valid: false, code, error, ...details };
+}
+
+function censusAddressUrl(buyer) {
+  const params = new URLSearchParams({
+    street: clean(buyer.address1),
+    city: clean(buyer.city, 80),
+    state: clean(buyer.state, 40),
+    zip: clean(buyer.zip, 20),
+    benchmark: 'Public_AR_Current',
+    format: 'json',
+  });
+  return `${CENSUS_GEOCODER_ENDPOINT}?${params}`;
+}
+
+function normalizedCensusBuyer(original, match) {
+  const components = match && match.addressComponents ? match.addressComponents : {};
+  const matchedAddress = clean(match && match.matchedAddress, 240);
+  const matchedStreet = matchedAddress ? matchedAddress.split(',')[0].trim() : '';
+  return {
+    ...original,
+    address1: matchedStreet || original.address1,
+    // Census geocodes only the street address. Preserve apartment/suite/unit
+    // exactly as entered so standardization can never discard it.
+    address2: original.address2,
+    city: clean(components.city, 80) || original.city,
+    state: clean(components.state, 40).toUpperCase() || original.state,
+    zip: clean(components.zip, 20) || original.zip,
+    country: 'US',
+  };
+}
+
+function interpretCensusResponse(buyer, payload) {
+  const matches = payload && payload.result && Array.isArray(payload.result.addressMatches)
+    ? payload.result.addressMatches
+    : [];
+  if (!matches.length) {
+    return invalidResult(
+      'invalid_address',
+      'We could not match that U.S. street address. Check the street, city, state, and ZIP code, then try again.',
+      { field: 'address1', status: 400, provider: 'census_geocoder' },
+    );
+  }
+  const match = matches[0];
+  return {
+    enabled: true,
+    valid: true,
+    buyer: normalizedCensusBuyer(buyer, match),
+    provider: 'census_geocoder',
+    responseId: null,
+    validationGranularity: 'ADDRESS_RANGE',
+    matchedAddress: clean(match.matchedAddress, 240),
+  };
+}
+
+async function validateWithCensus(buyer, fetchImpl) {
+  let response;
+  try {
+    response = await fetchImpl(censusAddressUrl(buyer), {
+      headers: {
+        Accept: 'application/json',
+        'User-Agent': 'HighlandPeptides/1.0 (shipping-address-check)',
+      },
+    });
+  } catch (_) {
+    return invalidResult('address_validation_unavailable', 'We could not verify this address right now. Please try again in a moment.', { status: 503, provider: 'census_geocoder' });
+  }
+  if (!response.ok) {
+    return invalidResult('address_validation_unavailable', 'We could not verify this address right now. Please try again in a moment.', { status: 503, provider: 'census_geocoder' });
+  }
+  try {
+    return interpretCensusResponse(buyer, await response.json());
+  } catch (_) {
+    return invalidResult('address_validation_unavailable', 'We could not verify this address right now. Please try again in a moment.', { status: 503, provider: 'census_geocoder' });
+  }
 }
 
 function interpretValidationResponse(buyer, payload) {
@@ -83,8 +158,12 @@ function interpretValidationResponse(buyer, payload) {
 
 async function validateShippingAddress(buyer, options = {}) {
   const apiKey = String(options.apiKey || '').trim();
-  if (!apiKey) return { enabled: false, valid: true, buyer };
   const fetchImpl = options.fetchImpl || fetch;
+  const country = clean(buyer && buyer.country, 2).toUpperCase() || 'US';
+  if (!apiKey) {
+    if (country !== 'US') return { enabled: false, valid: true, buyer, provider: 'manual' };
+    return validateWithCensus(buyer, fetchImpl);
+  }
   let response;
   try {
     response = await fetchImpl(`${GOOGLE_VALIDATE_ENDPOINT}?key=${encodeURIComponent(apiKey)}`, {
@@ -104,11 +183,13 @@ async function validateShippingAddress(buyer, options = {}) {
   } catch (_) {
     return invalidResult('address_validation_unavailable', 'We could not verify this address right now. Please try again in a moment.', { status: 503 });
   }
-  return interpretValidationResponse(buyer, payload);
+  return { ...interpretValidationResponse(buyer, payload), provider: 'google_address_validation' };
 }
 
 module.exports = {
   addressRequest,
+  censusAddressUrl,
+  interpretCensusResponse,
   interpretValidationResponse,
   validateShippingAddress,
 };
