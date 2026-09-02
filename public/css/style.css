@@ -197,7 +197,7 @@ body {
 .account-progress { height:9px; overflow:hidden; border-radius:999px; background:#e5ded2; }.account-progress i { display:block; width:0; height:100%; border-radius:inherit; background:linear-gradient(90deg,#315b43,#7ba083); transition:width .45s ease; }
 .payout-panel .account-primary-button { width:100%; margin-top:10px; }
 .account-panel-heading { display:flex; align-items:center; justify-content:space-between; gap:10px; border-bottom:1px solid #e3dbcf; padding-bottom:12px; }.account-panel-heading h3 { margin:0; }.account-panel-heading span { font-size:10px; color:#81786d; text-transform:uppercase; letter-spacing:.08em; }
-.account-activity-list { display:grid; }.account-activity-row { display:flex; justify-content:space-between; gap:16px; padding:13px 0; border-bottom:1px solid #eee6da; }.account-activity-row:last-child { border-bottom:0; }.account-activity-row > div { display:flex; flex-direction:column; gap:3px; }.account-activity-row > div:last-child { text-align:right; }.account-activity-row strong { font-size:13px; }.account-activity-row span { color:#7b7369; font-size:11px; }.account-order-status { color:#315b43 !important; font-weight:800; }.account-empty-state { padding:22px 0; color:#81786d; font-size:12px; }
+.account-activity-list { display:grid; }.account-activity-row { display:flex; justify-content:space-between; gap:16px; padding:13px 0; border-bottom:1px solid #eee6da; }.account-activity-row:last-child { border-bottom:0; }.account-activity-row > div { display:flex; flex-direction:column; gap:3px; }.account-activity-row > div:last-child { text-align:right; }.account-activity-row strong { font-size:13px; }.account-activity-row span { color:#7b7369; font-size:11px; }.account-order-status { color:#315b43 !important; font-weight:800; }.account-tracking-link { color:#315b43; font-size:11px; font-weight:800; overflow-wrap:anywhere; }.account-empty-state { padding:22px 0; color:#81786d; font-size:12px; }
 .creator-credit-panel { margin-top:12px; display:grid; grid-template-columns:1fr 1fr 1.15fr; gap:24px; align-items:start; background:linear-gradient(135deg,#fffaf2,#edf2e9); }
 .creator-credit-panel a { color:#24563a; font-weight:850; }.creator-credit-form { display:grid; gap:8px; }.creator-credit-form label { font-size:11px; text-transform:uppercase; letter-spacing:.08em; font-weight:900; color:#6b6257; }.creator-credit-form > div { display:grid; gap:8px; }.creator-credit-form input { width:100%; box-sizing:border-box; border:1px solid #cfc4b5; border-radius:11px; padding:13px; font:inherit; }.creator-credit-form .form-msg { min-height:18px; margin:0; font-size:11px; }
 .account-welcome-overlay { position:fixed; inset:0; z-index:10020; display:grid; place-items:center; padding:18px; background:rgba(7,12,13,.72); backdrop-filter:blur(10px); }
@@ -3011,6 +3011,7 @@ body.search-open { overflow: hidden; }
   text-transform: uppercase;
 }
 .admin-status-paid,
+.admin-status-pending_tracking,
 .admin-status-fulfilled { background: rgba(58,126,75,0.24); color: #a8e3b2; }
 .admin-status-cancelled { background: rgba(160,50,50,0.24); color: #f0b0a8; }
 .admin-payment {
@@ -4223,30 +4224,29 @@ body.admin-page select {
   text-decoration: none;
 }
 .paid-label-queue {
-  margin-bottom: 22px;
-  padding: 18px;
-  border: 1px solid rgba(109,177,128,0.34);
-  border-radius: 22px;
-  background: linear-gradient(135deg, rgba(31,75,54,0.48), rgba(15,23,20,0.82));
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+  margin-bottom: 18px;
+  padding: 16px;
+  border: 1px solid rgba(243,239,230,0.13);
+  border-radius: 16px;
+  background: rgba(250,247,241,0.035);
 }
 .paid-label-queue-heading {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 18px;
+  gap: 16px;
 }
 .paid-label-queue-heading h3 {
-  margin: 4px 0 6px;
+  margin: 3px 0 4px;
   color: #f3efe6;
-  font-size: 20px;
+  font-size: 17px;
 }
 .paid-label-queue-heading p {
-  max-width: 760px;
+  max-width: 680px;
   margin: 0;
-  color: rgba(243,239,230,0.65);
-  font-size: 12px;
-  line-height: 1.5;
+  color: rgba(243,239,230,0.54);
+  font-size: 11px;
+  line-height: 1.4;
 }
 .paid-label-queue-controls {
   flex: 0 0 auto;
@@ -4255,53 +4255,67 @@ body.admin-page select {
   gap: 9px;
 }
 .paid-label-next-position {
-  min-height: 38px;
+  min-height: 34px;
   display: inline-flex;
   align-items: center;
   padding: 0 12px;
   border: 1px solid rgba(243,239,230,0.15);
   border-radius: 999px;
-  background: rgba(10,16,13,0.38);
+  background: rgba(10,16,13,0.28);
   color: #dcecdf;
   font-size: 11px;
   font-weight: 850;
   white-space: nowrap;
 }
 #refreshPaidLabelOrders {
-  min-height: 38px;
-  padding: 0 13px;
-  border: 1px solid rgba(217,154,96,0.4);
+  min-height: 34px;
+  padding: 0 11px;
+  border: 1px solid rgba(243,239,230,0.16);
   border-radius: 999px;
-  background: rgba(217,154,96,0.1);
-  color: #f3efe6;
-  font: 850 11px/1 Inter, sans-serif;
+  background: transparent;
+  color: rgba(243,239,230,0.72);
+  font: 800 10px/1 Inter, sans-serif;
   cursor: pointer;
 }
 #refreshPaidLabelOrders:disabled { opacity: 0.55; cursor: wait; }
 .paid-label-order-list {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(285px, 1fr));
-  gap: 12px;
-  margin-top: 16px;
+  gap: 7px;
+  margin-top: 13px;
 }
-.paid-label-order-card {
-  display: grid;
-  grid-template-columns: minmax(125px, 0.75fr) minmax(170px, 1.2fr) auto;
+.paid-label-order-card { min-width: 0; }
+.paid-label-customer-button {
+  display: grid !important;
+  grid-template-columns: minmax(130px, 0.7fr) minmax(180px, 1.5fr) auto;
   align-items: center;
   gap: 14px;
-  padding: 14px;
+  width: 100%;
+  min-height: 62px !important;
+  padding: 10px 12px !important;
   border: 1px solid rgba(243,239,230,0.14);
-  border-radius: 16px;
-  background: rgba(17,23,20,0.78);
+  border-radius: 12px;
+  background: rgba(17,23,20,0.52) !important;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 150ms ease, background 150ms ease, transform 150ms ease;
 }
+.paid-label-customer-button:hover,
+.paid-label-customer-button:focus-visible {
+  border-color: rgba(109,177,128,0.58);
+  background: rgba(39,76,55,0.48) !important;
+  outline: none;
+  transform: translateY(-1px);
+}
+.paid-label-customer-button:disabled { opacity: 0.55; cursor: wait; transform: none; }
 .paid-label-order-meta {
   display: grid;
-  gap: 3px;
+  gap: 2px;
   min-width: 0;
 }
-.paid-label-order-meta > span {
+.paid-label-order-meta > small {
   color: #d99a60;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 900;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -4309,56 +4323,25 @@ body.admin-page select {
 .paid-label-order-meta > strong {
   overflow: hidden;
   color: #fffaf2;
-  font-size: 14px;
+  font-size: 15px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.paid-label-order-meta > small {
-  color: rgba(243,239,230,0.5);
-  font-size: 9px;
-}
-.paid-label-order-items {
-  display: grid;
-  gap: 5px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.paid-label-order-items li {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  color: rgba(243,239,230,0.76);
-  font-size: 10px;
-}
-.paid-label-order-items li > span { display: grid; gap: 1px; min-width: 0; }
-.paid-label-order-items strong {
+.paid-label-order-summary {
   overflow: hidden;
+  color: rgba(243,239,230,0.62);
+  font-size: 10px;
+  line-height: 1.35;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.paid-label-order-items small { color: rgba(243,239,230,0.46); font-size: 9px; }
-.paid-label-order-items b { color: #dcecdf; }
-.paid-label-order-action {
-  display: grid;
-  justify-items: end;
-  gap: 7px;
-}
-.paid-label-order-action > span {
-  color: rgba(243,239,230,0.58);
+.paid-label-order-count {
+  color: rgba(243,239,230,0.56);
   font-size: 10px;
   white-space: nowrap;
 }
-.paid-label-order-action > span strong { color: #fffaf2; font-size: 15px; }
-.paid-label-print-button {
-  min-width: 118px;
-  min-height: 42px;
-  border-color: rgba(122,198,143,0.7) !important;
-  background: #2e7048 !important;
-  color: #fff !important;
-  font-size: 11px !important;
-}
+.paid-label-order-count strong { color: #e6f5e9; font-size: 15px; }
+.paid-label-order-count i { margin-left: 6px; color: #7bc48d; font-size: 16px; font-style: normal; }
 .paid-label-order-empty {
   grid-column: 1 / -1;
   display: grid;
@@ -4855,15 +4838,17 @@ body.admin-page .highland-print-label .highland-label-compound {
   .paid-label-queue-controls { display: grid; grid-template-columns: 1fr 1fr; }
   .paid-label-next-position,
   #refreshPaidLabelOrders { justify-content: center; width: 100%; }
-  .paid-label-order-list { grid-template-columns: 1fr; }
-  .paid-label-order-card { grid-template-columns: 1fr; }
-  .paid-label-order-meta > strong { font-size: 16px; }
-  .paid-label-order-action {
-    grid-template-columns: 1fr auto;
-    align-items: center;
-    justify-items: start;
+  .paid-label-customer-button {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 4px 10px;
+    min-height: 72px !important;
   }
-  .paid-label-print-button { min-width: 140px; min-height: 48px; }
+  .paid-label-order-summary {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  .paid-label-order-count { grid-column: 2; grid-row: 1; }
+  .paid-label-order-meta > strong { font-size: 16px; }
   .label-maker-row,
   .label-design-picker { grid-template-columns: 1fr; }
   .label-design-option {

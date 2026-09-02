@@ -61,7 +61,11 @@ test('paid orders can print all vial labels into consecutive unused positions', 
   assert.match(js, /renderPaidOrderLabelQueue/);
   assert.match(js, /\.filter\(order => order\.status === 'paid' && orderLabelCount\(order\) > 0\)/);
   assert.match(js, /paid_at \|\| b\.created_at/);
-  assert.match(js, /paid-label-print-button/);
+  assert.match(js, /paid-label-customer-button/);
+  assert.match(js, /highland-order-labels-printed/);
+  assert.match(js, /status: 'pending_tracking'/);
+  assert.match(js, /window\.addEventListener\('afterprint', notifyPrintComplete\)/);
+  assert.match(js, /window\.setTimeout\(startOrderPrint, 250\)/);
   assert.match(js, /renderOrdersTable\(\);\s*renderPaidOrderLabelQueue\(\);/);
   assert.match(js, /buildOrderLabelValues/);
   assert.match(js, /labelCatalogProducts\.find\(product => String\(product\.sku\) === String\(item\.sku\)\)/);
@@ -72,7 +76,7 @@ test('paid orders can print all vial labels into consecutive unused positions', 
   assert.match(js, /openLabelPrintWindow\(values, printWindow\)/);
   assert.match(css, /\.admin-print-order-labels/);
   assert.match(css, /\.paid-label-order-list/);
-  assert.match(css, /\.paid-label-print-button/);
+  assert.match(css, /\.paid-label-customer-button/);
 });
 
 test('label maker receives every current storefront SKU and strength', () => {

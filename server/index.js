@@ -33,6 +33,8 @@ const { applyBundlePromotion, publicPromotion } = require('./promotions');
 const { startPaymentReminderScheduler } = require('./reminders');
 const { registerAccountRoutes } = require('./accounts');
 
+const CONFIRMED_ORDER_STATUSES = new Set(['paid', 'pending_tracking', 'fulfilled']);
+
 const isProductionRuntime = Boolean(process.env.RENDER || process.env.RENDER_SERVICE_ID || process.env.NODE_ENV === 'production');
 if (isProductionRuntime) {
   if ((!process.env.ADMIN_PASSWORD_SHA256 && !process.env.ADMIN_PASSWORD) || (!config.ADMIN_PASSWORD_SHA256 && config.ADMIN_PASSWORD === 'change-me-before-launch')) {
@@ -647,7 +649,7 @@ function resetAdminLoginFailures(req) {
 
 function topSoldProducts(orders, limit = 10) {
   const leaders = new Map();
-  orders.filter(order => ['paid', 'fulfilled'].includes(order.status)).forEach(order => {
+  orders.filter(order => CONFIRMED_ORDER_STATUSES.has(order.status)).forEach(order => {
     (order.items || []).forEach(item => {
       const key = String(item.sku || `${item.name}|${item.spec}`);
       const current = leaders.get(key) || {
@@ -682,7 +684,7 @@ app.get('/api/admin/analytics', requireAdmin, (req, res) => {
 
   const salesOrders = db.getAllOrders().filter(order => {
     const createdAt = new Date(order.created_at || 0);
-    return createdAt >= rangeStart && ['paid', 'fulfilled'].includes(order.status);
+    return createdAt >= rangeStart && CONFIRMED_ORDER_STATUSES.has(order.status);
   });
   const trackingStartedAt = new Date(summary.trackingStartedAt || 0);
   const conversionStart = trackingStartedAt > rangeStart ? trackingStartedAt : rangeStart;
@@ -717,8 +719,7 @@ app.get('/api/admin/top-products', requireAdmin, (req, res) => {
 });
 
 app.get('/api/admin/profit', requireAdmin, (req, res) => {
-  const countedStatuses = ['paid', 'fulfilled'];
-  const orders = db.getAllOrders().filter(order => countedStatuses.includes(order.status));
+  const orders = db.getAllOrders().filter(order => CONFIRMED_ORDER_STATUSES.has(order.status));
   const lines = [];
   const totals = {
     orderCount: orders.length,
@@ -829,7 +830,7 @@ app.post('/api/admin/logout', (req, res) => {
 
 app.get('/api/admin/launch-checks', requireAdmin, (req, res) => {
   const storage = db.getStorageInfo();
-  const paidOrders = db.getAllOrders().filter(order => ['paid', 'fulfilled'].includes(order.status));
+  const paidOrders = db.getAllOrders().filter(order => CONFIRMED_ORDER_STATUSES.has(order.status));
   const checks = [
     {
       key: 'storage',
@@ -884,7 +885,7 @@ app.get('/api/admin/launch-checks', requireAdmin, (req, res) => {
       label: 'Live payment smoke test',
       ok: paidOrders.length > 0,
       detail: paidOrders.length > 0
-        ? `${paidOrders.length} paid/fulfilled order(s) recorded.`
+        ? `${paidOrders.length} confirmed order(s) recorded.`
         : 'Place a small live test order after deploy, confirm it appears here, then redeploy and confirm it remains.',
     },
   ];
@@ -943,7 +944,8 @@ const TRACKING_CARRIERS = new Set(['USPS', 'UPS', 'FedEx', 'DHL', 'Canada Post',
 app.post('/api/admin/orders/:id/tracking', requireAdmin, async (req, res) => {
   const order = db.getOrderById(req.params.id);
   if (!order) return res.status(404).json({ error: 'Order not found' });
-  if (!['paid', 'fulfilled'].includes(order.status)) return res.status(400).json({ error: 'Mark the order paid before sending tracking.' });
+  if (!['paid', 'pending_tracking'].includes(order.status)) return res.status(400).json({ error: 'Tracking can only be sent for a paid order awaiting fulfillment.' });
+  if (order.tracking_sent_at || order.tracking_number) return res.status(409).json({ error: 'Tracking has already been sent for this order.' });
   const carrier = cleanText(req.body && req.body.carrier, 60);
   const trackingNumber = cleanText(req.body && req.body.trackingNumber, 120);
   if (!TRACKING_CARRIERS.has(carrier)) return res.status(400).json({ error: 'Choose a supported carrier.' });
@@ -991,17 +993,17 @@ app.get('/api/admin/orders', requireAdmin, (req, res) => {
 
 app.post('/api/admin/orders/:id/status', requireAdmin, async (req, res) => {
   const { status } = req.body || {};
-  if (!['pending_payment', 'paid', 'fulfilled', 'cancelled'].includes(status)) {
+  if (!['pending_payment', 'paid', 'pending_tracking', 'fulfilled', 'cancelled'].includes(status)) {
     return res.status(400).json({ error: 'invalid status' });
   }
   const previousOrder = db.getOrderById(req.params.id);
-  const wasConfirmed = previousOrder && ['paid', 'fulfilled'].includes(previousOrder.status);
+  const wasConfirmed = previousOrder && CONFIRMED_ORDER_STATUSES.has(previousOrder.status);
   const order = db.updateOrderStatus(req.params.id, status);
   if (!order) return res.status(404).json({ error: 'Order not found' });
-  if (!wasConfirmed && ['paid', 'fulfilled'].includes(status)) {
+  if (!wasConfirmed && CONFIRMED_ORDER_STATUSES.has(status)) {
     analytics.recordEvent({ type: 'payment_confirmed' });
   }
-  if (['paid', 'fulfilled'].includes(status)) {
+  if (CONFIRMED_ORDER_STATUSES.has(status)) {
     await backupOrderIfNeeded(order, 'admin_status_' + status);
   }
   res.json({ ok: true });

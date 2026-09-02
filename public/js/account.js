@@ -74,8 +74,13 @@ function renderDashboard(data) {
 
   renderActivity(document.getElementById('referralActivity'), stats.recentReferrals || [], item => `
     <div class="account-activity-row"><div><strong>${escapeHTML(item.customer)}</strong><span>Order HP-${item.orderId} · ${safeDate(item.paidAt)}</span></div><div><strong>${money(item.creditAmount)}</strong><span>${escapeHTML(statusLabel(item.creditStatus || 'pending_review'))}</span></div></div>`, 'Paid referral activity will appear here.');
-  renderActivity(document.getElementById('accountOrders'), orders || [], item => `
-    <div class="account-activity-row"><div><strong>Order HP-${item.id}</strong><span>${item.itemCount} item${item.itemCount === 1 ? '' : 's'} · ${safeDate(item.createdAt)}</span></div><div><strong>${money(item.total)}</strong><span class="account-order-status">${escapeHTML(statusLabel(item.status))}</span></div></div>`, 'Orders using this verified email will appear here.');
+  renderActivity(document.getElementById('accountOrders'), orders || [], item => {
+    const trackingText = item.trackingNumber ? `${item.trackingCarrier || 'Tracking'} · ${item.trackingNumber}` : '';
+    const tracking = !trackingText ? '' : item.trackingUrl
+      ? `<a class="account-tracking-link" href="${escapeHTML(item.trackingUrl)}" target="_blank" rel="noopener">${escapeHTML(trackingText)}</a>`
+      : `<span class="account-tracking-link">${escapeHTML(trackingText)}</span>`;
+    return `<div class="account-activity-row"><div><strong>Order HP-${item.id}</strong><span>${item.itemCount} item${item.itemCount === 1 ? '' : 's'} · ${safeDate(item.createdAt)}</span>${tracking}</div><div><strong>${money(item.total)}</strong><span class="account-order-status">${escapeHTML(statusLabel(item.status))}</span></div></div>`;
+  }, 'Orders using this verified email will appear here.');
 
   renderActivity(document.getElementById('tiktokActivity'), socialSubmissions, item => `
     <div class="account-activity-row"><div><strong><a href="${escapeHTML(item.video_url)}" target="_blank" rel="noopener">TikTok submission #${item.id}</a></strong><span>${safeDate(item.created_at)}</span></div><div><strong>${money(item.creditAmount || referral.tiktokCredit || 5)}</strong><span>${escapeHTML(statusLabel(item.status))}</span></div></div>`, 'Your submitted videos will appear here.');

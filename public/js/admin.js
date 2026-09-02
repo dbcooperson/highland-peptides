@@ -229,15 +229,17 @@ function paymentHTML(order) {
 
 function summaryHTML(orders) {
   const paid = orders.filter(o => o.status === 'paid').length;
+  const pendingTracking = orders.filter(o => o.status === 'pending_tracking').length;
   const duplicateTxidOrders = orders.filter(o => o.payment_reference_duplicate).length;
   const pending = orders.filter(o => o.status === 'pending_payment').length;
   const fulfilled = orders.filter(o => o.status === 'fulfilled').length;
-  const revenue = orders.filter(o => ['paid','fulfilled'].includes(o.status)).reduce((sum, o) => sum + (o.total || 0), 0);
+  const revenue = orders.filter(o => ['paid','pending_tracking','fulfilled'].includes(o.status)).reduce((sum, o) => sum + (o.total || 0), 0);
   return `
     <div class="admin-summary-grid">
       <div><span>Total orders</span><strong>${orders.length}</strong></div>
       <div><span>Paid</span><strong>${paid}</strong></div>
-      <div><span>Pending</span><strong>${pending}</strong></div>
+      <div><span>Pending payment</span><strong>${pending}</strong></div>
+      <div><span>Pending tracking</span><strong>${pendingTracking}</strong></div>
       <div><span>Fulfilled</span><strong>${fulfilled}</strong></div>
       <div><span>Paid revenue</span><strong>$${revenue.toFixed(2)}</strong></div>
       <div class="${duplicateTxidOrders ? 'admin-summary-alert' : ''}"><span>Duplicate TXIDs</span><strong>${duplicateTxidOrders}</strong></div>
@@ -465,13 +467,14 @@ function openLabelPrintWindow(values, preparedWindow = null) {
   printWindow.document.open();
   const nextPosition = values.start + values.quantity <= 48 ? values.start + values.quantity : 1;
   const nextSlot = labelRowAndColumnFromPosition(nextPosition);
+  const printedOrderId = Number.isInteger(Number(values.orderId)) ? Number(values.orderId) : null;
   printWindow.document.write(`<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Highland Label Print Sheet</title>
-  <link rel="stylesheet" href="/css/style.css?v=paid-order-label-queue-v1-20260901">
+  <link rel="stylesheet" href="/css/style.css?v=streamlined-label-workflow-v1-20260901">
   <style>
     * { box-sizing: border-box; }
     html, body { margin: 0; min-height: 100%; background: #e9e6de; color: #171a18; font-family: Arial, Helvetica, sans-serif; }
@@ -501,15 +504,40 @@ function openLabelPrintWindow(values, preparedWindow = null) {
   </header>
   ${portal.outerHTML}
   <script>
+    const printedOrderId = ${printedOrderId === null ? 'null' : printedOrderId};
+    let completionSent = false;
+    function notifyPrintComplete() {
+      if (completionSent || printedOrderId === null) return;
+      completionSent = true;
+      if (window.opener && !window.opener.closed) {
+        window.opener.postMessage({ type: 'highland-order-labels-printed', orderId: printedOrderId }, window.location.origin);
+      }
+    }
+    window.addEventListener('afterprint', notifyPrintComplete);
     document.getElementById('printSheetButton').addEventListener('click', function () {
       try {
         localStorage.setItem('${LABEL_NEXT_POSITION_KEY}', '${nextPosition}');
         if (window.opener && !window.opener.closed) {
-          window.opener.postMessage({ type: 'highland-label-position-used', nextPosition: ${nextPosition} }, '*');
+          window.opener.postMessage({ type: 'highland-label-position-used', nextPosition: ${nextPosition} }, window.location.origin);
         }
       } catch (_) {}
       window.print();
+      window.setTimeout(notifyPrintComplete, 750);
     });
+    async function startOrderPrint() {
+      if (printedOrderId === null) return;
+      try {
+        if (document.fonts && document.fonts.ready) await document.fonts.ready;
+        await Promise.all(Array.from(document.images).map(function (img) {
+          return img.complete ? Promise.resolve() : new Promise(function (resolve) {
+            img.addEventListener('load', resolve, { once: true });
+            img.addEventListener('error', resolve, { once: true });
+          });
+        }));
+      } catch (_) {}
+      document.getElementById('printSheetButton').click();
+    }
+    window.setTimeout(startOrderPrint, 250);
   <\/script>
 </body>
 </html>`);
@@ -685,12 +713,25 @@ function initLabelMaker() {
       button.textContent = 'Refresh orders';
     }
   });
-  window.addEventListener('message', event => {
-    if (event.data?.type !== 'highland-label-position-used') return;
+  window.addEventListener('message', async event => {
+    if (event.origin !== window.location.origin) return;
+    if (event.data?.type === 'highland-label-position-used') {
+      try {
+        localStorage.setItem(LABEL_NEXT_POSITION_KEY, String(event.data.nextPosition));
+      } catch (_) {}
+      setLabelSheetPosition(event.data.nextPosition);
+      return;
+    }
+    if (event.data?.type !== 'highland-order-labels-printed') return;
+    const order = adminOrdersCache.find(item => String(item.id) === String(event.data.orderId));
+    if (!order || order.status !== 'paid') return;
     try {
-      localStorage.setItem(LABEL_NEXT_POSITION_KEY, String(event.data.nextPosition));
-    } catch (_) {}
-    setLabelSheetPosition(event.data.nextPosition);
+      await api(`/api/admin/orders/${order.id}/status`, { method: 'POST', body: { status: 'pending_tracking' } });
+      await loadOrders();
+      loadProfit();
+    } catch (err) {
+      window.alert(err.message || 'The labels printed, but the order could not be moved to Pending tracking.');
+    }
   });
   form.addEventListener('submit', event => {
     event.preventDefault();
@@ -861,7 +902,7 @@ async function loadProfit() {
         ${td(`${line.margin}%`)}
         ${td('#' + line.orderId)}
       </tr>
-    `).join('') || `<tr>${td('No paid or fulfilled orders yet.')}</tr>`}
+    `).join('') || `<tr>${td('No confirmed orders yet.')}</tr>`}
   `;
 }
 
@@ -916,8 +957,8 @@ function updatePaidLabelQueuePosition(values = getLabelMakerValues()) {
 function paidOrderLabelItemSummary(order) {
   return (order.items || []).map(item => {
     const quantity = Math.max(0, Number(item.quantity) || 0);
-    return `<li><span><strong>${escapeHtml(item.name || item.sku || 'Research product')}</strong>${item.spec ? `<small>${escapeHtml(item.spec)}</small>` : ''}</span><b>×${quantity}</b></li>`;
-  }).join('');
+    return `${item.name || item.sku || 'Research product'}${item.spec ? ` ${item.spec}` : ''} ×${quantity}`;
+  }).join(' · ');
 }
 
 function renderPaidOrderLabelQueue() {
@@ -935,18 +976,12 @@ function renderPaidOrderLabelQueue() {
 
   queue.innerHTML = paidOrders.map(order => {
     const count = orderLabelCount(order);
-    const paidDate = new Date(order.paid_at || order.created_at || Date.now());
     return `<article class="paid-label-order-card">
-      <div class="paid-label-order-meta">
-        <span>Order #${escapeHtml(order.id)}</span>
-        <strong>${escapeHtml(order.buyer?.name || 'Customer')}</strong>
-        <small>Paid ${escapeHtml(paidDate.toLocaleString())}</small>
-      </div>
-      <ul class="paid-label-order-items">${paidOrderLabelItemSummary(order)}</ul>
-      <div class="paid-label-order-action">
-        <span><strong>${count}</strong> vial label${count === 1 ? '' : 's'}</span>
-        <button type="button" class="admin-print-order-labels paid-label-print-button" data-id="${escapeHtml(order.id)}">Print order</button>
-      </div>
+      <button type="button" class="admin-print-order-labels paid-label-customer-button" data-id="${escapeHtml(order.id)}">
+        <span class="paid-label-order-meta"><small>Order #${escapeHtml(order.id)}</small><strong>${escapeHtml(order.buyer?.name || 'Customer')}</strong></span>
+        <span class="paid-label-order-summary">${escapeHtml(paidOrderLabelItemSummary(order))}</span>
+        <span class="paid-label-order-count"><strong>${count}</strong> label${count === 1 ? '' : 's'} <i aria-hidden="true">→</i></span>
+      </button>
     </article>`;
   }).join('');
 
@@ -1014,7 +1049,7 @@ function adminFulfillmentHTML(order) {
         <button type="button" class="admin-print-order-labels" data-id="${order.id}">Print entire order · ${labelCount} label${labelCount === 1 ? '' : 's'}</button>
         <span class="admin-muted">Starts at the next saved sheet position.</span>
       ` : ''}
-      ${['paid', 'fulfilled'].includes(order.status) ? `
+      ${['paid', 'pending_tracking'].includes(order.status) ? `
         <label>Carrier
           <select class="admin-tracking-carrier" data-id="${order.id}">
             ${['USPS','UPS','FedEx','DHL','Canada Post','Royal Mail','Australia Post','Other'].map(carrier => `<option value="${carrier}" ${carrier === order.tracking_carrier ? 'selected' : ''}>${carrier}</option>`).join('')}
@@ -1107,7 +1142,7 @@ function renderOrdersTable() {
         ${td(paymentHTML(o))}
         ${td(orderTotalHTML(o))}
         ${td(`<select data-id="${o.id}" class="statusSelect">
-          ${['pending_payment','paid','fulfilled','cancelled'].map(s => `<option value="${s}" ${s===o.status?'selected':''}>${s.replace('_', ' ')}</option>`).join('')}
+          ${['pending_payment','paid','pending_tracking','fulfilled','cancelled'].map(s => `<option value="${s}" ${s===o.status?'selected':''}>${s.replace('_', ' ')}</option>`).join('')}
         </select>`)}
         ${td(new Date(o.created_at).toLocaleString())}
         ${td(`<a href="/api/admin/orders/${o.id}/packing-slip.pdf" target="_blank">Packing Slip</a><br>

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin: Highland Peptides</title>
-<link rel="stylesheet" href="/css/style.css?v=paid-order-label-queue-v1-20260901">
+<link rel="stylesheet" href="/css/style.css?v=streamlined-label-workflow-v1-20260901">
 </head>
 <body class="admin-page">
 <header class="topbar">
@@ -104,7 +104,7 @@
       </div>
     </div>
     <div class="panel admin-tab-panel" id="profitPanel" data-admin-panel="profit" hidden>
-      <h2>Profit <span class="hint">(paid and fulfilled orders only)</span></h2>
+      <h2>Profit <span class="hint">(confirmed orders only)</span></h2>
       <div id="profitSummary"></div>
       <table id="profitTable" style="width:100%; border-collapse: collapse;"></table>
     </div>
@@ -141,8 +141,8 @@
         <div class="paid-label-queue-heading">
           <div>
             <span class="label-maker-kicker">Paid · not fulfilled</span>
-            <h3 id="paidLabelQueueTitle">Orders ready for vial labels</h3>
-            <p>Tap one button to prepare every vial in the order. Labels begin at your selected sheet position and continue left to right, then down to the next row.</p>
+            <h3 id="paidLabelQueueTitle">Print a paid order</h3>
+            <p>Tap the customer’s name. Their exact quantities print from the next open label, then the order moves to Pending tracking.</p>
           </div>
           <div class="paid-label-queue-controls">
             <span id="paidLabelNextPosition" class="paid-label-next-position">Next: row 1, label 1</span>
@@ -262,7 +262,7 @@
 
 <div id="labelPrintPortal" class="label-print-sheet" aria-hidden="true"></div>
 
-<script src="/js/admin.js?v=paid-order-label-queue-v1-20260901"></script>
+<script src="/js/admin.js?v=streamlined-label-workflow-v1-20260901"></script>
 </body>
 </html>
 

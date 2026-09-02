@@ -149,6 +149,48 @@ test('TikTok creator credit is manually approved, unique, and limited to one sub
   assert.equal(dashboard.socialSubmissions[0].status, 'approved');
 });
 
+test('printed orders update a customer account through pending tracking and fulfillment', async () => {
+  const customer = await verifiedAccount('Shipping Customer', 'shipping@example.com');
+  const order = db.createOrder({
+    buyer: {
+      name: 'Shipping Customer',
+      email: customer.email,
+      address1: '123 Highland Way',
+      address2: '',
+      city: 'Riverside',
+      state: 'CA',
+      zip: '92501',
+      country: 'United States',
+    },
+    certifiedAt: new Date().toISOString(),
+    items: [{ sku: 'RT20', name: 'Retatrutide', spec: '20mg', quantity: 3, unit_price: 30 }],
+    subtotal: 90,
+    packagingFee: 0,
+    shippingFee: 10.27,
+    shippingMethod: 'domestic',
+    orderFee: 3,
+    orderFeeRate: 0.03,
+    discountAmount: 0,
+    total: 103.27,
+    paymentProvider: 'manual_paypal',
+    customerAccountId: customer.id,
+  });
+
+  db.markOrderPaid(order.id, 'shipping-payment');
+  db.updateOrderStatus(order.id, 'pending_tracking');
+  let dashboard = db.getAccountDashboard(customer.id);
+  assert.equal(dashboard.orders[0].status, 'pending_tracking');
+  assert.equal(dashboard.orders[0].trackingNumber, '');
+  assert.ok(db.getOrderById(order.id).labels_printed_at);
+
+  db.markTrackingSent(order.id, 'USPS', '9400100000000000000000');
+  dashboard = db.getAccountDashboard(customer.id);
+  assert.equal(dashboard.orders[0].status, 'fulfilled');
+  assert.equal(dashboard.orders[0].trackingCarrier, 'USPS');
+  assert.equal(dashboard.orders[0].trackingNumber, '9400100000000000000000');
+  assert.ok(dashboard.orders[0].trackingSentAt);
+});
+
 test.after(() => {
   fs.rmSync(tempDir, { recursive: true, force: true });
 });

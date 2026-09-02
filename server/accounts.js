@@ -1,7 +1,7 @@
 const config = require('./config');
 const db = require('./db');
 const { hashPassword, verifyPassword, createToken, hashToken } = require('./account-security');
-const { sendAccountVerificationEmail, sendPasswordResetEmail, isCustomerEmailConfigured } = require('./notifications');
+const { sendAccountVerificationEmail, sendPasswordResetEmail, isCustomerEmailConfigured, trackingUrl } = require('./notifications');
 
 const attempts = new Map();
 const WINDOW_MS = 15 * 60 * 1000;
@@ -219,7 +219,10 @@ function registerAccountRoutes(app, requireAdmin) {
     res.json({
       account: publicAccount(dashboard.account),
       stats: dashboard.stats,
-      orders: dashboard.orders,
+      orders: dashboard.orders.map(order => ({
+        ...order,
+        trackingUrl: order.trackingNumber ? trackingUrl(order.trackingCarrier, order.trackingNumber) : '',
+      })),
       ledger: dashboard.ledger,
       payouts: dashboard.payouts,
       socialSubmissions: dashboard.socialSubmissions,

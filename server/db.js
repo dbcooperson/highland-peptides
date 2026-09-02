@@ -8,6 +8,11 @@ const fs = require('fs');
 const path = require('path');
 
 const LEGACY_DB_PATH = path.join(__dirname, '..', 'data', 'db.json');
+const CONFIRMED_ORDER_STATUSES = new Set(['paid', 'pending_tracking', 'fulfilled']);
+
+function isConfirmedOrderStatus(status) {
+  return CONFIRMED_ORDER_STATUSES.has(String(status || ''));
+}
 
 function defaultDbPath() {
   if (process.env.ORDER_DB_PATH) return process.env.ORDER_DB_PATH;
@@ -295,6 +300,7 @@ function createOrder({ buyer, certifiedAt, items, subtotal, promoEligibleSubtota
     tracking_carrier: null,
     tracking_number: null,
     tracking_sent_at: null,
+    labels_printed_at: null,
     created_at: new Date().toISOString(),
   };
   data.orders.push(order);
@@ -323,7 +329,7 @@ function syncReferralCredit(data, order) {
   if (!order || !order.referral_account_id) return;
   const account = accountById(data, order.referral_account_id);
   if (!account) return;
-  const paid = ['paid', 'fulfilled'].includes(order.status);
+  const paid = isConfirmedOrderStatus(order.status);
   const eligibleSubtotal = order.promo_eligible_subtotal == null ? order.subtotal : order.promo_eligible_subtotal;
   const merchandiseCents = Math.max(0, cents(eligibleSubtotal) - cents(order.discount_amount));
   const rewardCents = Math.round(merchandiseCents * Number(order.referral_credit_rate || 0.10));
@@ -346,7 +352,7 @@ function reviewReferralCredit(orderId, decision, adminNote = '') {
   const order = data.orders.find(item => item.id === Number(orderId));
   if (!order || !order.referral_account_id) return null;
   if (order.referral_credit_status !== 'pending_review') throw new Error('This referral reward is no longer awaiting review.');
-  if (decision === 'approved' && !['paid', 'fulfilled'].includes(order.status)) throw new Error('Only paid or fulfilled orders can earn referral credit.');
+  if (decision === 'approved' && !isConfirmedOrderStatus(order.status)) throw new Error('Only confirmed orders can earn referral credit.');
   const account = accountById(data, order.referral_account_id);
   if (!account) throw new Error('Referral account not found.');
   const now = new Date().toISOString();
@@ -403,7 +409,8 @@ function updateOrderStatus(id, status) {
   const order = data.orders.find(item => item.id === Number(id));
   if (!order) return null;
   order.status = status;
-  if (['paid', 'fulfilled'].includes(status)) order.paid_at = order.paid_at || new Date().toISOString();
+  if (isConfirmedOrderStatus(status)) order.paid_at = order.paid_at || new Date().toISOString();
+  if (status === 'pending_tracking') order.labels_printed_at = order.labels_printed_at || new Date().toISOString();
   syncReferralCredit(data, order);
   if (status === 'cancelled') refundStoreCredit(data, order);
   save(data);
@@ -473,7 +480,7 @@ function deleteOrder(id) {
 function referralStatsFromData(data, accountId, options = {}) {
   const account = accountById(data, accountId);
   if (!account) return null;
-  const paidOrders = data.orders.filter(order => order.referral_account_id === account.id && ['paid', 'fulfilled'].includes(order.status));
+  const paidOrders = data.orders.filter(order => order.referral_account_id === account.id && isConfirmedOrderStatus(order.status));
   const customerSpend = new Map();
   let totalSpendCents = 0;
   paidOrders.forEach(order => {
@@ -507,7 +514,16 @@ function getAccountDashboard(id, options = {}) {
   const account = accountById(data, id);
   if (!account) return null;
   const stats = referralStatsFromData(data, id, options);
-  const orders = data.orders.filter(order => order.customer_account_id === account.id).sort((a, b) => b.id - a.id).slice(0, 12).map(order => ({ id: order.id, status: order.status, total: order.total, createdAt: order.created_at, itemCount: (order.items || []).reduce((sum, item) => sum + Number(item.quantity || 0), 0) }));
+  const orders = data.orders.filter(order => order.customer_account_id === account.id).sort((a, b) => b.id - a.id).slice(0, 12).map(order => ({
+    id: order.id,
+    status: order.status,
+    total: order.total,
+    createdAt: order.created_at,
+    itemCount: (order.items || []).reduce((sum, item) => sum + Number(item.quantity || 0), 0),
+    trackingCarrier: order.tracking_carrier || '',
+    trackingNumber: order.tracking_number || '',
+    trackingSentAt: order.tracking_sent_at || null,
+  }));
   const ledger = data.creditLedger.filter(entry => entry.account_id === account.id).sort((a, b) => b.id - a.id).slice(0, 20).map(entry => ({ ...entry, amount: dollars(entry.amount_cents) }));
   const payouts = data.payoutRequests.filter(request => request.account_id === account.id).sort((a, b) => b.id - a.id).map(request => ({ ...request, amount: dollars(request.amount_cents) }));
   const socialSubmissions = data.socialCreditSubmissions.filter(item => item.account_id === account.id).sort((a, b) => b.id - a.id).slice(0, 12).map(item => ({ ...item, creditAmount: dollars(item.credit_cents) }));
