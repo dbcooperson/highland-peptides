@@ -954,9 +954,15 @@ document.addEventListener('click', (event) => {
   deleteAdminOrder(deleteLink);
 });
 let adminOrdersCache = [];
+const PAID_LABEL_QUEUE_WINDOW_MS = 3 * 24 * 60 * 60 * 1000;
 
 function orderLabelCount(order) {
   return (order.items || []).reduce((sum, item) => sum + Math.max(0, Number(item.quantity) || 0), 0);
+}
+
+function isRecentPaidLabelOrder(order, now = Date.now()) {
+  const paidAt = Date.parse(order.paid_at || order.created_at || '');
+  return Number.isFinite(paidAt) && paidAt >= now - PAID_LABEL_QUEUE_WINDOW_MS;
 }
 
 function updatePaidLabelQueuePosition(values = getLabelMakerValues()) {
@@ -975,11 +981,11 @@ function renderPaidOrderLabelQueue() {
   const queue = document.getElementById('paidLabelOrderQueue');
   if (!queue) return;
   const paidOrders = adminOrdersCache
-    .filter(order => order.status === 'paid' && orderLabelCount(order) > 0)
+    .filter(order => order.status === 'paid' && orderLabelCount(order) > 0 && isRecentPaidLabelOrder(order))
     .sort((a, b) => new Date(b.paid_at || b.created_at || 0) - new Date(a.paid_at || a.created_at || 0));
 
   if (!paidOrders.length) {
-    queue.innerHTML = '<div class="paid-label-order-empty"><strong>No orders waiting for labels</strong><span>Orders appear here as soon as they are marked paid and remain until fulfilled.</span></div>';
+    queue.innerHTML = '<div class="paid-label-order-empty"><strong>No recent paid orders waiting for labels</strong><span>Only orders paid within the last 3 days appear in this label queue.</span></div>';
     updatePaidLabelQueuePosition();
     return;
   }

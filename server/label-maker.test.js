@@ -58,8 +58,12 @@ test('paid orders can print all vial labels into consecutive unused positions', 
   assert.match(html, /id="refreshPaidLabelOrders"/);
   assert.match(js, /class="admin-print-order-labels"/);
   assert.match(js, /order\.status === 'paid'/);
+  assert.match(js, /PAID_LABEL_QUEUE_WINDOW_MS\s*=\s*3\s*\*\s*24\s*\*\s*60\s*\*\s*60\s*\*\s*1000/);
+  assert.match(js, /isRecentPaidLabelOrder\(order\)/);
+  assert.match(js, /paidAt\s*>=\s*now\s*-\s*PAID_LABEL_QUEUE_WINDOW_MS/);
+  assert.match(html, /Only the last 72 hours of paid orders appear here/);
   assert.match(js, /renderPaidOrderLabelQueue/);
-  assert.match(js, /\.filter\(order => order\.status === 'paid' && orderLabelCount\(order\) > 0\)/);
+  assert.match(js, /\.filter\(order => order\.status === 'paid' && orderLabelCount\(order\) > 0 && isRecentPaidLabelOrder\(order\)\)/);
   assert.match(js, /paid_at \|\| b\.created_at/);
   assert.match(js, /paid-label-customer-button/);
   assert.match(js, /highland-order-labels-printed/);
