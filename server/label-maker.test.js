@@ -53,6 +53,19 @@ test('label sheet matches the OL1735WS 48-up geometry', () => {
   assert.match(css, /\.highland-label-dose[\s\S]*?-webkit-text-fill-color:\s*#07563f/);
 });
 
+test('paid orders can print all vial labels into consecutive unused positions', () => {
+  assert.match(js, /class="admin-print-order-labels"/);
+  assert.match(js, /order\.status === 'paid'/);
+  assert.match(js, /buildOrderLabelValues/);
+  assert.match(js, /labelCatalogProducts\.find\(product => String\(product\.sku\) === String\(item\.sku\)\)/);
+  assert.match(js, /count < quantity; count \+= 1/);
+  assert.match(js, /labels\[labelIndex\]/);
+  assert.match(js, /quantity:\s*labels\.length/);
+  assert.match(js, /const available = 49 - values\.start/);
+  assert.match(js, /openLabelPrintWindow\(values, printWindow\)/);
+  assert.match(css, /\.admin-print-order-labels/);
+});
+
 test('label maker receives every current storefront SKU and strength', () => {
   assert.equal(catalog.length, rawProducts.length);
   assert.equal(new Set(catalog.map(product => product.sku)).size, rawProducts.length);

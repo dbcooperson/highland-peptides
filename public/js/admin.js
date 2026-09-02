@@ -420,17 +420,21 @@ function buildLabelPrintSheet(values) {
   const portal = document.getElementById('labelPrintPortal');
   if (!portal) return;
   portal.replaceChildren();
+  const labels = Array.isArray(values.labels) && values.labels.length
+    ? values.labels
+    : Array.from({ length: values.quantity }, () => values);
   for (let position = 1; position <= 48; position += 1) {
     const cell = document.createElement('div');
     cell.className = 'label-print-cell';
-    const shouldPrint = position >= values.start && position < values.start + values.quantity;
-    if (shouldPrint) cell.appendChild(buildHighlandLabel(values));
+    const labelIndex = position - values.start;
+    const shouldPrint = labelIndex >= 0 && labelIndex < labels.length;
+    if (shouldPrint) cell.appendChild(buildHighlandLabel(labels[labelIndex]));
     portal.appendChild(cell);
   }
 }
 
-function openLabelPrintWindow(values) {
-  const printWindow = window.open('', '_blank');
+function openLabelPrintWindow(values, preparedWindow = null) {
+  const printWindow = preparedWindow || window.open('', '_blank');
   const message = document.getElementById('labelMakerMessage');
   if (!printWindow) {
     if (message) message.textContent = 'Safari blocked the print sheet. Allow pop-ups for this site, then tap Print labels again.';
@@ -453,7 +457,7 @@ function openLabelPrintWindow(values) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Highland Label Print Sheet</title>
-  <link rel="stylesheet" href="/css/style.css?v=admin-label-calibration-v5-20260901">
+  <link rel="stylesheet" href="/css/style.css?v=admin-order-labels-v7-20260901">
   <style>
     * { box-sizing: border-box; }
     html, body { margin: 0; min-height: 100%; background: #e9e6de; color: #171a18; font-family: Arial, Helvetica, sans-serif; }
@@ -478,7 +482,7 @@ function openLabelPrintWindow(values) {
 </head>
 <body>
   <header class="label-sheet-toolbar">
-    <div><strong>Row ${values.row}, label ${values.column} · ${values.quantity} label${values.quantity === 1 ? '' : 's'}</strong><span>Copies 1 · Page 1 only · Letter · 100% · correction ${values.offsetX} mm / ${values.offsetY} mm</span></div>
+    <div><strong>${values.orderId ? `Order #${escapeHtml(values.orderId)} · ` : ''}Row ${values.row}, label ${values.column} · ${values.quantity} label${values.quantity === 1 ? '' : 's'}</strong><span>Copies 1 · Page 1 only · Letter · 100% · correction ${values.offsetX} mm / ${values.offsetY} mm</span></div>
     <button id="printSheetButton" type="button">Print labels</button>
   </header>
   ${portal.outerHTML}
@@ -496,7 +500,7 @@ function openLabelPrintWindow(values) {
 </body>
 </html>`);
   printWindow.document.close();
-  if (message) message.textContent = `${values.quantity} label${values.quantity === 1 ? '' : 's'} prepared at row ${values.row}, label ${values.column}. After printing, the picker advances to row ${nextSlot.row}, label ${nextSlot.column}.`;
+  if (message) message.textContent = `${values.orderId ? `Order #${values.orderId}: ` : ''}${values.quantity} label${values.quantity === 1 ? '' : 's'} prepared at row ${values.row}, label ${values.column}. After printing, the picker advances to row ${nextSlot.row}, label ${nextSlot.column}.`;
 }
 
 let labelCatalogProducts = [];
@@ -914,11 +918,16 @@ function adminFulfillmentHTML(order) {
   const trackingStatus = order.tracking_number
     ? `<span class="admin-tracking-sent">Tracking sent: ${escapeHtml(order.tracking_carrier)} ${escapeHtml(order.tracking_number)}</span>`
     : '';
+  const labelCount = (order.items || []).reduce((sum, item) => sum + Math.max(0, Number(item.quantity) || 0), 0);
   return `
     <div class="admin-fulfillment-box">
       ${order.status === 'pending_payment' ? `
         <button type="button" class="admin-send-reminder" data-id="${order.id}">Send payment reminder</button>
         ${reminderStatus}
+      ` : ''}
+      ${order.status === 'paid' && labelCount ? `
+        <button type="button" class="admin-print-order-labels" data-id="${order.id}">Print entire order · ${labelCount} label${labelCount === 1 ? '' : 's'}</button>
+        <span class="admin-muted">Starts at the next saved sheet position.</span>
       ` : ''}
       ${['paid', 'fulfilled'].includes(order.status) ? `
         <label>Carrier
@@ -934,6 +943,68 @@ function adminFulfillmentHTML(order) {
       ` : ''}
     </div>
   `;
+}
+
+function fallbackOrderLabelDose(spec) {
+  return String(spec || '')
+    .replace(/\bx\s*\d+\s*vials?\b/gi, '')
+    .replace(/(\d)\s*mg\s*\/\s*ml/gi, '$1 MG/ML')
+    .replace(/(\d)\s*mg\b/gi, '$1 MG')
+    .replace(/(\d)\s*ml\b/gi, '$1 ML')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toUpperCase();
+}
+
+function buildOrderLabelValues(order) {
+  const base = getLabelMakerValues();
+  const labels = [];
+  (order.items || []).forEach(item => {
+    const catalogProduct = labelCatalogProducts.find(product => String(product.sku) === String(item.sku));
+    const quantity = Math.max(0, Math.min(48, Number(item.quantity) || 0));
+    const labelValues = {
+      ...base,
+      name: catalogProduct?.labelName || item.name || 'RESEARCH PRODUCT',
+      dosage: catalogProduct?.labelDose || fallbackOrderLabelDose(item.spec),
+    };
+    for (let count = 0; count < quantity; count += 1) labels.push({ ...labelValues });
+  });
+  return {
+    ...base,
+    orderId: order.id,
+    labels,
+    quantity: labels.length,
+  };
+}
+
+async function printAdminOrderLabels(button) {
+  const order = adminOrdersCache.find(item => String(item.id) === String(button.dataset.id));
+  if (!order || order.status !== 'paid') return window.alert('Only paid, unfulfilled orders can print a full label set.');
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) return window.alert('Safari blocked the print sheet. Allow pop-ups, then try again.');
+  printWindow.document.write('<!doctype html><title>Preparing Highland labels</title><p style="font:700 16px Arial;padding:24px">Preparing the complete order label sheet…</p>');
+  button.disabled = true;
+  const originalText = button.textContent;
+  button.textContent = 'Preparing labels…';
+  try {
+    await loadLabelCatalogProducts();
+    const values = buildOrderLabelValues(order);
+    if (!values.quantity) throw new Error('This order has no printable vial labels.');
+    const available = 49 - values.start;
+    if (values.quantity > available) {
+      printWindow.close();
+      const startSlot = labelRowAndColumnFromPosition(values.start);
+      window.alert(`This order needs ${values.quantity} labels, but only ${available} positions remain after row ${startSlot.row}, label ${startSlot.column}. Start a fresh sheet at row 1, label 1, or print the order in two batches.`);
+      return;
+    }
+    openLabelPrintWindow(values, printWindow);
+  } catch (err) {
+    if (!printWindow.closed) printWindow.close();
+    window.alert(err.message || 'Could not prepare the order labels.');
+  } finally {
+    button.disabled = false;
+    button.textContent = originalText;
+  }
 }
 
 function renderOrdersTable() {
@@ -1025,6 +1096,9 @@ function renderOrdersTable() {
         window.alert(err.message || 'Could not send tracking email.');
       }
     };
+  });
+  document.querySelectorAll('.admin-print-order-labels').forEach(btn => {
+    btn.onclick = () => printAdminOrderLabels(btn);
   });
 
 }
