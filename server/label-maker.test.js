@@ -24,7 +24,9 @@ test('admin includes the protected label maker controls', () => {
   assert.match(html, /id="labelOffsetY"[^>]*value="-4"/);
   assert.match(html, /id="labelQuantity"/);
   assert.match(html, /id="labelQuantity"[^>]*value="1"/);
-  assert.match(html, /id="labelStartPosition"/);
+  assert.match(html, /id="labelSheetRow"/);
+  assert.match(html, /id="labelSheetColumn"/);
+  assert.doesNotMatch(html, /id="labelStartPosition"/);
   assert.match(html, /id="labelPrintPortal"/);
   assert.match(html, /name="labelDesign" value="vial-current"/);
   assert.match(html, /OL1735WS White Gloss sheets/);
@@ -37,6 +39,10 @@ test('label sheet matches the OL1735WS 48-up geometry', () => {
   assert.match(css, /row-gap:\s*0\.136in/);
   assert.match(css, /padding:\s*0\.25in/);
   assert.match(js, /position\s*<=\s*48/);
+  assert.match(js, /labelPositionFromRowAndColumn/);
+  assert.match(js, /\(\(row - 1\) \* 4\) \+ column/);
+  assert.match(js, /highland-label-next-position-v1/);
+  assert.match(js, /highland-label-position-used/);
   assert.match(js, /openLabelPrintWindow/);
   assert.match(js, /Highland Label Print Sheet/);
   assert.match(js, /left:\s*\$\{values\.offsetX\}mm/);

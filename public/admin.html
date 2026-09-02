@@ -175,13 +175,37 @@
             </label>
           </div>
           <div class="label-maker-row">
-            <label>Labels to print
-              <input id="labelQuantity" type="number" value="1" min="1" max="48" inputmode="numeric" required>
+            <label>Row on the sheet
+              <select id="labelSheetRow" required>
+                <option value="1">Row 1 (top)</option>
+                <option value="2">Row 2</option>
+                <option value="3">Row 3</option>
+                <option value="4">Row 4</option>
+                <option value="5">Row 5</option>
+                <option value="6">Row 6</option>
+                <option value="7">Row 7</option>
+                <option value="8">Row 8</option>
+                <option value="9">Row 9</option>
+                <option value="10">Row 10</option>
+                <option value="11">Row 11</option>
+                <option value="12">Row 12 (bottom)</option>
+              </select>
+              <small class="label-field-note">Choose the next unused row from top to bottom.</small>
             </label>
-            <label>Start at position
-              <input id="labelStartPosition" type="number" value="1" min="1" max="48" inputmode="numeric" required>
+            <label>Label in that row
+              <select id="labelSheetColumn" required>
+                <option value="1">Label 1 (left)</option>
+                <option value="2">Label 2</option>
+                <option value="3">Label 3</option>
+                <option value="4">Label 4 (right)</option>
+              </select>
+              <small class="label-field-note">Labels count from left to right with the sheet upright.</small>
             </label>
           </div>
+          <label>Labels to print
+            <input id="labelQuantity" type="number" value="1" min="1" max="48" inputmode="numeric" required>
+            <small class="label-field-note">After printing, the next unused label is remembered automatically on this phone.</small>
+          </label>
 
           <input type="hidden" name="labelDesign" value="vial-current">
           <div class="label-current-design" aria-label="Current approved label design">
@@ -216,7 +240,7 @@
 
 <div id="labelPrintPortal" class="label-print-sheet" aria-hidden="true"></div>
 
-<script src="/js/admin.js?v=admin-label-calibration-v5-20260901"></script>
+<script src="/js/admin.js?v=admin-label-position-picker-v6-20260901"></script>
 </body>
 </html>
 

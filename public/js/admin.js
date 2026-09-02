@@ -363,6 +363,29 @@ function buildHighlandLabel({ name, dosage, lot, expiry, storage, design = 'vial
   return label;
 }
 
+const LABEL_NEXT_POSITION_KEY = 'highland-label-next-position-v1';
+
+function labelPositionFromRowAndColumn(row, column) {
+  return ((row - 1) * 4) + column;
+}
+
+function labelRowAndColumnFromPosition(position) {
+  const safePosition = Math.max(1, Math.min(48, Number(position) || 1));
+  return {
+    row: Math.floor((safePosition - 1) / 4) + 1,
+    column: ((safePosition - 1) % 4) + 1,
+  };
+}
+
+function setLabelSheetPosition(position) {
+  const { row, column } = labelRowAndColumnFromPosition(position);
+  const rowInput = document.getElementById('labelSheetRow');
+  const columnInput = document.getElementById('labelSheetColumn');
+  if (rowInput) rowInput.value = String(row);
+  if (columnInput) columnInput.value = String(column);
+  renderLabelMaker();
+}
+
 function getLabelMakerValues() {
   const name = document.getElementById('labelProductName')?.value.trim() || '';
   const dosage = document.getElementById('labelDosage')?.value.trim() || '';
@@ -372,10 +395,12 @@ function getLabelMakerValues() {
   const offsetX = Math.max(-10, Math.min(10, Number(document.getElementById('labelOffsetX')?.value || 0)));
   const offsetY = Math.max(-10, Math.min(10, Number(document.getElementById('labelOffsetY')?.value || 0)));
   const design = document.querySelector('[name="labelDesign"]')?.value || 'vial-current';
-  const start = Math.max(1, Math.min(48, Number(document.getElementById('labelStartPosition')?.value || 1)));
+  const row = Math.max(1, Math.min(12, Number(document.getElementById('labelSheetRow')?.value || 1)));
+  const column = Math.max(1, Math.min(4, Number(document.getElementById('labelSheetColumn')?.value || 1)));
+  const start = labelPositionFromRowAndColumn(row, column);
   const requested = Math.max(1, Math.min(48, Number(document.getElementById('labelQuantity')?.value || 1)));
   const quantity = Math.min(requested, 49 - start);
-  return { name, dosage, lot, expiry, storage, offsetX, offsetY, design, start, quantity };
+  return { name, dosage, lot, expiry, storage, offsetX, offsetY, design, row, column, start, quantity };
 }
 
 function renderLabelMaker() {
@@ -387,8 +412,8 @@ function renderLabelMaker() {
   if (quantityInput) quantityInput.max = String(49 - values.start);
   const message = document.getElementById('labelMakerMessage');
   if (message) message.textContent = values.quantity < Number(quantityInput?.value || 1)
-    ? `This starting position leaves room for ${values.quantity} labels on the sheet.`
-    : '';
+    ? `Row ${values.row}, label ${values.column} leaves room for ${values.quantity} labels on this sheet.`
+    : `Next print starts at row ${values.row}, label ${values.column}.`;
 }
 
 function buildLabelPrintSheet(values) {
@@ -420,6 +445,8 @@ function openLabelPrintWindow(values) {
   }
 
   printWindow.document.open();
+  const nextPosition = values.start + values.quantity <= 48 ? values.start + values.quantity : 1;
+  const nextSlot = labelRowAndColumnFromPosition(nextPosition);
   printWindow.document.write(`<!doctype html>
 <html lang="en">
 <head>
@@ -451,15 +478,25 @@ function openLabelPrintWindow(values) {
 </head>
 <body>
   <header class="label-sheet-toolbar">
-    <div><strong>Highland label sheet · ${values.quantity} label${values.quantity === 1 ? '' : 's'}</strong><span>Copies 1 · Page 1 only · Letter · 100% · correction ${values.offsetX} mm / ${values.offsetY} mm</span></div>
+    <div><strong>Row ${values.row}, label ${values.column} · ${values.quantity} label${values.quantity === 1 ? '' : 's'}</strong><span>Copies 1 · Page 1 only · Letter · 100% · correction ${values.offsetX} mm / ${values.offsetY} mm</span></div>
     <button id="printSheetButton" type="button">Print labels</button>
   </header>
   ${portal.outerHTML}
-  <script>document.getElementById('printSheetButton').addEventListener('click', function () { window.print(); });<\/script>
+  <script>
+    document.getElementById('printSheetButton').addEventListener('click', function () {
+      try {
+        localStorage.setItem('${LABEL_NEXT_POSITION_KEY}', '${nextPosition}');
+        if (window.opener && !window.opener.closed) {
+          window.opener.postMessage({ type: 'highland-label-position-used', nextPosition: ${nextPosition} }, '*');
+        }
+      } catch (_) {}
+      window.print();
+    });
+  <\/script>
 </body>
 </html>`);
   printWindow.document.close();
-  if (message) message.textContent = `${values.quantity} label${values.quantity === 1 ? '' : 's'} prepared on page 1. Tap Print labels in the new page.`;
+  if (message) message.textContent = `${values.quantity} label${values.quantity === 1 ? '' : 's'} prepared at row ${values.row}, label ${values.column}. After printing, the picker advances to row ${nextSlot.row}, label ${nextSlot.column}.`;
 }
 
 let labelCatalogProducts = [];
@@ -580,7 +617,7 @@ function initLabelMaker() {
   const form = document.getElementById('labelMakerForm');
   if (!form || form.dataset.initialized) return;
   form.dataset.initialized = 'true';
-  form.querySelectorAll('input').forEach(input => input.addEventListener('input', renderLabelMaker));
+  form.querySelectorAll('input, select').forEach(control => control.addEventListener('input', renderLabelMaker));
   document.getElementById('labelCatalogProduct')?.addEventListener('change', applyCatalogLabelSelection);
   const productSearch = document.getElementById('labelProductSearch');
   const productResults = document.getElementById('labelProductResults');
@@ -617,12 +654,24 @@ function initLabelMaker() {
   document.addEventListener('click', event => {
     if (!event.target.closest('.label-product-picker')) closeLabelProductResults();
   });
+  window.addEventListener('message', event => {
+    if (event.data?.type !== 'highland-label-position-used') return;
+    try {
+      localStorage.setItem(LABEL_NEXT_POSITION_KEY, String(event.data.nextPosition));
+    } catch (_) {}
+    setLabelSheetPosition(event.data.nextPosition);
+  });
   form.addEventListener('submit', event => {
     event.preventDefault();
     const values = getLabelMakerValues();
     if (!values.name || !values.dosage) return;
     openLabelPrintWindow(values);
   });
+  try {
+    setLabelSheetPosition(localStorage.getItem(LABEL_NEXT_POSITION_KEY) || 1);
+  } catch (_) {
+    setLabelSheetPosition(1);
+  }
   loadLabelCatalogProducts();
   renderLabelMaker();
 }
