@@ -683,6 +683,10 @@ function initLabelMaker() {
   if (!form || form.dataset.initialized) return;
   form.dataset.initialized = 'true';
   try {
+    const savedHiddenOrderIds = JSON.parse(localStorage.getItem(LABEL_HIDDEN_ORDERS_KEY) || '[]');
+    if (Array.isArray(savedHiddenOrderIds)) savedHiddenOrderIds.forEach(id => hiddenPaidLabelOrderIds.add(String(id)));
+  } catch (_) {}
+  try {
     const savedCalibration = JSON.parse(localStorage.getItem(LABEL_CALIBRATION_KEY) || '{}');
     ['labelOffsetX', 'labelOffsetY', 'labelPitchX', 'labelPitchY'].forEach(id => {
       const control = document.getElementById(id);
@@ -751,6 +755,7 @@ function initLabelMaker() {
       button.textContent = 'Refresh orders';
     }
   });
+  document.getElementById('restoreRemovedLabelOrders')?.addEventListener('click', restoreRemovedLabelOrders);
   window.addEventListener('message', async event => {
     if (event.origin !== window.location.origin) return;
     if (event.data?.type === 'highland-label-position-used') {
@@ -983,8 +988,11 @@ document.addEventListener('click', (event) => {
 });
 let adminOrdersCache = [];
 const PAID_LABEL_QUEUE_WINDOW_MS = 3 * 24 * 60 * 60 * 1000;
+const LABEL_HIDDEN_ORDERS_KEY = 'highland-label-hidden-orders-v1';
 const printedPaidOrderIds = new Set();
+const hiddenPaidLabelOrderIds = new Set();
 let confirmingPendingTrackingOrderId = '';
+let confirmingRemoveLabelOrderId = '';
 
 function orderLabelCount(order) {
   return (order.items || []).reduce((sum, item) => sum + Math.max(0, Number(item.quantity) || 0), 0);
@@ -1016,6 +1024,7 @@ function paidOrderBuyerDisplayName(order) {
 }
 
 function beginPendingTrackingConfirmation(button) {
+  confirmingRemoveLabelOrderId = '';
   confirmingPendingTrackingOrderId = String(button.dataset.id || '');
   renderPaidOrderLabelQueue();
   document.querySelector(`.paid-label-confirm-pending[data-id="${CSS.escape(confirmingPendingTrackingOrderId)}"]`)?.focus();
@@ -1024,6 +1033,54 @@ function beginPendingTrackingConfirmation(button) {
 function cancelPendingTrackingConfirmation() {
   confirmingPendingTrackingOrderId = '';
   renderPaidOrderLabelQueue();
+}
+
+function saveHiddenLabelOrderIds() {
+  try {
+    localStorage.setItem(LABEL_HIDDEN_ORDERS_KEY, JSON.stringify([...hiddenPaidLabelOrderIds]));
+  } catch (_) {}
+}
+
+function beginRemoveLabelOrderConfirmation(button) {
+  confirmingPendingTrackingOrderId = '';
+  confirmingRemoveLabelOrderId = String(button.dataset.id || '');
+  renderPaidOrderLabelQueue();
+  document.querySelector(`.paid-label-confirm-remove[data-id="${CSS.escape(confirmingRemoveLabelOrderId)}"]`)?.focus();
+}
+
+function cancelRemoveLabelOrderConfirmation() {
+  confirmingRemoveLabelOrderId = '';
+  renderPaidOrderLabelQueue();
+}
+
+function confirmRemoveLabelOrder(button) {
+  const order = adminOrdersCache.find(item => String(item.id) === String(button.dataset.id));
+  if (!order) {
+    confirmingRemoveLabelOrderId = '';
+    return window.alert('That order is no longer available.');
+  }
+  const buyerName = paidOrderBuyerDisplayName(order);
+  hiddenPaidLabelOrderIds.add(String(order.id));
+  confirmingRemoveLabelOrderId = '';
+  saveHiddenLabelOrderIds();
+  renderPaidOrderLabelQueue();
+  const message = document.getElementById('labelMakerMessage');
+  if (message) {
+    message.style.color = 'var(--success)';
+    message.textContent = `HP-${order.id} · ${buyerName} was removed from the label maker. The paid order remains in Orders and profit totals.`;
+  }
+}
+
+function restoreRemovedLabelOrders() {
+  hiddenPaidLabelOrderIds.clear();
+  confirmingRemoveLabelOrderId = '';
+  saveHiddenLabelOrderIds();
+  renderPaidOrderLabelQueue();
+  const message = document.getElementById('labelMakerMessage');
+  if (message) {
+    message.style.color = 'var(--success)';
+    message.textContent = 'Removed label-maker orders were restored.';
+  }
 }
 
 async function confirmOrderPendingTracking(button) {
@@ -1063,8 +1120,20 @@ async function confirmOrderPendingTracking(button) {
 function renderPaidOrderLabelQueue() {
   const queue = document.getElementById('paidLabelOrderQueue');
   if (!queue) return;
+  const hiddenRecentOrders = adminOrdersCache.filter(order => order.status === 'paid'
+    && orderLabelCount(order) > 0
+    && isRecentPaidLabelOrder(order)
+    && hiddenPaidLabelOrderIds.has(String(order.id)));
+  const restoreButton = document.getElementById('restoreRemovedLabelOrders');
+  if (restoreButton) {
+    restoreButton.hidden = hiddenRecentOrders.length === 0;
+    restoreButton.textContent = `Restore removed${hiddenRecentOrders.length ? ` (${hiddenRecentOrders.length})` : ''}`;
+  }
   const paidOrders = adminOrdersCache
-    .filter(order => order.status === 'paid' && orderLabelCount(order) > 0 && isRecentPaidLabelOrder(order))
+    .filter(order => order.status === 'paid'
+      && orderLabelCount(order) > 0
+      && isRecentPaidLabelOrder(order)
+      && !hiddenPaidLabelOrderIds.has(String(order.id)))
     .sort((a, b) => new Date(b.paid_at || b.created_at || 0) - new Date(a.paid_at || a.created_at || 0));
 
   if (!paidOrders.length) {
@@ -1078,6 +1147,7 @@ function renderPaidOrderLabelQueue() {
     const orderId = String(order.id);
     const isPrinted = printedPaidOrderIds.has(orderId);
     const isConfirming = confirmingPendingTrackingOrderId === orderId;
+    const isConfirmingRemove = confirmingRemoveLabelOrderId === orderId;
     const buyerName = paidOrderBuyerDisplayName(order);
     const buyerEmail = String(order.buyer?.email || '').trim();
     return `<article class="paid-label-order-card">
@@ -1087,7 +1157,10 @@ function renderPaidOrderLabelQueue() {
           <span class="paid-label-order-summary">${escapeHtml(paidOrderLabelItemSummary(order))}</span>
           <span class="paid-label-order-count"><strong>${count}</strong> label${count === 1 ? '' : 's'} <i aria-hidden="true">→</i></span>
         </button>
-        <button type="button" class="paid-label-pending-button${isPrinted ? ' is-ready' : ''}" data-id="${escapeHtml(order.id)}">${isPrinted ? 'Printed · mark pending' : 'Mark pending tracking'}</button>
+        <div class="paid-label-order-actions">
+          <button type="button" class="paid-label-pending-button${isPrinted ? ' is-ready' : ''}" data-id="${escapeHtml(order.id)}">${isPrinted ? 'Printed · mark pending' : 'Mark pending tracking'}</button>
+          <button type="button" class="paid-label-remove-button" data-id="${escapeHtml(order.id)}" aria-label="Remove order HP-${escapeHtml(order.id)} from label maker">Remove</button>
+        </div>
       </div>
       <div class="paid-label-inline-confirm" ${isConfirming ? '' : 'hidden'}>
         <strong>Move HP-${escapeHtml(order.id)} · ${escapeHtml(buyerName)} to Pending tracking?</strong>
@@ -1095,6 +1168,14 @@ function renderPaidOrderLabelQueue() {
         <div>
           <button type="button" class="paid-label-confirm-pending" data-id="${escapeHtml(order.id)}">Yes, mark pending</button>
           <button type="button" class="paid-label-cancel-pending">Cancel</button>
+        </div>
+      </div>
+      <div class="paid-label-inline-confirm is-remove" ${isConfirmingRemove ? '' : 'hidden'}>
+        <strong>Remove HP-${escapeHtml(order.id)} · ${escapeHtml(buyerName)} from the label maker?</strong>
+        <span>The paid transaction stays in Orders and profit totals. You can restore this card later.</span>
+        <div>
+          <button type="button" class="paid-label-confirm-remove" data-id="${escapeHtml(order.id)}">Yes, remove</button>
+          <button type="button" class="paid-label-cancel-remove">Cancel</button>
         </div>
       </div>
     </article>`;
@@ -1111,6 +1192,15 @@ function renderPaidOrderLabelQueue() {
   });
   queue.querySelectorAll('.paid-label-cancel-pending').forEach(button => {
     button.onclick = cancelPendingTrackingConfirmation;
+  });
+  queue.querySelectorAll('.paid-label-remove-button').forEach(button => {
+    button.onclick = () => beginRemoveLabelOrderConfirmation(button);
+  });
+  queue.querySelectorAll('.paid-label-confirm-remove').forEach(button => {
+    button.onclick = () => confirmRemoveLabelOrder(button);
+  });
+  queue.querySelectorAll('.paid-label-cancel-remove').forEach(button => {
+    button.onclick = cancelRemoveLabelOrderConfirmation;
   });
   updatePaidLabelQueuePosition();
 }

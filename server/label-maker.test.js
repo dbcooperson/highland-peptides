@@ -69,13 +69,21 @@ test('paid orders can print all vial labels into consecutive unused positions', 
   assert.match(js, /paidAt\s*>=\s*now\s*-\s*PAID_LABEL_QUEUE_WINDOW_MS/);
   assert.match(html, /Only the last 72 hours of paid orders appear here/);
   assert.match(js, /renderPaidOrderLabelQueue/);
-  assert.match(js, /\.filter\(order => order\.status === 'paid' && orderLabelCount\(order\) > 0 && isRecentPaidLabelOrder\(order\)\)/);
+  assert.match(js, /\.filter\(order => order\.status === 'paid'[\s\S]*?isRecentPaidLabelOrder\(order\)[\s\S]*?!hiddenPaidLabelOrderIds\.has\(String\(order\.id\)\)\)/);
   assert.match(js, /paid_at \|\| b\.created_at/);
   assert.match(js, /paid-label-customer-button/);
   assert.match(js, /highland-order-labels-printed/);
   assert.match(js, /printedPaidOrderIds\.add/);
   assert.match(js, /paid-label-pending-button/);
   assert.match(js, /paid-label-inline-confirm/);
+  assert.match(html, /id="restoreRemovedLabelOrders"/);
+  assert.match(js, /paid-label-remove-button/);
+  assert.match(js, /paid-label-inline-confirm is-remove/);
+  assert.match(js, /confirmRemoveLabelOrder/);
+  assert.match(js, /paid-label-confirm-remove/);
+  assert.match(js, /highland-label-hidden-orders-v1/);
+  assert.match(js, /The paid transaction stays in Orders and profit totals\. You can restore this card later\./);
+  assert.doesNotMatch(js, /confirmRemoveLabelOrder[\s\S]*?method: 'DELETE'/);
   assert.match(js, /confirmOrderPendingTracking/);
   assert.match(js, /status: 'pending_tracking'/);
   assert.match(html, /It stays in this list until you separately confirm Pending tracking/);
@@ -92,6 +100,8 @@ test('paid orders can print all vial labels into consecutive unused positions', 
   assert.match(css, /\.admin-print-order-labels/);
   assert.match(css, /\.paid-label-order-list/);
   assert.match(css, /\.paid-label-customer-button/);
+  assert.match(css, /\.paid-label-remove-button/);
+  assert.match(css, /\.paid-label-inline-confirm\.is-remove/);
 });
 
 test('label maker receives every current storefront SKU and strength', () => {
