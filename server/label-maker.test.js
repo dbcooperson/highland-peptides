@@ -54,8 +54,15 @@ test('label sheet matches the OL1735WS 48-up geometry', () => {
 });
 
 test('paid orders can print all vial labels into consecutive unused positions', () => {
+  assert.match(html, /id="paidLabelOrderQueue"/);
+  assert.match(html, /id="refreshPaidLabelOrders"/);
   assert.match(js, /class="admin-print-order-labels"/);
   assert.match(js, /order\.status === 'paid'/);
+  assert.match(js, /renderPaidOrderLabelQueue/);
+  assert.match(js, /\.filter\(order => order\.status === 'paid' && orderLabelCount\(order\) > 0\)/);
+  assert.match(js, /paid_at \|\| b\.created_at/);
+  assert.match(js, /paid-label-print-button/);
+  assert.match(js, /renderOrdersTable\(\);\s*renderPaidOrderLabelQueue\(\);/);
   assert.match(js, /buildOrderLabelValues/);
   assert.match(js, /labelCatalogProducts\.find\(product => String\(product\.sku\) === String\(item\.sku\)\)/);
   assert.match(js, /count < quantity; count \+= 1/);
@@ -64,6 +71,8 @@ test('paid orders can print all vial labels into consecutive unused positions', 
   assert.match(js, /const available = 49 - values\.start/);
   assert.match(js, /openLabelPrintWindow\(values, printWindow\)/);
   assert.match(css, /\.admin-print-order-labels/);
+  assert.match(css, /\.paid-label-order-list/);
+  assert.match(css, /\.paid-label-print-button/);
 });
 
 test('label maker receives every current storefront SKU and strength', () => {

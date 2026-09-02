@@ -35,6 +35,7 @@ function initAdminTabs() {
       });
       if (tab.dataset.adminTab === 'analytics') loadAnalytics();
       if (tab.dataset.adminTab === 'referrals') loadReferrals();
+      if (tab.dataset.adminTab === 'labels') loadOrders();
     };
   });
 }
@@ -426,6 +427,7 @@ function renderLabelMaker() {
   if (message) message.textContent = values.quantity < Number(quantityInput?.value || 1)
     ? `Row ${values.row}, label ${values.column} leaves room for ${values.quantity} labels on this sheet.`
     : `Next print starts at row ${values.row}, label ${values.column}.`;
+  updatePaidLabelQueuePosition(values);
 }
 
 function buildLabelPrintSheet(values) {
@@ -469,7 +471,7 @@ function openLabelPrintWindow(values, preparedWindow = null) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Highland Label Print Sheet</title>
-  <link rel="stylesheet" href="/css/style.css?v=admin-order-labels-v7-20260901">
+  <link rel="stylesheet" href="/css/style.css?v=paid-order-label-queue-v1-20260901">
   <style>
     * { box-sizing: border-box; }
     html, body { margin: 0; min-height: 100%; background: #e9e6de; color: #171a18; font-family: Arial, Helvetica, sans-serif; }
@@ -669,6 +671,19 @@ function initLabelMaker() {
   });
   document.addEventListener('click', event => {
     if (!event.target.closest('.label-product-picker')) closeLabelProductResults();
+  });
+  document.getElementById('refreshPaidLabelOrders')?.addEventListener('click', async event => {
+    const button = event.currentTarget;
+    button.disabled = true;
+    button.textContent = 'Refreshing…';
+    try {
+      await loadOrders();
+    } catch (err) {
+      window.alert(err.message || 'Could not refresh paid orders.');
+    } finally {
+      button.disabled = false;
+      button.textContent = 'Refresh orders';
+    }
   });
   window.addEventListener('message', event => {
     if (event.data?.type !== 'highland-label-position-used') return;
@@ -889,6 +904,58 @@ document.addEventListener('click', (event) => {
 });
 let adminOrdersCache = [];
 
+function orderLabelCount(order) {
+  return (order.items || []).reduce((sum, item) => sum + Math.max(0, Number(item.quantity) || 0), 0);
+}
+
+function updatePaidLabelQueuePosition(values = getLabelMakerValues()) {
+  const target = document.getElementById('paidLabelNextPosition');
+  if (target) target.textContent = `Next: row ${values.row}, label ${values.column}`;
+}
+
+function paidOrderLabelItemSummary(order) {
+  return (order.items || []).map(item => {
+    const quantity = Math.max(0, Number(item.quantity) || 0);
+    return `<li><span><strong>${escapeHtml(item.name || item.sku || 'Research product')}</strong>${item.spec ? `<small>${escapeHtml(item.spec)}</small>` : ''}</span><b>×${quantity}</b></li>`;
+  }).join('');
+}
+
+function renderPaidOrderLabelQueue() {
+  const queue = document.getElementById('paidLabelOrderQueue');
+  if (!queue) return;
+  const paidOrders = adminOrdersCache
+    .filter(order => order.status === 'paid' && orderLabelCount(order) > 0)
+    .sort((a, b) => new Date(b.paid_at || b.created_at || 0) - new Date(a.paid_at || a.created_at || 0));
+
+  if (!paidOrders.length) {
+    queue.innerHTML = '<div class="paid-label-order-empty"><strong>No orders waiting for labels</strong><span>Orders appear here as soon as they are marked paid and remain until fulfilled.</span></div>';
+    updatePaidLabelQueuePosition();
+    return;
+  }
+
+  queue.innerHTML = paidOrders.map(order => {
+    const count = orderLabelCount(order);
+    const paidDate = new Date(order.paid_at || order.created_at || Date.now());
+    return `<article class="paid-label-order-card">
+      <div class="paid-label-order-meta">
+        <span>Order #${escapeHtml(order.id)}</span>
+        <strong>${escapeHtml(order.buyer?.name || 'Customer')}</strong>
+        <small>Paid ${escapeHtml(paidDate.toLocaleString())}</small>
+      </div>
+      <ul class="paid-label-order-items">${paidOrderLabelItemSummary(order)}</ul>
+      <div class="paid-label-order-action">
+        <span><strong>${count}</strong> vial label${count === 1 ? '' : 's'}</span>
+        <button type="button" class="admin-print-order-labels paid-label-print-button" data-id="${escapeHtml(order.id)}">Print order</button>
+      </div>
+    </article>`;
+  }).join('');
+
+  queue.querySelectorAll('.admin-print-order-labels').forEach(button => {
+    button.onclick = () => printAdminOrderLabels(button);
+  });
+  updatePaidLabelQueuePosition();
+}
+
 function orderSearchText(order) {
   const buyer = order.buyer || {};
   const itemText = (order.items || []).map(item => [item.name, item.spec, item.sku].join(' ')).join(' ');
@@ -936,7 +1003,7 @@ function adminFulfillmentHTML(order) {
   const trackingStatus = order.tracking_number
     ? `<span class="admin-tracking-sent">Tracking sent: ${escapeHtml(order.tracking_carrier)} ${escapeHtml(order.tracking_number)}</span>`
     : '';
-  const labelCount = (order.items || []).reduce((sum, item) => sum + Math.max(0, Number(item.quantity) || 0), 0);
+  const labelCount = orderLabelCount(order);
   return `
     <div class="admin-fulfillment-box">
       ${order.status === 'pending_payment' ? `
@@ -1129,6 +1196,7 @@ async function loadOrders() {
   if (existingSummary) existingSummary.remove();
   if (panel) panel.insertAdjacentHTML('afterbegin', summaryHTML(orders));
   renderOrdersTable();
+  renderPaidOrderLabelQueue();
   const searchInput = document.getElementById('adminOrderSearch');
   const statusFilter = document.getElementById('adminStatusFilter');
   const paymentFilter = document.getElementById('adminPaymentFilter');

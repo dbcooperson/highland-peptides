@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin: Highland Peptides</title>
-<link rel="stylesheet" href="/css/style.css?v=admin-remember-device-v1-20260901">
+<link rel="stylesheet" href="/css/style.css?v=paid-order-label-queue-v1-20260901">
 </head>
 <body class="admin-page">
 <header class="topbar">
@@ -137,6 +137,23 @@
         <span class="label-concept-link">Matched to current vial photography</span>
       </div>
 
+      <section class="paid-label-queue" aria-labelledby="paidLabelQueueTitle">
+        <div class="paid-label-queue-heading">
+          <div>
+            <span class="label-maker-kicker">Paid · not fulfilled</span>
+            <h3 id="paidLabelQueueTitle">Orders ready for vial labels</h3>
+            <p>Tap one button to prepare every vial in the order. Labels begin at your selected sheet position and continue left to right, then down to the next row.</p>
+          </div>
+          <div class="paid-label-queue-controls">
+            <span id="paidLabelNextPosition" class="paid-label-next-position">Next: row 1, label 1</span>
+            <button id="refreshPaidLabelOrders" type="button">Refresh orders</button>
+          </div>
+        </div>
+        <div id="paidLabelOrderQueue" class="paid-label-order-list" aria-live="polite">
+          <p class="paid-label-order-empty">Loading paid orders…</p>
+        </div>
+      </section>
+
       <div class="label-maker-grid">
         <form id="labelMakerForm" class="label-maker-form">
           <div class="label-product-picker">
@@ -245,7 +262,7 @@
 
 <div id="labelPrintPortal" class="label-print-sheet" aria-hidden="true"></div>
 
-<script src="/js/admin.js?v=admin-remember-device-v1-20260901"></script>
+<script src="/js/admin.js?v=paid-order-label-queue-v1-20260901"></script>
 </body>
 </html>
 

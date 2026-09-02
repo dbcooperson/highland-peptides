@@ -4222,6 +4222,156 @@ body.admin-page select {
   font-weight: 900;
   text-decoration: none;
 }
+.paid-label-queue {
+  margin-bottom: 22px;
+  padding: 18px;
+  border: 1px solid rgba(109,177,128,0.34);
+  border-radius: 22px;
+  background: linear-gradient(135deg, rgba(31,75,54,0.48), rgba(15,23,20,0.82));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+}
+.paid-label-queue-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+.paid-label-queue-heading h3 {
+  margin: 4px 0 6px;
+  color: #f3efe6;
+  font-size: 20px;
+}
+.paid-label-queue-heading p {
+  max-width: 760px;
+  margin: 0;
+  color: rgba(243,239,230,0.65);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.paid-label-queue-controls {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.paid-label-next-position {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 12px;
+  border: 1px solid rgba(243,239,230,0.15);
+  border-radius: 999px;
+  background: rgba(10,16,13,0.38);
+  color: #dcecdf;
+  font-size: 11px;
+  font-weight: 850;
+  white-space: nowrap;
+}
+#refreshPaidLabelOrders {
+  min-height: 38px;
+  padding: 0 13px;
+  border: 1px solid rgba(217,154,96,0.4);
+  border-radius: 999px;
+  background: rgba(217,154,96,0.1);
+  color: #f3efe6;
+  font: 850 11px/1 Inter, sans-serif;
+  cursor: pointer;
+}
+#refreshPaidLabelOrders:disabled { opacity: 0.55; cursor: wait; }
+.paid-label-order-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(285px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+.paid-label-order-card {
+  display: grid;
+  grid-template-columns: minmax(125px, 0.75fr) minmax(170px, 1.2fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid rgba(243,239,230,0.14);
+  border-radius: 16px;
+  background: rgba(17,23,20,0.78);
+}
+.paid-label-order-meta {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.paid-label-order-meta > span {
+  color: #d99a60;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.paid-label-order-meta > strong {
+  overflow: hidden;
+  color: #fffaf2;
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.paid-label-order-meta > small {
+  color: rgba(243,239,230,0.5);
+  font-size: 9px;
+}
+.paid-label-order-items {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.paid-label-order-items li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: rgba(243,239,230,0.76);
+  font-size: 10px;
+}
+.paid-label-order-items li > span { display: grid; gap: 1px; min-width: 0; }
+.paid-label-order-items strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.paid-label-order-items small { color: rgba(243,239,230,0.46); font-size: 9px; }
+.paid-label-order-items b { color: #dcecdf; }
+.paid-label-order-action {
+  display: grid;
+  justify-items: end;
+  gap: 7px;
+}
+.paid-label-order-action > span {
+  color: rgba(243,239,230,0.58);
+  font-size: 10px;
+  white-space: nowrap;
+}
+.paid-label-order-action > span strong { color: #fffaf2; font-size: 15px; }
+.paid-label-print-button {
+  min-width: 118px;
+  min-height: 42px;
+  border-color: rgba(122,198,143,0.7) !important;
+  background: #2e7048 !important;
+  color: #fff !important;
+  font-size: 11px !important;
+}
+.paid-label-order-empty {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 16px;
+  border: 1px dashed rgba(243,239,230,0.16);
+  border-radius: 14px;
+  color: rgba(243,239,230,0.5);
+  font-size: 11px;
+  text-align: center;
+}
+.paid-label-order-empty strong { color: #dcecdf; font-size: 13px; }
 .label-maker-grid {
   display: grid;
   grid-template-columns: minmax(320px, 0.85fr) minmax(440px, 1.15fr);
@@ -4700,6 +4850,20 @@ body.admin-page .highland-print-label .highland-label-compound {
 @media (max-width: 620px) {
   .label-maker-heading { display: grid; }
   .label-concept-link { justify-self: start; }
+  .paid-label-queue { padding: 14px; }
+  .paid-label-queue-heading { display: grid; }
+  .paid-label-queue-controls { display: grid; grid-template-columns: 1fr 1fr; }
+  .paid-label-next-position,
+  #refreshPaidLabelOrders { justify-content: center; width: 100%; }
+  .paid-label-order-list { grid-template-columns: 1fr; }
+  .paid-label-order-card { grid-template-columns: 1fr; }
+  .paid-label-order-meta > strong { font-size: 16px; }
+  .paid-label-order-action {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    justify-items: start;
+  }
+  .paid-label-print-button { min-width: 140px; min-height: 48px; }
   .label-maker-row,
   .label-design-picker { grid-template-columns: 1fr; }
   .label-design-option {
