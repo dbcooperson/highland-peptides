@@ -379,6 +379,13 @@ function buildHighlandLabel({ name, dosage, lot, expiry, storage, design = 'vial
 }
 
 const LABEL_NEXT_POSITION_KEY = 'highland-label-next-position-v1';
+const LABEL_CALIBRATION_KEY = 'highland-label-calibration-v1';
+const LABEL_SHEET_GEOMETRY_MM = Object.freeze({
+  marginX: 6.35,
+  marginY: 6.35,
+  pitchX: 52.9082,
+  pitchY: 22.5044,
+});
 
 function labelPositionFromRowAndColumn(row, column) {
   return ((row - 1) * 4) + column;
@@ -409,13 +416,24 @@ function getLabelMakerValues() {
   const storage = document.getElementById('labelStorage')?.value.trim() || '';
   const offsetX = Math.max(-10, Math.min(10, Number(document.getElementById('labelOffsetX')?.value || 0)));
   const offsetY = Math.max(-10, Math.min(10, Number(document.getElementById('labelOffsetY')?.value || 0)));
+  const pitchX = Math.max(-3, Math.min(3, Number(document.getElementById('labelPitchX')?.value || 0)));
+  const pitchY = Math.max(-3, Math.min(3, Number(document.getElementById('labelPitchY')?.value || 0)));
   const design = document.querySelector('[name="labelDesign"]')?.value || 'vial-current';
   const row = Math.max(1, Math.min(12, Number(document.getElementById('labelSheetRow')?.value || 1)));
   const column = Math.max(1, Math.min(4, Number(document.getElementById('labelSheetColumn')?.value || 1)));
   const start = labelPositionFromRowAndColumn(row, column);
   const requested = Math.max(1, Math.min(48, Number(document.getElementById('labelQuantity')?.value || 1)));
   const quantity = Math.min(requested, 49 - start);
-  return { name, dosage, lot, expiry, storage, offsetX, offsetY, design, row, column, start, quantity };
+  return { name, dosage, lot, expiry, storage, offsetX, offsetY, pitchX, pitchY, design, row, column, start, quantity };
+}
+
+function positionLabelPrintCell(cell, position, values) {
+  const rowIndex = Math.floor((position - 1) / 4);
+  const columnIndex = (position - 1) % 4;
+  const left = LABEL_SHEET_GEOMETRY_MM.marginX + (columnIndex * (LABEL_SHEET_GEOMETRY_MM.pitchX + values.pitchX));
+  const top = LABEL_SHEET_GEOMETRY_MM.marginY + (rowIndex * (LABEL_SHEET_GEOMETRY_MM.pitchY + values.pitchY));
+  cell.style.left = `${left.toFixed(4)}mm`;
+  cell.style.top = `${top.toFixed(4)}mm`;
 }
 
 function renderLabelMaker() {
@@ -442,6 +460,7 @@ function buildLabelPrintSheet(values) {
   for (let position = 1; position <= 48; position += 1) {
     const cell = document.createElement('div');
     cell.className = 'label-print-cell';
+    positionLabelPrintCell(cell, position, values);
     const labelIndex = position - values.start;
     const shouldPrint = labelIndex >= 0 && labelIndex < labels.length;
     if (shouldPrint) cell.appendChild(buildHighlandLabel(labels[labelIndex]));
@@ -474,7 +493,7 @@ function openLabelPrintWindow(values, preparedWindow = null) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Highland Label Print Sheet</title>
-  <link rel="stylesheet" href="/css/style.css?v=streamlined-label-workflow-v1-20260901">
+  <link rel="stylesheet" href="/css/style.css?v=exact-label-pitch-v1-20260902">
   <style>
     * { box-sizing: border-box; }
     html, body { margin: 0; min-height: 100%; background: #e9e6de; color: #171a18; font-family: Arial, Helvetica, sans-serif; }
@@ -482,8 +501,8 @@ function openLabelPrintWindow(values, preparedWindow = null) {
     .label-sheet-toolbar strong { font-size: 14px; }
     .label-sheet-toolbar span { display: block; margin-top: 2px; color: rgba(255,255,255,.68); font-size: 10px; }
     .label-sheet-toolbar button { min-height: 42px; padding: 0 22px; border: 0; border-radius: 999px; background: #fff; color: #153e31; font: 900 13px/1 Arial, sans-serif; cursor: pointer; }
-    #labelPrintPortal { box-sizing: border-box; position: relative; left: ${values.offsetX}mm; top: ${values.offsetY}mm; display: grid !important; grid-template-columns: repeat(4, 1.75in); grid-template-rows: repeat(12, .75in); column-gap: .333in; row-gap: .136in; width: 8.5in; height: 11in; margin: 18px auto; padding: .25in; background: #fff; box-shadow: 0 18px 55px rgba(0,0,0,.2); }
-    .label-print-cell { width: 1.75in; height: .75in; overflow: hidden; }
+    #labelPrintPortal { box-sizing: border-box; position: relative; left: ${values.offsetX}mm; top: ${values.offsetY}mm; display: block !important; width: 8.5in; height: 11in; margin: 18px auto; padding: 0; background: #fff; box-shadow: 0 18px 55px rgba(0,0,0,.2); }
+    .label-print-cell { position: absolute; width: 1.75in; height: .75in; overflow: hidden; }
     @media (max-width: 850px) {
       .label-sheet-toolbar { align-items: stretch; flex-direction: column; }
       .label-sheet-toolbar button { width: 100%; }
@@ -493,13 +512,13 @@ function openLabelPrintWindow(values, preparedWindow = null) {
       @page { size: Letter portrait; margin: 0; }
       html, body { width: 8.5in !important; height: 11in !important; background: #fff !important; }
       .label-sheet-toolbar { display: none !important; }
-      #labelPrintPortal { display: grid !important; margin: 0 !important; transform: none !important; box-shadow: none !important; }
+      #labelPrintPortal { display: block !important; margin: 0 !important; transform: none !important; box-shadow: none !important; }
     }
   </style>
 </head>
 <body>
   <header class="label-sheet-toolbar">
-    <div><strong>${values.orderId ? `Order #${escapeHtml(values.orderId)} · ` : ''}Row ${values.row}, label ${values.column} · ${values.quantity} label${values.quantity === 1 ? '' : 's'}</strong><span>Copies 1 · Page 1 only · Letter · 100% · correction ${values.offsetX} mm / ${values.offsetY} mm</span></div>
+    <div><strong>${values.orderId ? `Order #${escapeHtml(values.orderId)} · ` : ''}Row ${values.row}, label ${values.column} · ${values.quantity} label${values.quantity === 1 ? '' : 's'}</strong><span>Copies 1 · Page 1 only · Letter · 100% · page correction ${values.offsetX}/${values.offsetY} mm · spacing ${values.pitchX}/${values.pitchY} mm</span></div>
     <button id="printSheetButton" type="button">Print labels</button>
   </header>
   ${portal.outerHTML}
@@ -663,7 +682,26 @@ function initLabelMaker() {
   const form = document.getElementById('labelMakerForm');
   if (!form || form.dataset.initialized) return;
   form.dataset.initialized = 'true';
-  form.querySelectorAll('input, select').forEach(control => control.addEventListener('input', renderLabelMaker));
+  try {
+    const savedCalibration = JSON.parse(localStorage.getItem(LABEL_CALIBRATION_KEY) || '{}');
+    ['labelOffsetX', 'labelOffsetY', 'labelPitchX', 'labelPitchY'].forEach(id => {
+      const control = document.getElementById(id);
+      if (control && Number.isFinite(Number(savedCalibration[id]))) control.value = String(savedCalibration[id]);
+    });
+  } catch (_) {}
+  form.querySelectorAll('input, select').forEach(control => control.addEventListener('input', () => {
+    if (['labelOffsetX', 'labelOffsetY', 'labelPitchX', 'labelPitchY'].includes(control.id)) {
+      try {
+        localStorage.setItem(LABEL_CALIBRATION_KEY, JSON.stringify({
+          labelOffsetX: document.getElementById('labelOffsetX')?.value || 0,
+          labelOffsetY: document.getElementById('labelOffsetY')?.value || 0,
+          labelPitchX: document.getElementById('labelPitchX')?.value || 0,
+          labelPitchY: document.getElementById('labelPitchY')?.value || 0,
+        }));
+      } catch (_) {}
+    }
+    renderLabelMaker();
+  }));
   document.getElementById('labelCatalogProduct')?.addEventListener('change', applyCatalogLabelSelection);
   const productSearch = document.getElementById('labelProductSearch');
   const productResults = document.getElementById('labelProductResults');

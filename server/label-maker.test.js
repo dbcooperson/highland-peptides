@@ -22,6 +22,8 @@ test('admin includes the protected label maker controls', () => {
   assert.match(html, /id="labelStorage"[^>]*value="36–46°F"/);
   assert.match(html, /id="labelOffsetX"[^>]*value="-4"/);
   assert.match(html, /id="labelOffsetY"[^>]*value="-4"/);
+  assert.match(html, /id="labelPitchX"[^>]*value="0"/);
+  assert.match(html, /id="labelPitchY"[^>]*value="0"/);
   assert.match(html, /id="labelQuantity"/);
   assert.match(html, /id="labelQuantity"[^>]*value="1"/);
   assert.match(html, /id="labelSheetRow"/);
@@ -33,11 +35,13 @@ test('admin includes the protected label maker controls', () => {
 });
 
 test('label sheet matches the OL1735WS 48-up geometry', () => {
-  assert.match(css, /grid-template-columns:\s*repeat\(4,\s*1\.75in\)/);
-  assert.match(css, /grid-template-rows:\s*repeat\(12,\s*0\.75in\)/);
-  assert.match(css, /column-gap:\s*0\.333in/);
-  assert.match(css, /row-gap:\s*0\.136in/);
-  assert.match(css, /padding:\s*0\.25in/);
+  assert.match(js, /marginX:\s*6\.35/);
+  assert.match(js, /marginY:\s*6\.35/);
+  assert.match(js, /pitchX:\s*52\.9082/);
+  assert.match(js, /pitchY:\s*22\.5044/);
+  assert.match(js, /positionLabelPrintCell/);
+  assert.match(js, /columnIndex \* \(LABEL_SHEET_GEOMETRY_MM\.pitchX \+ values\.pitchX\)/);
+  assert.match(js, /rowIndex \* \(LABEL_SHEET_GEOMETRY_MM\.pitchY \+ values\.pitchY\)/);
   assert.match(js, /position\s*<=\s*48/);
   assert.match(js, /labelPositionFromRowAndColumn/);
   assert.match(js, /\(\(row - 1\) \* 4\) \+ column/);
@@ -47,9 +51,11 @@ test('label sheet matches the OL1735WS 48-up geometry', () => {
   assert.match(js, /Highland Label Print Sheet/);
   assert.match(js, /left:\s*\$\{values\.offsetX\}mm/);
   assert.match(js, /top:\s*\$\{values\.offsetY\}mm/);
+  assert.match(js, /highland-label-calibration-v1/);
   assert.match(js, /id="printSheetButton"/);
   assert.match(js, /window\.print\(\)/);
-  assert.match(js, /display: grid !important; grid-template-columns: repeat\(4, 1\.75in\)/);
+  assert.match(js, /display: block !important/);
+  assert.match(js, /\.label-print-cell \{ position: absolute/);
   assert.match(css, /\.highland-label-dose[\s\S]*?-webkit-text-fill-color:\s*#07563f/);
 });
 

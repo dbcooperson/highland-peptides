@@ -4985,17 +4985,15 @@ body.admin-page .highland-print-label .highland-label-compound {
   body.label-printing > *:not(#labelPrintPortal) { display: none !important; }
   body.label-printing #labelPrintPortal {
     box-sizing: border-box;
-    display: grid !important;
-    grid-template-columns: repeat(4, 1.75in);
-    grid-template-rows: repeat(12, 0.75in);
-    column-gap: 0.333in;
-    row-gap: 0.136in;
+    position: relative;
+    display: block !important;
     width: 8.5in;
     height: 11in;
-    padding: 0.25in;
+    padding: 0;
     background: #fff;
   }
   .label-print-cell {
+    position: absolute;
     width: 1.75in;
     height: 0.75in;
     overflow: hidden;

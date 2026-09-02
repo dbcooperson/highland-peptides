@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin: Highland Peptides</title>
-<link rel="stylesheet" href="/css/style.css?v=streamlined-label-workflow-v1-20260901">
+<link rel="stylesheet" href="/css/style.css?v=exact-label-pitch-v1-20260902">
 </head>
 <body class="admin-page">
 <header class="topbar">
@@ -197,6 +197,16 @@
             </label>
           </div>
           <div class="label-maker-row">
+            <label>Column spacing correction (mm each)
+              <input id="labelPitchX" type="number" value="0" min="-3" max="3" step="0.1" inputmode="decimal" required>
+              <small class="label-field-note">Keeps label 1 fixed. Positive spreads each later label farther right.</small>
+            </label>
+            <label>Row spacing correction (mm each)
+              <input id="labelPitchY" type="number" value="0" min="-3" max="3" step="0.1" inputmode="decimal" required>
+              <small class="label-field-note">Keeps row 1 fixed. Positive spreads each later row farther down.</small>
+            </label>
+          </div>
+          <div class="label-maker-row">
             <label>Row on the sheet
               <select id="labelSheetRow" required>
                 <option value="1">Row 1 (top)</option>
@@ -262,7 +272,7 @@
 
 <div id="labelPrintPortal" class="label-print-sheet" aria-hidden="true"></div>
 
-<script src="/js/admin.js?v=streamlined-label-workflow-v1-20260901"></script>
+<script src="/js/admin.js?v=exact-label-pitch-v1-20260902"></script>
 </body>
 </html>
 
