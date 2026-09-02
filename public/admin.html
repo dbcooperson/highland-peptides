@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin: Highland Peptides</title>
-<link rel="stylesheet" href="/css/style.css?v=label-remove-v1-20260902">
+<link rel="stylesheet" href="/css/style.css?v=photo-calibrated-labels-v2-20260902">
 </head>
 <body class="admin-page">
 <header class="topbar">
@@ -193,13 +193,13 @@
               <small class="label-field-note">Negative moves the print left.</small>
             </label>
             <label>Vertical correction (mm)
-              <input id="labelOffsetY" type="number" value="-4" min="-10" max="10" step="0.5" inputmode="decimal" required>
+              <input id="labelOffsetY" type="number" value="0" min="-10" max="10" step="0.5" inputmode="decimal" required>
               <small class="label-field-note">Negative moves the print up.</small>
             </label>
           </div>
           <div class="label-maker-row">
             <label>Column spacing correction (mm each)
-              <input id="labelPitchX" type="number" value="0" min="-3" max="3" step="0.1" inputmode="decimal" required>
+              <input id="labelPitchX" type="number" value="2.3" min="-3" max="3" step="0.1" inputmode="decimal" required>
               <small class="label-field-note">Keeps label 1 fixed. Positive spreads each later label farther right.</small>
             </label>
             <label>Row spacing correction (mm each)
@@ -248,7 +248,7 @@
 
           <div class="label-print-note">
             <strong>Canon laser-printer setup</strong>
-            <span>Use your laser-compatible OL1735WS White Gloss sheets, Letter paper, Actual Size / 100% scale, and turn browser headers and footers off. Do not use inkjet-only OL1735WG stock.</span>
+            <span>Calibrated for your Canon LBP646Cdw + iPhone AirPrint from the printed sheet photos. Use laser-compatible OL1735WS White Gloss sheets, Letter paper, Portrait, 100% scale, and one-sided printing when available.</span>
           </div>
           <button type="submit" class="label-print-button">Print labels</button>
           <p id="labelMakerMessage" class="form-msg" aria-live="polite"></p>
@@ -273,7 +273,7 @@
 
 <div id="labelPrintPortal" class="label-print-sheet" aria-hidden="true"></div>
 
-<script src="/js/admin.js?v=label-remove-v1-20260902"></script>
+<script src="/js/admin.js?v=photo-calibrated-labels-v2-20260902"></script>
 </body>
 </html>
 
