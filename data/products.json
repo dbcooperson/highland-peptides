@@ -319,7 +319,7 @@
     "sku": "GTT9000",
     "name": "Glutathione",
     "spec": "300mg/ml 30ml (9,000mg)",
-    "cost": 0,
+    "cost": 14,
     "category": "Research Material",
     "group": "Antioxidant",
     "fixedPublicPrice": 47.05,
