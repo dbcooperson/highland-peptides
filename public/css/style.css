@@ -3879,6 +3879,18 @@ body.admin-page #adminPassword {
 body.admin-page .admin-order-toolbar input::placeholder {
   color: rgba(243, 239, 230, 0.52) !important;
 }
+body.admin-page .admin-remember-device {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--offwhite);
+  cursor: pointer;
+}
+body.admin-page .admin-remember-device input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+  accent-color: #2c6b4f;
+}
 body.admin-page .admin-order-toolbar select option {
   color: #1c1a17 !important;
   background: #faf7f1 !important;

@@ -39,6 +39,18 @@ function initAdminTabs() {
   });
 }
 
+function showAdminDashboard() {
+  document.getElementById('adminLogin').style.display = 'none';
+  document.getElementById('adminPanels').style.display = 'block';
+  document.getElementById('adminLogoutBtn').style.display = 'inline-block';
+  initAdminTabs();
+  loadStorageInfo();
+  loadOrders();
+  loadProfit();
+  loadLaunchChecks();
+  initLabelMaker();
+}
+
 function referralAdminSummaryHTML(accounts, payouts, rewards = [], social = []) {
   const verified = accounts.filter(account => account.verifiedAt).length;
   const activeCodes = accounts.filter(account => account.referralCode).length;
@@ -1127,16 +1139,14 @@ async function loadOrders() {
 document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   try {
-    await api('/api/admin/login', { method: 'POST', body: { password: document.getElementById('adminPassword').value } });
-    document.getElementById('adminLogin').style.display = 'none';
-    document.getElementById('adminPanels').style.display = 'block';
-    document.getElementById('adminLogoutBtn').style.display = 'inline-block';
-    initAdminTabs();
-    loadStorageInfo();
-    loadOrders();
-    loadProfit();
-    loadLaunchChecks();
-    initLabelMaker();
+    await api('/api/admin/login', {
+      method: 'POST',
+      body: {
+        password: document.getElementById('adminPassword').value,
+        rememberDevice: document.getElementById('adminRememberDevice').checked,
+      },
+    });
+    showAdminDashboard();
   } catch (err) {
     document.getElementById('adminLoginMsg').textContent = err.message;
   }
@@ -1149,6 +1159,12 @@ document.getElementById('adminLogoutBtn').addEventListener('click', async () => 
 
 document.getElementById('analyticsRange')?.addEventListener('change', loadAnalytics);
 document.getElementById('refreshReferralsButton')?.addEventListener('click', loadReferrals);
+
+api('/api/admin/session')
+  .then(session => {
+    if (session.authenticated) showAdminDashboard();
+  })
+  .catch(() => {});
 
 
 

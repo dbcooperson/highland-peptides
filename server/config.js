@@ -75,6 +75,10 @@ module.exports = {
   // Session secret (change via env var SESSION_SECRET before deploying).
   SESSION_SECRET: process.env.SESSION_SECRET || 'change-me-session-secret',
 
+  // A remembered admin device stays signed in across tabs and server restarts.
+  // Changing the admin password or session secret invalidates every remembered device.
+  ADMIN_REMEMBER_DAYS: Math.max(1, Math.min(90, Number(process.env.ADMIN_REMEMBER_DAYS || 30))),
+
   // PayPal Checkout. Use sandbox while testing, then switch PAYPAL_ENV to live.
   PAYPAL_CLIENT_ID: process.env.PAYPAL_CLIENT_ID || '',
   PAYPAL_CLIENT_SECRET: process.env.PAYPAL_CLIENT_SECRET || '',

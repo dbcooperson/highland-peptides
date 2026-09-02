@@ -16,7 +16,13 @@ const session = require('express-session');
 const config = require('./config');
 const db = require('./db');
 const { catalog, bySku, costBySku, getProductFamily, priceAudit } = require('./products');
-const { requireAdmin } = require('./auth');
+const {
+  ADMIN_REMEMBER_COOKIE,
+  createAdminRememberToken,
+  adminRememberCookieOptions,
+  restoreAdminFromRememberCookie,
+  requireAdmin,
+} = require('./auth');
 const { buildPackingSlip, buildContentsLabel } = require('./labels');
 const { isPayPalConfigured, createPayPalOrder, capturePayPalOrder } = require('./paypal');
 const { sendOrderBackup, sendCustomerPaymentInstructions, sendPaymentReminder, sendTrackingEmail, isCustomerEmailConfigured } = require('./notifications');
@@ -72,6 +78,7 @@ app.use(session({
     maxAge: 1000 * 60 * 60 * 8,
   },
 }));
+app.use('/api/admin', restoreAdminFromRememberCookie(config));
 app.use(express.static(path.join(__dirname, '..', 'public'), {
   maxAge: process.env.NODE_ENV === 'production' ? '1h' : 0,
   setHeaders(res, filePath) {
@@ -786,8 +793,13 @@ app.get('/api/admin/profit', requireAdmin, (req, res) => {
   res.json({ totals, lines: lines.sort((a, b) => b.grossProfit - a.grossProfit) });
 });
 
+app.get('/api/admin/session', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  res.json({ authenticated: Boolean(req.session?.isAdmin) });
+});
+
 app.post('/api/admin/login', checkAdminLoginLimit, (req, res) => {
-  const { password } = req.body || {};
+  const { password, rememberDevice } = req.body || {};
   if (!safePasswordMatch(password, config.ADMIN_PASSWORD, config.ADMIN_PASSWORD_SHA256)) {
     recordAdminLoginFailure(req);
     return res.status(401).json({ error: 'Wrong admin password.' });
@@ -796,13 +808,20 @@ app.post('/api/admin/login', checkAdminLoginLimit, (req, res) => {
   req.session.regenerate(err => {
     if (err) return res.status(500).json({ error: 'Could not start admin session.' });
     req.session.isAdmin = true;
+    const cookieOptions = adminRememberCookieOptions(config, isProductionRuntime);
+    if (rememberDevice === true) {
+      res.cookie(ADMIN_REMEMBER_COOKIE, createAdminRememberToken(config), cookieOptions);
+    } else {
+      res.clearCookie(ADMIN_REMEMBER_COOKIE, adminRememberCookieOptions(config, isProductionRuntime, false));
+    }
     res.json({ ok: true });
   });
 });
 
 app.post('/api/admin/logout', (req, res) => {
   req.session.destroy(() => {
-    res.clearCookie('hp.sid');
+    res.clearCookie('hp.sid', { httpOnly: true, secure: isProductionRuntime, sameSite: 'lax' });
+    res.clearCookie(ADMIN_REMEMBER_COOKIE, adminRememberCookieOptions(config, isProductionRuntime, false));
     res.json({ ok: true });
   });
 });

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin: Highland Peptides</title>
-<link rel="stylesheet" href="/css/style.css?v=admin-order-labels-v7-20260901">
+<link rel="stylesheet" href="/css/style.css?v=admin-remember-device-v1-20260901">
 </head>
 <body class="admin-page">
 <header class="topbar">
@@ -17,6 +17,11 @@
     <h2>Admin Login</h2>
     <form id="adminLoginForm">
       <label>Password <input type="password" id="adminPassword" required></label>
+      <label class="admin-remember-device">
+        <input type="checkbox" id="adminRememberDevice" checked>
+        <span>Remember this device for 30 days</span>
+      </label>
+      <p class="hint">Uses a secure sign-in token. Your password is never saved in the browser.</p>
       <button type="submit">Log In</button>
       <p class="form-msg" id="adminLoginMsg"></p>
     </form>
@@ -240,7 +245,7 @@
 
 <div id="labelPrintPortal" class="label-print-sheet" aria-hidden="true"></div>
 
-<script src="/js/admin.js?v=admin-order-labels-v7-20260901"></script>
+<script src="/js/admin.js?v=admin-remember-device-v1-20260901"></script>
 </body>
 </html>
 
