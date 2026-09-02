@@ -144,18 +144,18 @@
     </div>
     <p class="form-msg" id="promoMsg"></p>
 
-    <form id="checkoutForm">
-      <label>Full Name <input type="text" id="buyerName" required></label>
-      <label>Email <input type="email" id="buyerEmail" required placeholder="you@example.com"></label>
-      <label>Address Line 1 <input type="text" id="buyerAddress1" required></label>
-      <label>Address Line 2 (optional) <input type="text" id="buyerAddress2"></label>
+    <form id="checkoutForm" autocomplete="on">
+      <label>Full Name <input type="text" id="buyerName" name="name" autocomplete="name" required></label>
+      <label>Email <input type="email" id="buyerEmail" name="email" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" required placeholder="you@example.com"></label>
+      <label>Address Line 1 <input type="text" id="buyerAddress1" name="address-line1" autocomplete="address-line1" required></label>
+      <label>Address Line 2 (optional) <input type="text" id="buyerAddress2" name="address-line2" autocomplete="address-line2"></label>
       <div class="modal-row">
-        <label>City <input type="text" id="buyerCity" required></label>
-        <label>State / Province <input type="text" id="buyerState" required></label>
-        <label>ZIP / Postal <input type="text" id="buyerZip" required></label>
+        <label>City <input type="text" id="buyerCity" name="address-level2" autocomplete="address-level2" required></label>
+        <label>State / Province <input type="text" id="buyerState" name="address-level1" autocomplete="address-level1" required></label>
+        <label>ZIP / Postal <input type="text" id="buyerZip" name="postal-code" autocomplete="postal-code" required></label>
       </div>
       <label>Select country
-        <select id="buyerCountry" required>
+        <select id="buyerCountry" name="country" autocomplete="country" required>
           <option value="US" selected>United States</option>
           <option value="CA">Canada</option>
           <option value="GB">United Kingdom</option>
@@ -480,7 +480,7 @@
   Not evaluated by the FDA.
 </footer>
 
-<script src="/js/shared.js?v=bac-fixed-v1-20260829"></script>
+<script src="/js/shared.js?v=checkout-analytics-v1-20260901"></script>
 <script src="/js/cart.js?v=account-rewards-v3-20260829"></script>
 </body>
 </html>

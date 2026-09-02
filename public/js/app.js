@@ -8,7 +8,7 @@ function cardHTML(p) {
   const badge = p.salesBadge || 'RUO';
   return `
     <div class="card product-card">
-      <a class="card-link" href="/product/${encodeURIComponent(p.slug)}">
+      <a class="card-link" href="/product/${encodeURIComponent(p.slug)}?sku=${encodeURIComponent(p.sku)}">
         <div class="card-media photo sku-mockup">
           ${productMockupImageHTML(p)}
           <span class="product-card-badge ${p.salesBadge ? 'sales-badge' : ''}">${escapeHTML(badge)}</span>

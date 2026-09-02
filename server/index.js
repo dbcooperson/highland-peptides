@@ -121,6 +121,16 @@ app.get('/api/product', (req, res) => {
 const analyticsAttempts = new Map();
 const ANALYTICS_WINDOW_MS = 15 * 60 * 1000;
 const ANALYTICS_MAX_ATTEMPTS = 250;
+const PUBLIC_ANALYTICS_EVENTS = new Set([
+  'page_view',
+  'product_view',
+  'add_to_cart',
+  'checkout_start',
+  'checkout_error',
+  'shipping_info_added',
+  'payment_method_selected',
+  'payment_failed',
+]);
 
 app.post('/api/analytics/event', (req, res) => {
   const key = req.ip || req.socket.remoteAddress || 'unknown';
@@ -134,8 +144,10 @@ app.post('/api/analytics/event', (req, res) => {
   if (attempt.count > ANALYTICS_MAX_ATTEMPTS) return res.status(204).end();
 
   const input = req.body || {};
+  const type = cleanText(input.type, 40);
+  if (!PUBLIC_ANALYTICS_EVENTS.has(type)) return res.status(204).end();
   analytics.recordEvent({
-    type: cleanText(input.type, 40),
+    type,
     visitorId: cleanText(input.visitorId, 128),
     sessionId: cleanText(input.sessionId, 128),
     path: cleanText(input.path, 180),
@@ -143,6 +155,10 @@ app.post('/api/analytics/event', (req, res) => {
     sku: cleanText(input.sku, 40),
     productName: cleanText(input.productName, 100),
     quantity: Math.max(1, Math.min(99, Number(input.quantity || 1))),
+    stage: cleanText(input.stage, 40),
+    reason: cleanText(input.reason, 60),
+    paymentMethod: cleanText(input.paymentMethod, 30),
+    checkoutAttemptId: cleanText(input.checkoutAttemptId, 128),
   });
   res.status(204).end();
 });
@@ -308,6 +324,7 @@ function prepareCheckout(body, accountId = null) {
     analytics: {
       visitorId: cleanText(body && body.analyticsVisitorId, 128),
       sessionId: cleanText(body && body.analyticsSessionId, 128),
+      checkoutAttemptId: cleanText(body && body.analyticsCheckoutAttemptId, 128),
     },
     orderInput: {
       buyer: cleanBuyer,
@@ -348,7 +365,10 @@ app.post('/api/paypal/create-order', checkCheckoutRateLimit, async (req, res) =>
   }
 
   const prepared = prepareCheckout(req.body, req.session && req.session.accountId);
-  if (prepared.error) return res.status(400).json({ error: prepared.error });
+  if (prepared.error) {
+    analytics.recordEvent({ type: 'checkout_error', stage: 'server_validation', reason: 'invalid_checkout', visitorId: cleanText(req.body && req.body.analyticsVisitorId, 128), sessionId: cleanText(req.body && req.body.analyticsSessionId, 128), checkoutAttemptId: cleanText(req.body && req.body.analyticsCheckoutAttemptId, 128) });
+    return res.status(400).json({ error: prepared.error });
+  }
 
   let order = null;
   try {
@@ -359,6 +379,7 @@ app.post('/api/paypal/create-order', checkCheckoutRateLimit, async (req, res) =>
     res.json({ ok: true, orderId: order.id, paypalOrderId: paypalOrder.id, total: order.total });
   } catch (err) {
     if (order && !order.paypal_order_id) db.deleteOrder(order.id);
+    analytics.recordEvent({ type: 'payment_failed', paymentMethod: 'paypal', reason: 'create_order_failed', ...prepared.analytics });
     res.status(502).json({ error: err.message || 'Could not start PayPal checkout.' });
   }
 });
@@ -369,13 +390,17 @@ app.post('/api/paypal/create-order', checkCheckoutRateLimit, async (req, res) =>
 // alternative to it.
 app.post('/api/checkout', checkCheckoutRateLimit, async (req, res) => {
   const prepared = prepareCheckout(req.body, req.session && req.session.accountId);
-  if (prepared.error) return res.status(400).json({ error: prepared.error });
+  if (prepared.error) {
+    analytics.recordEvent({ type: 'checkout_error', stage: 'server_validation', reason: 'invalid_checkout', visitorId: cleanText(req.body && req.body.analyticsVisitorId, 128), sessionId: cleanText(req.body && req.body.analyticsSessionId, 128), checkoutAttemptId: cleanText(req.body && req.body.analyticsCheckoutAttemptId, 128) });
+    return res.status(400).json({ error: prepared.error });
+  }
 
   const { paymentMethod, cryptoAsset, ...orderInput } = prepared.orderInput;
   let order;
   try {
     order = db.createOrder({ ...orderInput, paymentProvider: paymentMethod, cryptoAsset });
   } catch (err) {
+    analytics.recordEvent({ type: 'checkout_error', stage: 'order_creation', reason: 'create_order_failed', ...prepared.analytics });
     return res.status(409).json({ error: err.message || 'Could not create the order.' });
   }
   analytics.recordEvent({ type: 'order_created', ...prepared.analytics });
@@ -452,7 +477,12 @@ function validatePayPalCaptureForOrder(capture, order, paypalOrderId) {
 }
 
 app.post('/api/paypal/capture-order', checkCheckoutRateLimit, async (req, res) => {
-  const { paypalOrderId, orderId } = req.body || {};
+  const { paypalOrderId, orderId, analyticsVisitorId, analyticsSessionId, analyticsCheckoutAttemptId } = req.body || {};
+  const captureAnalytics = {
+    visitorId: cleanText(analyticsVisitorId, 128),
+    sessionId: cleanText(analyticsSessionId, 128),
+    checkoutAttemptId: cleanText(analyticsCheckoutAttemptId, 128),
+  };
   if (!paypalOrderId || !orderId) {
     return res.status(400).json({ error: 'Missing PayPal order details.' });
   }
@@ -463,14 +493,20 @@ app.post('/api/paypal/capture-order', checkCheckoutRateLimit, async (req, res) =
   try {
     const capture = await capturePayPalOrder(paypalOrderId);
     if (capture.status !== 'COMPLETED') {
+      analytics.recordEvent({ type: 'payment_failed', paymentMethod: 'paypal', reason: 'capture_incomplete', ...captureAnalytics });
       return res.status(400).json({ error: `PayPal payment was not completed. Status: ${capture.status}` });
     }
     const validationError = validatePayPalCaptureForOrder(capture, order, paypalOrderId);
-    if (validationError) return res.status(400).json({ error: validationError });
+    if (validationError) {
+      analytics.recordEvent({ type: 'payment_failed', paymentMethod: 'paypal', reason: 'capture_validation_failed', ...captureAnalytics });
+      return res.status(400).json({ error: validationError });
+    }
     const paidOrder = db.markOrderPaid(orderId, paypalOrderId);
+    analytics.recordEvent({ type: 'payment_confirmed', ...captureAnalytics });
     await backupOrderIfNeeded(paidOrder, 'paypal_capture');
     res.json({ ok: true, orderId: Number(orderId), paypalOrderId, total: paidOrder.total, message: 'Payment received. Order is confirmed.' });
   } catch (err) {
+    analytics.recordEvent({ type: 'payment_failed', paymentMethod: 'paypal', reason: 'capture_request_failed', ...captureAnalytics });
     res.status(502).json({ error: err.message || 'Could not confirm PayPal payment.' });
   }
 });
@@ -660,6 +696,7 @@ app.get('/api/admin/analytics', requireAdmin, (req, res) => {
     },
     rates: {
       visitorToOrder: rate(totals.ordersCreated, totals.uniqueVisitors),
+      visitorToPaid: rate(trackedPaidOrders.length, totals.uniqueVisitors),
       productToCart: rate(totals.addToCarts, totals.productViews),
       checkoutToOrder: rate(totals.ordersCreated, totals.checkoutStarts),
       orderToPaid: rate(trackedPaidOrders.length, totals.ordersCreated),
@@ -938,8 +975,13 @@ app.post('/api/admin/orders/:id/status', requireAdmin, async (req, res) => {
   if (!['pending_payment', 'paid', 'fulfilled', 'cancelled'].includes(status)) {
     return res.status(400).json({ error: 'invalid status' });
   }
+  const previousOrder = db.getOrderById(req.params.id);
+  const wasConfirmed = previousOrder && ['paid', 'fulfilled'].includes(previousOrder.status);
   const order = db.updateOrderStatus(req.params.id, status);
   if (!order) return res.status(404).json({ error: 'Order not found' });
+  if (!wasConfirmed && ['paid', 'fulfilled'].includes(status)) {
+    analytics.recordEvent({ type: 'payment_confirmed' });
+  }
   if (['paid', 'fulfilled'].includes(status)) {
     await backupOrderIfNeeded(order, 'admin_status_' + status);
   }

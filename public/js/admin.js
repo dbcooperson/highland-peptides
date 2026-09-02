@@ -687,7 +687,7 @@ function analyticsSummaryHTML(data) {
     <div class="admin-summary-grid analytics-summary-grid">
       <div><span>Impressions</span><strong>${Number(totals.pageViews || 0).toLocaleString()}</strong><em>page views</em></div>
       <div><span>Unique visitors</span><strong>${Number(totals.uniqueVisitors || 0).toLocaleString()}</strong><em>anonymous devices</em></div>
-      <div><span>Visitor CVR</span><strong>${percent(data.rates && data.rates.visitorToOrder)}</strong><em>visitor to order</em></div>
+      <div><span>Paid visitor CVR</span><strong>${percent(data.rates && data.rates.visitorToPaid)}</strong><em>visitor to paid order</em></div>
       <div><span>Orders created</span><strong>${Number(totals.ordersCreated || 0).toLocaleString()}</strong><em>tracked funnel</em></div>
       <div><span>Paid orders</span><strong>${Number(sales.paidOrders || 0).toLocaleString()}</strong><em>selected date range</em></div>
       <div><span>Paid revenue</span><strong>${money(sales.paidRevenue)}</strong><em>AOV ${money(sales.averageOrderValue)}</em></div>
@@ -718,7 +718,10 @@ function analyticsFunnelHTML(data) {
     ['Product views', totals.productViews || 0],
     ['Added to cart', totals.addToCarts || 0],
     ['Checkout opened', totals.checkoutStarts || 0],
+    ['Shipping completed', totals.shippingInfoAdded || 0],
+    ['Payment selected', totals.paymentMethodsSelected || 0],
     ['Orders created', totals.ordersCreated || 0],
+    ['Payments confirmed', totals.paymentsConfirmed || 0],
   ];
   const base = Math.max(1, Number(stages[0][1] || 0));
   return `<div class="analytics-funnel">${stages.map(([label, value], index) => {
@@ -739,6 +742,9 @@ function analyticsInsightsHTML(data) {
   if (!totals.pageViews) {
     insights.push(['Baseline is starting now', 'The site did not previously record impressions. Let this run for 7–14 days before making major conversion decisions.']);
   } else {
+    if (Number(totals.checkoutErrors || 0) || Number(totals.paymentFailures || 0)) {
+      insights.push(['Resolve measured checkout failures', `${Number(totals.checkoutErrors || 0)} checkout errors and ${Number(totals.paymentFailures || 0)} payment failures were recorded in this range. Start with the most frequent categorized failure before changing checkout design.`]);
+    }
     if (rates.productToCart == null || rates.productToCart < 8) {
       insights.push(['Strengthen product-to-cart intent', 'Use the best-selling strength as the default, keep price and purity proof above the fold, and add one clear Add to Cart action per card.']);
     }

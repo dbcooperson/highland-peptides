@@ -288,7 +288,7 @@ function showAddedToCartPopup(sku, qty = 1) {
           <div class="cart-popup-suggestions-title">Suggested research products</div>
           <div class="cart-popup-suggestion-grid">
             ${suggestions.map(item => `
-              <a href="/product/${encodeURIComponent(item.slug)}" class="cart-popup-suggestion">
+              <a href="/product/${encodeURIComponent(item.slug)}?sku=${encodeURIComponent(item.sku)}" class="cart-popup-suggestion">
                 <span class="cart-popup-suggestion-media photo sku-mockup">${productMockupImageHTML(item)}</span>
                 <span><strong>${escapeHTML(item.name)}</strong><em>${escapeHTML(cleanVialSpec(item.spec))} &bull; $${item.price.toFixed(2)}</em></span>
               </a>
@@ -424,7 +424,7 @@ let productSearchCatalogPromise = null;
 
 function productSearchResultHTML(p) {
   return `
-    <a class="product-search-result" href="/product/${encodeURIComponent(p.slug)}">
+    <a class="product-search-result" href="/product/${encodeURIComponent(p.slug)}?sku=${encodeURIComponent(p.sku)}">
       <div class="product-search-result-media photo sku-mockup">${productMockupImageHTML(p)}</div>
       <div class="product-search-result-copy">
         <span class="product-search-result-group">${escapeHTML(p.group || p.category)}</span>
@@ -655,6 +655,81 @@ let appliedDiscount = null; // { code, percentOff } | null
 let paypalConfigPromise = null;
 let paypalButtonsRendered = false;
 let pendingPayPalLocalOrderId = null;
+const HP_CHECKOUT_ATTEMPT_KEY = 'hp_checkout_attempt';
+let currentCheckoutAttemptId = '';
+let checkoutShippingTracked = false;
+const checkoutTrackedMethods = new Set();
+const checkoutTrackedErrors = new Set();
+
+function newAnonymousId() {
+  return window.crypto && typeof window.crypto.randomUUID === 'function'
+    ? window.crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
+}
+
+function checkoutCartSignature() {
+  return Object.entries(getCart())
+    .filter(([, quantity]) => Number(quantity) > 0)
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([sku, quantity]) => `${sku}:${quantity}`)
+    .join('|');
+}
+
+function checkoutAttemptId() {
+  if (currentCheckoutAttemptId) return currentCheckoutAttemptId;
+  const cartSignature = checkoutCartSignature();
+  try {
+    const stored = JSON.parse(sessionStorage.getItem(HP_CHECKOUT_ATTEMPT_KEY) || 'null');
+    if (stored && stored.id && stored.cartSignature === cartSignature && Date.now() - Number(stored.startedAt || 0) < 30 * 60 * 1000) {
+      currentCheckoutAttemptId = stored.id;
+      return currentCheckoutAttemptId;
+    }
+  } catch {}
+  currentCheckoutAttemptId = newAnonymousId();
+  try {
+    sessionStorage.setItem(HP_CHECKOUT_ATTEMPT_KEY, JSON.stringify({
+      id: currentCheckoutAttemptId,
+      cartSignature,
+      startedAt: Date.now(),
+    }));
+  } catch {}
+  return currentCheckoutAttemptId;
+}
+
+function finishCheckoutAttempt() {
+  currentCheckoutAttemptId = '';
+  checkoutShippingTracked = false;
+  checkoutTrackedMethods.clear();
+  checkoutTrackedErrors.clear();
+  try { sessionStorage.removeItem(HP_CHECKOUT_ATTEMPT_KEY); } catch {}
+}
+
+function trackCheckoutEvent(type, details = {}) {
+  hpTrack(type, { checkoutAttemptId: checkoutAttemptId(), ...details });
+}
+
+function trackPaymentMethod(paymentMethod) {
+  if (!paymentMethod || checkoutTrackedMethods.has(paymentMethod)) return;
+  checkoutTrackedMethods.add(paymentMethod);
+  trackCheckoutEvent('payment_method_selected', { paymentMethod });
+}
+
+function trackShippingInfoAdded() {
+  if (checkoutShippingTracked) return;
+  checkoutShippingTracked = true;
+  trackCheckoutEvent('shipping_info_added');
+}
+
+function trackCheckoutError(stage, reason, paymentMethod = '') {
+  const key = `${stage}|${reason}|${paymentMethod}`;
+  if (checkoutTrackedErrors.has(key)) return;
+  checkoutTrackedErrors.add(key);
+  trackCheckoutEvent('checkout_error', { stage, reason, paymentMethod });
+}
+
+function trackPaymentFailure(paymentMethod, reason) {
+  trackCheckoutEvent('payment_failed', { paymentMethod, reason });
+}
 
 function renderCheckoutSummary() {
   const cart = getCart();
@@ -727,44 +802,41 @@ function checkoutPayloadFromForm() {
     paymentMethod: 'manual_paypal',
     analyticsVisitorId: analytics.visitorId,
     analyticsSessionId: analytics.sessionId,
+    analyticsCheckoutAttemptId: checkoutAttemptId(),
   };
 }
 
 function validateCheckoutPayload(payload, msgEl) {
-  if (payload.items.length === 0) {
+  const fail = (message, reason) => {
     msgEl.style.color = 'var(--danger)';
-    msgEl.textContent = 'Cart is empty.';
+    msgEl.textContent = message;
+    trackCheckoutError('validation', reason, payload.paymentMethod);
     return false;
+  };
+  if (payload.items.length === 0) {
+    return fail('Cart is empty.', 'empty_cart');
   }
   if (!payload.buyer.name || !payload.buyer.email || !payload.buyer.address1 || !payload.buyer.city || !payload.buyer.state || !payload.buyer.zip || !payload.buyer.country) {
-    msgEl.style.color = 'var(--danger)';
-    msgEl.textContent = 'Name, email, destination country, and full shipping address are required before payment.';
-    return false;
+    return fail('Name, email, destination country, and full shipping address are required before payment.', 'missing_shipping_fields');
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.buyer.email)) {
+    return fail('Enter a valid email address before payment.', 'invalid_email');
   }
   if (!/^[A-Z]{2}$/.test(payload.buyer.country)) {
-    msgEl.style.color = 'var(--danger)';
-    msgEl.textContent = 'Select a valid destination country from the list.';
-    return false;
+    return fail('Select a valid destination country from the list.', 'invalid_country');
   }
   if (payload.shippingMethod === 'domestic' && payload.buyer.country !== 'US') {
-    msgEl.style.color = 'var(--danger)';
-    msgEl.textContent = 'Choose International shipping for destinations outside the U.S.';
-    return false;
+    return fail('Choose International shipping for destinations outside the U.S.', 'domestic_country_mismatch');
   }
   if (payload.shippingMethod === 'international' && payload.buyer.country === 'US') {
-    msgEl.style.color = 'var(--danger)';
-    msgEl.textContent = 'International shipping is for destinations outside the U.S. Change the country or select U.S. shipping.';
-    return false;
+    return fail('International shipping is for destinations outside the U.S. Change the country or select U.S. shipping.', 'international_country_mismatch');
   }
+  trackShippingInfoAdded();
   if (!payload.certified) {
-    msgEl.style.color = 'var(--danger)';
-    msgEl.textContent = 'You must certify research/business use before payment.';
-    return false;
+    return fail('You must certify research/business use before payment.', 'research_certification_missing');
   }
   if (!payload.paymentPolicyAccepted) {
-    msgEl.style.color = 'var(--danger)';
-    msgEl.textContent = 'Confirm the exact-payment and 72-hour mismatch policy before payment.';
-    return false;
+    return fail('Confirm the exact-payment and 72-hour mismatch policy before payment.', 'payment_policy_missing');
   }
   msgEl.textContent = '';
   return true;
@@ -776,6 +848,7 @@ function clearCartAfterCheckout() {
   updateCartBadge();
   document.dispatchEvent(new CustomEvent('cart:updated'));
   document.getElementById('checkoutForm').reset();
+  finishCheckoutAttempt();
 }
 
 async function refreshCheckoutAccountStatus() {
@@ -836,7 +909,7 @@ function openCheckoutModal() {
   renderCryptoPricePreview();
   document.body.classList.add('checkout-modal-open');
   document.getElementById('checkoutModal').style.display = 'flex';
-  hpTrack('checkout_start');
+  trackCheckoutEvent('checkout_start');
 
 }
 
@@ -865,11 +938,13 @@ async function applyPromoCode() {
       appliedDiscount = null;
       msgEl.style.color = 'var(--danger)';
       msgEl.textContent = 'Invalid code.';
+      trackCheckoutError('promo', 'invalid_code');
     }
   } catch {
     appliedDiscount = null;
     msgEl.style.color = 'var(--danger)';
     msgEl.textContent = 'Could not check that code, try again.';
+    trackCheckoutError('promo', 'lookup_failed');
   }
   renderCheckoutSummary();
 }
@@ -916,18 +991,28 @@ async function initPayPalCheckout() {
       style: { layout: 'vertical', color: 'gold', shape: 'pill', label: 'paypal' },
       onClick(data, actions) {
         const payload = checkoutPayloadFromForm();
+        payload.paymentMethod = 'paypal';
+        trackPaymentMethod('paypal');
         return validateCheckoutPayload(payload, paypalMsg) ? actions.resolve() : actions.reject();
       },
       async createOrder() {
         const payload = checkoutPayloadFromForm();
+        payload.paymentMethod = 'paypal';
         const result = await api('/api/paypal/create-order', { method: 'POST', body: payload });
         pendingPayPalLocalOrderId = result.orderId;
         return result.paypalOrderId;
       },
       async onApprove(data) {
+        const analytics = analyticsContext();
         const result = await api('/api/paypal/capture-order', {
           method: 'POST',
-          body: { paypalOrderId: data.orderID, orderId: pendingPayPalLocalOrderId },
+          body: {
+            paypalOrderId: data.orderID,
+            orderId: pendingPayPalLocalOrderId,
+            analyticsVisitorId: analytics.visitorId,
+            analyticsSessionId: analytics.sessionId,
+            analyticsCheckoutAttemptId: checkoutAttemptId(),
+          },
         });
         paypalMsg.style.color = 'var(--success)';
         paypalMsg.textContent = 'Payment confirmed. Redirecting to your order confirmation...';
@@ -939,12 +1024,14 @@ async function initPayPalCheckout() {
         paypalMsg.textContent = 'PayPal checkout was cancelled.';
       },
       onError(err) {
+        trackPaymentFailure('paypal', 'paypal_sdk_error');
         paypalMsg.style.color = 'var(--danger)';
         paypalMsg.textContent = err && err.message ? err.message : 'PayPal checkout failed. Please try again.';
       },
     }).render('#paypalButtons');
     paypalButtonsRendered = true;
   } catch (err) {
+    trackPaymentFailure('paypal', 'paypal_unavailable');
     paypalButtons.innerHTML = '<div class="paypal-disabled">PayPal could not load. Please refresh the page or contact support@highlandpeptides.com.</div>';
     if (paypalMsg) {
       paypalMsg.style.color = 'var(--danger)';
@@ -989,6 +1076,7 @@ async function submitCryptoCheckout() {
   const btn = document.getElementById('cryptoCheckoutBtn');
   const choice = document.getElementById('cryptoChoiceDetails');
   const paypalDetails = document.getElementById('paypalPaymentDetails');
+  trackPaymentMethod('crypto');
 
   if (appliedDiscount) {
     msgEl.style.color = 'var(--danger)';
@@ -1031,6 +1119,7 @@ async function submitCryptoCheckout() {
   } catch (err) {
     msgEl.style.color = 'var(--danger)';
     msgEl.textContent = err.message;
+    trackCheckoutError('order_creation', 'submission_failed', 'crypto');
   } finally {
     btn.disabled = false;
   }
@@ -1063,6 +1152,7 @@ async function confirmCryptoPayment() {
   } catch (err) {
     msgEl.style.color = 'var(--danger)';
     msgEl.textContent = err.message;
+    trackCheckoutError('payment_confirmation', 'reference_submission_failed', 'crypto');
   } finally {
     btn.disabled = false;
   }
@@ -1073,6 +1163,7 @@ async function submitManualPaypalCheckout() {
   const btn = document.getElementById('manualPaypalCheckoutBtn');
   const payload = checkoutPayloadFromForm();
   payload.paymentMethod = 'manual_paypal';
+  trackPaymentMethod('manual_paypal');
 
   if (!validateCheckoutPayload(payload, msgEl)) return;
 
@@ -1093,6 +1184,7 @@ async function submitManualPaypalCheckout() {
   } catch (err) {
     msgEl.style.color = 'var(--danger)';
     msgEl.textContent = err.message;
+    trackCheckoutError('order_creation', 'submission_failed', 'manual_paypal');
   } finally {
     btn.disabled = false;
   }

@@ -5070,3 +5070,45 @@ body.admin-page .highland-print-label .highland-label-compound {
   }
   body:has(.mobile-purchase-dock) .site-footer { padding-bottom: 90px; }
 }
+
+/* ---------- Narrow-phone conversion safeguards ---------- */
+@media (max-width: 520px) {
+  .nav-search-button,
+  .account-nav-link,
+  .cart-link,
+  .product-search-close,
+  .cart-popup-close,
+  .modal-close {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .product-search-close,
+  .cart-popup-close,
+  .modal-close {
+    display: inline-grid;
+    place-items: center;
+    padding: 0;
+  }
+  .cart-line .qty-btn,
+  .cart-line .cart-remove-btn {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+  }
+}
+
+@media (max-width: 360px) {
+  .nav-wrap { padding-inline: 6px; }
+  .topbar { padding: 8px; }
+  .topbar > .brand,
+  .topbar > .brand > a {
+    gap: 0 !important;
+    font-size: 0;
+  }
+  .topbar .brand-seal-wrap {
+    width: 56px;
+    height: 36px;
+  }
+  .header-actions { gap: 4px; }
+  .cart-link { padding-inline: 9px; }
+}

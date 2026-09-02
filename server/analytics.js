@@ -8,6 +8,11 @@ const ALLOWED_EVENTS = new Set([
   'product_view',
   'add_to_cart',
   'checkout_start',
+  'checkout_error',
+  'shipping_info_added',
+  'payment_method_selected',
+  'payment_failed',
+  'payment_confirmed',
   'order_created',
 ]);
 
@@ -40,6 +45,12 @@ function blankDay() {
     pages: {},
     products: {},
     sources: {},
+    checkout: {
+      errors: {},
+      paymentMethods: {},
+      paymentFailures: {},
+      attemptEvents: {},
+    },
   };
 }
 
@@ -102,6 +113,20 @@ function createAnalyticsStore(filePath = defaultAnalyticsPath()) {
     const sessionHash = hashId(input.sessionId);
     addUnique(day.visitors, visitorHash);
     addUnique(day.sessions, sessionHash);
+
+    if (!day.checkout || typeof day.checkout !== 'object') day.checkout = blankDay().checkout;
+    if (!day.checkout.attemptEvents || typeof day.checkout.attemptEvents !== 'object') day.checkout.attemptEvents = {};
+    const attemptHash = hashId(input.checkoutAttemptId);
+    let attemptEventKey = type;
+    if (type === 'checkout_error') attemptEventKey += `|${clean(input.stage, 40)}|${clean(input.reason, 60)}`;
+    if (type === 'payment_method_selected') attemptEventKey += `|${clean(input.paymentMethod, 30)}`;
+    if (type === 'payment_failed') attemptEventKey += `|${clean(input.paymentMethod, 30)}|${clean(input.reason, 60)}`;
+    if (attemptHash) {
+      const seenAttempts = day.checkout.attemptEvents[attemptEventKey] || [];
+      if (seenAttempts.includes(attemptHash)) return true;
+      addUnique(seenAttempts, attemptHash);
+      day.checkout.attemptEvents[attemptEventKey] = seenAttempts;
+    }
     increment(day.events, type);
 
     if (type === 'page_view') {
@@ -117,6 +142,20 @@ function createAnalyticsStore(filePath = defaultAnalyticsPath()) {
       if (!day.products[label]) day.products[label] = { views: 0, adds: 0 };
       if (type === 'product_view') day.products[label].views += 1;
       if (type === 'add_to_cart') day.products[label].adds += Math.max(1, Math.min(99, Number(input.quantity || 1)));
+    }
+
+    if (type === 'checkout_error') {
+      const stage = clean(input.stage, 40) || 'unknown_stage';
+      const reason = clean(input.reason, 60) || 'unknown_error';
+      increment(day.checkout.errors, `${stage}|${reason}`);
+    }
+    if (type === 'payment_method_selected') {
+      increment(day.checkout.paymentMethods, clean(input.paymentMethod, 30) || 'unknown_method');
+    }
+    if (type === 'payment_failed') {
+      const method = clean(input.paymentMethod, 30) || 'unknown_method';
+      const reason = clean(input.reason, 60) || 'unknown_failure';
+      increment(day.checkout.paymentFailures, `${method}|${reason}`);
     }
 
     data.days[key] = day;
@@ -144,11 +183,19 @@ function createAnalyticsStore(filePath = defaultAnalyticsPath()) {
       productViews: 0,
       addToCarts: 0,
       checkoutStarts: 0,
+      checkoutErrors: 0,
+      shippingInfoAdded: 0,
+      paymentMethodsSelected: 0,
+      paymentFailures: 0,
+      paymentsConfirmed: 0,
       ordersCreated: 0,
     };
     const pageTotals = {};
     const sourceTotals = {};
     const productTotals = {};
+    const checkoutErrorTotals = {};
+    const paymentMethodTotals = {};
+    const paymentFailureTotals = {};
     const dailyByKey = Object.fromEntries(selected);
     const daily = [];
 
@@ -164,6 +211,11 @@ function createAnalyticsStore(filePath = defaultAnalyticsPath()) {
       totals.productViews += Number(eventCounts.product_view || 0);
       totals.addToCarts += Number(eventCounts.add_to_cart || 0);
       totals.checkoutStarts += Number(eventCounts.checkout_start || 0);
+      totals.checkoutErrors += Number(eventCounts.checkout_error || 0);
+      totals.shippingInfoAdded += Number(eventCounts.shipping_info_added || 0);
+      totals.paymentMethodsSelected += Number(eventCounts.payment_method_selected || 0);
+      totals.paymentFailures += Number(eventCounts.payment_failed || 0);
+      totals.paymentsConfirmed += Number(eventCounts.payment_confirmed || 0);
       totals.ordersCreated += Number(eventCounts.order_created || 0);
       Object.entries(day.pages || {}).forEach(([name, count]) => increment(pageTotals, name, count));
       Object.entries(day.sources || {}).forEach(([name, count]) => increment(sourceTotals, name, count));
@@ -172,6 +224,10 @@ function createAnalyticsStore(filePath = defaultAnalyticsPath()) {
         productTotals[name].views += Number(product.views || 0);
         productTotals[name].adds += Number(product.adds || 0);
       });
+      const checkout = day.checkout || {};
+      Object.entries(checkout.errors || {}).forEach(([name, count]) => increment(checkoutErrorTotals, name, count));
+      Object.entries(checkout.paymentMethods || {}).forEach(([name, count]) => increment(paymentMethodTotals, name, count));
+      Object.entries(checkout.paymentFailures || {}).forEach(([name, count]) => increment(paymentFailureTotals, name, count));
       daily.push({
         date: key,
         pageViews: Number(day.pageViews || eventCounts.page_view || 0),
@@ -209,6 +265,11 @@ function createAnalyticsStore(filePath = defaultAnalyticsPath()) {
       topPages: ranked(pageTotals).slice(0, 10),
       topSources: ranked(sourceTotals).slice(0, 10),
       topProducts,
+      checkout: {
+        errors: ranked(checkoutErrorTotals),
+        paymentMethods: ranked(paymentMethodTotals),
+        paymentFailures: ranked(paymentFailureTotals),
+      },
       storagePath: filePath,
     };
   }
