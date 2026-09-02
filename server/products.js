@@ -33,7 +33,10 @@ function labelDoseFromSpec(spec) {
     .replace(/\s+/g, ' ')
     .toUpperCase();
 
-  dose = dose.replace(/^(\d+(?:\.\d+)?) MG\/ML\s+(\d+(?:\.\d+)?) ML$/, '$1 MG/ML · $2 ML');
+  dose = dose.replace(
+    /^(\d+(?:\.\d+)?) MG\/ML\s+(\d+(?:\.\d+)?) ML(?:\s+\(([\d,]+) MG\))?$/,
+    (_match, concentration, volume, total) => `${concentration} MG/ML · ${volume} ML${total ? ` (${total} MG)` : ''}`,
+  );
   return dose;
 }
 
@@ -77,7 +80,7 @@ const LOW_STOCK_SKUS = new Set(BEST_SELLER_SKUS);
 // Curated catalog order. Best-seller presentation is handled by the completed-
 // order snapshot above rather than broad market assumptions.
 const POPULAR_SKUS = [
-  'MS40', 'RT20', 'CU100', 'RT30', 'CP10', 'RT15', 'MT1', 'KLOW80', 'GTT600', 'BC20',
+  'GTT9000', 'MS40', 'RT20', 'CU100', 'RT30', 'CP10', 'RT15', 'MT1', 'KLOW80', 'GTT600', 'BC20',
   'BC10', 'BT10', 'TR30', 'SM10', 'CGL5',
   'ML10', 'TA10', 'MS10', 'ET10', 'NJ500',
 ];
@@ -99,7 +102,7 @@ const pricedCatalog = raw
       ? 'Low stock'
       : 'Available to order',
     promoEligible: p.promoEligible !== false,
-    description: descriptions[p.name] || '',
+    description: p.description || descriptions[p.name] || '',
     image: `/images/product-mockups/generated/${p.sku}.webp?v=${PRODUCT_IMAGE_REVISION}`,
     labelName: labelNameForProduct(p.name),
     labelDose: labelDoseFromSpec(p.spec),

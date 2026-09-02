@@ -69,7 +69,7 @@ function renderProduct() {
           <span data-shipping-countdown="pill">Calculating local cutoff…</span>
         </div>
         <h1 class="product-title">${escapeHTML(family.name)}</h1>
-        <p class="hint product-description">${escapeHTML(family.description)}</p>
+        <p class="hint product-description">${escapeHTML(selected.description || family.description)}</p>
         <div class="product-availability ${availabilityLabel === 'Low stock' ? 'limited' : ''}"><span aria-hidden="true"></span>${escapeHTML(availabilityLabel)}</div>
         <div class="product-selected-card">
           <span>Selected vial</span>

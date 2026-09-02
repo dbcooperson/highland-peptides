@@ -316,6 +316,16 @@
     "salePrice": 14.773913
   },
   {
+    "sku": "GTT9000",
+    "name": "Glutathione",
+    "spec": "300mg/ml 30ml (9,000mg)",
+    "cost": 0,
+    "category": "Research Material",
+    "group": "Antioxidant",
+    "fixedPublicPrice": 47.05,
+    "description": "Glutathione (GSH) is an endogenous tripeptide antioxidant that helps cells reduce peroxides, maintain redox balance, protect protein thiols, and support glutathione-transferase conjugation pathways. In parenteral pharmacokinetic research, glutathione bypasses gastrointestinal exposure and transiently increases plasma glutathione and cysteine availability. Common research contexts include oxidative-stress response, mitochondrial antioxidant defense, hepatic detoxification pathways, redox signaling, and drug-toxicity models. For laboratory research only—not for human or veterinary administration."
+  },
+  {
     "sku": "F410",
     "name": "FOXO4-DRI",
     "spec": "10mg x1 vial",
