@@ -135,6 +135,63 @@ async function sendDiscordBackup(order, source) {
   return 'discord';
 }
 
+function fulfillmentAddressText(order) {
+  const buyer = order && order.buyer ? order.buyer : {};
+  const cityLine = [buyer.city, buyer.state, buyer.zip].filter(Boolean).join(' ');
+  return [
+    buyer.name,
+    buyer.address1,
+    buyer.address2,
+    cityLine,
+    buyer.country,
+  ]
+    .map(value => String(value || '').trim().replace(/```/g, "'''").replace(/[\u0000-\u001f\u007f]/g, ''))
+    .filter(Boolean)
+    .join('\n');
+}
+
+function discordWaitUrl(webhookUrl) {
+  const url = new URL(webhookUrl);
+  url.searchParams.set('wait', 'true');
+  return url.toString();
+}
+
+async function sendPendingTrackingDiscord(order, options = {}) {
+  const webhookUrl = String(options.webhookUrl || config.DISCORD_FULFILLMENT_WEBHOOK_URL || '').trim();
+  const expectedChannelId = String(options.expectedChannelId || config.DISCORD_FULFILLMENT_CHANNEL_ID || '').trim();
+  const fetchImpl = options.fetchImpl || fetch;
+  if (!webhookUrl) return null;
+
+  // Discord webhooks are channel-specific. Verify the destination before
+  // transmitting customer PII so a stale or copied webhook cannot send an
+  // address into the wrong channel.
+  const metadataResponse = await fetchImpl(webhookUrl, { method: 'GET' });
+  if (!metadataResponse.ok) throw new Error(`Discord fulfillment webhook check failed: ${metadataResponse.status}`);
+  const metadata = await metadataResponse.json();
+  if (!expectedChannelId || String(metadata.channel_id || '') !== expectedChannelId) {
+    throw new Error('Discord fulfillment webhook is not attached to the authorized shipping channel.');
+  }
+
+  const response = await fetchImpl(discordWaitUrl(webhookUrl), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      username: 'Highland Shipping',
+      content: `📦 Pending tracking · Order HP-${order.id}`,
+      embeds: [{
+        title: 'Copy into Pirate Ship',
+        description: '```' + fulfillmentAddressText(order).slice(0, 1800) + '```',
+        color: 4545349,
+        footer: { text: 'Address verified at checkout when Google validation is enabled.' },
+      }],
+      allowed_mentions: { parse: [] },
+    }),
+  });
+  if (!response.ok) throw new Error(`Discord fulfillment post failed: ${response.status}`);
+  const message = await response.json().catch(() => ({}));
+  return { channel: 'discord', messageId: String(message.id || '') };
+}
+
 async function sendOrderBackup(order, source = 'payment') {
   const channels = [];
   const errors = [];
@@ -401,6 +458,7 @@ function isCustomerEmailConfigured() {
 
 module.exports = {
   sendOrderBackup,
+  sendPendingTrackingDiscord,
   sendCustomerPaymentInstructions,
   sendPaymentReminder,
   sendTrackingEmail,
@@ -409,5 +467,6 @@ module.exports = {
   isCustomerEmailConfigured,
   trackingUrl,
   orderText,
+  fulfillmentAddressText,
 };
 

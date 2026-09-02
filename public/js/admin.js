@@ -726,7 +726,17 @@ function initLabelMaker() {
     const order = adminOrdersCache.find(item => String(item.id) === String(event.data.orderId));
     if (!order || order.status !== 'paid') return;
     try {
-      await api(`/api/admin/orders/${order.id}/status`, { method: 'POST', body: { status: 'pending_tracking' } });
+      const result = await api(`/api/admin/orders/${order.id}/status`, { method: 'POST', body: { status: 'pending_tracking' } });
+      const message = document.getElementById('labelMakerMessage');
+      if (message) {
+        if (result.fulfillmentDispatch?.sent || result.fulfillmentDispatch?.alreadySent) {
+          message.style.color = 'var(--success)';
+          message.textContent = `${order.buyer?.name || `Order #${order.id}`} is now Pending tracking and the copy-ready address was sent to Discord.`;
+        } else if (result.fulfillmentDispatch?.warning) {
+          message.style.color = 'var(--warning, #f0ae66)';
+          message.textContent = result.fulfillmentDispatch.warning;
+        }
+      }
       await loadOrders();
       loadProfit();
     } catch (err) {

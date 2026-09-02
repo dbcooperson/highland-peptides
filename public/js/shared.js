@@ -28,7 +28,12 @@ async function api(path, opts = {}) {
     body: opts.body ? JSON.stringify(opts.body) : undefined,
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || 'Request failed');
+  if (!res.ok) {
+    const error = new Error(data.error || 'Request failed');
+    error.code = data.code || '';
+    error.field = data.field || '';
+    throw error;
+  }
   return data;
 }
 
@@ -649,6 +654,118 @@ function updateShippingCountryNote() {
     : `U.S. shipping selected. Use International shipping for any destination outside the U.S.`;
 }
 
+let shippingAddressAutocomplete = null;
+let googleAddressLoader = null;
+
+function setAddressValidationStatus(message, tone = '') {
+  const status = document.getElementById('addressValidationStatus');
+  if (!status) return;
+  status.textContent = message || '';
+  status.dataset.tone = tone;
+}
+
+function googleAddressScript(browserKey) {
+  if (window.google?.maps?.importLibrary) return Promise.resolve();
+  if (googleAddressLoader) return googleAddressLoader;
+  googleAddressLoader = new Promise((resolve, reject) => {
+    const callbackName = `__highlandGoogleMapsReady${Date.now()}`;
+    window[callbackName] = () => {
+      delete window[callbackName];
+      resolve();
+    };
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(browserKey)}&loading=async&libraries=places&v=weekly&callback=${callbackName}`;
+    script.async = true;
+    script.onerror = () => {
+      delete window[callbackName];
+      reject(new Error('Address search could not load.'));
+    };
+    document.head.appendChild(script);
+  });
+  return googleAddressLoader;
+}
+
+function addressComponent(components, type, text = 'longText') {
+  const match = components.find(component => Array.isArray(component.types) && component.types.includes(type));
+  return match ? String(match[text] || match.longText || '').trim() : '';
+}
+
+async function fillShippingAddress(placePrediction) {
+  const place = placePrediction.toPlace();
+  await place.fetchFields({ fields: ['addressComponents'] });
+  const components = Array.isArray(place.addressComponents) ? place.addressComponents : [];
+  if (!components.length) throw new Error('That suggestion did not include a complete address.');
+
+  const streetNumber = addressComponent(components, 'street_number');
+  const route = addressComponent(components, 'route', 'shortText');
+  const streetAddress = addressComponent(components, 'street_address');
+  const subpremise = addressComponent(components, 'subpremise');
+  const locality = addressComponent(components, 'locality')
+    || addressComponent(components, 'postal_town')
+    || addressComponent(components, 'sublocality_level_1');
+  const state = addressComponent(components, 'administrative_area_level_1', 'shortText');
+  const country = addressComponent(components, 'country', 'shortText').toUpperCase();
+  const postalCode = addressComponent(components, 'postal_code');
+  const postalSuffix = addressComponent(components, 'postal_code_suffix');
+  const fields = {
+    buyerAddress1: streetAddress || [streetNumber, route].filter(Boolean).join(' '),
+    buyerAddress2: subpremise ? `Unit ${subpremise}` : '',
+    buyerCity: locality,
+    buyerState: state,
+    buyerZip: postalSuffix ? `${postalCode}-${postalSuffix}` : postalCode,
+  };
+  Object.entries(fields).forEach(([id, value]) => {
+    const input = document.getElementById(id);
+    if (input && value) input.value = value;
+  });
+  const countrySelect = document.getElementById('buyerCountry');
+  if (countrySelect && country && countrySelect.querySelector(`option[value="${country}"]`)) {
+    countrySelect.value = country;
+    countrySelect.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+  setAddressValidationStatus('Address selected. We will verify deliverability and any required apartment or unit before creating the order.', 'success');
+  document.getElementById('buyerAddress2')?.focus();
+}
+
+async function initShippingAddressAutocomplete() {
+  const field = document.getElementById('addressAutocompleteField');
+  const mount = document.getElementById('addressAutocompleteMount');
+  if (!field || !mount || shippingAddressAutocomplete) return;
+  try {
+    const config = await api('/api/address/config');
+    if (!config.autocompleteEnabled || !config.browserKey) return;
+    await googleAddressScript(config.browserKey);
+    const { PlaceAutocompleteElement } = await google.maps.importLibrary('places');
+    const autocomplete = new PlaceAutocompleteElement();
+    autocomplete.placeholder = 'Start typing your street address';
+    autocomplete.includedRegionCodes = [selectedCountryCode()];
+    autocomplete.addEventListener('gmp-select', event => {
+      fillShippingAddress(event.placePrediction).catch(err => {
+        setAddressValidationStatus(err.message || 'Choose a complete street address.', 'error');
+      });
+    });
+    mount.replaceChildren(autocomplete);
+    shippingAddressAutocomplete = autocomplete;
+    field.hidden = false;
+  } catch (_) {
+    field.hidden = true;
+  }
+}
+
+function focusAddressError(error) {
+  const fieldId = error?.field === 'address2' || ['missing_unit', 'invalid_unit'].includes(error?.code)
+    ? 'buyerAddress2'
+    : 'buyerAddress1';
+  const input = document.getElementById(fieldId);
+  if (input) {
+    input.focus();
+    input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  if (['missing_unit', 'invalid_unit', 'invalid_address', 'address_validation_unavailable'].includes(error?.code)) {
+    setAddressValidationStatus(error.message, 'error');
+  }
+}
+
 // ---------- Checkout modal (lives on the cart page only) ----------
 
 let appliedDiscount = null; // { code, percentOff } | null
@@ -848,6 +965,8 @@ function clearCartAfterCheckout() {
   updateCartBadge();
   document.dispatchEvent(new CustomEvent('cart:updated'));
   document.getElementById('checkoutForm').reset();
+  if (shippingAddressAutocomplete) shippingAddressAutocomplete.value = '';
+  setAddressValidationStatus('');
   finishCheckoutAttempt();
 }
 
@@ -904,6 +1023,7 @@ function openCheckoutModal() {
   const cryptoButton = document.getElementById('cryptoCheckoutBtn');
   if (cryptoButton) cryptoButton.querySelector('strong').innerHTML = hpAccountState.authenticated ? 'Crypto <em>10% total savings</em>' : 'Crypto <em>5% off</em>';
   updateShippingCountryNote();
+  initShippingAddressAutocomplete();
   renderCheckoutSummary();
   refreshCheckoutAccountStatus();
   renderCryptoPricePreview();
@@ -1027,6 +1147,7 @@ async function initPayPalCheckout() {
         trackPaymentFailure('paypal', 'paypal_sdk_error');
         paypalMsg.style.color = 'var(--danger)';
         paypalMsg.textContent = err && err.message ? err.message : 'PayPal checkout failed. Please try again.';
+        focusAddressError(err);
       },
     }).render('#paypalButtons');
     paypalButtonsRendered = true;
@@ -1119,6 +1240,7 @@ async function submitCryptoCheckout() {
   } catch (err) {
     msgEl.style.color = 'var(--danger)';
     msgEl.textContent = err.message;
+    focusAddressError(err);
     trackCheckoutError('order_creation', 'submission_failed', 'crypto');
   } finally {
     btn.disabled = false;
@@ -1184,6 +1306,7 @@ async function submitManualPaypalCheckout() {
   } catch (err) {
     msgEl.style.color = 'var(--danger)';
     msgEl.textContent = err.message;
+    focusAddressError(err);
     trackCheckoutError('order_creation', 'submission_failed', 'manual_paypal');
   } finally {
     btn.disabled = false;
@@ -1218,7 +1341,14 @@ function wireCheckout() {
   });
 
   const buyerCountryInput = document.getElementById('buyerCountry');
-  if (buyerCountryInput) buyerCountryInput.addEventListener('change', updateShippingCountryNote);
+  if (buyerCountryInput) buyerCountryInput.addEventListener('change', () => {
+    updateShippingCountryNote();
+    if (shippingAddressAutocomplete) shippingAddressAutocomplete.includedRegionCodes = [selectedCountryCode()];
+  });
+
+  ['buyerAddress1', 'buyerAddress2', 'buyerCity', 'buyerState', 'buyerZip'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', () => setAddressValidationStatus('We will verify this delivery address before creating the order.', 'pending'));
+  });
 
   const promoApplyBtn = document.getElementById('promoApplyBtn');
   if (promoApplyBtn) {

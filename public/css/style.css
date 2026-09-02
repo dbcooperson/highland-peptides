@@ -3964,6 +3964,51 @@ body.admin-page select {
   font-size: 12px;
   color: var(--muted-on-light);
 }
+.address-autocomplete-field {
+  display: grid;
+  gap: 7px;
+  margin: 4px 0 2px;
+  padding: 12px;
+  border: 1px solid rgba(49, 91, 67, 0.28);
+  border-radius: 14px;
+  background: rgba(49, 91, 67, 0.06);
+}
+.address-autocomplete-field[hidden] { display: none !important; }
+.address-autocomplete-field > label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0;
+  color: var(--ink-on-light);
+}
+.address-autocomplete-field > label span,
+.checkout-when-applicable {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #315b43;
+}
+#addressAutocompleteMount,
+#addressAutocompleteMount gmp-place-autocomplete {
+  display: block;
+  width: 100%;
+}
+.address-autocomplete-field small {
+  color: var(--muted-on-light);
+  font-size: 11px;
+  line-height: 1.4;
+}
+.address-validation-status {
+  min-height: 17px;
+  margin: -5px 0 4px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--muted-on-light);
+}
+.address-validation-status[data-tone="success"] { color: #245b3d; }
+.address-validation-status[data-tone="error"] { color: var(--danger); font-weight: 750; }
+.address-validation-status[data-tone="pending"] { color: #755a2d; }
 .payment-policy-confirm {
   border: 1px solid rgba(193, 121, 58, 0.28);
   border-radius: 14px;

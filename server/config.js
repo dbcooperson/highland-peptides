@@ -99,6 +99,12 @@ module.exports = {
   ALT_PAYMENT_DISCOUNT_RATE: Number(process.env.ALT_PAYMENT_DISCOUNT_RATE || 0.05),
 
   DISCORD_ORDER_WEBHOOK_URL: process.env.DISCORD_ORDER_WEBHOOK_URL || '',
+  // Fulfillment addresses are more sensitive than ordinary order alerts. The
+  // webhook is verified against this exact Discord channel before any customer
+  // name or mailing address is posted. Keep this separate from payment alerts
+  // so customer addresses can never fall back to a different Discord channel.
+  DISCORD_FULFILLMENT_WEBHOOK_URL: process.env.DISCORD_FULFILLMENT_WEBHOOK_URL || '',
+  DISCORD_FULFILLMENT_CHANNEL_ID: process.env.DISCORD_FULFILLMENT_CHANNEL_ID || '1544575715024965633',
   BTC_MONITOR: {
     ENABLED: String(process.env.BTC_MONITOR_ENABLED || '').toLowerCase() === 'true',
     ADDRESSES: String(process.env.BTC_MONITOR_ADDRESSES || process.env.CRYPTO_BTC_ADDRESS || 'bc1qvz90rnsmdq3fyefxpcxdj4sp03pcwwyysryu82')
@@ -123,6 +129,11 @@ module.exports = {
   PAYMENT_REMINDER_REPEAT_HOURS: Math.max(1, Number(process.env.PAYMENT_REMINDER_REPEAT_HOURS || 24)),
   PAYMENT_REMINDER_MAX: Math.max(1, Number(process.env.PAYMENT_REMINDER_MAX || 2)),
   PAYMENT_REMINDER_POLL_MINUTES: Math.max(5, Number(process.env.PAYMENT_REMINDER_POLL_MINUTES || 30)),
+
+  // Google Maps Platform address tools. The browser key should be restricted
+  // to Highland's HTTPS origins and the server key to Address Validation API.
+  GOOGLE_PLACES_BROWSER_KEY: process.env.GOOGLE_PLACES_BROWSER_KEY || '',
+  GOOGLE_ADDRESS_VALIDATION_KEY: process.env.GOOGLE_ADDRESS_VALIDATION_KEY || '',
 
   // Optional customer accounts and referral rewards. Referral codes give the
   // shopper 10% off and credit the code owner with 10% of net merchandise

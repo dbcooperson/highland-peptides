@@ -247,7 +247,7 @@ function paymentMatchAdjustmentCents(orderId, paymentProvider) {
   return (Number(orderId) % 49) + 1;
 }
 
-function createOrder({ buyer, certifiedAt, items, subtotal, promoEligibleSubtotal, packagingFee, shippingFee, shippingMethod, orderFee, orderFeeRate, discountCode, discountAmount, total, paymentProvider, cryptoAsset, customerAccountId, referralAccountId, referralCreditRate, storeCreditAmount }) {
+function createOrder({ buyer, certifiedAt, items, subtotal, promoEligibleSubtotal, packagingFee, shippingFee, shippingMethod, orderFee, orderFeeRate, discountCode, discountAmount, total, paymentProvider, cryptoAsset, customerAccountId, referralAccountId, referralCreditRate, storeCreditAmount, shippingAddressValidation }) {
   const data = load();
   const id = data.nextOrderId++;
   const normalizedProvider = paymentProvider || 'manual';
@@ -301,6 +301,11 @@ function createOrder({ buyer, certifiedAt, items, subtotal, promoEligibleSubtota
     tracking_number: null,
     tracking_sent_at: null,
     labels_printed_at: null,
+    shipping_address_validation: shippingAddressValidation || null,
+    fulfillment_discord_dispatch_started_at: null,
+    fulfillment_discord_sent_at: null,
+    fulfillment_discord_message_id: null,
+    fulfillment_discord_error: null,
     created_at: new Date().toISOString(),
   };
   data.orders.push(order);
@@ -446,6 +451,45 @@ function markTrackingSent(id, carrier, trackingNumber) {
   order.status = 'fulfilled';
   order.paid_at = order.paid_at || new Date().toISOString();
   syncReferralCredit(data, order);
+  save(data);
+  return order;
+}
+
+function claimFulfillmentDiscordPost(id, staleAfterMs = 10 * 60 * 1000) {
+  const data = load();
+  const order = data.orders.find(item => item.id === Number(id));
+  if (!order) return { claimed: false, reason: 'not_found', order: null };
+  if (order.fulfillment_discord_sent_at) return { claimed: false, reason: 'already_sent', order };
+  const startedAt = order.fulfillment_discord_dispatch_started_at
+    ? new Date(order.fulfillment_discord_dispatch_started_at).getTime()
+    : 0;
+  if (startedAt && Number.isFinite(startedAt) && Date.now() - startedAt < staleAfterMs) {
+    return { claimed: false, reason: 'in_progress', order };
+  }
+  order.fulfillment_discord_dispatch_started_at = new Date().toISOString();
+  order.fulfillment_discord_error = null;
+  save(data);
+  return { claimed: true, reason: 'claimed', order };
+}
+
+function markFulfillmentDiscordSent(id, messageId = '') {
+  const data = load();
+  const order = data.orders.find(item => item.id === Number(id));
+  if (!order) return null;
+  order.fulfillment_discord_sent_at = order.fulfillment_discord_sent_at || new Date().toISOString();
+  order.fulfillment_discord_message_id = String(messageId || '').slice(0, 80) || order.fulfillment_discord_message_id || null;
+  order.fulfillment_discord_dispatch_started_at = null;
+  order.fulfillment_discord_error = null;
+  save(data);
+  return order;
+}
+
+function markFulfillmentDiscordFailed(id, error) {
+  const data = load();
+  const order = data.orders.find(item => item.id === Number(id));
+  if (!order) return null;
+  order.fulfillment_discord_dispatch_started_at = null;
+  order.fulfillment_discord_error = String(error || 'Could not post fulfillment address.').slice(0, 500);
   save(data);
   return order;
 }
@@ -641,6 +685,6 @@ function getStorageInfo() {
 }
 
 module.exports = {
-  createOrder, getAllOrders, getOrderById, setPayPalOrderId, markOrderPaid, updateOrderStatus, updateOrderNotes, deleteOrder, markOrderBackupSent, markPaymentReminderSent, markTrackingSent, getStorageInfo, isTxidUsed, setPaymentReference,
+  createOrder, getAllOrders, getOrderById, setPayPalOrderId, markOrderPaid, updateOrderStatus, updateOrderNotes, deleteOrder, markOrderBackupSent, markPaymentReminderSent, markTrackingSent, claimFulfillmentDiscordPost, markFulfillmentDiscordSent, markFulfillmentDiscordFailed, getStorageInfo, isTxidUsed, setPaymentReference,
   createAccount, getAccountById, getAccountByEmail, setAccountVerificationToken, verifyAccountByTokenHash, touchAccountLogin, setPasswordResetToken, resetPasswordByTokenHash, getAccountByReferralCode, setAccountReferralCode, getAccountDashboard, createPayoutRequest, updatePayoutRequest, getAdminReferralData, reviewReferralCredit, createSocialCreditSubmission, reviewSocialCreditSubmission,
 };

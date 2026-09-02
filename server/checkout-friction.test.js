@@ -14,6 +14,11 @@ test('checkout exposes mobile-friendly browser autofill semantics', () => {
     assert.match(cartHtml, new RegExp(`autocomplete="${token}"`));
   });
   assert.match(cartHtml, /id="buyerEmail"[^>]*inputmode="email"[^>]*autocapitalize="none"/);
+  assert.match(cartHtml, /id="addressAutocompleteMount"/);
+  assert.match(cartHtml, /Required when applicable/);
+  assert.match(sharedJs, /PlaceAutocompleteElement/);
+  assert.match(sharedJs, /gmp-select/);
+  assert.match(serverJs, /validatePreparedCheckoutAddress/);
 });
 
 test('checkout instrumentation uses anonymous attempt IDs and categorical events', () => {

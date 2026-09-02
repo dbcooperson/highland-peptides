@@ -109,6 +109,28 @@ DISCORD_ORDER_WEBHOOK_URL=https://discord.com/api/webhooks/...
 
 When PayPal captures an order, or when you manually mark an order as paid/fulfilled in admin, the site will post the order details to Discord.
 
+### Pending-tracking address channel
+
+Create a separate webhook inside the authorized shipping channel, then add:
+
+```txt
+DISCORD_FULFILLMENT_WEBHOOK_URL=https://discord.com/api/webhooks/...
+DISCORD_FULFILLMENT_CHANNEL_ID=1544575715024965633
+```
+
+When label printing moves an order to `pending_tracking`, the site verifies the webhook's actual Discord channel ID before sending a copy-ready recipient block. It stores the sent timestamp and message ID so the same order is not posted twice. A five-minute catch-up scan posts any waiting order that was missed during a restart or temporary Discord failure. The shipping post contains only the order number, full recipient name, and mailing address.
+
+## Google-style address autocomplete and validation
+
+Enable **Maps JavaScript API**, **Places API (New)**, and **Address Validation API** in one Google Cloud project. Use separate restricted keys:
+
+```txt
+GOOGLE_PLACES_BROWSER_KEY=browser-key-restricted-to-highlandpeptides.com
+GOOGLE_ADDRESS_VALIDATION_KEY=server-key-restricted-to-address-validation-api
+```
+
+The browser key supplies address suggestions on mobile and desktop. The server key validates every address again before creating an order, standardizes the saved address for shipping labels, rejects incomplete or undeliverable addresses, and prompts for a missing or unconfirmed apartment/unit on supported U.S. addresses. The server-side check applies even when the shopper skips autocomplete and types the address manually.
+
 ### Email order backup
 
 To email yourself a copy of every paid order, configure SMTP in Render:

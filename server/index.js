@@ -25,8 +25,9 @@ const {
 } = require('./auth');
 const { buildPackingSlip, buildContentsLabel } = require('./labels');
 const { isPayPalConfigured, createPayPalOrder, capturePayPalOrder } = require('./paypal');
-const { sendOrderBackup, sendCustomerPaymentInstructions, sendPaymentReminder, sendTrackingEmail, isCustomerEmailConfigured } = require('./notifications');
+const { sendOrderBackup, sendPendingTrackingDiscord, sendCustomerPaymentInstructions, sendPaymentReminder, sendTrackingEmail, isCustomerEmailConfigured } = require('./notifications');
 const { createBitcoinMonitor } = require('./btc-monitor');
+const { validateShippingAddress } = require('./address-validation');
 const analytics = require('./analytics');
 const coa = require('./coa');
 const { applyBundlePromotion, publicPromotion } = require('./promotions');
@@ -359,6 +360,40 @@ function prepareCheckout(body, accountId = null) {
   };
 }
 
+async function validatePreparedCheckoutAddress(prepared) {
+  const result = await validateShippingAddress(prepared.orderInput.buyer, {
+    apiKey: config.GOOGLE_ADDRESS_VALIDATION_KEY,
+  });
+  if (!result.valid) return result;
+  if (result.enabled) {
+    prepared.orderInput.buyer = result.buyer;
+    prepared.orderInput.shippingAddressValidation = {
+      provider: 'google_address_validation',
+      responseId: result.responseId || null,
+      granularity: result.validationGranularity || null,
+      validatedAt: new Date().toISOString(),
+    };
+  }
+  return result;
+}
+
+function checkoutAddressError(res, result) {
+  return res.status(result.status || 400).json({
+    error: result.error || 'Enter a valid delivery address.',
+    code: result.code || 'invalid_address',
+    field: result.field || 'address1',
+  });
+}
+
+app.get('/api/address/config', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  res.json({
+    autocompleteEnabled: Boolean(config.GOOGLE_PLACES_BROWSER_KEY),
+    validationEnabled: Boolean(config.GOOGLE_ADDRESS_VALIDATION_KEY),
+    browserKey: config.GOOGLE_PLACES_BROWSER_KEY || null,
+  });
+});
+
 app.get('/api/paypal/config', (req, res) => {
   res.json({
     enabled: isPayPalConfigured(),
@@ -377,6 +412,11 @@ app.post('/api/paypal/create-order', checkCheckoutRateLimit, async (req, res) =>
   if (prepared.error) {
     analytics.recordEvent({ type: 'checkout_error', stage: 'server_validation', reason: 'invalid_checkout', visitorId: cleanText(req.body && req.body.analyticsVisitorId, 128), sessionId: cleanText(req.body && req.body.analyticsSessionId, 128), checkoutAttemptId: cleanText(req.body && req.body.analyticsCheckoutAttemptId, 128) });
     return res.status(400).json({ error: prepared.error });
+  }
+  const addressValidation = await validatePreparedCheckoutAddress(prepared);
+  if (!addressValidation.valid) {
+    analytics.recordEvent({ type: 'checkout_error', stage: 'address_validation', reason: addressValidation.code || 'invalid_address', ...prepared.analytics });
+    return checkoutAddressError(res, addressValidation);
   }
 
   let order = null;
@@ -402,6 +442,11 @@ app.post('/api/checkout', checkCheckoutRateLimit, async (req, res) => {
   if (prepared.error) {
     analytics.recordEvent({ type: 'checkout_error', stage: 'server_validation', reason: 'invalid_checkout', visitorId: cleanText(req.body && req.body.analyticsVisitorId, 128), sessionId: cleanText(req.body && req.body.analyticsSessionId, 128), checkoutAttemptId: cleanText(req.body && req.body.analyticsCheckoutAttemptId, 128) });
     return res.status(400).json({ error: prepared.error });
+  }
+  const addressValidation = await validatePreparedCheckoutAddress(prepared);
+  if (!addressValidation.valid) {
+    analytics.recordEvent({ type: 'checkout_error', stage: 'address_validation', reason: addressValidation.code || 'invalid_address', ...prepared.analytics });
+    return checkoutAddressError(res, addressValidation);
   }
 
   const { paymentMethod, cryptoAsset, ...orderInput } = prepared.orderInput;
@@ -539,6 +584,36 @@ async function backupOrderIfNeeded(order, source) {
     if (result.errors.length) console.error('Order backup errors:', result.errors.join('; '));
   } catch (err) {
     console.error('Order backup failed:', err.message || err);
+  }
+}
+
+async function dispatchPendingTrackingAddress(order) {
+  if (!order) return { sent: false, warning: 'Order not found.' };
+  if (order.fulfillment_discord_sent_at) {
+    return { sent: false, alreadySent: true, sentAt: order.fulfillment_discord_sent_at };
+  }
+  if (!config.DISCORD_FULFILLMENT_WEBHOOK_URL) {
+    return { sent: false, warning: 'Pending tracking was saved, but the authorized Discord shipping webhook is not configured.' };
+  }
+  const claim = db.claimFulfillmentDiscordPost(order.id);
+  if (!claim.claimed) {
+    return {
+      sent: false,
+      alreadySent: claim.reason === 'already_sent',
+      inProgress: claim.reason === 'in_progress',
+      warning: claim.reason === 'in_progress' ? 'The shipping address is already being posted to Discord.' : undefined,
+    };
+  }
+  try {
+    const result = await sendPendingTrackingDiscord(claim.order);
+    if (!result) throw new Error('The authorized Discord shipping webhook is not configured.');
+    const updated = db.markFulfillmentDiscordSent(order.id, result.messageId);
+    return { sent: true, sentAt: updated.fulfillment_discord_sent_at };
+  } catch (err) {
+    const message = err.message || 'Could not post the shipping address to Discord.';
+    db.markFulfillmentDiscordFailed(order.id, message);
+    console.error(`Order #${order.id} fulfillment Discord post failed:`, message);
+    return { sent: false, warning: `Pending tracking was saved, but Discord was not updated: ${message}` };
   }
 }
 
@@ -857,6 +932,30 @@ app.get('/api/admin/launch-checks', requireAdmin, (req, res) => {
         : 'Add DISCORD_ORDER_WEBHOOK_URL in Render to receive paid orders in Discord.',
     },
     {
+      key: 'fulfillment-discord',
+      label: 'Pending-tracking address channel',
+      ok: Boolean(config.DISCORD_FULFILLMENT_WEBHOOK_URL),
+      detail: config.DISCORD_FULFILLMENT_WEBHOOK_URL
+        ? `A webhook is configured and will be verified against shipping channel ${config.DISCORD_FULFILLMENT_CHANNEL_ID} before customer addresses are posted.`
+        : 'Add DISCORD_FULFILLMENT_WEBHOOK_URL for the authorized shipping channel. No customer address is posted without it.',
+    },
+    {
+      key: 'address-autocomplete',
+      label: 'Checkout address autocomplete',
+      ok: Boolean(config.GOOGLE_PLACES_BROWSER_KEY),
+      detail: config.GOOGLE_PLACES_BROWSER_KEY
+        ? 'Google Places address suggestions are enabled.'
+        : 'Add GOOGLE_PLACES_BROWSER_KEY to enable Google-style address suggestions.',
+    },
+    {
+      key: 'address-validation',
+      label: 'Shipping-address validation',
+      ok: Boolean(config.GOOGLE_ADDRESS_VALIDATION_KEY),
+      detail: config.GOOGLE_ADDRESS_VALIDATION_KEY
+        ? 'Google Address Validation is enabled before every order is created.'
+        : 'Add GOOGLE_ADDRESS_VALIDATION_KEY to reject undeliverable addresses and detect missing apartment or unit numbers.',
+    },
+    {
       key: 'email',
       label: 'Email order backup',
       ok: Boolean(config.SMTP_HOST && config.ORDER_BACKUP_EMAIL_TO),
@@ -1006,7 +1105,23 @@ app.post('/api/admin/orders/:id/status', requireAdmin, async (req, res) => {
   if (CONFIRMED_ORDER_STATUSES.has(status)) {
     await backupOrderIfNeeded(order, 'admin_status_' + status);
   }
-  res.json({ ok: true });
+  const fulfillmentDispatch = status === 'pending_tracking'
+    ? await dispatchPendingTrackingAddress(order)
+    : null;
+  res.json({ ok: true, fulfillmentDispatch });
+});
+
+app.post('/api/admin/orders/:id/fulfillment-discord', requireAdmin, async (req, res) => {
+  const order = db.getOrderById(req.params.id);
+  if (!order) return res.status(404).json({ error: 'Order not found' });
+  if (order.status !== 'pending_tracking') {
+    return res.status(400).json({ error: 'Only orders awaiting tracking can be posted to the shipping channel.' });
+  }
+  const result = await dispatchPendingTrackingAddress(order);
+  if (!result.sent && !result.alreadySent && !result.inProgress) {
+    return res.status(502).json({ error: result.warning || 'Could not post the shipping address to Discord.' });
+  }
+  res.json({ ok: true, fulfillmentDispatch: result });
 });
 
 app.delete('/api/admin/orders/:id', requireAdmin, (req, res) => {
@@ -1026,10 +1141,31 @@ app.get('/api/admin/orders/:id/contents-label.pdf', requireAdmin, (req, res) => 
   buildContentsLabel(order, order.items, res);
 });
 
+function startFulfillmentDiscordScheduler() {
+  if (!config.DISCORD_FULFILLMENT_WEBHOOK_URL) return null;
+  let running = false;
+  const scan = async () => {
+    if (running) return;
+    running = true;
+    try {
+      const waiting = db.getAllOrders().filter(order => order.status === 'pending_tracking' && !order.fulfillment_discord_sent_at);
+      for (const order of waiting) await dispatchPendingTrackingAddress(order);
+    } finally {
+      running = false;
+    }
+  };
+  const initial = setTimeout(scan, 5000);
+  if (typeof initial.unref === 'function') initial.unref();
+  const timer = setInterval(scan, 5 * 60 * 1000);
+  if (typeof timer.unref === 'function') timer.unref();
+  return timer;
+}
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`${config.SITE_NAME} running on http://localhost:${PORT}`);
   startPaymentReminderScheduler({ db, sendPaymentReminder });
+  startFulfillmentDiscordScheduler();
   if (config.BTC_MONITOR.ENABLED) {
     try {
       createBitcoinMonitor({
