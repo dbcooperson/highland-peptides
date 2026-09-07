@@ -125,9 +125,12 @@ module.exports = {
   SMTP_PASS: process.env.SMTP_PASS || '',
   CUSTOMER_EMAIL_FROM: process.env.CUSTOMER_EMAIL_FROM || process.env.ORDER_BACKUP_EMAIL_FROM || process.env.SMTP_USER || 'support@highlandpeptides.com',
   PAYMENT_REMINDERS_ENABLED: String(process.env.PAYMENT_REMINDERS_ENABLED || 'true').toLowerCase() === 'true',
-  PAYMENT_REMINDER_FIRST_HOURS: Math.max(1, Number(process.env.PAYMENT_REMINDER_FIRST_HOURS || 12)),
-  PAYMENT_REMINDER_REPEAT_HOURS: Math.max(1, Number(process.env.PAYMENT_REMINDER_REPEAT_HOURS || 24)),
-  PAYMENT_REMINDER_MAX: Math.max(1, Number(process.env.PAYMENT_REMINDER_MAX || 2)),
+  // Pending-payment reminders only: wait one week before the first message,
+  // then no more than one message every two weeks. A max of 0 means the
+  // biweekly cadence continues while the order remains pending.
+  PAYMENT_REMINDER_FIRST_HOURS: Math.max(1, Number(process.env.PAYMENT_REMINDER_FIRST_HOURS || 168)),
+  PAYMENT_REMINDER_REPEAT_HOURS: Math.max(1, Number(process.env.PAYMENT_REMINDER_REPEAT_HOURS || 336)),
+  PAYMENT_REMINDER_MAX: Math.max(0, Number(process.env.PAYMENT_REMINDER_MAX || 0)),
   PAYMENT_REMINDER_POLL_MINUTES: Math.max(5, Number(process.env.PAYMENT_REMINDER_POLL_MINUTES || 30)),
 
   // Google Maps Platform address tools. The browser key should be restricted

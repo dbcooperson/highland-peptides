@@ -14,7 +14,7 @@ function reminderIsDue(order, nowMs = Date.now()) {
   if (order.payment_reminders_enabled !== true) return false;
   if (!['manual_paypal', 'crypto'].includes(order.payment_provider)) return false;
   const count = Number(order.payment_reminder_count || 0);
-  if (count >= config.PAYMENT_REMINDER_MAX) return false;
+  if (config.PAYMENT_REMINDER_MAX > 0 && count >= config.PAYMENT_REMINDER_MAX) return false;
   if (!count) return hoursBetween(order.created_at, nowMs) >= config.PAYMENT_REMINDER_FIRST_HOURS;
   return hoursBetween(order.payment_reminder_last_sent_at, nowMs) >= config.PAYMENT_REMINDER_REPEAT_HOURS;
 }
@@ -25,13 +25,22 @@ async function runPaymentReminderScan({ db, sendPaymentReminder, nowMs = Date.no
   const errors = [];
   let sent = 0;
   for (const order of due) {
+    const claim = typeof db.claimPaymentReminder === 'function'
+      ? db.claimPaymentReminder(order.id)
+      : { claimed: true, order };
+    if (!claim.claimed) continue;
     try {
-      const channel = await sendPaymentReminder(order);
+      const channel = await sendPaymentReminder(claim.order);
       if (channel) {
         db.markPaymentReminderSent(order.id);
         sent += 1;
+      } else if (typeof db.markPaymentReminderFailed === 'function') {
+        db.markPaymentReminderFailed(order.id, 'Customer email is not configured.');
       }
     } catch (err) {
+      if (typeof db.markPaymentReminderFailed === 'function') {
+        db.markPaymentReminderFailed(order.id, err.message || String(err));
+      }
       errors.push({ orderId: order.id, error: err.message || String(err) });
     }
   }

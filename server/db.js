@@ -297,9 +297,16 @@ function createOrder({ buyer, certifiedAt, items, subtotal, promoEligibleSubtota
     payment_reminders_enabled: true,
     payment_reminder_count: 0,
     payment_reminder_last_sent_at: null,
+    payment_reminder_dispatch_started_at: null,
+    payment_reminder_error: null,
     tracking_carrier: null,
     tracking_number: null,
     tracking_sent_at: null,
+    tracking_service: null,
+    tracking_estimated_delivery: null,
+    tracking_source: null,
+    tracking_dispatch_started_at: null,
+    tracking_dispatch_error: null,
     labels_printed_at: null,
     shipping_address_validation: shippingAddressValidation || null,
     fulfillment_discord_dispatch_started_at: null,
@@ -437,17 +444,87 @@ function markPaymentReminderSent(id) {
   if (!order) return null;
   order.payment_reminder_count = Number(order.payment_reminder_count || 0) + 1;
   order.payment_reminder_last_sent_at = new Date().toISOString();
+  order.payment_reminder_dispatch_started_at = null;
+  order.payment_reminder_error = null;
   save(data);
   return order;
 }
 
-function markTrackingSent(id, carrier, trackingNumber) {
+function claimPaymentReminder(id, staleAfterMs = 30 * 60 * 1000) {
+  const data = load();
+  const order = data.orders.find(item => item.id === Number(id));
+  if (!order) return { claimed: false, reason: 'not_found', order: null };
+  if (order.status !== 'pending_payment' || order.payment_reminders_enabled !== true) {
+    return { claimed: false, reason: 'not_pending', order };
+  }
+  const startedAt = order.payment_reminder_dispatch_started_at
+    ? new Date(order.payment_reminder_dispatch_started_at).getTime()
+    : 0;
+  if (startedAt && Number.isFinite(startedAt) && Date.now() - startedAt < staleAfterMs) {
+    return { claimed: false, reason: 'in_progress', order };
+  }
+  order.payment_reminder_dispatch_started_at = new Date().toISOString();
+  order.payment_reminder_error = null;
+  save(data);
+  return { claimed: true, reason: 'claimed', order };
+}
+
+function markPaymentReminderFailed(id, message) {
+  const data = load();
+  const order = data.orders.find(item => item.id === Number(id));
+  if (!order) return null;
+  order.payment_reminder_dispatch_started_at = null;
+  order.payment_reminder_error = String(message || 'Payment reminder failed.').slice(0, 500);
+  save(data);
+  return order;
+}
+
+function claimTrackingDispatch(id, carrier, trackingNumber, staleAfterMs = 30 * 60 * 1000) {
+  const data = load();
+  const order = data.orders.find(item => item.id === Number(id));
+  if (!order) return { claimed: false, reason: 'not_found', order: null };
+  if (!['paid', 'pending_tracking'].includes(order.status)) {
+    return { claimed: false, reason: 'invalid_status', order };
+  }
+  if (order.tracking_sent_at || order.tracking_number) {
+    return { claimed: false, reason: 'already_sent', order };
+  }
+  const startedAt = order.tracking_dispatch_started_at
+    ? new Date(order.tracking_dispatch_started_at).getTime()
+    : 0;
+  if (startedAt && Number.isFinite(startedAt) && Date.now() - startedAt < staleAfterMs) {
+    return { claimed: false, reason: 'in_progress', order };
+  }
+  order.tracking_dispatch_started_at = new Date().toISOString();
+  order.tracking_dispatch_carrier = String(carrier || '').slice(0, 60);
+  order.tracking_dispatch_number = String(trackingNumber || '').slice(0, 120);
+  order.tracking_dispatch_error = null;
+  save(data);
+  return { claimed: true, reason: 'claimed', order };
+}
+
+function markTrackingFailed(id, message) {
+  const data = load();
+  const order = data.orders.find(item => item.id === Number(id));
+  if (!order) return null;
+  order.tracking_dispatch_started_at = null;
+  order.tracking_dispatch_error = String(message || 'Tracking email failed.').slice(0, 500);
+  save(data);
+  return order;
+}
+
+function markTrackingSent(id, carrier, trackingNumber, details = {}) {
   const data = load();
   const order = data.orders.find(item => item.id === Number(id));
   if (!order) return null;
   order.tracking_carrier = String(carrier || '').slice(0, 60);
   order.tracking_number = String(trackingNumber || '').slice(0, 120);
   order.tracking_sent_at = new Date().toISOString();
+  order.tracking_service = String(details.service || '').slice(0, 120) || null;
+  order.tracking_estimated_delivery = String(details.estimatedDelivery || '').slice(0, 120) || null;
+  order.tracking_source = String(details.source || '').slice(0, 60) || order.tracking_source || 'admin';
+  order.tracking_dispatch_started_at = null;
+  order.tracking_dispatch_error = null;
   order.status = 'fulfilled';
   order.paid_at = order.paid_at || new Date().toISOString();
   syncReferralCredit(data, order);
@@ -566,6 +643,8 @@ function getAccountDashboard(id, options = {}) {
     itemCount: (order.items || []).reduce((sum, item) => sum + Number(item.quantity || 0), 0),
     trackingCarrier: order.tracking_carrier || '',
     trackingNumber: order.tracking_number || '',
+    trackingService: order.tracking_service || '',
+    trackingEstimatedDelivery: order.tracking_estimated_delivery || '',
     trackingSentAt: order.tracking_sent_at || null,
   }));
   const ledger = data.creditLedger.filter(entry => entry.account_id === account.id).sort((a, b) => b.id - a.id).slice(0, 20).map(entry => ({ ...entry, amount: dollars(entry.amount_cents) }));
@@ -685,6 +764,6 @@ function getStorageInfo() {
 }
 
 module.exports = {
-  createOrder, getAllOrders, getOrderById, setPayPalOrderId, markOrderPaid, updateOrderStatus, updateOrderNotes, deleteOrder, markOrderBackupSent, markPaymentReminderSent, markTrackingSent, claimFulfillmentDiscordPost, markFulfillmentDiscordSent, markFulfillmentDiscordFailed, getStorageInfo, isTxidUsed, setPaymentReference,
+  createOrder, getAllOrders, getOrderById, setPayPalOrderId, markOrderPaid, updateOrderStatus, updateOrderNotes, deleteOrder, markOrderBackupSent, claimPaymentReminder, markPaymentReminderSent, markPaymentReminderFailed, claimTrackingDispatch, markTrackingSent, markTrackingFailed, claimFulfillmentDiscordPost, markFulfillmentDiscordSent, markFulfillmentDiscordFailed, getStorageInfo, isTxidUsed, setPaymentReference,
   createAccount, getAccountById, getAccountByEmail, setAccountVerificationToken, verifyAccountByTokenHash, touchAccountLogin, setPasswordResetToken, resetPasswordByTokenHash, getAccountByReferralCode, setAccountReferralCode, getAccountDashboard, createPayoutRequest, updatePayoutRequest, getAdminReferralData, reviewReferralCredit, createSocialCreditSubmission, reviewSocialCreditSubmission,
 };

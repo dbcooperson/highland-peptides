@@ -31,7 +31,7 @@ const { validateShippingAddress } = require('./address-validation');
 const analytics = require('./analytics');
 const coa = require('./coa');
 const { applyBundlePromotion, publicPromotion } = require('./promotions');
-const { startPaymentReminderScheduler } = require('./reminders');
+const { reminderIsDue, startPaymentReminderScheduler } = require('./reminders');
 const { registerAccountRoutes } = require('./accounts');
 
 const CONFIRMED_ORDER_STATUSES = new Set(['paid', 'pending_tracking', 'fulfilled']);
@@ -1048,12 +1048,24 @@ app.post('/api/admin/orders/:id/payment-reminder', requireAdmin, async (req, res
   const order = db.getOrderById(req.params.id);
   if (!order) return res.status(404).json({ error: 'Order not found' });
   if (order.status !== 'pending_payment') return res.status(400).json({ error: 'Only pending orders can receive a payment reminder.' });
+  if (!reminderIsDue(order)) {
+    return res.status(429).json({ error: 'This order is not due for another payment reminder yet.' });
+  }
+  const claim = db.claimPaymentReminder(order.id);
+  if (!claim.claimed) {
+    return res.status(409).json({ error: claim.reason === 'in_progress' ? 'A reminder is already being sent.' : 'This order cannot receive a reminder.' });
+  }
   try {
-    const channel = await sendPaymentReminder(order);
-    if (!channel) return res.status(503).json({ error: 'Customer email is not configured. Add SMTP settings in Render.' });
+    const channel = await sendPaymentReminder(claim.order);
+    if (!channel) {
+      db.markPaymentReminderFailed(order.id, 'Customer email is not configured.');
+      return res.status(503).json({ error: 'Customer email is not configured. Add SMTP settings in Render.' });
+    }
     const updated = db.markPaymentReminderSent(order.id);
     res.json({ ok: true, sentAt: updated.payment_reminder_last_sent_at, reminderCount: updated.payment_reminder_count });
   } catch (err) {
+    db.markPaymentReminderFailed(order.id, err.message || String(err));
+    console.error(`Order #${order.id} payment reminder failed:`, err.message || err);
     res.status(502).json({ error: err.message || 'Could not send payment reminder.' });
   }
 });
@@ -1067,15 +1079,27 @@ app.post('/api/admin/orders/:id/tracking', requireAdmin, async (req, res) => {
   if (order.tracking_sent_at || order.tracking_number) return res.status(409).json({ error: 'Tracking has already been sent for this order.' });
   const carrier = cleanText(req.body && req.body.carrier, 60);
   const trackingNumber = cleanText(req.body && req.body.trackingNumber, 120);
+  const service = cleanText(req.body && req.body.service, 120);
+  const estimatedDelivery = cleanText(req.body && req.body.estimatedDelivery, 120);
   if (!TRACKING_CARRIERS.has(carrier)) return res.status(400).json({ error: 'Choose a supported carrier.' });
   if (!/^[A-Za-z0-9][A-Za-z0-9 -]{5,119}$/.test(trackingNumber)) return res.status(400).json({ error: 'Enter a valid tracking number.' });
+  const claim = db.claimTrackingDispatch(order.id, carrier, trackingNumber);
+  if (!claim.claimed) {
+    return res.status(409).json({ error: claim.reason === 'in_progress' ? 'Tracking is already being sent.' : 'Tracking has already been sent for this order.' });
+  }
   try {
-    const channel = await sendTrackingEmail(order, carrier, trackingNumber);
-    if (!channel) return res.status(503).json({ error: 'Customer email is not configured. Add SMTP settings in Render.' });
-    const updated = db.markTrackingSent(order.id, carrier, trackingNumber);
+    const details = { service, estimatedDelivery, source: 'admin' };
+    const channel = await sendTrackingEmail(claim.order, carrier, trackingNumber, details);
+    if (!channel) {
+      db.markTrackingFailed(order.id, 'Customer email is not configured.');
+      return res.status(503).json({ error: 'Customer email is not configured. Add SMTP settings in Render.' });
+    }
+    const updated = db.markTrackingSent(order.id, carrier, trackingNumber, details);
     await backupOrderIfNeeded(updated, 'tracking_sent');
     res.json({ ok: true, status: updated.status, sentAt: updated.tracking_sent_at });
   } catch (err) {
+    db.markTrackingFailed(order.id, err.message || String(err));
+    console.error(`Order #${order.id} tracking email failed:`, err.message || err);
     res.status(502).json({ error: err.message || 'Could not send tracking email.' });
   }
 });

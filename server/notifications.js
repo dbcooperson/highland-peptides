@@ -377,18 +377,22 @@ async function sendPaymentReminder(order) {
   return 'email';
 }
 
-async function sendTrackingEmail(order, carrier, trackingNumber) {
+async function sendTrackingEmail(order, carrier, trackingNumber, details = {}) {
   const transport = smtpTransport();
   const buyer = order && order.buyer ? order.buyer : {};
   if (!transport || !buyer.email) return null;
   const ref = `HP-${order.id}`;
   const url = trackingUrl(carrier, trackingNumber);
+  const service = String(details.service || '').trim();
+  const estimatedDelivery = String(details.estimatedDelivery || '').trim();
   const text = [
     `Your Highland Peptides order has shipped`,
     ``,
     `Order: ${ref}`,
     `Carrier: ${carrier}`,
+    service ? `Service: ${service}` : null,
     `Tracking number: ${trackingNumber}`,
+    estimatedDelivery ? `Estimated delivery: ${estimatedDelivery}` : 'Estimated delivery: Check the carrier tracking page for the latest estimate.',
     url ? `Track shipment: ${url}` : null,
     ``,
     `Carrier scans may take up to one business day to appear. Reply to this email if you need help with your shipment.`,
@@ -397,7 +401,9 @@ async function sendTrackingEmail(order, carrier, trackingNumber) {
     <h2>Your Highland Peptides order has shipped</h2>
     <p><strong>Order:</strong> ${htmlEscape(ref)}<br>
     <strong>Carrier:</strong> ${htmlEscape(carrier)}<br>
-    <strong>Tracking number:</strong> ${htmlEscape(trackingNumber)}</p>
+    ${service ? `<strong>Service:</strong> ${htmlEscape(service)}<br>` : ''}
+    <strong>Tracking number:</strong> ${htmlEscape(trackingNumber)}<br>
+    <strong>Estimated delivery:</strong> ${htmlEscape(estimatedDelivery || 'Check the carrier tracking page for the latest estimate.')}</p>
     ${url ? `<p><a href="${htmlEscape(url)}">Track your shipment</a></p>` : ''}
     <p>Carrier scans may take up to one business day to appear. Reply to this email if you need help with your shipment.</p>
   `;

@@ -1295,6 +1295,12 @@ function adminFulfillmentHTML(order) {
         <label>Tracking number
           <input class="admin-tracking-number" data-id="${order.id}" value="${escapeHtml(order.tracking_number || '')}" placeholder="Paste tracking ID">
         </label>
+        <label>Shipping service (optional)
+          <input class="admin-tracking-service" data-id="${order.id}" value="${escapeHtml(order.tracking_service || '')}" placeholder="USPS Ground Advantage">
+        </label>
+        <label>Expected delivery (optional)
+          <input class="admin-tracking-eta" data-id="${order.id}" value="${escapeHtml(order.tracking_estimated_delivery || '')}" placeholder="September 10, 2026">
+        </label>
         <button type="button" class="admin-send-tracking" data-id="${order.id}">Send tracking email</button>
         ${trackingStatus}
       ` : ''}
@@ -1439,12 +1445,14 @@ function renderOrdersTable() {
       const id = btn.dataset.id;
       const carrier = document.querySelector(`.admin-tracking-carrier[data-id="${id}"]`)?.value;
       const trackingNumber = document.querySelector(`.admin-tracking-number[data-id="${id}"]`)?.value.trim();
+      const service = document.querySelector(`.admin-tracking-service[data-id="${id}"]`)?.value.trim();
+      const estimatedDelivery = document.querySelector(`.admin-tracking-eta[data-id="${id}"]`)?.value.trim();
       if (!trackingNumber) return window.alert('Paste a tracking number first.');
       if (!window.confirm(`Email ${carrier} tracking ${trackingNumber} to this buyer and mark the order fulfilled?`)) return;
       btn.disabled = true;
       btn.textContent = 'Sending...';
       try {
-        await api(`/api/admin/orders/${id}/tracking`, { method: 'POST', body: { carrier, trackingNumber } });
+        await api(`/api/admin/orders/${id}/tracking`, { method: 'POST', body: { carrier, trackingNumber, service, estimatedDelivery } });
         await loadOrders();
         loadProfit();
       } catch (err) {
