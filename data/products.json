@@ -171,15 +171,6 @@
     "fixedPublicPrice": 29.99
   },
   {
-    "sku": "CD2",
-    "name": "CJC-1295 with DAC",
-    "spec": "2mg x1 vial",
-    "cost": 5.8,
-    "category": "Peptide",
-    "group": "Growth Hormone",
-    "salePrice": 13.904348
-  },
-  {
     "sku": "CD5",
     "name": "CJC-1295 with DAC",
     "spec": "5mg x1 vial",
@@ -524,7 +515,8 @@
     "cost": 9.5,
     "category": "Peptide",
     "group": "Metabolic",
-    "salePrice": 22.6
+    "salePrice": 22.6,
+    "fixedPublicPrice": 24.99
   },
   {
     "sku": "RT20",
@@ -533,7 +525,8 @@
     "cost": 12,
     "category": "Peptide",
     "group": "Metabolic",
-    "salePrice": 27.817391
+    "salePrice": 27.817391,
+    "fixedPublicPrice": 29.99
   },
   {
     "sku": "RT30",
@@ -542,7 +535,8 @@
     "cost": 15.7,
     "category": "Peptide",
     "group": "Metabolic",
-    "salePrice": 36.513043
+    "salePrice": 36.513043,
+    "fixedPublicPrice": 39.99
   },
   {
     "sku": "SM2",

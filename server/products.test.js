@@ -24,8 +24,14 @@ test('Glutathione 9,000mg is $38.99 after a 15% code', () => {
 test('requested CJC 5mg products and Klow have fixed pre-code prices', () => {
   assert.equal(bySku.CP10.price, 29.99);
   assert.equal(bySku.CD5.price, 29.99);
-  assert.equal(bySku.CD2.price, 15.99);
+  assert.equal(bySku.CD2, undefined);
   assert.equal(bySku.KLOW80.price, 41.99);
+});
+
+test('Retatrutide variants have requested fixed pre-code prices', () => {
+  assert.equal(bySku.RT15.price, 24.99);
+  assert.equal(bySku.RT20.price, 29.99);
+  assert.equal(bySku.RT30.price, 39.99);
 });
 
 test('Bacteriostatic Water 10ml has a fixed $8.99 non-promo price', () => {
