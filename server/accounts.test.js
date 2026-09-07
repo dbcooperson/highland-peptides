@@ -60,6 +60,36 @@ test('verification is single-use and one referral code is enforced', async () =>
   assert.equal(db.getAccountByReferralCode('ridge10').id, account.id);
 });
 
+test('promotion codes never expose customer usage in a referral dashboard', async () => {
+  const promoter = await verifiedAccount('Private Promotion Owner', 'private-promo@example.com');
+  db.setAccountReferralCode(promoter.id, 'PRIVATE10');
+  const order = db.createOrder({
+    buyer: { name: 'Hidden Customer', email: 'hidden-customer@example.com' },
+    certifiedAt: new Date().toISOString(),
+    items: [{ sku: 'TEST', name: 'Test Product', spec: '10mg', quantity: 1, unit_price: 100 }],
+    subtotal: 100,
+    packagingFee: 0,
+    shippingFee: 10.27,
+    shippingMethod: 'domestic',
+    orderFee: 3,
+    orderFeeRate: 0.03,
+    discountCode: 'PRIVATE15',
+    discountType: 'promotion',
+    discountAmount: 15,
+    total: 98.27,
+    paymentProvider: 'manual_paypal',
+    referralAccountId: promoter.id,
+    referralCreditRate: 0.10,
+  });
+  db.markOrderPaid(order.id, 'promotion-payment');
+  const stored = db.getOrderById(order.id);
+  const dashboard = db.getAccountDashboard(promoter.id, { minCustomers: 5, minSpend: 500 });
+  assert.equal(stored.discount_type, 'promotion');
+  assert.equal(stored.referral_account_id, null);
+  assert.equal(dashboard.stats.uniqueCustomers, 0);
+  assert.deepEqual(dashboard.stats.recentReferrals, []);
+});
+
 test('paid referral orders wait for approval, award credit once, and cancelled credit orders are restored', async () => {
   const owner = db.getAccountByEmail('owner@example.com');
   const order = referredOrder(owner, 'friend1@example.com');

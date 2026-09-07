@@ -348,6 +348,7 @@ function prepareCheckout(body, accountId = null) {
       orderFee,
       orderFeeRate: config.ORDER_FEE_RATE,
       discountCode: discountLabel,
+      discountType: discountMatch ? discountMatch.type : null,
       discountAmount,
       storeCreditAmount,
       customerAccountId: customerAccount && customerAccount.verified_at ? customerAccount.id : null,

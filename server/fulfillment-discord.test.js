@@ -41,7 +41,9 @@ test('fulfillment webhook verifies the authorized channel before posting once', 
   assert.equal(result.messageId, 'discord-message-1');
   assert.equal(calls.length, 2);
   const payload = JSON.parse(calls[1].options.body);
-  assert.match(payload.embeds[0].description, /July Customer/);
+  assert.equal(payload.content, fulfillmentAddressText(order));
+  assert.match(payload.embeds[0].title, /HP-314/);
+  assert.doesNotMatch(payload.content, /HP-314|```|Copy into Pirate Ship/);
   assert.deepEqual(payload.allowed_mentions, { parse: [] });
   assert.doesNotMatch(JSON.stringify(payload), /private@example\.com|Retatrutide|99\.99/);
 });

@@ -247,12 +247,18 @@ function paymentMatchAdjustmentCents(orderId, paymentProvider) {
   return (Number(orderId) % 49) + 1;
 }
 
-function createOrder({ buyer, certifiedAt, items, subtotal, promoEligibleSubtotal, packagingFee, shippingFee, shippingMethod, orderFee, orderFeeRate, discountCode, discountAmount, total, paymentProvider, cryptoAsset, customerAccountId, referralAccountId, referralCreditRate, storeCreditAmount, shippingAddressValidation }) {
+function createOrder({ buyer, certifiedAt, items, subtotal, promoEligibleSubtotal, packagingFee, shippingFee, shippingMethod, orderFee, orderFeeRate, discountCode, discountType, discountAmount, total, paymentProvider, cryptoAsset, customerAccountId, referralAccountId, referralCreditRate, storeCreditAmount, shippingAddressValidation }) {
   const data = load();
   const id = data.nextOrderId++;
   const normalizedProvider = paymentProvider || 'manual';
   const appliedCreditCents = cents(storeCreditAmount);
   const customerAccount = customerAccountId ? accountById(data, customerAccountId) : null;
+  const normalizedDiscountType = ['promotion', 'referral'].includes(discountType)
+    ? discountType
+    : (referralAccountId ? 'referral' : (discountCode ? 'promotion' : null));
+  const safeReferralAccountId = normalizedDiscountType === 'referral' && referralAccountId
+    ? Number(referralAccountId)
+    : null;
   if (appliedCreditCents > 0) {
     if (!customerAccount || !customerAccount.verified_at) throw new Error('Sign in to use store credit.');
     if (Number(customerAccount.credit_balance_cents || 0) < appliedCreditCents) throw new Error('Store-credit balance changed. Refresh checkout and try again.');
@@ -273,10 +279,10 @@ function createOrder({ buyer, certifiedAt, items, subtotal, promoEligibleSubtota
     paid_at: null,
     buyer,
     customer_account_id: customerAccount ? customerAccount.id : null,
-    referral_account_id: referralAccountId ? Number(referralAccountId) : null,
-    referral_credit_rate: Number(referralCreditRate || 0),
+    referral_account_id: safeReferralAccountId,
+    referral_credit_rate: safeReferralAccountId ? Number(referralCreditRate || 0) : 0,
     referral_credit_cents: 0,
-    referral_credit_status: referralAccountId ? 'pending' : null,
+    referral_credit_status: safeReferralAccountId ? 'pending' : null,
     certified_at: certifiedAt,
     items,
     subtotal,
@@ -287,6 +293,7 @@ function createOrder({ buyer, certifiedAt, items, subtotal, promoEligibleSubtota
     order_fee: orderFee || 0,
     order_fee_rate: orderFeeRate || 0,
     discount_code: discountCode || null,
+    discount_type: normalizedDiscountType,
     discount_amount: discountAmount || 0,
     store_credit_amount: dollars(appliedCreditCents),
     store_credit_status: appliedCreditCents ? 'debited' : null,
@@ -338,7 +345,7 @@ function setPayPalOrderId(id, paypalOrderId) {
 }
 
 function syncReferralCredit(data, order) {
-  if (!order || !order.referral_account_id) return;
+  if (!order || !order.referral_account_id || order.discount_type === 'promotion') return;
   const account = accountById(data, order.referral_account_id);
   if (!account) return;
   const paid = isConfirmedOrderStatus(order.status);
@@ -601,7 +608,7 @@ function deleteOrder(id) {
 function referralStatsFromData(data, accountId, options = {}) {
   const account = accountById(data, accountId);
   if (!account) return null;
-  const paidOrders = data.orders.filter(order => order.referral_account_id === account.id && isConfirmedOrderStatus(order.status));
+  const paidOrders = data.orders.filter(order => order.referral_account_id === account.id && order.discount_type !== 'promotion' && isConfirmedOrderStatus(order.status));
   const customerSpend = new Map();
   let totalSpendCents = 0;
   paidOrders.forEach(order => {
@@ -748,7 +755,7 @@ function getAdminReferralData(options = {}) {
     const account = accountById(data, request.account_id);
     return { ...request, amount: dollars(request.amount_cents), accountName: account ? account.name : 'Unknown', accountEmail: account ? account.email : '', referralCode: account ? account.referral_code : null };
   }).sort((a, b) => b.id - a.id);
-  const referralRewards = data.orders.filter(order => order.referral_account_id && order.referral_credit_status && order.referral_credit_status !== 'pending').map(order => {
+  const referralRewards = data.orders.filter(order => order.referral_account_id && order.discount_type !== 'promotion' && order.referral_credit_status && order.referral_credit_status !== 'pending').map(order => {
     const account = accountById(data, order.referral_account_id);
     return { orderId: order.id, status: order.referral_credit_status, orderStatus: order.status, customerName: order.buyer && order.buyer.name, customerEmail: order.buyer && order.buyer.email, amount: dollars(order.referral_credit_cents), productSpend: dollars(Math.max(0, cents(order.subtotal) - cents(order.discount_amount))), accountName: account ? account.name : 'Unknown', accountEmail: account ? account.email : '', referralCode: account ? account.referral_code : null, adminNote: order.referral_credit_admin_note || '', createdAt: order.paid_at || order.created_at };
   }).sort((a, b) => b.orderId - a.orderId);

@@ -196,16 +196,20 @@ async function checkFulfillmentDiscordConnection(options = {}) {
 async function sendPendingTrackingDiscord(order, options = {}) {
   const verified = await verifyFulfillmentDiscordWebhook(options);
   if (!verified) return null;
+  const addressText = fulfillmentAddressText(order).slice(0, 1900);
 
   const response = await verified.fetchImpl(discordWaitUrl(verified.webhookUrl), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       username: 'Highland Shipping',
-      content: `📦 Pending tracking · Order HP-${order.id}`,
+      // Keep the message body as only the mailing address. Discord's mobile
+      // "Copy Text" action copies message content but not embed descriptions,
+      // so this can be pasted straight into Pirate Ship without cleanup.
+      content: addressText,
       embeds: [{
-        title: 'Copy into Pirate Ship',
-        description: '```' + fulfillmentAddressText(order).slice(0, 1800) + '```',
+        title: `Pending tracking · Order HP-${order.id}`,
+        description: 'Long-press the message and choose **Copy Text**, then paste it directly into Pirate Ship.',
         color: 4545349,
         footer: { text: 'Address verified at checkout when Google validation is enabled.' },
       }],
