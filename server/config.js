@@ -124,6 +124,11 @@ module.exports = {
   SMTP_USER: process.env.SMTP_USER || '',
   SMTP_PASS: process.env.SMTP_PASS || '',
   CUSTOMER_EMAIL_FROM: process.env.CUSTOMER_EMAIL_FROM || process.env.ORDER_BACKUP_EMAIL_FROM || process.env.SMTP_USER || 'support@highlandpeptides.com',
+  // Pirate Ship tracking automation. The CSV export can route each shipment
+  // email to hp-<order>@this domain so tracking is matched without guessing.
+  RESEND_API_KEY: process.env.RESEND_API_KEY || '',
+  RESEND_WEBHOOK_SECRET: process.env.RESEND_WEBHOOK_SECRET || '',
+  PIRATE_SHIP_INBOUND_DOMAIN: process.env.PIRATE_SHIP_INBOUND_DOMAIN || '',
   PAYMENT_REMINDERS_ENABLED: String(process.env.PAYMENT_REMINDERS_ENABLED || 'true').toLowerCase() === 'true',
   // Pending-payment reminders only: wait one week before the first message,
   // then no more than one message every two weeks. A max of 0 means the

@@ -77,6 +77,8 @@ test('paid orders can print all vial labels into consecutive unused positions', 
   assert.match(js, /paid-label-pending-button/);
   assert.match(js, /paid-label-inline-confirm/);
   assert.match(html, /id="restoreRemovedLabelOrders"/);
+  assert.match(html, /id="exportPirateShipCsv"[^>]*href="\/api\/admin\/pirate-ship\.csv"/);
+  assert.match(html, /Each tracking notice returns through Highland’s secure cloud inbox/);
   assert.match(js, /paid-label-remove-button/);
   assert.match(js, /paid-label-inline-confirm is-remove/);
   assert.match(js, /confirmRemoveLabelOrder/);

@@ -33,6 +33,7 @@ const coa = require('./coa');
 const { applyBundlePromotion, publicPromotion } = require('./promotions');
 const { reminderIsDue, startPaymentReminderScheduler } = require('./reminders');
 const { registerAccountRoutes } = require('./accounts');
+const { pirateShipCsv, parseInboundTrackingEmail, matchPendingTrackingOrder, verifyResendWebhook, fetchResendReceivedEmail, normalizeInboundDomain, validOrderAliasToken } = require('./pirate-ship');
 
 const CONFIRMED_ORDER_STATUSES = new Set(['paid', 'pending_tracking', 'fulfilled']);
 
@@ -67,7 +68,12 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.json({ limit: '25kb' }));
+app.use(express.json({
+  limit: '25kb',
+  verify(req, res, buffer) {
+    if (req.originalUrl === '/api/webhooks/resend/inbound') req.rawBody = Buffer.from(buffer);
+  },
+}));
 app.use(session({
   secret: config.SESSION_SECRET,
   resave: false,
@@ -99,6 +105,73 @@ app.get('/api/health', (req, res) => {
     release: releaseId,
     startedAt,
   });
+});
+
+// Resend receives Pirate Ship's tracking notice at an order-specific address
+// and posts a signed event here. This route is intentionally public because
+// Resend cannot use an admin session; the timestamped HMAC protects it.
+app.post('/api/webhooks/resend/inbound', async (req, res) => {
+  if (!config.RESEND_API_KEY || !config.RESEND_WEBHOOK_SECRET) {
+    return res.status(503).json({ error: 'Inbound tracking automation is not configured.' });
+  }
+  let event;
+  try {
+    event = verifyResendWebhook(String(req.rawBody || ''), {
+      id: req.get('svix-id'),
+      timestamp: req.get('svix-timestamp'),
+      signature: req.get('svix-signature'),
+    }, config.RESEND_WEBHOOK_SECRET);
+  } catch (err) {
+    return res.status(401).json({ error: err.message || 'Invalid webhook signature.' });
+  }
+  if (event.type !== 'email.received') return res.json({ ok: true, ignored: true });
+
+  const eventId = String(req.get('svix-id') || event.data && event.data.message_id || '');
+  if (db.hasInboundTrackingEvent(eventId)) return res.json({ ok: true, duplicate: true });
+  const emailId = cleanText(event.data && event.data.email_id, 160);
+  try {
+    const email = await fetchResendReceivedEmail(emailId, config.RESEND_API_KEY);
+    const parsed = parseInboundTrackingEmail(email, { inboundDomain: config.PIRATE_SHIP_INBOUND_DOMAIN });
+    if (parsed.orderAliasToken && !validOrderAliasToken(parsed.orderId, parsed.orderAliasToken, config.SESSION_SECRET)) {
+      throw new Error('The inbound order address failed its security check.');
+    }
+    if (!parsed.trackingNumber || !parsed.carrier) {
+      throw new Error('The inbound Pirate Ship email did not contain a supported USPS or UPS tracking number.');
+    }
+    const match = matchPendingTrackingOrder(db.getAllOrders(), parsed);
+    if (!match.order) throw new Error(`Could not safely match this tracking email (${match.reason}).`);
+    if (match.reason === 'already_processed') {
+      db.markInboundTrackingEvent(eventId, { emailId, orderId: match.order.id, trackingNumber: parsed.trackingNumber, result: 'duplicate_order' });
+      return res.json({ ok: true, duplicate: true, orderId: match.order.id });
+    }
+
+    const claim = db.claimTrackingDispatch(match.order.id, parsed.carrier, parsed.trackingNumber);
+    if (!claim.claimed) {
+      if (claim.reason === 'already_sent') {
+        db.markInboundTrackingEvent(eventId, { emailId, orderId: match.order.id, trackingNumber: parsed.trackingNumber, result: 'duplicate_order' });
+        return res.json({ ok: true, duplicate: true, orderId: match.order.id });
+      }
+      throw new Error(claim.reason === 'in_progress' ? 'Tracking is already being processed.' : 'The matched order is not awaiting tracking.');
+    }
+    const details = {
+      service: parsed.service,
+      estimatedDelivery: parsed.estimatedDelivery,
+      source: 'pirate_ship_email',
+    };
+    const channel = await sendTrackingEmail(claim.order, parsed.carrier, parsed.trackingNumber, details);
+    if (!channel) {
+      db.markTrackingFailed(match.order.id, 'Customer email is not configured.');
+      throw new Error('Customer email is not configured.');
+    }
+    const updated = db.markTrackingSent(match.order.id, parsed.carrier, parsed.trackingNumber, details);
+    db.markInboundTrackingEvent(eventId, { emailId, orderId: updated.id, trackingNumber: parsed.trackingNumber, result: 'fulfilled' });
+    await backupOrderIfNeeded(updated, 'pirate_ship_tracking');
+    console.log(`Pirate Ship tracking fulfilled order HP-${updated.id}.`);
+    return res.json({ ok: true, orderId: updated.id, status: updated.status });
+  } catch (err) {
+    console.error('Pirate Ship inbound tracking failed:', err.message || err);
+    return res.status(503).json({ error: err.message || 'Could not process inbound tracking.' });
+  }
 });
 
 // ---------- Public catalog ----------
@@ -993,6 +1066,14 @@ app.get('/api/admin/launch-checks', requireAdmin, async (req, res) => {
         : 'Add SMTP settings in Render before enabling customer account registration.',
     },
     {
+      key: 'pirate-ship-tracking',
+      label: 'Pirate Ship tracking automation',
+      ok: Boolean(config.RESEND_API_KEY && config.RESEND_WEBHOOK_SECRET && normalizeInboundDomain(config.PIRATE_SHIP_INBOUND_DOMAIN)),
+      detail: config.RESEND_API_KEY && config.RESEND_WEBHOOK_SECRET && normalizeInboundDomain(config.PIRATE_SHIP_INBOUND_DOMAIN)
+        ? `Order-specific tracking inboxes are active at ${normalizeInboundDomain(config.PIRATE_SHIP_INBOUND_DOMAIN)}.`
+        : 'Add RESEND_API_KEY, RESEND_WEBHOOK_SECRET, and PIRATE_SHIP_INBOUND_DOMAIN in Render to activate automatic fulfillment.',
+    },
+    {
       key: 'price-audit',
       label: 'Catalog price sanity',
       ok: priceAudit().issueCount === 0,
@@ -1036,6 +1117,17 @@ app.get('/api/admin/orders.csv', requireAdmin, (req, res) => {
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
   res.setHeader('Content-Disposition', 'attachment; filename="highland-orders.csv"');
   res.send(ordersCsv(orders));
+});
+
+app.get('/api/admin/pirate-ship.csv', requireAdmin, (req, res) => {
+  const waiting = db.getAllOrders()
+    .filter(order => order.status === 'pending_tracking' && !order.tracking_number)
+    .sort((a, b) => Number(a.id) - Number(b.id));
+  const date = new Date().toISOString().slice(0, 10);
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="highland-pirate-ship-${date}.csv"`);
+  res.send(pirateShipCsv(waiting, { inboundDomain: config.PIRATE_SHIP_INBOUND_DOMAIN, tokenSecret: config.SESSION_SECRET }));
 });
 
 app.post('/api/admin/orders/:id/notes', requireAdmin, (req, res) => {

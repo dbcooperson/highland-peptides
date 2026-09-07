@@ -28,3 +28,12 @@ test('customer accounts receive status and tracking details', () => {
   assert.match(accountSource, /account-tracking-link/);
   assert.match(accountSource, /item\.trackingUrl/);
 });
+
+test('Pirate Ship inbound tracking is signed, idempotent, and fulfills through the existing email path', () => {
+  assert.match(indexSource, /\/api\/webhooks\/resend\/inbound/);
+  assert.match(indexSource, /verifyResendWebhook/);
+  assert.match(indexSource, /hasInboundTrackingEvent/);
+  assert.match(indexSource, /claimTrackingDispatch/);
+  assert.match(indexSource, /sendTrackingEmail/);
+  assert.match(indexSource, /source: 'pirate_ship_email'/);
+});

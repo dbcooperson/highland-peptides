@@ -146,6 +146,7 @@
           </div>
           <div class="paid-label-queue-controls">
             <span id="paidLabelNextPosition" class="paid-label-next-position">Next: row 1, label 1</span>
+            <a id="exportPirateShipCsv" class="paid-label-tool-link" href="/api/admin/pirate-ship.csv" download>Export Pirate Ship CSV</a>
             <button id="refreshPaidLabelOrders" type="button">Refresh orders</button>
             <button id="checkFulfillmentDiscord" type="button">Check Discord</button>
             <button id="restoreRemovedLabelOrders" type="button" hidden>Restore removed</button>
@@ -154,6 +155,7 @@
         <div id="paidLabelOrderQueue" class="paid-label-order-list" aria-live="polite">
           <p class="paid-label-order-empty">Loading paid orders…</p>
         </div>
+        <p class="pirate-ship-export-note">The CSV contains only orders marked Pending tracking. Upload it in Pirate Ship, map the columns once, and enable <strong>Email recipients</strong>. Each tracking notice returns through Highland’s secure cloud inbox and fulfills the matching order automatically.</p>
       </section>
 
       <div class="label-maker-grid">

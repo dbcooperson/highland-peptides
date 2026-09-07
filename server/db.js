@@ -46,6 +46,7 @@ function initialData() {
     nextPayoutRequestId: 1,
     socialCreditSubmissions: [],
     nextSocialCreditSubmissionId: 1,
+    inboundTrackingEvents: [],
   };
 }
 
@@ -56,6 +57,7 @@ function normalizeData(raw) {
   data.creditLedger = Array.isArray(data.creditLedger) ? data.creditLedger : [];
   data.payoutRequests = Array.isArray(data.payoutRequests) ? data.payoutRequests : [];
   data.socialCreditSubmissions = Array.isArray(data.socialCreditSubmissions) ? data.socialCreditSubmissions : [];
+  data.inboundTrackingEvents = Array.isArray(data.inboundTrackingEvents) ? data.inboundTrackingEvents : [];
   data.nextOrderId = Math.max(Number(data.nextOrderId || 1), ...data.orders.map(item => Number(item.id || 0) + 1), 1);
   data.nextAccountId = Math.max(Number(data.nextAccountId || 1), ...data.accounts.map(item => Number(item.id || 0) + 1), 1);
   data.nextCreditLedgerId = Math.max(Number(data.nextCreditLedgerId || 1), ...data.creditLedger.map(item => Number(item.id || 0) + 1), 1);
@@ -539,6 +541,32 @@ function markTrackingSent(id, carrier, trackingNumber, details = {}) {
   return order;
 }
 
+function hasInboundTrackingEvent(eventId) {
+  const normalized = String(eventId || '').trim();
+  if (!normalized) return false;
+  return load().inboundTrackingEvents.some(event => event.event_id === normalized);
+}
+
+function markInboundTrackingEvent(eventId, details = {}) {
+  const normalized = String(eventId || '').trim().slice(0, 160);
+  if (!normalized) return null;
+  const data = load();
+  const existing = data.inboundTrackingEvents.find(event => event.event_id === normalized);
+  if (existing) return existing;
+  const event = {
+    event_id: normalized,
+    email_id: String(details.emailId || '').slice(0, 160),
+    order_id: details.orderId ? Number(details.orderId) : null,
+    tracking_number: String(details.trackingNumber || '').slice(0, 120),
+    result: String(details.result || 'processed').slice(0, 80),
+    processed_at: new Date().toISOString(),
+  };
+  data.inboundTrackingEvents.push(event);
+  if (data.inboundTrackingEvents.length > 1000) data.inboundTrackingEvents = data.inboundTrackingEvents.slice(-1000);
+  save(data);
+  return event;
+}
+
 function claimFulfillmentDiscordPost(id, staleAfterMs = 10 * 60 * 1000) {
   const data = load();
   const order = data.orders.find(item => item.id === Number(id));
@@ -771,6 +799,6 @@ function getStorageInfo() {
 }
 
 module.exports = {
-  createOrder, getAllOrders, getOrderById, setPayPalOrderId, markOrderPaid, updateOrderStatus, updateOrderNotes, deleteOrder, markOrderBackupSent, claimPaymentReminder, markPaymentReminderSent, markPaymentReminderFailed, claimTrackingDispatch, markTrackingSent, markTrackingFailed, claimFulfillmentDiscordPost, markFulfillmentDiscordSent, markFulfillmentDiscordFailed, getStorageInfo, isTxidUsed, setPaymentReference,
+  createOrder, getAllOrders, getOrderById, setPayPalOrderId, markOrderPaid, updateOrderStatus, updateOrderNotes, deleteOrder, markOrderBackupSent, claimPaymentReminder, markPaymentReminderSent, markPaymentReminderFailed, claimTrackingDispatch, markTrackingSent, markTrackingFailed, hasInboundTrackingEvent, markInboundTrackingEvent, claimFulfillmentDiscordPost, markFulfillmentDiscordSent, markFulfillmentDiscordFailed, getStorageInfo, isTxidUsed, setPaymentReference,
   createAccount, getAccountById, getAccountByEmail, setAccountVerificationToken, verifyAccountByTokenHash, touchAccountLogin, setPasswordResetToken, resetPasswordByTokenHash, getAccountByReferralCode, setAccountReferralCode, getAccountDashboard, createPayoutRequest, updatePayoutRequest, getAdminReferralData, reviewReferralCredit, createSocialCreditSubmission, reviewSocialCreditSubmission,
 };

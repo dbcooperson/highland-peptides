@@ -118,7 +118,19 @@ DISCORD_FULFILLMENT_WEBHOOK_URL=https://discord.com/api/webhooks/...
 DISCORD_FULFILLMENT_CHANNEL_ID=1544575715024965633
 ```
 
-When label printing moves an order to `pending_tracking`, the site verifies the webhook's actual Discord channel ID before sending a copy-ready recipient block. It stores the sent timestamp and message ID so the same order is not posted twice. A five-minute catch-up scan posts any waiting order that was missed during a restart or temporary Discord failure. The shipping post contains only the order number, full recipient name, and mailing address.
+When label printing moves an order to `pending_tracking`, the site verifies the webhook's actual Discord channel ID before sending a copy-ready recipient block. It stores the sent timestamp and message ID so the same order is not posted twice. A five-minute catch-up scan posts any waiting order that was missed during a restart or temporary Discord failure. The message body contains only the full recipient name and mailing address, so Discord's mobile **Copy Text** can be pasted directly into Pirate Ship; the order number remains in the embed title.
+
+### Pirate Ship tracking automation
+
+The admin Label Maker includes **Export Pirate Ship CSV**. It exports only orders in `pending_tracking`, with separate address columns, customer email, item details, and an order note. When the three Render variables below are configured, the CSV's `Email` column uses a signed, order-specific inbound address (`hp-<order>-<token>@...`) so a Pirate Ship tracking email can never be matched to the wrong order. The public Resend webhook verifies the signed event, fetches the received email, extracts USPS/UPS tracking details, emails the customer once through Highland, marks the order `fulfilled`, and records the event for idempotency. The fallback BCC format can also match a single pending order by the customer's email; ambiguous matches are rejected for manual review.
+
+Required Render environment variables:
+
+* `RESEND_API_KEY` — Resend API key with Receiving enabled.
+* `RESEND_WEBHOOK_SECRET` — signing secret from the Resend `email.received` webhook.
+* `PIRATE_SHIP_INBOUND_DOMAIN` — the Resend receiving domain (for example `your-id.resend.app`), without `@`.
+
+Create a Resend webhook at `https://highlandpeptides.com/api/webhooks/resend/inbound` for the `email.received` event. In Pirate Ship, upload the exported CSV, map the address columns, and enable **Email recipients** when buying labels. Resend stores inbound messages and retries signed webhooks when the app is temporarily unavailable.
 
 ## Google-style address autocomplete and validation
 
