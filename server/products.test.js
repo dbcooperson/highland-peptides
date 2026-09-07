@@ -44,7 +44,7 @@ test('Bacteriostatic Water 10ml has a fixed $8.99 non-promo price', () => {
 test('GHK-Cu variants have fixed .99 pre-code prices', () => {
   const variants = [
     { sku: 'CU', publicPrice: 25.99 },
-    { sku: 'CU100', publicPrice: 34.99 },
+    { sku: 'CU100', publicPrice: 29.99 },
   ];
 
   variants.forEach(({ sku, publicPrice }) => {
