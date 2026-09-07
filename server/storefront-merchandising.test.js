@@ -12,7 +12,7 @@ test('hero launches Glutathione and orders L-Carnitine, Retatrutide, then Tirzep
 
   assert.match(hero, /\/product\/glutathione\?sku=GTT9000/);
   assert.match(hero, /300mg\/ml · 30ml \(9,000mg\)/);
-  assert.match(hero, /\$39\.99 after code/);
+  assert.match(hero, /\$38\.99 after code/);
 
   const lCarnitine = hero.indexOf('/product/l-carnitine?sku=LCARN50');
   const retatrutide = hero.indexOf('/product/retatrutide');

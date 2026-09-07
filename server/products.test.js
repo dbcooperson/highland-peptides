@@ -4,21 +4,28 @@ const assert = require('node:assert/strict');
 const { catalog, bySku, labelDoseFromSpec } = require('./products');
 const { recordsForSkus } = require('./coa');
 
-test('L-Carnitine has a fixed $46.99 pre-code price', () => {
+test('L-Carnitine has a fixed $45.99 pre-code price', () => {
   const product = bySku.LCARN50;
   assert.ok(product);
-  assert.equal(product.price, 46.99);
+  assert.equal(product.price, 45.99);
 });
 
-test('Glutathione 9,000mg is $39.99 after a 15% code', () => {
+test('Glutathione 9,000mg is $38.99 after a 15% code', () => {
   const product = bySku.GTT9000;
   assert.ok(product);
   assert.equal(product.spec, '300mg/ml 30ml (9,000mg)');
-  assert.equal(product.price, 47.05);
-  assert.equal(Math.round(product.price * 0.85 * 100) / 100, 39.99);
+  assert.equal(product.price, 45.87);
+  assert.equal(Math.round(product.price * 0.85 * 100) / 100, 38.99);
   assert.match(product.description, /oxidative-stress response/i);
   assert.equal(labelDoseFromSpec(product.spec), '300 MG/ML · 30 ML (9,000 MG)');
   assert.equal(catalog[0].sku, 'GTT9000');
+});
+
+test('requested CJC 5mg products and Klow have fixed pre-code prices', () => {
+  assert.equal(bySku.CP10.price, 29.99);
+  assert.equal(bySku.CD5.price, 29.99);
+  assert.equal(bySku.CD2.price, 15.99);
+  assert.equal(bySku.KLOW80.price, 41.99);
 });
 
 test('Bacteriostatic Water 10ml has a fixed $8.99 non-promo price', () => {

@@ -167,7 +167,8 @@
     "cost": 7.5,
     "category": "Peptide",
     "group": "Growth Hormone",
-    "salePrice": 31.295652
+    "salePrice": 31.295652,
+    "fixedPublicPrice": 29.99
   },
   {
     "sku": "CD2",
@@ -185,7 +186,8 @@
     "cost": 13.5,
     "category": "Peptide",
     "group": "Growth Hormone",
-    "salePrice": 31.295652
+    "salePrice": 31.295652,
+    "fixedPublicPrice": 29.99
   },
   {
     "sku": "SMO5",
@@ -322,7 +324,7 @@
     "cost": 14,
     "category": "Research Material",
     "group": "Antioxidant",
-    "fixedPublicPrice": 47.05,
+    "fixedPublicPrice": 45.87,
     "description": "Glutathione (GSH) is an endogenous tripeptide antioxidant that helps cells reduce peroxides, maintain redox balance, protect protein thiols, and support glutathione-transferase conjugation pathways. In parenteral pharmacokinetic research, glutathione bypasses gastrointestinal exposure and transiently increases plasma glutathione and cysteine availability. Common research contexts include oxidative-stress response, mitochondrial antioxidant defense, hepatic detoxification pathways, redox signaling, and drug-toxicity models. For laboratory research only—not for human or veterinary administration."
   },
   {
@@ -765,7 +767,8 @@
     "cost": 19.5,
     "category": "Peptide",
     "group": "Skin & Recovery",
-    "salePrice": 43.469565
+    "salePrice": 43.469565,
+    "fixedPublicPrice": 41.99
   },
   {
     "sku": "LCARN50",
@@ -775,6 +778,6 @@
     "category": "Research Material",
     "group": "Aminos",
     "salePrice": 40.92,
-    "fixedPublicPrice": 46.99
+    "fixedPublicPrice": 45.99
   }
 ]
