@@ -98,10 +98,12 @@ customer-facing recipient without editing code, set:
 
 ```txt
 ZELLE_RECIPIENT=+1 (213) 424-4643
+ZELLE_PAYMENT_DISCOUNT_RATE=0.10
 ```
 
-Zelle orders remain `pending_payment` until the payment is verified and the
-order is manually marked paid in the admin dashboard.
+Zelle orders receive a 10% discount by default, which cannot be combined with
+promotion or referral codes. They remain `pending_payment` until the payment is
+verified and the order is manually marked paid in the admin dashboard.
 
 If an old `data/db.json` exists when this new code first runs, the app copies it into the persistent path automatically.
 

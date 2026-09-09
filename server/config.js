@@ -90,6 +90,9 @@ module.exports = {
   // manually in the admin dashboard after the customer submits an order.
   ZELLE_RECIPIENT: process.env.ZELLE_RECIPIENT || '+1 (213) 424-4643',
 
+  // Discount applied to Zelle orders. This cannot be combined with any code.
+  ZELLE_PAYMENT_DISCOUNT_RATE: Number(process.env.ZELLE_PAYMENT_DISCOUNT_RATE || 0.10),
+
   // Optional order backups. Configure these in Render so paid orders are copied
   // outside the site database.
   // Crypto payment addresses (customer-facing, shown at checkout).

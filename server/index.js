@@ -190,6 +190,7 @@ app.get('/api/catalog', (req, res) => {
     orderFeeRate: config.ORDER_FEE_RATE,
     altPaymentDiscountRate: config.ALT_PAYMENT_DISCOUNT_RATE,
     accountCryptoDiscountRate: config.ACCOUNT_CRYPTO_DISCOUNT_RATE,
+    zellePaymentDiscountRate: config.ZELLE_PAYMENT_DISCOUNT_RATE,
     zelleRecipient: config.ZELLE_RECIPIENT,
     promotion: publicPromotion(),
   });
@@ -375,14 +376,18 @@ function prepareCheckout(body, accountId = null) {
       return { error: 'Referral codes are for other customers and cannot be used on your own order.' };
     }
   }
-  if (normalizedPaymentMethod === 'crypto' && discountMatch) {
-    return { error: 'Promo codes cannot be combined with the crypto discount. Remove the promo code or choose PayPal checkout.' };
+  if (['crypto', 'zelle'].includes(normalizedPaymentMethod) && discountMatch) {
+    const methodLabel = normalizedPaymentMethod === 'zelle' ? 'Zelle' : 'Crypto';
+    return { error: `${methodLabel} discounts cannot be combined with codes. Remove the code or choose PayPal checkout.` };
   }
   const codeDiscount = discountMatch ? promoEligibleSubtotal * discountMatch.rate : 0;
   const altPaymentDiscount = normalizedPaymentMethod === 'crypto' ? subtotal * config.ALT_PAYMENT_DISCOUNT_RATE : 0;
   const memberCryptoDiscount = normalizedPaymentMethod === 'crypto' && customerAccount && customerAccount.verified_at ? subtotal * config.ACCOUNT_CRYPTO_DISCOUNT_RATE : 0;
-  const discountAmount = Math.round((codeDiscount + altPaymentDiscount + memberCryptoDiscount) * 100) / 100;
-  const discountLabel = discountMatch ? discountMatch.code : (memberCryptoDiscount ? 'CRYPTO5+MEMBER5' : (altPaymentDiscount ? 'CRYPTO5' : null));
+  const zelleDiscount = normalizedPaymentMethod === 'zelle' ? subtotal * config.ZELLE_PAYMENT_DISCOUNT_RATE : 0;
+  const discountAmount = Math.round((codeDiscount + altPaymentDiscount + memberCryptoDiscount + zelleDiscount) * 100) / 100;
+  const discountLabel = discountMatch
+    ? discountMatch.code
+    : (zelleDiscount ? 'ZELLE10' : (memberCryptoDiscount ? 'CRYPTO5+MEMBER5' : (altPaymentDiscount ? 'CRYPTO5' : null)));
   const availableCredit = customerAccount && customerAccount.verified_at
     ? Math.max(0, Number(customerAccount.credit_balance_cents || 0) / 100)
     : 0;

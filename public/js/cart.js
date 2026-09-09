@@ -206,7 +206,7 @@ async function init() {
   }
   const catalogData = await api('/api/catalog');
   window.siteCatalog = catalogData.products;
-  window.siteFees = { packagingFee: catalogData.packagingFee, shippingFee: catalogData.shippingFee, internationalShippingFee: catalogData.internationalShippingFee || 35, shippingOptions: catalogData.shippingOptions || [], orderFeeRate: catalogData.orderFeeRate || 0, altPaymentDiscountRate: catalogData.altPaymentDiscountRate || 0, accountCryptoDiscountRate: catalogData.accountCryptoDiscountRate || 0 };
+  window.siteFees = { packagingFee: catalogData.packagingFee, shippingFee: catalogData.shippingFee, internationalShippingFee: catalogData.internationalShippingFee || 35, shippingOptions: catalogData.shippingOptions || [], orderFeeRate: catalogData.orderFeeRate || 0, altPaymentDiscountRate: catalogData.altPaymentDiscountRate || 0, accountCryptoDiscountRate: catalogData.accountCryptoDiscountRate || 0, zellePaymentDiscountRate: catalogData.zellePaymentDiscountRate || 0 };
   window.sitePayments = { zelleRecipient: catalogData.zelleRecipient || '+1 (213) 424-4643' };
   const zelleRecipientPreview = document.getElementById('zelleRecipientPreview');
   if (zelleRecipientPreview) zelleRecipientPreview.textContent = window.sitePayments.zelleRecipient;

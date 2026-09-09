@@ -480,7 +480,7 @@ function getProductSearchCatalog() {
   if (!productSearchCatalogPromise) {
     productSearchCatalogPromise = api('/api/catalog').then(data => {
       window.siteCatalog = data.products;
-      window.siteFees = { packagingFee: data.packagingFee, shippingFee: data.shippingFee, internationalShippingFee: data.internationalShippingFee || 35, shippingOptions: data.shippingOptions || [], orderFeeRate: data.orderFeeRate || 0, altPaymentDiscountRate: data.altPaymentDiscountRate || 0, accountCryptoDiscountRate: data.accountCryptoDiscountRate || 0 };
+      window.siteFees = { packagingFee: data.packagingFee, shippingFee: data.shippingFee, internationalShippingFee: data.internationalShippingFee || 35, shippingOptions: data.shippingOptions || [], orderFeeRate: data.orderFeeRate || 0, altPaymentDiscountRate: data.altPaymentDiscountRate || 0, accountCryptoDiscountRate: data.accountCryptoDiscountRate || 0, zellePaymentDiscountRate: data.zellePaymentDiscountRate || 0 };
       window.sitePromotion = data.promotion || null;
       return data.products;
     });
@@ -1307,7 +1307,7 @@ async function submitManualPaypalCheckout() {
     if (zelleDetails) zelleDetails.style.display = 'none';
     if (paypalDetails) paypalDetails.style.display = 'block';
     document.getElementById('paypalPaymentEmail').textContent = result.paypal ? result.paypal.email : 'at475756@gmail.com';
-    showManualPaymentShell('PayPal payment instructions', `<strong>Order #${result.orderId}</strong><br>Exact total due: <strong>$${result.total.toFixed(2)}</strong><br>Send payment to: <strong>${result.paypal ? result.paypal.email : 'at475756@gmail.com'}</strong><br><span class="manual-payment-alert"><strong>Send with PayPal Friends and Family.</strong><br>Include <strong>Order #${result.orderId}</strong> in the PayPal note.</span><br><span class="hint">Please send the exact total shown. If the amount is incorrect, we will email you for confirmation. If no response is received within 72 hours, fulfillment will not proceed and the payment will not be refunded except where required by law. Confirmed orders ship the next business day.</span>`);
+    showManualPaymentShell('PayPal payment instructions', `<strong>Order #${result.orderId}</strong><br>Exact total due: <strong>$${result.total.toFixed(2)}</strong><br>Send payment to: <strong>${result.paypal ? result.paypal.email : 'at475756@gmail.com'}</strong><br><span class="manual-payment-alert"><strong>Send using PayPal Goods and Services.</strong><br>Leave the PayPal note completely blank. Do not include the order number, product names, or any other text.</span><br><span class="hint">Please send the exact total shown. If the amount is incorrect, we will email you for confirmation. If no response is received within 72 hours, fulfillment will not proceed and the payment will not be refunded except where required by law. Confirmed orders ship the next business day.</span>`);
     clearCartAfterCheckout();
   } catch (err) {
     msgEl.style.color = 'var(--danger)';
@@ -1325,6 +1325,12 @@ async function submitZelleCheckout() {
   const payload = checkoutPayloadFromForm();
   payload.paymentMethod = 'zelle';
   trackPaymentMethod('zelle');
+
+  if (appliedDiscount) {
+    msgEl.style.color = 'var(--danger)';
+    msgEl.textContent = 'The Zelle 10% discount cannot be combined with codes. Remove the code or choose PayPal.';
+    return;
+  }
 
   if (!validateCheckoutPayload(payload, msgEl)) return;
 
