@@ -269,6 +269,18 @@ function customerInstructionsText(order) {
       `Payment is manually reviewed before fulfillment. Once confirmed, your order ships the next business day.`,
       `If you have questions, reply to this email.`,
     );
+  } else if (order.payment_provider === 'zelle') {
+    lines.push(
+      `Send the exact total due by Zelle to:`,
+      config.ZELLE_RECIPIENT,
+      ``,
+      `Zelle note: enter only ${ref} and nothing else.`,
+      `Do not include product names, comments, or any other text in the note.`,
+      `Use the exact amount shown above so we can match your payment to ${ref}.`,
+      `If the amount is incorrect, we will send a confirmation email. If no response is received within 72 hours, fulfillment will not proceed and the payment will not be refunded except where required by law.`,
+      `Payment is manually reviewed before fulfillment. Once confirmed, your order ships the next business day.`,
+      `If you have questions, reply to this email.`,
+    );
   } else {
     lines.push(
       `We'll follow up shortly with payment instructions.`,
@@ -299,6 +311,17 @@ function customerInstructionsHtml(order) {
       <p style="font-family:monospace; font-size:16px;"><strong>${htmlEscape(config.PAYPAL_MANUAL_EMAIL)}</strong></p>
       <p><strong>Send with PayPal Friends and Family.</strong></p>
       <p>Include your order number <strong>${htmlEscape(ref)}</strong> in the PayPal note.</p>
+      <p>Use the exact amount shown above so we can match your payment to <strong>${htmlEscape(ref)}</strong>.</p>
+      <p>If the amount is incorrect, we will send a confirmation email. If no response is received within 72 hours, fulfillment will not proceed and the payment will not be refunded except where required by law.</p>
+      <p>Payment is manually reviewed before fulfillment. Once confirmed, your order ships the next business day.</p>
+      <p>If you have questions, reply to this email.</p>
+    `;
+  } else if (order.payment_provider === 'zelle') {
+    body = `
+      <p>Send the exact total due by Zelle to:</p>
+      <p style="font-family:monospace; font-size:16px;"><strong>${htmlEscape(config.ZELLE_RECIPIENT)}</strong></p>
+      <p><strong>Zelle note: enter only ${htmlEscape(ref)} and nothing else.</strong></p>
+      <p>Do not include product names, comments, or any other text in the note.</p>
       <p>Use the exact amount shown above so we can match your payment to <strong>${htmlEscape(ref)}</strong>.</p>
       <p>If the amount is incorrect, we will send a confirmation email. If no response is received within 72 hours, fulfillment will not proceed and the payment will not be refunded except where required by law.</p>
       <p>Payment is manually reviewed before fulfillment. Once confirmed, your order ships the next business day.</p>
@@ -350,14 +373,17 @@ async function sendPaymentReminder(order) {
   const ref = `HP-${order.id}`;
   const provider = order.payment_provider === 'crypto'
     ? `${order.crypto_asset || 'crypto'} payment`
-    : 'PayPal payment';
+    : order.payment_provider === 'zelle' ? 'Zelle payment' : 'PayPal payment';
+  const confirmation = order.payment_provider === 'crypto'
+    ? 'the TXID'
+    : order.payment_provider === 'zelle' ? 'your Zelle confirmation' : 'your PayPal confirmation';
   const text = [
     `Payment reminder for ${ref}`,
     ``,
     `We have your Highland Peptides order, but it is still awaiting ${provider}.`,
     `Exact total due: ${money(order.total)}`,
     ``,
-    `If you already sent payment, reply to this email with ${order.payment_provider === 'crypto' ? 'the TXID' : 'your PayPal confirmation'} so we can match it.`,
+    `If you already sent payment, reply to this email with ${confirmation} so we can match it.`,
     `If you no longer want the order, no action is required.`,
     ``,
     `Questions? Reply to this email and include ${ref}.`,
@@ -366,7 +392,7 @@ async function sendPaymentReminder(order) {
     <h2>Payment reminder for ${htmlEscape(ref)}</h2>
     <p>We have your Highland Peptides order, but it is still awaiting ${htmlEscape(provider)}.</p>
     <p><strong>Exact total due: ${money(order.total)}</strong></p>
-    <p>If you already sent payment, reply to this email with ${order.payment_provider === 'crypto' ? 'the TXID' : 'your PayPal confirmation'} so we can match it.</p>
+    <p>If you already sent payment, reply to this email with ${htmlEscape(confirmation)} so we can match it.</p>
     <p>If you no longer want the order, no action is required.</p>
     <p>Questions? Reply to this email and include <strong>${htmlEscape(ref)}</strong>.</p>
   `;

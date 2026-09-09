@@ -447,6 +447,10 @@
           <strong>Crypto <em>5% off</em></strong>
           <span>Submit order and pay by BTC or USDC. Cannot be combined with promo codes.</span>
         </button>
+        <button type="button" id="zelleCheckoutBtn" class="payment-choice-card">
+          <strong>Zelle</strong>
+          <span>Submit your order, then send the exact total to <span id="zelleRecipientPreview" class="zelle-recipient-inline">+1 (213) 424-4643</span>. The Zelle note must contain only your order number and nothing else.</span>
+        </button>
       </div>
       <p class="manual-payment-note">Each order receives a unique exact total. Payments are manually reviewed, and confirmed orders ship the next business day. Wrong payment amounts require email confirmation within 72 hours before fulfillment can proceed.</p>
       <p class="form-msg" id="checkoutMsg"></p>
@@ -458,6 +462,11 @@
           <p class="crypto-address-label">Send the exact total to PayPal:</p>
           <p class="crypto-address" id="paypalPaymentEmail"></p>
           <p class="crypto-network-note">Use the exact total shown so we can match your payment to this order. We manually verify payment before fulfillment; confirmed orders ship the next business day.</p>
+        </div>
+        <div id="zellePaymentDetails" style="display:none;">
+          <p class="crypto-address-label">Send the exact total by Zelle to:</p>
+          <p class="crypto-address" id="zellePaymentRecipient"></p>
+          <p class="crypto-network-note">Use the exact total shown. In the Zelle note, enter only the order number shown above (for example, HP-123) and nothing else. We manually verify payment before fulfillment; confirmed orders ship the next business day.</p>
         </div>
         <div id="cryptoChoiceDetails" style="display:none;">
           <label>Pay with
@@ -486,7 +495,7 @@
   Not evaluated by the FDA.
 </footer>
 
-<script src="/js/shared.js?v=address-validation-v1-20260901"></script>
+<script src="/js/shared.js?v=zelle-payment-v1-20260909"></script>
 <script src="/js/cart.js?v=account-rewards-v3-20260829"></script>
 </body>
 </html>

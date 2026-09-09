@@ -93,6 +93,16 @@ or:
 DATA_DIR=/var/data
 ```
 
+The Zelle checkout option defaults to `+1 (213) 424-4643`. To change the
+customer-facing recipient without editing code, set:
+
+```txt
+ZELLE_RECIPIENT=+1 (213) 424-4643
+```
+
+Zelle orders remain `pending_payment` until the payment is verified and the
+order is manually marked paid in the admin dashboard.
+
 If an old `data/db.json` exists when this new code first runs, the app copies it into the persistent path automatically.
 
 ## Order backups: email and Discord

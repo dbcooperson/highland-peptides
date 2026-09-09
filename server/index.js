@@ -190,6 +190,7 @@ app.get('/api/catalog', (req, res) => {
     orderFeeRate: config.ORDER_FEE_RATE,
     altPaymentDiscountRate: config.ALT_PAYMENT_DISCOUNT_RATE,
     accountCryptoDiscountRate: config.ACCOUNT_CRYPTO_DISCOUNT_RATE,
+    zelleRecipient: config.ZELLE_RECIPIENT,
     promotion: publicPromotion(),
   });
 });
@@ -339,7 +340,7 @@ function prepareCheckout(body, accountId = null) {
     return { error: 'Name, valid email, destination country, and full shipping address are required.' };
   }
 
-  const normalizedPaymentMethod = ['paypal', 'manual_paypal', 'crypto'].includes(paymentMethod) ? paymentMethod : 'manual_paypal';
+  const normalizedPaymentMethod = ['paypal', 'manual_paypal', 'zelle', 'crypto'].includes(paymentMethod) ? paymentMethod : 'manual_paypal';
   const normalizedCryptoAsset = normalizedPaymentMethod === 'crypto' && cryptoAsset === 'USDC' ? 'USDC' : 'BTC';
 
   const items = Array.isArray(rawItems) ? rawItems : [];
@@ -550,6 +551,11 @@ app.post('/api/checkout', checkCheckoutRateLimit, async (req, res) => {
   if (paymentMethod === 'manual_paypal') {
     response.paypal = { email: config.PAYPAL_MANUAL_EMAIL, reference: `HP-${order.id}` };
     response.message = 'Order received. Send the exact total shown to PayPal. We manually verify payment before fulfillment.';
+  }
+
+  if (paymentMethod === 'zelle') {
+    response.zelle = { recipient: config.ZELLE_RECIPIENT, reference: `HP-${order.id}` };
+    response.message = 'Order received. Send the exact total shown by Zelle to the phone number provided. We manually verify payment before fulfillment.';
   }
 
   if (paymentMethod === 'crypto') {

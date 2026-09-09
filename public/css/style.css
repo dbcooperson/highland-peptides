@@ -1253,7 +1253,7 @@ body.search-open { overflow: hidden; }
 }
 .manual-payment-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   margin: 0 0 10px;
 }
@@ -1307,6 +1307,11 @@ body.search-open { overflow: hidden; }
 .manual-payment-details p {
   margin: 0 0 10px;
 }
+.payment-choice-card span .zelle-recipient-inline {
+  display: inline;
+  color: inherit;
+  font: inherit;
+}
 .manual-payment-alert {
   display: block;
   margin: 10px 0;
@@ -1321,7 +1326,7 @@ body.search-open { overflow: hidden; }
 .manual-payment-alert strong {
   font-weight: 900;
 }
-@media (max-width: 560px) {
+@media (max-width: 700px) {
   .manual-payment-grid { grid-template-columns: 1fr; }
   .manual-payment-details {
     padding: 12px;

@@ -86,6 +86,10 @@ module.exports = {
   PAYPAL_CURRENCY: process.env.PAYPAL_CURRENCY || 'USD',
   PAYPAL_MANUAL_EMAIL: process.env.PAYPAL_MANUAL_EMAIL || 'at475756@gmail.com',
 
+  // Customer-facing Zelle recipient. Zelle payments are matched and approved
+  // manually in the admin dashboard after the customer submits an order.
+  ZELLE_RECIPIENT: process.env.ZELLE_RECIPIENT || '+1 (213) 424-4643',
+
   // Optional order backups. Configure these in Render so paid orders are copied
   // outside the site database.
   // Crypto payment addresses (customer-facing, shown at checkout).

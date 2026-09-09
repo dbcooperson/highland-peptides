@@ -1015,9 +1015,11 @@ function openCheckoutModal() {
   if (cryptoMsg) cryptoMsg.textContent = '';
   const manualDetails = document.getElementById('manualPaymentDetails');
   const paypalDetails = document.getElementById('paypalPaymentDetails');
+  const zelleDetails = document.getElementById('zellePaymentDetails');
   const cryptoChoice = document.getElementById('cryptoChoiceDetails');
   if (manualDetails) manualDetails.style.display = 'none';
   if (paypalDetails) paypalDetails.style.display = 'none';
+  if (zelleDetails) zelleDetails.style.display = 'none';
   if (cryptoChoice) cryptoChoice.style.display = 'none';
   if (cryptoDetails) cryptoDetails.style.display = 'none';
   const cryptoButton = document.getElementById('cryptoCheckoutBtn');
@@ -1197,6 +1199,7 @@ async function submitCryptoCheckout() {
   const btn = document.getElementById('cryptoCheckoutBtn');
   const choice = document.getElementById('cryptoChoiceDetails');
   const paypalDetails = document.getElementById('paypalPaymentDetails');
+  const zelleDetails = document.getElementById('zellePaymentDetails');
   trackPaymentMethod('crypto');
 
   if (appliedDiscount) {
@@ -1208,6 +1211,7 @@ async function submitCryptoCheckout() {
   if (!cryptoChoiceOpen) {
     cryptoChoiceOpen = true;
     if (paypalDetails) paypalDetails.style.display = 'none';
+    if (zelleDetails) zelleDetails.style.display = 'none';
     if (choice) choice.style.display = 'block';
     showManualPaymentShell('Crypto payment', 'Choose BTC or USDC, then submit the order to get the exact payment total and address. Crypto discount cannot be combined with promo codes.');
     btn.querySelector('strong').innerHTML = hpAccountState.authenticated ? 'Submit Crypto Order <em>10% total savings</em>' : 'Submit Crypto Order <em>5% off</em>';
@@ -1295,10 +1299,12 @@ async function submitManualPaypalCheckout() {
     msgEl.style.color = 'var(--success)';
     msgEl.textContent = 'Order submitted. Send the exact amount shown below.';
     const paypalDetails = document.getElementById('paypalPaymentDetails');
+    const zelleDetails = document.getElementById('zellePaymentDetails');
     const cryptoChoice = document.getElementById('cryptoChoiceDetails');
     const cryptoDetails = document.getElementById('cryptoPaymentDetails');
     if (cryptoChoice) cryptoChoice.style.display = 'none';
     if (cryptoDetails) cryptoDetails.style.display = 'none';
+    if (zelleDetails) zelleDetails.style.display = 'none';
     if (paypalDetails) paypalDetails.style.display = 'block';
     document.getElementById('paypalPaymentEmail').textContent = result.paypal ? result.paypal.email : 'at475756@gmail.com';
     showManualPaymentShell('PayPal payment instructions', `<strong>Order #${result.orderId}</strong><br>Exact total due: <strong>$${result.total.toFixed(2)}</strong><br>Send payment to: <strong>${result.paypal ? result.paypal.email : 'at475756@gmail.com'}</strong><br><span class="manual-payment-alert"><strong>Send with PayPal Friends and Family.</strong><br>Include <strong>Order #${result.orderId}</strong> in the PayPal note.</span><br><span class="hint">Please send the exact total shown. If the amount is incorrect, we will email you for confirmation. If no response is received within 72 hours, fulfillment will not proceed and the payment will not be refunded except where required by law. Confirmed orders ship the next business day.</span>`);
@@ -1308,6 +1314,43 @@ async function submitManualPaypalCheckout() {
     msgEl.textContent = err.message;
     focusAddressError(err);
     trackCheckoutError('order_creation', 'submission_failed', 'manual_paypal');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function submitZelleCheckout() {
+  const msgEl = document.getElementById('checkoutMsg');
+  const btn = document.getElementById('zelleCheckoutBtn');
+  const payload = checkoutPayloadFromForm();
+  payload.paymentMethod = 'zelle';
+  trackPaymentMethod('zelle');
+
+  if (!validateCheckoutPayload(payload, msgEl)) return;
+
+  btn.disabled = true;
+  try {
+    const result = await api('/api/checkout', { method: 'POST', body: payload });
+    const recipient = result.zelle ? result.zelle.recipient : ((window.sitePayments && window.sitePayments.zelleRecipient) || '+1 (213) 424-4643');
+    msgEl.style.color = 'var(--success)';
+    msgEl.textContent = 'Order submitted. Send the exact amount shown below by Zelle.';
+    const zelleDetails = document.getElementById('zellePaymentDetails');
+    const paypalDetails = document.getElementById('paypalPaymentDetails');
+    const cryptoChoice = document.getElementById('cryptoChoiceDetails');
+    const cryptoDetails = document.getElementById('cryptoPaymentDetails');
+    if (paypalDetails) paypalDetails.style.display = 'none';
+    if (cryptoChoice) cryptoChoice.style.display = 'none';
+    if (cryptoDetails) cryptoDetails.style.display = 'none';
+    if (zelleDetails) zelleDetails.style.display = 'block';
+    document.getElementById('zellePaymentRecipient').textContent = recipient;
+    const reference = result.zelle ? result.zelle.reference : `HP-${result.orderId}`;
+    showManualPaymentShell('Zelle payment instructions', `<strong>Order #${result.orderId}</strong><br>Exact total due: <strong>$${result.total.toFixed(2)}</strong><br>Send by Zelle to: <strong>${escapeHTML(recipient)}</strong><br><span class="manual-payment-alert">Zelle note: enter only <strong>${escapeHTML(reference)}</strong> and nothing else.</span><br><span class="hint">Do not include product names, comments, or any other text in the note. Please send the exact total shown. If the amount is incorrect, we will email you for confirmation. If no response is received within 72 hours, fulfillment will not proceed and the payment will not be refunded except where required by law. Confirmed orders ship the next business day.</span>`);
+    clearCartAfterCheckout();
+  } catch (err) {
+    msgEl.style.color = 'var(--danger)';
+    msgEl.textContent = err.message;
+    focusAddressError(err);
+    trackCheckoutError('order_creation', 'submission_failed', 'zelle');
   } finally {
     btn.disabled = false;
   }
@@ -1360,6 +1403,9 @@ function wireCheckout() {
 
   const manualPaypalBtn = document.getElementById('manualPaypalCheckoutBtn');
   if (manualPaypalBtn) manualPaypalBtn.addEventListener('click', submitManualPaypalCheckout);
+
+  const zelleBtn = document.getElementById('zelleCheckoutBtn');
+  if (zelleBtn) zelleBtn.addEventListener('click', submitZelleCheckout);
 
   const cryptoBtn = document.getElementById('cryptoCheckoutBtn');
   if (cryptoBtn) cryptoBtn.addEventListener('click', submitCryptoCheckout);

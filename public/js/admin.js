@@ -216,6 +216,9 @@ function paymentHTML(order) {
   if (provider === 'manual_paypal') {
     return `<span class="admin-payment admin-payment-paypal">PayPal manual</span><br><span class="admin-muted">Match exact total</span>`;
   }
+  if (provider === 'zelle') {
+    return `<span class="admin-payment admin-payment-manual">Zelle</span><br><span class="admin-muted">Match exact total</span>`;
+  }
   if (provider === 'crypto') {
     const asset = escapeHtml(order.crypto_asset || 'BTC');
     const rawTxid = String(order.payment_reference || '');
