@@ -72,6 +72,10 @@ module.exports = {
   ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || 'change-me-before-launch',
   ADMIN_PASSWORD_SHA256: process.env.ADMIN_PASSWORD_SHA256 || '',
 
+  // Restricted staff login that can only create fixed 15% promotion codes.
+  PROMO_MANAGER_USERNAME: process.env.PROMO_MANAGER_USERNAME || '',
+  PROMO_MANAGER_PASSWORD_SHA256: process.env.PROMO_MANAGER_PASSWORD_SHA256 || '',
+
   // Session secret (change via env var SESSION_SECRET before deploying).
   SESSION_SECRET: process.env.SESSION_SECRET || 'change-me-session-secret',
 

@@ -47,6 +47,7 @@ function initialData() {
     socialCreditSubmissions: [],
     nextSocialCreditSubmissionId: 1,
     inboundTrackingEvents: [],
+    promotionCodes: [],
   };
 }
 
@@ -58,6 +59,7 @@ function normalizeData(raw) {
   data.payoutRequests = Array.isArray(data.payoutRequests) ? data.payoutRequests : [];
   data.socialCreditSubmissions = Array.isArray(data.socialCreditSubmissions) ? data.socialCreditSubmissions : [];
   data.inboundTrackingEvents = Array.isArray(data.inboundTrackingEvents) ? data.inboundTrackingEvents : [];
+  data.promotionCodes = Array.isArray(data.promotionCodes) ? data.promotionCodes : [];
   data.nextOrderId = Math.max(Number(data.nextOrderId || 1), ...data.orders.map(item => Number(item.id || 0) + 1), 1);
   data.nextAccountId = Math.max(Number(data.nextAccountId || 1), ...data.accounts.map(item => Number(item.id || 0) + 1), 1);
   data.nextCreditLedgerId = Math.max(Number(data.nextCreditLedgerId || 1), ...data.creditLedger.map(item => Number(item.id || 0) + 1), 1);
@@ -97,6 +99,33 @@ function normalizedEmail(value) {
 
 function normalizedCode(value) {
   return String(value || '').trim().toUpperCase();
+}
+
+function getPromotionCodeByCode(code) {
+  const data = load();
+  const normalized = normalizedCode(code);
+  return data.promotionCodes.find(item => item.code === normalized && item.active !== false) || null;
+}
+
+function getPromotionCodes() {
+  return load().promotionCodes.slice().sort((left, right) => String(right.created_at).localeCompare(String(left.created_at)));
+}
+
+function createPromotionCode(code, createdBy = 'promo-manager') {
+  const normalized = normalizedCode(code);
+  if (!/^[A-Z0-9]{3,24}$/.test(normalized)) throw new Error('Use 3–24 letters or numbers with no spaces.');
+  const data = load();
+  if (data.promotionCodes.some(item => item.code === normalized)) throw new Error('That promotion code already exists.');
+  const promotionCode = {
+    code: normalized,
+    rate: 0.15,
+    active: true,
+    created_by: String(createdBy || 'promo-manager').slice(0, 80),
+    created_at: new Date().toISOString(),
+  };
+  data.promotionCodes.push(promotionCode);
+  save(data);
+  return promotionCode;
 }
 
 function addLedgerEntry(data, accountId, amountCents, type, details = {}) {
@@ -801,4 +830,5 @@ function getStorageInfo() {
 module.exports = {
   createOrder, getAllOrders, getOrderById, setPayPalOrderId, markOrderPaid, updateOrderStatus, updateOrderNotes, deleteOrder, markOrderBackupSent, claimPaymentReminder, markPaymentReminderSent, markPaymentReminderFailed, claimTrackingDispatch, markTrackingSent, markTrackingFailed, hasInboundTrackingEvent, markInboundTrackingEvent, claimFulfillmentDiscordPost, markFulfillmentDiscordSent, markFulfillmentDiscordFailed, getStorageInfo, isTxidUsed, setPaymentReference,
   createAccount, getAccountById, getAccountByEmail, setAccountVerificationToken, verifyAccountByTokenHash, touchAccountLogin, setPasswordResetToken, resetPasswordByTokenHash, getAccountByReferralCode, setAccountReferralCode, getAccountDashboard, createPayoutRequest, updatePayoutRequest, getAdminReferralData, reviewReferralCredit, createSocialCreditSubmission, reviewSocialCreditSubmission,
+  createPromotionCode, getPromotionCodeByCode, getPromotionCodes,
 };

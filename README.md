@@ -19,7 +19,7 @@ PDF generation. Payment processing is intentionally stubbed — orders land as
 
 1. **Supplier costs.** `data/products.json` currently has placeholder cost figures. Replace `cost` for each SKU with what you're actually paying your COA-verified supplier.
 2. **Packaging fee.** `server/config.js` → `PACKAGING_FEE` is a $1.50 placeholder. Update it to your real per-order ink + bag cost.
-3. **Admin password & session secret.** Set `ADMIN_PASSWORD_SHA256` (preferred) or `ADMIN_PASSWORD`, plus `SESSION_SECRET`, before deploying — do not leave the defaults in `config.js`.
+3. **Admin password & session secret.** Set `ADMIN_PASSWORD_SHA256` (preferred) or `ADMIN_PASSWORD`, plus `SESSION_SECRET`, before deploying — do not leave the defaults in `config.js`. The restricted `/promo-manager.html` login stays disabled until the private `PROMO_MANAGER_USERNAME` and `PROMO_MANAGER_PASSWORD_SHA256` environment variables are set; it can only create fixed 15%-off codes.
 4. **Payment.** No processor is wired in. Checkout currently just records the order as pending. Once you've set up a business entity + a processor that allows this product category, this is the next thing to build.
 5. **Legal review.** `legal/RUO_Disclaimer_DRAFT.docx` is a first-draft disclaimer, not legal advice. Have an attorney review and finalize it, and confirm your final product list, before this goes live.
 

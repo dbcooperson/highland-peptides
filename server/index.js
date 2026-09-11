@@ -22,6 +22,7 @@ const {
   adminRememberCookieOptions,
   restoreAdminFromRememberCookie,
   requireAdmin,
+  requirePromoManager,
 } = require('./auth');
 const { buildPackingSlip, buildContentsLabel } = require('./labels');
 const { isPayPalConfigured, createPayPalOrder, capturePayPalOrder } = require('./paypal');
@@ -260,6 +261,8 @@ function resolveDiscountCode(code) {
   const normalized = String(code).trim().toUpperCase();
   const rate = config.DISCOUNT_CODES[normalized];
   if (rate != null) return { code: normalized, rate, type: 'promotion', referralAccountId: null };
+  const managedPromotion = db.getPromotionCodeByCode(normalized);
+  if (managedPromotion) return { code: normalized, rate: 0.15, type: 'promotion', referralAccountId: null };
   const referralAccount = db.getAccountByReferralCode(normalized);
   return referralAccount ? {
     code: normalized,
@@ -1002,6 +1005,54 @@ app.post('/api/admin/logout', (req, res) => {
     res.clearCookie(ADMIN_REMEMBER_COOKIE, adminRememberCookieOptions(config, isProductionRuntime, false));
     res.json({ ok: true });
   });
+});
+
+app.get('/api/promo-manager/session', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  res.json({ authenticated: Boolean(req.session?.isPromoManager), role: req.session?.isPromoManager ? 'promo_manager' : null });
+});
+
+app.post('/api/promo-manager/login', checkAdminLoginLimit, (req, res) => {
+  if (!config.PROMO_MANAGER_USERNAME || !/^[a-f0-9]{64}$/i.test(config.PROMO_MANAGER_PASSWORD_SHA256)) {
+    return res.status(503).json({ error: 'Promo manager access is not configured yet.' });
+  }
+  const username = cleanText(req.body?.username, 80).toLowerCase();
+  const expectedUsername = cleanText(config.PROMO_MANAGER_USERNAME, 80).toLowerCase();
+  if (username !== expectedUsername || !safePasswordMatch(req.body?.password, '', config.PROMO_MANAGER_PASSWORD_SHA256)) {
+    recordAdminLoginFailure(req);
+    return res.status(401).json({ error: 'Wrong promo manager credentials.' });
+  }
+  resetAdminLoginFailures(req);
+  req.session.regenerate(err => {
+    if (err) return res.status(500).json({ error: 'Could not start promo manager session.' });
+    req.session.isPromoManager = true;
+    res.json({ ok: true, role: 'promo_manager' });
+  });
+});
+
+app.post('/api/promo-manager/logout', (req, res) => {
+  req.session.destroy(() => {
+    res.clearCookie('hp.sid', { httpOnly: true, secure: isProductionRuntime, sameSite: 'lax' });
+    res.json({ ok: true });
+  });
+});
+
+app.get('/api/promo-manager/codes', requirePromoManager, (_req, res) => {
+  res.json({ codes: db.getPromotionCodes().map(item => ({ code: item.code, percentOff: 15, createdAt: item.created_at })) });
+});
+
+app.post('/api/promo-manager/codes', requirePromoManager, (req, res) => {
+  const code = cleanText(req.body?.code, 24).toUpperCase();
+  if (!/^[A-Z0-9]{3,24}$/.test(code)) return res.status(400).json({ error: 'Use 3–24 letters or numbers with no spaces.' });
+  if (config.DISCOUNT_CODES[code] != null || db.getPromotionCodeByCode(code) || db.getAccountByReferralCode(code)) {
+    return res.status(409).json({ error: 'That code is already in use.' });
+  }
+  try {
+    const created = db.createPromotionCode(code, config.PROMO_MANAGER_USERNAME);
+    res.status(201).json({ ok: true, code: created.code, percentOff: 15, createdAt: created.created_at });
+  } catch (err) {
+    res.status(400).json({ error: err.message || 'Could not create promotion code.' });
+  }
 });
 
 

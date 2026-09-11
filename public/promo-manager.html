@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Highland Promo Manager</title>
+<link rel="stylesheet" href="/css/style.css?v=promo-manager-20260911">
+</head>
+<body class="admin-page">
+<header class="topbar"><div class="brand">Highland Promo Manager</div><nav><button id="logoutBtn" type="button" hidden>Log Out</button></nav></header>
+<main style="display:block;max-width:720px">
+  <section id="loginPanel" class="panel">
+    <h2>Promo Manager Login</h2>
+    <p class="hint">This account can only create fixed 15%-off codes. It cannot access orders, customers, payments, analytics, or admin settings.</p>
+    <form id="loginForm">
+      <label>Username <input id="username" autocomplete="username" required></label>
+      <label>Password <input id="password" type="password" autocomplete="current-password" required></label>
+      <button type="submit">Log In</button>
+      <p id="loginMessage" class="form-msg" aria-live="polite"></p>
+    </form>
+  </section>
+  <section id="managerPanel" class="panel" hidden>
+    <h2>Create a 15% code</h2>
+    <p class="hint">Codes use 3–24 letters or numbers, contain no spaces, and always give exactly 15% off eligible products.</p>
+    <form id="codeForm">
+      <label>New code <input id="promoCode" maxlength="24" pattern="[A-Za-z0-9]{3,24}" autocomplete="off" required></label>
+      <button type="submit">Create 15% Code</button>
+      <p id="codeMessage" class="form-msg" aria-live="polite"></p>
+    </form>
+    <h3>Codes created by this account</h3>
+    <div id="codeList" class="panel"><p class="hint">Loading…</p></div>
+  </section>
+</main>
+<script src="/js/promo-manager.js?v=20260911"></script>
+</body>
+</html>

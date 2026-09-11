@@ -120,6 +120,13 @@ function requireAdmin(req, res, next) {
   next();
 }
 
+function requirePromoManager(req, res, next) {
+  if (!req.session?.isPromoManager) {
+    return res.status(401).json({ error: 'Promo manager login required.' });
+  }
+  next();
+}
+
 module.exports = {
   ADMIN_REMEMBER_COOKIE,
   createAdminRememberToken,
@@ -127,4 +134,5 @@ module.exports = {
   adminRememberCookieOptions,
   restoreAdminFromRememberCookie,
   requireAdmin,
+  requirePromoManager,
 };
