@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { addressRequest, censusAddressUrl, interpretCensusResponse, interpretValidationResponse, validateShippingAddress } = require('./address-validation');
+const { addressRequest, canUseAddressAsEntered, censusAddressUrl, interpretCensusResponse, interpretValidationResponse, validateShippingAddress } = require('./address-validation');
 
 const buyer = {
   name: 'July Customer',
@@ -101,6 +101,17 @@ test('Census fallback rejects a U.S. address that does not match', () => {
   const result = interpretCensusResponse(buyer, { result: { addressMatches: [] } });
   assert.equal(result.valid, false);
   assert.equal(result.code, 'invalid_address');
+});
+
+test('unmatched or temporarily unverifiable addresses may be used as entered', () => {
+  assert.equal(canUseAddressAsEntered({ code: 'invalid_address' }), true);
+  assert.equal(canUseAddressAsEntered({ code: 'address_validation_unavailable' }), true);
+});
+
+test('known apartment or unit problems still require correction', () => {
+  assert.equal(canUseAddressAsEntered({ code: 'missing_unit' }), false);
+  assert.equal(canUseAddressAsEntered({ code: 'invalid_unit' }), false);
+  assert.equal(canUseAddressAsEntered({ code: 'unexpected_validation_error' }), false);
 });
 
 test('Census requests omit apartment details but preserve the entered unit', () => {

@@ -27,7 +27,7 @@ const { buildPackingSlip, buildContentsLabel } = require('./labels');
 const { isPayPalConfigured, createPayPalOrder, capturePayPalOrder } = require('./paypal');
 const { sendOrderBackup, sendPendingTrackingDiscord, checkFulfillmentDiscordConnection, sendCustomerPaymentInstructions, sendPaymentReminder, sendTrackingEmail, isCustomerEmailConfigured } = require('./notifications');
 const { createBitcoinMonitor } = require('./btc-monitor');
-const { validateShippingAddress } = require('./address-validation');
+const { canUseAddressAsEntered, validateShippingAddress } = require('./address-validation');
 const analytics = require('./analytics');
 const coa = require('./coa');
 const { applyBundlePromotion, publicPromotion } = require('./promotions');
@@ -444,7 +444,19 @@ async function validatePreparedCheckoutAddress(prepared) {
   const result = await validateShippingAddress(prepared.orderInput.buyer, {
     apiKey: config.GOOGLE_ADDRESS_VALIDATION_KEY,
   });
-  if (!result.valid) return result;
+  if (!result.valid && !canUseAddressAsEntered(result)) return result;
+  if (!result.valid) {
+    prepared.orderInput.shippingAddressValidation = {
+      provider: result.provider || (config.GOOGLE_ADDRESS_VALIDATION_KEY ? 'google_address_validation' : 'census_geocoder'),
+      responseId: result.responseId || null,
+      granularity: result.validationGranularity || null,
+      matchedAddress: result.matchedAddress || null,
+      validatedAt: new Date().toISOString(),
+      acceptedAsEntered: true,
+      warningCode: result.code,
+    };
+    return { ...result, valid: true, buyer: prepared.orderInput.buyer, acceptedAsEntered: true };
+  }
   if (result.enabled) {
     prepared.orderInput.buyer = result.buyer;
     prepared.orderInput.shippingAddressValidation = {
