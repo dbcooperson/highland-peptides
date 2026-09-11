@@ -153,7 +153,7 @@ GOOGLE_PLACES_BROWSER_KEY=browser-key-restricted-to-highlandpeptides.com
 GOOGLE_ADDRESS_VALIDATION_KEY=server-key-restricted-to-address-validation-api
 ```
 
-The browser key supplies address suggestions on mobile and desktop. The server key validates every address again before creating an order, standardizes the saved address for shipping labels, rejects incomplete or undeliverable addresses, and prompts for a missing or unconfirmed apartment/unit on supported U.S. addresses. The server-side check applies even when the shopper skips autocomplete and types the address manually.
+The browser key supplies optional address suggestions on mobile and desktop. The server key checks addresses and standardizes successful matches for shipping labels. A completed checkout form is still accepted exactly as entered when the provider cannot verify it, with the lookup warning saved for fulfillment review.
 
 Both Google keys are optional. Without them, checkout keeps native phone/browser
 address autofill and automatically checks U.S. street/city/state/ZIP combinations

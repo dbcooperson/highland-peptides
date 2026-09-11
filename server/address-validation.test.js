@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { addressRequest, canUseAddressAsEntered, censusAddressUrl, interpretCensusResponse, interpretValidationResponse, validateShippingAddress } = require('./address-validation');
+const { acceptAddressAsEntered, addressRequest, censusAddressUrl, interpretCensusResponse, interpretValidationResponse, validateShippingAddress } = require('./address-validation');
 
 const buyer = {
   name: 'July Customer',
@@ -103,15 +103,17 @@ test('Census fallback rejects a U.S. address that does not match', () => {
   assert.equal(result.code, 'invalid_address');
 });
 
-test('unmatched or temporarily unverifiable addresses may be used as entered', () => {
-  assert.equal(canUseAddressAsEntered({ code: 'invalid_address' }), true);
-  assert.equal(canUseAddressAsEntered({ code: 'address_validation_unavailable' }), true);
-});
-
-test('known apartment or unit problems still require correction', () => {
-  assert.equal(canUseAddressAsEntered({ code: 'missing_unit' }), false);
-  assert.equal(canUseAddressAsEntered({ code: 'invalid_unit' }), false);
-  assert.equal(canUseAddressAsEntered({ code: 'unexpected_validation_error' }), false);
+test('checkout policy accepts a complete address as entered when lookup cannot verify it', () => {
+  const result = acceptAddressAsEntered({
+    enabled: true,
+    valid: false,
+    code: 'missing_unit',
+    provider: 'google_address_validation',
+  }, buyer);
+  assert.equal(result.valid, true);
+  assert.equal(result.acceptedAsEntered, true);
+  assert.equal(result.buyer, buyer);
+  assert.equal(result.code, 'missing_unit');
 });
 
 test('Census requests omit apartment details but preserve the entered unit', () => {

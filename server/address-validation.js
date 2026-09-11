@@ -37,8 +37,9 @@ function invalidResult(code, error, details = {}) {
   return { enabled: true, valid: false, code, error, ...details };
 }
 
-function canUseAddressAsEntered(result) {
-  return Boolean(result && ['invalid_address', 'address_validation_unavailable'].includes(result.code));
+function acceptAddressAsEntered(result, buyer) {
+  if (!result || result.valid) return result;
+  return { ...result, valid: true, buyer, acceptedAsEntered: true };
 }
 
 function censusAddressUrl(buyer) {
@@ -191,8 +192,8 @@ async function validateShippingAddress(buyer, options = {}) {
 }
 
 module.exports = {
+  acceptAddressAsEntered,
   addressRequest,
-  canUseAddressAsEntered,
   censusAddressUrl,
   interpretCensusResponse,
   interpretValidationResponse,

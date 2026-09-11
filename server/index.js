@@ -27,7 +27,7 @@ const { buildPackingSlip, buildContentsLabel } = require('./labels');
 const { isPayPalConfigured, createPayPalOrder, capturePayPalOrder } = require('./paypal');
 const { sendOrderBackup, sendPendingTrackingDiscord, checkFulfillmentDiscordConnection, sendCustomerPaymentInstructions, sendPaymentReminder, sendTrackingEmail, isCustomerEmailConfigured } = require('./notifications');
 const { createBitcoinMonitor } = require('./btc-monitor');
-const { canUseAddressAsEntered, validateShippingAddress } = require('./address-validation');
+const { acceptAddressAsEntered, validateShippingAddress } = require('./address-validation');
 const analytics = require('./analytics');
 const coa = require('./coa');
 const { applyBundlePromotion, publicPromotion } = require('./promotions');
@@ -441,11 +441,14 @@ function prepareCheckout(body, accountId = null) {
 }
 
 async function validatePreparedCheckoutAddress(prepared) {
-  const result = await validateShippingAddress(prepared.orderInput.buyer, {
+  const validation = await validateShippingAddress(prepared.orderInput.buyer, {
     apiKey: config.GOOGLE_ADDRESS_VALIDATION_KEY,
   });
-  if (!result.valid && !canUseAddressAsEntered(result)) return result;
-  if (!result.valid) {
+  // A third-party lookup is advisory. The required-field checks in
+  // prepareCheckout decide whether the shopper supplied a complete address;
+  // fulfillment can review any lookup warning before buying the shipping label.
+  const result = acceptAddressAsEntered(validation, prepared.orderInput.buyer);
+  if (result.acceptedAsEntered) {
     prepared.orderInput.shippingAddressValidation = {
       provider: result.provider || (config.GOOGLE_ADDRESS_VALIDATION_KEY ? 'google_address_validation' : 'census_geocoder'),
       responseId: result.responseId || null,
@@ -455,7 +458,7 @@ async function validatePreparedCheckoutAddress(prepared) {
       acceptedAsEntered: true,
       warningCode: result.code,
     };
-    return { ...result, valid: true, buyer: prepared.orderInput.buyer, acceptedAsEntered: true };
+    return result;
   }
   if (result.enabled) {
     prepared.orderInput.buyer = result.buyer;
