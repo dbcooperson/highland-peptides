@@ -1019,6 +1019,7 @@ app.post('/api/promo-manager/login', checkAdminLoginLimit, (req, res) => {
   const username = cleanText(req.body?.username, 80).toLowerCase();
   const expectedUsername = cleanText(config.PROMO_MANAGER_USERNAME, 80).toLowerCase();
   if (username !== expectedUsername || !safePasswordMatch(req.body?.password, '', config.PROMO_MANAGER_PASSWORD_SHA256)) {
+    db.recordPromoAudit({ username: username || '(blank)', action: 'login', outcome: 'failed', ip: clientIp(req) });
     recordAdminLoginFailure(req);
     return res.status(401).json({ error: 'Wrong promo manager credentials.' });
   }
@@ -1026,11 +1027,15 @@ app.post('/api/promo-manager/login', checkAdminLoginLimit, (req, res) => {
   req.session.regenerate(err => {
     if (err) return res.status(500).json({ error: 'Could not start promo manager session.' });
     req.session.isPromoManager = true;
+    req.session.promoManagerUsername = expectedUsername;
+    db.recordPromoAudit({ username: expectedUsername, action: 'login', outcome: 'success', ip: clientIp(req) });
     res.json({ ok: true, role: 'promo_manager' });
   });
 });
 
-app.post('/api/promo-manager/logout', (req, res) => {
+app.post('/api/promo-manager/logout', requirePromoManager, (req, res) => {
+  const username = req.session?.promoManagerUsername || config.PROMO_MANAGER_USERNAME || 'unknown';
+  db.recordPromoAudit({ username, action: 'logout', outcome: 'success', ip: clientIp(req) });
   req.session.destroy(() => {
     res.clearCookie('hp.sid', { httpOnly: true, secure: isProductionRuntime, sameSite: 'lax' });
     res.json({ ok: true });
@@ -1043,16 +1048,28 @@ app.get('/api/promo-manager/codes', requirePromoManager, (_req, res) => {
 
 app.post('/api/promo-manager/codes', requirePromoManager, (req, res) => {
   const code = cleanText(req.body?.code, 24).toUpperCase();
-  if (!/^[A-Z0-9]{3,24}$/.test(code)) return res.status(400).json({ error: 'Use 3–24 letters or numbers with no spaces.' });
+  const username = req.session.promoManagerUsername || config.PROMO_MANAGER_USERNAME || 'unknown';
+  if (!/^[A-Z0-9]{3,24}$/.test(code)) {
+    db.recordPromoAudit({ username, action: 'code_create', outcome: 'rejected_invalid', code, ip: clientIp(req) });
+    return res.status(400).json({ error: 'Use 3–24 letters or numbers with no spaces.' });
+  }
   if (config.DISCOUNT_CODES[code] != null || db.getPromotionCodeByCode(code) || db.getAccountByReferralCode(code)) {
+    db.recordPromoAudit({ username, action: 'code_create', outcome: 'rejected_duplicate', code, ip: clientIp(req) });
     return res.status(409).json({ error: 'That code is already in use.' });
   }
   try {
-    const created = db.createPromotionCode(code, config.PROMO_MANAGER_USERNAME);
+    const created = db.createPromotionCode(code, username);
+    db.recordPromoAudit({ username, action: 'code_create', outcome: 'success', code: created.code, ip: clientIp(req) });
     res.status(201).json({ ok: true, code: created.code, percentOff: 15, createdAt: created.created_at });
   } catch (err) {
+    db.recordPromoAudit({ username, action: 'code_create', outcome: 'failed', code, ip: clientIp(req) });
     res.status(400).json({ error: err.message || 'Could not create promotion code.' });
   }
+});
+
+app.get('/api/admin/promo-audit', requireAdmin, (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  res.json({ entries: db.getPromoAuditLog(req.query.limit) });
 });
 
 

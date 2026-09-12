@@ -36,8 +36,29 @@ function initAdminTabs() {
       if (tab.dataset.adminTab === 'analytics') loadAnalytics();
       if (tab.dataset.adminTab === 'referrals') loadReferrals();
       if (tab.dataset.adminTab === 'labels') loadOrders();
+      if (tab.dataset.adminTab === 'promo-audit') loadPromoAudit();
     };
   });
+}
+
+async function loadPromoAudit() {
+  const table = document.getElementById('promoAuditTable');
+  const message = document.getElementById('promoAuditMessage');
+  if (!table) return;
+  if (message) message.textContent = '';
+  try {
+    const { entries } = await api('/api/admin/promo-audit?limit=500');
+    table.innerHTML = `<tr>${th('Time')}${th('Account')}${th('Action')}${th('Result')}${th('Code')}${th('IP')}</tr>${entries.map(entry => `<tr>
+      ${td(escapeHtml(new Date(entry.created_at).toLocaleString()))}
+      ${td(`<strong>${escapeHtml(entry.username)}</strong>`)}
+      ${td(escapeHtml(String(entry.action || '').replaceAll('_', ' ')))}
+      ${td(escapeHtml(String(entry.outcome || '').replaceAll('_', ' ')))}
+      ${td(entry.code ? `<strong>${escapeHtml(entry.code)}</strong>` : '<span class="admin-muted">—</span>')}
+      ${td(escapeHtml(entry.ip || '—'))}
+    </tr>`).join('') || `<tr>${td('No promo-account activity has been recorded yet.')}</tr>`}`;
+  } catch (err) {
+    if (message) message.textContent = err.message || 'Could not load the promo audit log.';
+  }
 }
 
 function showAdminDashboard() {
@@ -1510,6 +1531,7 @@ document.getElementById('adminLogoutBtn').addEventListener('click', async () => 
 
 document.getElementById('analyticsRange')?.addEventListener('change', loadAnalytics);
 document.getElementById('refreshReferralsButton')?.addEventListener('click', loadReferrals);
+document.getElementById('refreshPromoAuditButton')?.addEventListener('click', loadPromoAudit);
 
 api('/api/admin/session')
   .then(session => {

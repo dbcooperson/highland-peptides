@@ -35,6 +35,7 @@
       <button type="button" class="admin-tab" data-admin-tab="profit">Profit</button>
       <button type="button" class="admin-tab" data-admin-tab="referrals">Accounts & Referrals</button>
       <button type="button" class="admin-tab" data-admin-tab="labels">Label Maker</button>
+      <button type="button" class="admin-tab" data-admin-tab="promo-audit">Promo Audit</button>
       <button type="button" class="admin-tab" data-admin-tab="launch">Launch Checks</button>
     </div>
     <div class="panel admin-tab-panel" id="ordersPanel" data-admin-panel="orders">
@@ -270,6 +271,17 @@
       <h2>Launch Checks <span class="hint">(things to verify before pushing traffic)</span></h2>
       <div id="launchChecks"></div>
       <div id="priceAuditDetails"></div>
+    </div>
+    <div class="panel admin-tab-panel" id="promoAuditPanel" data-admin-panel="promo-audit" hidden>
+      <div class="analytics-heading-row">
+        <div>
+          <h2>Promo Account Audit Log</h2>
+          <p class="hint">Visible only through the full admin account. Tracks promo-manager sign-ins and code activity.</p>
+        </div>
+        <button type="button" id="refreshPromoAuditButton">Refresh</button>
+      </div>
+      <div class="analytics-table-wrap"><table id="promoAuditTable"></table></div>
+      <p id="promoAuditMessage" class="form-msg" aria-live="polite"></p>
     </div>
   </section>
 </main>

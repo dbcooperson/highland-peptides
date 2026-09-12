@@ -48,6 +48,8 @@ function initialData() {
     nextSocialCreditSubmissionId: 1,
     inboundTrackingEvents: [],
     promotionCodes: [],
+    promoAuditLog: [],
+    nextPromoAuditId: 1,
   };
 }
 
@@ -60,11 +62,13 @@ function normalizeData(raw) {
   data.socialCreditSubmissions = Array.isArray(data.socialCreditSubmissions) ? data.socialCreditSubmissions : [];
   data.inboundTrackingEvents = Array.isArray(data.inboundTrackingEvents) ? data.inboundTrackingEvents : [];
   data.promotionCodes = Array.isArray(data.promotionCodes) ? data.promotionCodes : [];
+  data.promoAuditLog = Array.isArray(data.promoAuditLog) ? data.promoAuditLog : [];
   data.nextOrderId = Math.max(Number(data.nextOrderId || 1), ...data.orders.map(item => Number(item.id || 0) + 1), 1);
   data.nextAccountId = Math.max(Number(data.nextAccountId || 1), ...data.accounts.map(item => Number(item.id || 0) + 1), 1);
   data.nextCreditLedgerId = Math.max(Number(data.nextCreditLedgerId || 1), ...data.creditLedger.map(item => Number(item.id || 0) + 1), 1);
   data.nextPayoutRequestId = Math.max(Number(data.nextPayoutRequestId || 1), ...data.payoutRequests.map(item => Number(item.id || 0) + 1), 1);
   data.nextSocialCreditSubmissionId = Math.max(Number(data.nextSocialCreditSubmissionId || 1), ...data.socialCreditSubmissions.map(item => Number(item.id || 0) + 1), 1);
+  data.nextPromoAuditId = Math.max(Number(data.nextPromoAuditId || 1), ...data.promoAuditLog.map(item => Number(item.id || 0) + 1), 1);
   return data;
 }
 
@@ -126,6 +130,28 @@ function createPromotionCode(code, createdBy = 'promo-manager') {
   data.promotionCodes.push(promotionCode);
   save(data);
   return promotionCode;
+}
+
+function recordPromoAudit({ username, action, outcome = 'success', code = '', ip = '' }) {
+  const data = load();
+  const entry = {
+    id: data.nextPromoAuditId++,
+    username: String(username || 'unknown').trim().slice(0, 80),
+    action: String(action || 'unknown').trim().slice(0, 60),
+    outcome: String(outcome || 'unknown').trim().slice(0, 30),
+    code: normalizedCode(code).slice(0, 24),
+    ip: String(ip || '').trim().slice(0, 100),
+    created_at: new Date().toISOString(),
+  };
+  data.promoAuditLog.push(entry);
+  if (data.promoAuditLog.length > 5000) data.promoAuditLog = data.promoAuditLog.slice(-5000);
+  save(data);
+  return entry;
+}
+
+function getPromoAuditLog(limit = 500) {
+  const safeLimit = Math.max(1, Math.min(1000, Number(limit) || 500));
+  return load().promoAuditLog.slice().sort((left, right) => Number(right.id) - Number(left.id)).slice(0, safeLimit);
 }
 
 function addLedgerEntry(data, accountId, amountCents, type, details = {}) {
@@ -831,4 +857,5 @@ module.exports = {
   createOrder, getAllOrders, getOrderById, setPayPalOrderId, markOrderPaid, updateOrderStatus, updateOrderNotes, deleteOrder, markOrderBackupSent, claimPaymentReminder, markPaymentReminderSent, markPaymentReminderFailed, claimTrackingDispatch, markTrackingSent, markTrackingFailed, hasInboundTrackingEvent, markInboundTrackingEvent, claimFulfillmentDiscordPost, markFulfillmentDiscordSent, markFulfillmentDiscordFailed, getStorageInfo, isTxidUsed, setPaymentReference,
   createAccount, getAccountById, getAccountByEmail, setAccountVerificationToken, verifyAccountByTokenHash, touchAccountLogin, setPasswordResetToken, resetPasswordByTokenHash, getAccountByReferralCode, setAccountReferralCode, getAccountDashboard, createPayoutRequest, updatePayoutRequest, getAdminReferralData, reviewReferralCredit, createSocialCreditSubmission, reviewSocialCreditSubmission,
   createPromotionCode, getPromotionCodeByCode, getPromotionCodes,
+  recordPromoAudit, getPromoAuditLog,
 };
