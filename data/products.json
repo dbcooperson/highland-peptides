@@ -416,6 +416,40 @@
     "category": "Supplies",
     "group": "Supplies",
     "fixedPublicPrice": 8.99,
+    "quantityDiscounts": {
+      "3": 5,
+      "5": 10
+    },
+    "promoEligible": false
+  },
+  {
+    "sku": "WA30",
+    "name": "Bacteriostatic Water",
+    "spec": "30ml x1 vial",
+    "cost": 3.9,
+    "category": "Supplies",
+    "group": "Supplies",
+    "fixedPublicPrice": 17.98,
+    "imageSku": "WA10",
+    "quantityDiscounts": {
+      "3": 5,
+      "5": 10
+    },
+    "promoEligible": false
+  },
+  {
+    "sku": "WA50",
+    "name": "Bacteriostatic Water",
+    "spec": "50ml x1 vial",
+    "cost": 6.5,
+    "category": "Supplies",
+    "group": "Supplies",
+    "fixedPublicPrice": 27.98,
+    "imageSku": "WA10",
+    "quantityDiscounts": {
+      "3": 5,
+      "5": 10
+    },
     "promoEligible": false
   },
   {
@@ -773,5 +807,16 @@
     "group": "Aminos",
     "salePrice": 40.92,
     "fixedPublicPrice": 45.99
+  },
+  {
+    "sku": "RU58841",
+    "name": "RU58841",
+    "spec": "5% solution, 30ml",
+    "containerLabel": "dropper bottle",
+    "cost": 15,
+    "category": "Research Compound",
+    "group": "Hair Research",
+    "fixedPublicPrice": 34.99,
+    "imageFile": "RU58841-v2.png"
   }
 ]

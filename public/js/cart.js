@@ -27,14 +27,15 @@ function sadFaceSVG() {
 }
 
 function cartLineHTML(sku, qty, p) {
-  const lineTotal = p.price * qty;
+  const pricing = productQuantityPricing(p, qty);
   return `
     <div class="cart-line">
       <div class="cart-line-media photo sku-mockup" aria-hidden="true">${productMockupImageHTML(p)}</div>
       <div class="cart-line-info">
         <div class="cart-line-kicker">${escapeHTML(p.group || p.category || 'Research product')}</div>
         <strong>${escapeHTML(p.name)}</strong>
-        <span>${escapeHTML(cleanVialSpec(p.spec))} x${qty} vial${qty === 1 ? '' : 's'}</span>
+        <span>${escapeHTML(cleanVialSpec(p.spec))} x${qty} ${escapeHTML(qty === 1 ? (p.containerLabel || 'vial') : `${p.containerLabel || 'vial'}s`)}</span>
+        ${pricing.savings ? `<span class="cart-line-savings">Bundle savings: $${pricing.savings.toFixed(2)}</span>` : ''}
         <em>Guaranteed 99% purity</em>
       </div>
       <div class="cart-line-qty" aria-label="Quantity controls">
@@ -42,7 +43,7 @@ function cartLineHTML(sku, qty, p) {
         <span class="cart-line-qty-num">${qty}</span>
         <button type="button" class="qty-btn cart-qty-up" data-sku="${sku}" aria-label="Increase quantity">+</button>
       </div>
-      <div class="cart-line-price">$${lineTotal.toFixed(2)}</div>
+      <div class="cart-line-price">$${pricing.total.toFixed(2)}</div>
       <button type="button" class="cart-remove-btn" data-sku="${sku}" aria-label="Remove ${escapeHTML(p.name)} from cart">&times;</button>
     </div>
   `;
@@ -139,7 +140,7 @@ function renderCartPage() {
       unavailableCount += 1;
       return unavailableCartLineHTML(sku, cart[sku]);
     }
-    subtotal += p.price * cart[sku];
+    subtotal += productQuantityPricing(p, cart[sku]).total;
     return cartLineHTML(sku, cart[sku], p);
   }).join('');
   const promotionState = bundlePromotionState(cart);

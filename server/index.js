@@ -15,7 +15,7 @@ const session = require('express-session');
 
 const config = require('./config');
 const db = require('./db');
-const { catalog, bySku, costBySku, getProductFamily, priceAudit } = require('./products');
+const { catalog, bySku, costBySku, getProductFamily, priceAudit, quantityPricing } = require('./products');
 const {
   ADMIN_REMEMBER_COOKIE,
   createAdminRememberToken,
@@ -360,10 +360,20 @@ function prepareCheckout(body, accountId = null) {
     if (!product || !qty || qty < 1 || qty > 99) {
       return { error: `Invalid item: ${item.sku}` };
     }
-    const lineTotal = product.price * qty;
+    const pricing = quantityPricing(product, qty);
+    const lineTotal = pricing.total;
     subtotal += lineTotal;
     if (product.promoEligible !== false) promoEligibleSubtotal += lineTotal;
-    resolved.push({ sku: product.sku, name: product.name, spec: product.spec, quantity: qty, unit_price: product.price, promo_eligible: product.promoEligible !== false });
+    resolved.push({
+      sku: product.sku,
+      name: product.name,
+      spec: product.spec,
+      quantity: qty,
+      unit_price: lineTotal / qty,
+      list_unit_price: product.price,
+      quantity_discount: pricing.savings,
+      promo_eligible: product.promoEligible !== false,
+    });
   }
   subtotal = Math.round(subtotal * 100) / 100;
   promoEligibleSubtotal = Math.round(promoEligibleSubtotal * 100) / 100;

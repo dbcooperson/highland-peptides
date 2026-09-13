@@ -86,6 +86,21 @@ const POPULAR_SKUS = [
 ];
 const popularRank = Object.fromEntries(POPULAR_SKUS.map((sku, i) => [sku, i]));
 
+function quantityPricing(product, quantity) {
+  const qty = Math.max(1, Math.floor(Number(quantity) || 1));
+  const tiers = Object.entries(product && product.quantityDiscounts || {})
+    .map(([minimum, savings]) => ({ minimum: Number(minimum), savings: Number(savings) }))
+    .filter(tier => tier.minimum > 0 && tier.savings > 0 && qty >= tier.minimum)
+    .sort((a, b) => b.minimum - a.minimum);
+  const savings = tiers.length ? tiers[0].savings : 0;
+  const listTotal = round(Number(product && product.price || 0) * qty, PRICE_DECIMALS);
+  return {
+    quantity: qty,
+    savings: round(Math.min(listTotal, savings), PRICE_DECIMALS),
+    total: round(Math.max(0, listTotal - savings), PRICE_DECIMALS),
+  };
+}
+
 // Public catalog: cost is never exposed to the frontend, only the sale price.
 // Price rule: supplier per-vial cost * markup * adjustment, unless a fixed public salePrice is set.
 const pricedCatalog = raw
@@ -102,8 +117,10 @@ const pricedCatalog = raw
       ? 'Low stock'
       : 'Available to order',
     promoEligible: p.promoEligible !== false,
+    quantityDiscounts: p.quantityDiscounts || null,
+    containerLabel: p.containerLabel || 'vial',
     description: p.description || descriptions[p.name] || '',
-    image: `/images/product-mockups/generated/${p.sku}.webp?v=${PRODUCT_IMAGE_REVISION}`,
+    image: `/images/product-mockups/generated/${p.imageFile || `${p.imageSku || p.sku}.webp`}?v=${PRODUCT_IMAGE_REVISION}`,
     labelName: labelNameForProduct(p.name),
     labelDose: labelDoseFromSpec(p.spec),
     price: p.fixedPublicPrice != null
@@ -180,6 +197,7 @@ module.exports = {
   priceAudit,
   labelNameForProduct,
   labelDoseFromSpec,
+  quantityPricing,
 };
 
 

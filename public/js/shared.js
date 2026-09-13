@@ -200,6 +200,21 @@ function getCatalogProductBySku(sku) {
   return catalog.find(product => product.sku === sku) || null;
 }
 
+function productQuantityPricing(product, quantity) {
+  const qty = Math.max(1, Math.floor(Number(quantity) || 1));
+  const tiers = Object.entries(product && product.quantityDiscounts || {})
+    .map(([minimum, savings]) => ({ minimum: Number(minimum), savings: Number(savings) }))
+    .filter(tier => tier.minimum > 0 && tier.savings > 0 && qty >= tier.minimum)
+    .sort((a, b) => b.minimum - a.minimum);
+  const savings = tiers.length ? tiers[0].savings : 0;
+  const listTotal = round2(Number(product && product.price || 0) * qty);
+  return {
+    quantity: qty,
+    savings: round2(Math.min(listTotal, savings)),
+    total: round2(Math.max(0, listTotal - savings)),
+  };
+}
+
 function bundlePromotionConfig() {
   return window.sitePromotion || {
     qualifyingQuantity: 5,
@@ -601,7 +616,7 @@ function cartSubtotal() {
   const cart = getCart();
   return Object.keys(cart).filter(s => cart[s] > 0).reduce((sum, sku) => {
     const p = window.siteCatalog.find(x => x.sku === sku);
-    return p ? sum + p.price * cart[sku] : sum;
+    return p ? sum + productQuantityPricing(p, cart[sku]).total : sum;
   }, 0);
 }
 
@@ -609,7 +624,7 @@ function cartPromoEligibleSubtotal() {
   const cart = getCart();
   return Object.keys(cart).filter(s => cart[s] > 0).reduce((sum, sku) => {
     const p = window.siteCatalog.find(x => x.sku === sku);
-    return p && p.promoEligible !== false ? sum + p.price * cart[sku] : sum;
+    return p && p.promoEligible !== false ? sum + productQuantityPricing(p, cart[sku]).total : sum;
   }, 0);
 }
 
@@ -873,7 +888,8 @@ function renderCheckoutSummary() {
   const lines = skus.map(sku => {
     const p = window.siteCatalog.find(x => x.sku === sku);
     if (!p) return '';
-    return `<div class="cart-row"><span>${escapeHTML(p.name)} x${cart[sku]}</span><span>$${(p.price * cart[sku]).toFixed(2)}</span></div>`;
+    const pricing = productQuantityPricing(p, cart[sku]);
+    return `<div class="cart-row"><span>${escapeHTML(p.name)} ${escapeHTML(cleanVialSpec(p.spec))} x${cart[sku]}${pricing.savings ? ` · save $${pricing.savings.toFixed(2)}` : ''}</span><span>$${pricing.total.toFixed(2)}</span></div>`;
   }).join('');
   const promotion = bundlePromotionState(cart);
   const rewardLine = promotion.unlocked && promotion.freeProduct

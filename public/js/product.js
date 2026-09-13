@@ -5,6 +5,11 @@ let selectedSku = sku;
 let family = null;
 let lastTrackedSku = null;
 
+function containerLabel(product, quantity = 1) {
+  const singular = product.containerLabel || 'vial';
+  return quantity === 1 ? singular : `${singular}s`;
+}
+
 function variantButtonsHTML() {
   return family.variants.map(v => `
     <button class="variant-btn ${v.sku === selectedSku ? 'active' : ''}" data-sku="${v.sku}">
@@ -12,6 +17,26 @@ function variantButtonsHTML() {
       <span class="variant-price">$${v.price.toFixed(2)}</span>
     </button>
   `).join('');
+}
+
+function quantityBundleOptionsHTML(selected) {
+  const tiers = Object.entries(selected.quantityDiscounts || {})
+    .map(([quantity, savings]) => ({ quantity: Number(quantity), savings: Number(savings) }))
+    .filter(tier => tier.quantity > 1 && tier.savings > 0)
+    .sort((a, b) => a.quantity - b.quantity);
+  if (!tiers.length) return '';
+  return `
+    <div class="size-label bundle-size-label">Choose a bundle</div>
+    <div class="quantity-bundle-options" aria-label="Quantity bundle options">
+      <button type="button" class="quantity-bundle-btn active" data-qty="1">
+        <strong>1 vial</strong><span>$${selected.price.toFixed(2)}</span>
+      </button>
+      ${tiers.map(tier => {
+        const total = Math.max(0, selected.price * tier.quantity - tier.savings);
+        return `<button type="button" class="quantity-bundle-btn" data-qty="${tier.quantity}"><strong>${tier.quantity} vials</strong><span>$${total.toFixed(2)} · save $${tier.savings.toFixed(2)}</span></button>`;
+      }).join('')}
+    </div>
+  `;
 }
 
 function coaHTML(selected) {
@@ -72,7 +97,7 @@ function renderProduct() {
         <p class="hint product-description">${escapeHTML(selected.description || family.description)}</p>
         <div class="product-availability ${availabilityLabel === 'Low stock' ? 'limited' : ''}"><span aria-hidden="true"></span>${escapeHTML(availabilityLabel)}</div>
         <div class="product-selected-card">
-          <span>Selected vial</span>
+          <span>Selected ${escapeHTML(containerLabel(selected))}</span>
           <strong>${escapeHTML(cleanVialSpec(selected.spec))}</strong>
         </div>
         <div class="product-trust-grid">
@@ -81,12 +106,14 @@ function renderProduct() {
           <div><strong>Expiry</strong><span>Good for the next 2 years</span></div>
         </div>
 
-        <div class="size-label">Choose vial size</div>
+        <div class="size-label">Choose size</div>
         <div class="variant-chips" id="variantChips">${variantButtonsHTML()}</div>
+
+        ${quantityBundleOptionsHTML(selected)}
 
         <div class="price-block">
           <span class="price-amount">$${selected.price.toFixed(2)}</span>
-          <span class="price-unit">per vial</span>
+          <span class="price-unit">per ${escapeHTML(containerLabel(selected))}</span>
         </div>
 
         <div class="purchase-row">
@@ -115,12 +142,27 @@ function renderProduct() {
   });
 
   const qtyInput = document.getElementById('qtyInput');
+  const syncBundleButtons = () => {
+    const qty = Math.max(1, parseInt(qtyInput.value, 10) || 1);
+    document.querySelectorAll('.quantity-bundle-btn').forEach(btn => {
+      btn.classList.toggle('active', Number(btn.dataset.qty) === qty);
+    });
+  };
   document.getElementById('qtyDown').onclick = () => {
     qtyInput.value = Math.max(1, (parseInt(qtyInput.value, 10) || 1) - 1);
+    syncBundleButtons();
   };
   document.getElementById('qtyUp').onclick = () => {
     qtyInput.value = (parseInt(qtyInput.value, 10) || 1) + 1;
+    syncBundleButtons();
   };
+  qtyInput.oninput = syncBundleButtons;
+  document.querySelectorAll('.quantity-bundle-btn').forEach(btn => {
+    btn.onclick = () => {
+      qtyInput.value = btn.dataset.qty;
+      syncBundleButtons();
+    };
+  });
 
   const addSelectedToCart = () => {
     const qty = Math.max(1, parseInt(qtyInput.value, 10) || 1);
