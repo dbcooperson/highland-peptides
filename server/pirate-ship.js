@@ -29,6 +29,15 @@ function orderItemsText(order) {
     .join('; ');
 }
 
+function pirateShipExportCandidates(orders) {
+  return (orders || [])
+    .filter(order => order.status === 'pending_tracking'
+      && !order.tracking_number
+      && Object.prototype.hasOwnProperty.call(order, 'pirate_ship_exported_at')
+      && !order.pirate_ship_exported_at)
+    .sort((a, b) => Number(a.id) - Number(b.id));
+}
+
 function pirateShipCsv(orders, options = {}) {
   const inboundDomain = normalizeInboundDomain(options.inboundDomain);
   const headers = [
@@ -236,6 +245,7 @@ async function fetchResendReceivedEmail(emailId, apiKey, fetchImpl = global.fetc
 
 module.exports = {
   pirateShipCsv,
+  pirateShipExportCandidates,
   parseInboundTrackingEmail,
   matchPendingTrackingOrder,
   verifyResendWebhook,

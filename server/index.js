@@ -34,7 +34,7 @@ const coa = require('./coa');
 const { applyBundlePromotion, publicPromotion } = require('./promotions');
 const { reminderIsDue, startPaymentReminderScheduler } = require('./reminders');
 const { registerAccountRoutes } = require('./accounts');
-const { pirateShipCsv, parseInboundTrackingEmail, matchPendingTrackingOrder, verifyResendWebhook, fetchResendReceivedEmail, normalizeInboundDomain, validOrderAliasToken } = require('./pirate-ship');
+const { pirateShipCsv, pirateShipExportCandidates, parseInboundTrackingEmail, matchPendingTrackingOrder, verifyResendWebhook, fetchResendReceivedEmail, normalizeInboundDomain, validOrderAliasToken } = require('./pirate-ship');
 
 const CONFIRMED_ORDER_STATUSES = new Set(['paid', 'pending_tracking', 'fulfilled']);
 
@@ -1224,14 +1224,20 @@ app.get('/api/admin/orders.csv', requireAdmin, (req, res) => {
 });
 
 app.get('/api/admin/pirate-ship.csv', requireAdmin, (req, res) => {
-  const waiting = db.getAllOrders()
-    .filter(order => order.status === 'pending_tracking' && !order.tracking_number)
-    .sort((a, b) => Number(a.id) - Number(b.id));
-  const date = new Date().toISOString().slice(0, 10);
+  const waiting = pirateShipExportCandidates(db.getAllOrders());
+  if (!waiting.length) {
+    res.setHeader('Cache-Control', 'no-store');
+    return res.status(204).end();
+  }
+  const exportedAt = new Date().toISOString();
+  const filenameTime = exportedAt.replace(/[:.]/g, '-');
+  const csv = pirateShipCsv(waiting, { inboundDomain: config.PIRATE_SHIP_INBOUND_DOMAIN, tokenSecret: config.SESSION_SECRET });
+  db.markPirateShipOrdersExported(waiting.map(order => order.id), exportedAt);
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-  res.setHeader('Content-Disposition', `attachment; filename="highland-pirate-ship-${date}.csv"`);
-  res.send(pirateShipCsv(waiting, { inboundDomain: config.PIRATE_SHIP_INBOUND_DOMAIN, tokenSecret: config.SESSION_SECRET }));
+  res.setHeader('X-Pirate-Ship-Order-Count', String(waiting.length));
+  res.setHeader('Content-Disposition', `attachment; filename="highland-pirate-ship-${filenameTime}.csv"`);
+  res.send(csv);
 });
 
 app.post('/api/admin/orders/:id/notes', requireAdmin, (req, res) => {

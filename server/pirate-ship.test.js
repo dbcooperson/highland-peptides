@@ -4,6 +4,7 @@ const crypto = require('crypto');
 
 const {
   pirateShipCsv,
+  pirateShipExportCandidates,
   parseInboundTrackingEmail,
   matchPendingTrackingOrder,
   verifyResendWebhook,
@@ -36,6 +37,19 @@ test('Pirate Ship CSV includes only mapping-friendly fields and an order-specifi
   assert.match(csv, /^\ufeff"Order ID","Full Name","Address Line 1"/);
   assert.match(csv, /"HP-187","July Researcher","8044 La Crosse Ave","Apt 3","Los Angeles","CA","90001","United States","hp-187-[a-f0-9]{16}@track\.example\.resend\.app","july@example\.com"/);
   assert.match(csv, /"3x Retatrutide 20mg"/);
+});
+
+test('Pirate Ship export queue includes each newly queued order only once', () => {
+  const fresh = order({ id: 190, pirate_ship_exported_at: null });
+  const exported = order({ id: 189, pirate_ship_exported_at: '2026-09-14T12:00:00.000Z' });
+  const legacy = order({ id: 188 });
+  const tracked = order({ id: 191, pirate_ship_exported_at: null, tracking_number: '9400100000000000000000' });
+  const paid = order({ id: 192, status: 'paid', pirate_ship_exported_at: null });
+
+  assert.deepEqual(
+    pirateShipExportCandidates([paid, tracked, legacy, exported, fresh]).map(item => item.id),
+    [190],
+  );
 });
 
 test('inbound tracking parser matches order alias and USPS tracking', () => {

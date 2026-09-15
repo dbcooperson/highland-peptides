@@ -372,6 +372,7 @@ function createOrder({ buyer, certifiedAt, items, subtotal, promoEligibleSubtota
     tracking_dispatch_started_at: null,
     tracking_dispatch_error: null,
     labels_printed_at: null,
+    pirate_ship_exported_at: null,
     shipping_address_validation: shippingAddressValidation || null,
     fulfillment_discord_dispatch_started_at: null,
     fulfillment_discord_sent_at: null,
@@ -484,13 +485,31 @@ function updateOrderStatus(id, status) {
   const data = load();
   const order = data.orders.find(item => item.id === Number(id));
   if (!order) return null;
+  const previousStatus = order.status;
   order.status = status;
   if (isConfirmedOrderStatus(status)) order.paid_at = order.paid_at || new Date().toISOString();
-  if (status === 'pending_tracking') order.labels_printed_at = order.labels_printed_at || new Date().toISOString();
+  if (status === 'pending_tracking') {
+    order.labels_printed_at = order.labels_printed_at || new Date().toISOString();
+    if (previousStatus !== 'pending_tracking') order.pirate_ship_exported_at = null;
+  }
   syncReferralCredit(data, order);
   if (status === 'cancelled') refundStoreCredit(data, order);
   save(data);
   return order;
+}
+
+function markPirateShipOrdersExported(ids, exportedAt = new Date().toISOString()) {
+  const orderIds = new Set((ids || []).map(Number).filter(Number.isFinite));
+  if (!orderIds.size) return [];
+  const data = load();
+  const exported = [];
+  data.orders.forEach(order => {
+    if (!orderIds.has(Number(order.id)) || order.status !== 'pending_tracking' || order.tracking_number) return;
+    order.pirate_ship_exported_at = exportedAt;
+    exported.push(order);
+  });
+  if (exported.length) save(data);
+  return exported;
 }
 
 function updateOrderNotes(id, notes) {
@@ -854,7 +873,7 @@ function getStorageInfo() {
 }
 
 module.exports = {
-  createOrder, getAllOrders, getOrderById, setPayPalOrderId, markOrderPaid, updateOrderStatus, updateOrderNotes, deleteOrder, markOrderBackupSent, claimPaymentReminder, markPaymentReminderSent, markPaymentReminderFailed, claimTrackingDispatch, markTrackingSent, markTrackingFailed, hasInboundTrackingEvent, markInboundTrackingEvent, claimFulfillmentDiscordPost, markFulfillmentDiscordSent, markFulfillmentDiscordFailed, getStorageInfo, isTxidUsed, setPaymentReference,
+  createOrder, getAllOrders, getOrderById, setPayPalOrderId, markOrderPaid, updateOrderStatus, updateOrderNotes, deleteOrder, markOrderBackupSent, claimPaymentReminder, markPaymentReminderSent, markPaymentReminderFailed, claimTrackingDispatch, markTrackingSent, markTrackingFailed, hasInboundTrackingEvent, markInboundTrackingEvent, claimFulfillmentDiscordPost, markFulfillmentDiscordSent, markFulfillmentDiscordFailed, markPirateShipOrdersExported, getStorageInfo, isTxidUsed, setPaymentReference,
   createAccount, getAccountById, getAccountByEmail, setAccountVerificationToken, verifyAccountByTokenHash, touchAccountLogin, setPasswordResetToken, resetPasswordByTokenHash, getAccountByReferralCode, setAccountReferralCode, getAccountDashboard, createPayoutRequest, updatePayoutRequest, getAdminReferralData, reviewReferralCredit, createSocialCreditSubmission, reviewSocialCreditSubmission,
   createPromotionCode, getPromotionCodeByCode, getPromotionCodes,
   recordPromoAudit, getPromoAuditLog,
