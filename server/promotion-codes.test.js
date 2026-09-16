@@ -13,6 +13,9 @@ const { configuredPromoManagers } = require('./promo-managers');
 
 test('multiple promo managers can be configured without exposing plaintext passwords', () => {
   const managers = configuredPromoManagers({
+    PROMO_MANAGER_BUILTIN_ACCOUNTS: [
+      { username: 'BuiltInPromo', passwordSha256: 'd'.repeat(64) },
+    ],
     PROMO_MANAGER_USERNAME: 'LegacyPromo',
     PROMO_MANAGER_PASSWORD_SHA256: 'a'.repeat(64),
     PROMO_MANAGER_ACCOUNTS_JSON: JSON.stringify([
@@ -20,7 +23,7 @@ test('multiple promo managers can be configured without exposing plaintext passw
       { username: 'PromoThree', passwordSha256: 'c'.repeat(64) },
     ]),
   });
-  assert.deepEqual(managers.map(item => item.username), ['legacypromo', 'promotwo', 'promothree']);
+  assert.deepEqual(managers.map(item => item.username), ['builtinpromo', 'legacypromo', 'promotwo', 'promothree']);
   assert.equal(managers.every(item => /^[a-f0-9]{64}$/.test(item.passwordSha256)), true);
 });
 

@@ -8,6 +8,18 @@ function validSha256(value) {
 
 function configuredPromoManagers(config) {
   const managers = [];
+  const builtInAccounts = Array.isArray(config.PROMO_MANAGER_BUILTIN_ACCOUNTS)
+    ? config.PROMO_MANAGER_BUILTIN_ACCOUNTS
+    : [];
+  for (const entry of builtInAccounts) {
+    const username = normalizedUsername(entry && entry.username);
+    const passwordSha256 = String(entry && entry.passwordSha256 || '').trim().toLowerCase();
+    if (!username || !validSha256(passwordSha256)) {
+      throw new Error('Every built-in promo manager account needs a username and a 64-character SHA-256 password hash.');
+    }
+    managers.push({ username, passwordSha256 });
+  }
+
   const legacyUsername = normalizedUsername(config.PROMO_MANAGER_USERNAME);
   const legacyHash = String(config.PROMO_MANAGER_PASSWORD_SHA256 || '').trim().toLowerCase();
 

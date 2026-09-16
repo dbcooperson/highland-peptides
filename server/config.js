@@ -76,6 +76,12 @@ module.exports = {
   // Restricted staff login that can only create fixed 15% promotion codes.
   PROMO_MANAGER_USERNAME: process.env.PROMO_MANAGER_USERNAME || '',
   PROMO_MANAGER_PASSWORD_SHA256: process.env.PROMO_MANAGER_PASSWORD_SHA256 || '',
+  // Promo-only bootstrap accounts. Only strong one-way hashes are committed;
+  // the plaintext passwords are delivered privately to the site owner.
+  PROMO_MANAGER_BUILTIN_ACCOUNTS: [
+    { username: 'promo02', passwordSha256: '746b5ed53c8a3451ea2c6674b7152ba6268bbed657897b579c4eb84fa4da0617' },
+    { username: 'promo03', passwordSha256: '44a890e74d87013c5b6963f407790647a0ac6ac534c27e4c51298ce7dca58aec' },
+  ],
   // Optional JSON array for additional promo-only staff accounts:
   // [{"username":"promo2","passwordSha256":"<64-char sha256>"}]
   // The legacy single-account variables above remain supported.
