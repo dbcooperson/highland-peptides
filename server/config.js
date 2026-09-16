@@ -59,6 +59,7 @@ module.exports = {
     NOOR: 0.15,
     GJ: 0.15,
     SUPERMAN: 0.15,
+    CHRIS: 0.15,
   },
 
 
@@ -75,6 +76,10 @@ module.exports = {
   // Restricted staff login that can only create fixed 15% promotion codes.
   PROMO_MANAGER_USERNAME: process.env.PROMO_MANAGER_USERNAME || '',
   PROMO_MANAGER_PASSWORD_SHA256: process.env.PROMO_MANAGER_PASSWORD_SHA256 || '',
+  // Optional JSON array for additional promo-only staff accounts:
+  // [{"username":"promo2","passwordSha256":"<64-char sha256>"}]
+  // The legacy single-account variables above remain supported.
+  PROMO_MANAGER_ACCOUNTS_JSON: process.env.PROMO_MANAGER_ACCOUNTS_JSON || '',
 
   // Session secret (change via env var SESSION_SECRET before deploying).
   SESSION_SECRET: process.env.SESSION_SECRET || 'change-me-session-secret',

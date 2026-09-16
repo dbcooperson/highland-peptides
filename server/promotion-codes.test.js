@@ -9,6 +9,29 @@ process.env.ORDER_DB_PATH = path.join(tempDir, 'db.json');
 delete require.cache[require.resolve('./db')];
 const db = require('./db');
 const { requirePromoManager } = require('./auth');
+const { configuredPromoManagers } = require('./promo-managers');
+
+test('multiple promo managers can be configured without exposing plaintext passwords', () => {
+  const managers = configuredPromoManagers({
+    PROMO_MANAGER_USERNAME: 'LegacyPromo',
+    PROMO_MANAGER_PASSWORD_SHA256: 'a'.repeat(64),
+    PROMO_MANAGER_ACCOUNTS_JSON: JSON.stringify([
+      { username: 'PromoTwo', passwordSha256: 'b'.repeat(64) },
+      { username: 'PromoThree', passwordSha256: 'c'.repeat(64) },
+    ]),
+  });
+  assert.deepEqual(managers.map(item => item.username), ['legacypromo', 'promotwo', 'promothree']);
+  assert.equal(managers.every(item => /^[a-f0-9]{64}$/.test(item.passwordSha256)), true);
+});
+
+test('duplicate or malformed promo manager accounts are rejected at startup', () => {
+  assert.throws(() => configuredPromoManagers({
+    PROMO_MANAGER_USERNAME: 'same',
+    PROMO_MANAGER_PASSWORD_SHA256: 'a'.repeat(64),
+    PROMO_MANAGER_ACCOUNTS_JSON: JSON.stringify([{ username: 'SAME', passwordSha256: 'b'.repeat(64) }]),
+  }), /duplicate/i);
+  assert.throws(() => configuredPromoManagers({ PROMO_MANAGER_ACCOUNTS_JSON: '{bad json' }), /valid JSON/i);
+});
 
 test('promo manager creates persistent fixed 15% codes', () => {
   const created = db.createPromotionCode('launch15', 'promo15');

@@ -35,8 +35,10 @@ const { applyBundlePromotion, publicPromotion } = require('./promotions');
 const { reminderIsDue, startPaymentReminderScheduler } = require('./reminders');
 const { registerAccountRoutes } = require('./accounts');
 const { pirateShipCsv, pirateShipExportCandidates, parseInboundTrackingEmail, matchPendingTrackingOrder, verifyResendWebhook, fetchResendReceivedEmail, normalizeInboundDomain, validOrderAliasToken } = require('./pirate-ship');
+const { configuredPromoManagers } = require('./promo-managers');
 
 const CONFIRMED_ORDER_STATUSES = new Set(['paid', 'pending_tracking', 'fulfilled']);
+const promoManagers = configuredPromoManagers(config);
 
 const isProductionRuntime = Boolean(process.env.RENDER || process.env.RENDER_SERVICE_ID || process.env.NODE_ENV === 'production');
 if (isProductionRuntime) {
@@ -1023,12 +1025,12 @@ app.get('/api/promo-manager/session', (req, res) => {
 });
 
 app.post('/api/promo-manager/login', checkAdminLoginLimit, (req, res) => {
-  if (!config.PROMO_MANAGER_USERNAME || !/^[a-f0-9]{64}$/i.test(config.PROMO_MANAGER_PASSWORD_SHA256)) {
+  if (!promoManagers.length) {
     return res.status(503).json({ error: 'Promo manager access is not configured yet.' });
   }
   const username = cleanText(req.body?.username, 80).toLowerCase();
-  const expectedUsername = cleanText(config.PROMO_MANAGER_USERNAME, 80).toLowerCase();
-  if (username !== expectedUsername || !safePasswordMatch(req.body?.password, '', config.PROMO_MANAGER_PASSWORD_SHA256)) {
+  const manager = promoManagers.find(item => item.username === username);
+  if (!manager || !safePasswordMatch(req.body?.password, '', manager.passwordSha256)) {
     db.recordPromoAudit({ username: username || '(blank)', action: 'login', outcome: 'failed', ip: clientIp(req) });
     recordAdminLoginFailure(req);
     return res.status(401).json({ error: 'Wrong promo manager credentials.' });
@@ -1037,14 +1039,14 @@ app.post('/api/promo-manager/login', checkAdminLoginLimit, (req, res) => {
   req.session.regenerate(err => {
     if (err) return res.status(500).json({ error: 'Could not start promo manager session.' });
     req.session.isPromoManager = true;
-    req.session.promoManagerUsername = expectedUsername;
-    db.recordPromoAudit({ username: expectedUsername, action: 'login', outcome: 'success', ip: clientIp(req) });
+    req.session.promoManagerUsername = manager.username;
+    db.recordPromoAudit({ username: manager.username, action: 'login', outcome: 'success', ip: clientIp(req) });
     res.json({ ok: true, role: 'promo_manager' });
   });
 });
 
 app.post('/api/promo-manager/logout', requirePromoManager, (req, res) => {
-  const username = req.session?.promoManagerUsername || config.PROMO_MANAGER_USERNAME || 'unknown';
+  const username = req.session?.promoManagerUsername || 'unknown';
   db.recordPromoAudit({ username, action: 'logout', outcome: 'success', ip: clientIp(req) });
   req.session.destroy(() => {
     res.clearCookie('hp.sid', { httpOnly: true, secure: isProductionRuntime, sameSite: 'lax' });
@@ -1058,7 +1060,7 @@ app.get('/api/promo-manager/codes', requirePromoManager, (_req, res) => {
 
 app.post('/api/promo-manager/codes', requirePromoManager, (req, res) => {
   const code = cleanText(req.body?.code, 24).toUpperCase();
-  const username = req.session.promoManagerUsername || config.PROMO_MANAGER_USERNAME || 'unknown';
+  const username = req.session.promoManagerUsername || 'unknown';
   if (!/^[A-Z0-9]{3,24}$/.test(code)) {
     db.recordPromoAudit({ username, action: 'code_create', outcome: 'rejected_invalid', code, ip: clientIp(req) });
     return res.status(400).json({ error: 'Use 3–24 letters or numbers with no spaces.' });
