@@ -1,0 +1,17 @@
+{
+  "name": "Highland Peptides",
+  "short_name": "Highland",
+  "description": "Highland Peptides research catalog",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f0e6",
+  "theme_color": "#064f3e",
+  "icons": [
+    {
+      "src": "/images/branding/highland-social-avatar-v1.png",
+      "sizes": "1254x1254",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
