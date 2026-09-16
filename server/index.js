@@ -39,6 +39,17 @@ const { configuredPromoManagers } = require('./promo-managers');
 
 const CONFIRMED_ORDER_STATUSES = new Set(['paid', 'pending_tracking', 'fulfilled']);
 const promoManagers = configuredPromoManagers(config);
+const todayPirateShipStatusMigration = db.applyOrderStatusMigration(
+  '2026-09-15-pirate-ship-orders-307-273-pending-tracking',
+  [307, 306, 303, 302, 291, 282, 281, 278, 275, 273],
+  'pending_tracking',
+);
+if (todayPirateShipStatusMigration.applied) {
+  console.log(`Marked ${todayPirateShipStatusMigration.updatedOrderIds.length} selected order(s) Pending tracking.`);
+  if (todayPirateShipStatusMigration.missingOrderIds.length) {
+    console.warn(`Selected order IDs not found: ${todayPirateShipStatusMigration.missingOrderIds.join(', ')}`);
+  }
+}
 
 const isProductionRuntime = Boolean(process.env.RENDER || process.env.RENDER_SERVICE_ID || process.env.NODE_ENV === 'production');
 if (isProductionRuntime) {

@@ -50,6 +50,7 @@ function initialData() {
     promotionCodes: [],
     promoAuditLog: [],
     nextPromoAuditId: 1,
+    appliedMigrations: [],
   };
 }
 
@@ -63,6 +64,7 @@ function normalizeData(raw) {
   data.inboundTrackingEvents = Array.isArray(data.inboundTrackingEvents) ? data.inboundTrackingEvents : [];
   data.promotionCodes = Array.isArray(data.promotionCodes) ? data.promotionCodes : [];
   data.promoAuditLog = Array.isArray(data.promoAuditLog) ? data.promoAuditLog : [];
+  data.appliedMigrations = Array.isArray(data.appliedMigrations) ? data.appliedMigrations : [];
   data.nextOrderId = Math.max(Number(data.nextOrderId || 1), ...data.orders.map(item => Number(item.id || 0) + 1), 1);
   data.nextAccountId = Math.max(Number(data.nextAccountId || 1), ...data.accounts.map(item => Number(item.id || 0) + 1), 1);
   data.nextCreditLedgerId = Math.max(Number(data.nextCreditLedgerId || 1), ...data.creditLedger.map(item => Number(item.id || 0) + 1), 1);
@@ -498,6 +500,49 @@ function updateOrderStatus(id, status) {
   return order;
 }
 
+function applyOrderStatusMigration(key, ids, status) {
+  const migrationKey = String(key || '').trim();
+  if (!migrationKey) throw new Error('A migration key is required.');
+  if (!['pending_payment', 'paid', 'pending_tracking', 'fulfilled', 'cancelled'].includes(status)) {
+    throw new Error('Unsupported order status migration.');
+  }
+  const data = load();
+  if (data.appliedMigrations.some(item => item && item.key === migrationKey)) {
+    return { applied: false, updatedOrderIds: [], missingOrderIds: [] };
+  }
+
+  const requestedIds = [...new Set((ids || []).map(Number).filter(Number.isFinite))];
+  const updatedOrderIds = [];
+  const missingOrderIds = [];
+  for (const id of requestedIds) {
+    const order = data.orders.find(item => Number(item.id) === id);
+    if (!order) {
+      missingOrderIds.push(id);
+      continue;
+    }
+    const previousStatus = order.status;
+    order.status = status;
+    if (isConfirmedOrderStatus(status)) order.paid_at = order.paid_at || new Date().toISOString();
+    if (status === 'pending_tracking') {
+      order.labels_printed_at = order.labels_printed_at || new Date().toISOString();
+      if (previousStatus !== 'pending_tracking') order.pirate_ship_exported_at = null;
+    }
+    syncReferralCredit(data, order);
+    if (status === 'cancelled') refundStoreCredit(data, order);
+    updatedOrderIds.push(id);
+  }
+  data.appliedMigrations.push({
+    key: migrationKey,
+    status,
+    requested_order_ids: requestedIds,
+    updated_order_ids: updatedOrderIds,
+    missing_order_ids: missingOrderIds,
+    applied_at: new Date().toISOString(),
+  });
+  save(data);
+  return { applied: true, updatedOrderIds, missingOrderIds };
+}
+
 function markPirateShipOrdersExported(ids, exportedAt = new Date().toISOString()) {
   const orderIds = new Set((ids || []).map(Number).filter(Number.isFinite));
   if (!orderIds.size) return [];
@@ -873,7 +918,7 @@ function getStorageInfo() {
 }
 
 module.exports = {
-  createOrder, getAllOrders, getOrderById, setPayPalOrderId, markOrderPaid, updateOrderStatus, updateOrderNotes, deleteOrder, markOrderBackupSent, claimPaymentReminder, markPaymentReminderSent, markPaymentReminderFailed, claimTrackingDispatch, markTrackingSent, markTrackingFailed, hasInboundTrackingEvent, markInboundTrackingEvent, claimFulfillmentDiscordPost, markFulfillmentDiscordSent, markFulfillmentDiscordFailed, markPirateShipOrdersExported, getStorageInfo, isTxidUsed, setPaymentReference,
+  createOrder, getAllOrders, getOrderById, setPayPalOrderId, markOrderPaid, updateOrderStatus, applyOrderStatusMigration, updateOrderNotes, deleteOrder, markOrderBackupSent, claimPaymentReminder, markPaymentReminderSent, markPaymentReminderFailed, claimTrackingDispatch, markTrackingSent, markTrackingFailed, hasInboundTrackingEvent, markInboundTrackingEvent, claimFulfillmentDiscordPost, markFulfillmentDiscordSent, markFulfillmentDiscordFailed, markPirateShipOrdersExported, getStorageInfo, isTxidUsed, setPaymentReference,
   createAccount, getAccountById, getAccountByEmail, setAccountVerificationToken, verifyAccountByTokenHash, touchAccountLogin, setPasswordResetToken, resetPasswordByTokenHash, getAccountByReferralCode, setAccountReferralCode, getAccountDashboard, createPayoutRequest, updatePayoutRequest, getAdminReferralData, reviewReferralCredit, createSocialCreditSubmission, reviewSocialCreditSubmission,
   createPromotionCode, getPromotionCodeByCode, getPromotionCodes,
   recordPromoAudit, getPromoAuditLog,
