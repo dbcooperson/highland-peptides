@@ -1034,8 +1034,8 @@ document.addEventListener('click', (event) => {
   deleteAdminOrder(deleteLink);
 });
 let adminOrdersCache = [];
-const PAID_LABEL_QUEUE_WINDOW_MS = 3 * 24 * 60 * 60 * 1000;
-const LABEL_HIDDEN_ORDERS_KEY = 'highland-label-hidden-orders-v1';
+const PAID_LABEL_QUEUE_CUTOFF_MS = Date.parse('2026-08-29T00:00:00-07:00');
+const LABEL_HIDDEN_ORDERS_KEY = 'highland-label-hidden-orders-v2';
 const printedPaidOrderIds = new Set();
 const hiddenPaidLabelOrderIds = new Set();
 let confirmingPendingTrackingOrderId = '';
@@ -1045,9 +1045,9 @@ function orderLabelCount(order) {
   return (order.items || []).reduce((sum, item) => sum + Math.max(0, Number(item.quantity) || 0), 0);
 }
 
-function isRecentPaidLabelOrder(order, now = Date.now()) {
+function isPaidLabelQueueOrder(order) {
   const paidAt = Date.parse(order.paid_at || order.created_at || '');
-  return Number.isFinite(paidAt) && paidAt >= now - PAID_LABEL_QUEUE_WINDOW_MS;
+  return Number.isFinite(paidAt) && paidAt >= PAID_LABEL_QUEUE_CUTOFF_MS;
 }
 
 function updatePaidLabelQueuePosition(values = getLabelMakerValues()) {
@@ -1167,24 +1167,24 @@ async function confirmOrderPendingTracking(button) {
 function renderPaidOrderLabelQueue() {
   const queue = document.getElementById('paidLabelOrderQueue');
   if (!queue) return;
-  const hiddenRecentOrders = adminOrdersCache.filter(order => order.status === 'paid'
+  const hiddenQueueOrders = adminOrdersCache.filter(order => order.status === 'paid'
     && orderLabelCount(order) > 0
-    && isRecentPaidLabelOrder(order)
+    && isPaidLabelQueueOrder(order)
     && hiddenPaidLabelOrderIds.has(String(order.id)));
   const restoreButton = document.getElementById('restoreRemovedLabelOrders');
   if (restoreButton) {
-    restoreButton.hidden = hiddenRecentOrders.length === 0;
-    restoreButton.textContent = `Restore removed${hiddenRecentOrders.length ? ` (${hiddenRecentOrders.length})` : ''}`;
+    restoreButton.hidden = hiddenQueueOrders.length === 0;
+    restoreButton.textContent = `Restore removed${hiddenQueueOrders.length ? ` (${hiddenQueueOrders.length})` : ''}`;
   }
   const paidOrders = adminOrdersCache
     .filter(order => order.status === 'paid'
       && orderLabelCount(order) > 0
-      && isRecentPaidLabelOrder(order)
+      && isPaidLabelQueueOrder(order)
       && !hiddenPaidLabelOrderIds.has(String(order.id)))
     .sort((a, b) => new Date(b.paid_at || b.created_at || 0) - new Date(a.paid_at || a.created_at || 0));
 
   if (!paidOrders.length) {
-    queue.innerHTML = '<div class="paid-label-order-empty"><strong>No recent paid orders waiting for labels</strong><span>Only orders paid within the last 3 days appear in this label queue.</span></div>';
+    queue.innerHTML = '<div class="paid-label-order-empty"><strong>No paid orders waiting for labels</strong><span>Paid orders after August 28 appear in this label queue until they are moved to Pending tracking.</span></div>';
     updatePaidLabelQueuePosition();
     return;
   }

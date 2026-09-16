@@ -64,12 +64,12 @@ test('paid orders can print all vial labels into consecutive unused positions', 
   assert.match(html, /id="refreshPaidLabelOrders"/);
   assert.match(js, /class="admin-print-order-labels"/);
   assert.match(js, /order\.status === 'paid'/);
-  assert.match(js, /PAID_LABEL_QUEUE_WINDOW_MS\s*=\s*3\s*\*\s*24\s*\*\s*60\s*\*\s*60\s*\*\s*1000/);
-  assert.match(js, /isRecentPaidLabelOrder\(order\)/);
-  assert.match(js, /paidAt\s*>=\s*now\s*-\s*PAID_LABEL_QUEUE_WINDOW_MS/);
-  assert.match(html, /Only the last 72 hours of paid orders appear here/);
+  assert.match(js, /PAID_LABEL_QUEUE_CUTOFF_MS\s*=\s*Date\.parse\('2026-08-29T00:00:00-07:00'\)/);
+  assert.match(js, /isPaidLabelQueueOrder\(order\)/);
+  assert.match(js, /paidAt\s*>=\s*PAID_LABEL_QUEUE_CUTOFF_MS/);
+  assert.match(html, /All paid orders after August 28 appear here/);
   assert.match(js, /renderPaidOrderLabelQueue/);
-  assert.match(js, /\.filter\(order => order\.status === 'paid'[\s\S]*?isRecentPaidLabelOrder\(order\)[\s\S]*?!hiddenPaidLabelOrderIds\.has\(String\(order\.id\)\)\)/);
+  assert.match(js, /\.filter\(order => order\.status === 'paid'[\s\S]*?isPaidLabelQueueOrder\(order\)[\s\S]*?!hiddenPaidLabelOrderIds\.has\(String\(order\.id\)\)\)/);
   assert.match(js, /paid_at \|\| b\.created_at/);
   assert.match(js, /paid-label-customer-button/);
   assert.match(js, /highland-order-labels-printed/);
@@ -83,7 +83,7 @@ test('paid orders can print all vial labels into consecutive unused positions', 
   assert.match(js, /paid-label-inline-confirm is-remove/);
   assert.match(js, /confirmRemoveLabelOrder/);
   assert.match(js, /paid-label-confirm-remove/);
-  assert.match(js, /highland-label-hidden-orders-v1/);
+  assert.match(js, /highland-label-hidden-orders-v2/);
   assert.match(js, /The paid transaction stays in Orders and profit totals\. You can restore this card later\./);
   assert.doesNotMatch(js, /confirmRemoveLabelOrder[\s\S]*?method: 'DELETE'/);
   assert.match(js, /confirmOrderPendingTracking/);
