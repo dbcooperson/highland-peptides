@@ -34,6 +34,7 @@ const coa = require('./coa');
 const { applyBundlePromotion, publicPromotion } = require('./promotions');
 const { reminderIsDue, startPaymentReminderScheduler } = require('./reminders');
 const { registerAccountRoutes } = require('./accounts');
+const { registerCheckoutVerificationRoutes, isCheckoutEmailVerified } = require('./checkout-verification');
 const { pirateShipCsv, pirateShipExportCandidates, parseInboundTrackingEmail, matchPendingTrackingOrder, verifyResendWebhook, fetchResendReceivedEmail, normalizeInboundDomain, validOrderAliasToken } = require('./pirate-ship');
 const { configuredPromoManagers } = require('./promo-managers');
 
@@ -101,6 +102,7 @@ app.use(session({
     maxAge: 1000 * 60 * 60 * 8,
   },
 }));
+registerCheckoutVerificationRoutes(app);
 app.use('/api/admin', restoreAdminFromRememberCookie(config));
 app.use(express.static(path.join(__dirname, '..', 'public'), {
   maxAge: process.env.NODE_ENV === 'production' ? '1h' : 0,
@@ -340,7 +342,7 @@ function prepareCheckout(body, accountId = null) {
     return { error: 'You must certify research/business use to place an order.' };
   }
   if (paymentPolicyAccepted !== true) {
-    return { error: 'You must confirm the exact-payment and 72-hour mismatch policy before payment.' };
+    return { error: 'You must confirm the exact-payment policy before payment.' };
   }
   const cleanBuyer = buyer ? {
     name: cleanText(buyer.name, 100),
@@ -536,6 +538,9 @@ app.post('/api/paypal/create-order', checkCheckoutRateLimit, async (req, res) =>
     analytics.recordEvent({ type: 'checkout_error', stage: 'server_validation', reason: 'invalid_checkout', visitorId: cleanText(req.body && req.body.analyticsVisitorId, 128), sessionId: cleanText(req.body && req.body.analyticsSessionId, 128), checkoutAttemptId: cleanText(req.body && req.body.analyticsCheckoutAttemptId, 128) });
     return res.status(400).json({ error: prepared.error });
   }
+  if (!isCheckoutEmailVerified(req, prepared.orderInput.buyer.email)) {
+    return res.status(403).json({ error: 'Verify your checkout email before placing the order.' });
+  }
   const addressValidation = await validatePreparedCheckoutAddress(prepared);
   if (!addressValidation.valid) {
     analytics.recordEvent({ type: 'checkout_error', stage: 'address_validation', reason: addressValidation.code || 'invalid_address', ...prepared.analytics });
@@ -565,6 +570,9 @@ app.post('/api/checkout', checkCheckoutRateLimit, async (req, res) => {
   if (prepared.error) {
     analytics.recordEvent({ type: 'checkout_error', stage: 'server_validation', reason: 'invalid_checkout', visitorId: cleanText(req.body && req.body.analyticsVisitorId, 128), sessionId: cleanText(req.body && req.body.analyticsSessionId, 128), checkoutAttemptId: cleanText(req.body && req.body.analyticsCheckoutAttemptId, 128) });
     return res.status(400).json({ error: prepared.error });
+  }
+  if (!isCheckoutEmailVerified(req, prepared.orderInput.buyer.email)) {
+    return res.status(403).json({ error: 'Verify your checkout email before placing the order.' });
   }
   const addressValidation = await validatePreparedCheckoutAddress(prepared);
   if (!addressValidation.valid) {

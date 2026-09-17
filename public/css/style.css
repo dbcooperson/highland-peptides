@@ -517,6 +517,21 @@ form input:focus, form select:focus { outline: none; border-color: var(--accent)
 }
 .checkbox-label input[type="checkbox"] { width: auto; margin: 2px 0 0; }
 
+.checkout-email-verify { border: 1px solid #d8d0bd; border-radius: 12px; padding: 14px; margin: 8px 0 18px; background: #fffdf8; }
+.checkout-email-verify h4 { margin: 0 0 5px; }
+.checkout-email-verify p { margin: 4px 0 10px; font-size: 13px; }
+.checkout-email-verify > label:not(.checkout-remember-device) { display: block; margin-top: 12px; }
+.checkout-email-verify > input { width: 100%; box-sizing: border-box; margin: 4px 0 8px; }
+.checkout-email-verify > button { border: 0; border-radius: 5px; padding: 8px 12px; color: white; background: #785b1d; cursor: pointer; }
+.checkout-email-verify > button:disabled { opacity: .55; cursor: wait; }
+.checkout-remember-device { display: flex; gap: 8px; align-items: center; margin-top: 10px; padding: 9px; border: 1px solid #e5bc62; border-radius: 7px; background: #fff7df; }
+.checkout-remember-device input { width: auto; margin: 0; }
+.checkout-email-verify .form-msg { min-height: 1.25em; margin-bottom: 0; }
+.checkout-research-terms { margin: 12px 0; font-size: 13px; }
+.checkout-research-terms summary { cursor: pointer; font-weight: 700; }
+.checkout-research-terms p { margin: 8px 0 0; }
+.checkout-refund-promise { padding: 12px; border-radius: 8px; border: 1px solid #d8d0bd; font-size: 13px; }
+
 /* ---------- Cart (checkout-modal order summary uses .cart-row) ---------- */
 .cart-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 .cart-remove-btn {
@@ -1334,6 +1349,20 @@ body.search-open { overflow: hidden; }
 .manual-payment-details p {
   margin: 0 0 10px;
 }
+
+.site-legal-notice {
+  border-top: 1px solid var(--border-on-dark);
+  background: #111619;
+  color: #d4d9d9;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.site-legal-notice-inner { max-width: 1100px; margin: 0 auto; padding: 28px 24px 36px; }
+.site-legal-notice h2 { margin: 0 0 10px; color: #fff; font-size: 16px; }
+.site-legal-notice p { margin: 0 0 10px; }
+.site-legal-notice a { color: #d7ae70; }
+.terms-of-sale-panel { max-width: 850px; margin: 48px auto; }
+.terms-of-sale-panel p { line-height: 1.7; }
 .payment-choice-card span .zelle-recipient-inline {
   display: inline;
   color: inherit;

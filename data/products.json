@@ -87,7 +87,8 @@
     "cost": 6.5,
     "category": "Peptide",
     "group": "Mitochondrial",
-    "salePrice": 15.643478
+    "salePrice": 15.643478,
+    "imageFile": "2S10-HP-31-clean.png"
   },
   {
     "sku": "2S50",
@@ -96,7 +97,8 @@
     "cost": 27,
     "category": "Peptide",
     "group": "Mitochondrial",
-    "salePrice": 52.165217
+    "salePrice": 52.165217,
+    "imageFile": "2S50-HP-31-clean.png"
   },
   {
     "sku": "G25",
@@ -400,22 +402,14 @@
     "salePrice": 13.034783
   },
   {
-    "sku": "OT10",
-    "name": "Oxytocin Acetate",
-    "spec": "10mg x1 vial",
-    "cost": 5.2,
-    "category": "Peptide",
-    "group": "Hormone",
-    "salePrice": 16.513043
-  },
-  {
     "sku": "WA10",
     "name": "Bacteriostatic Water",
-    "spec": "10ml x1 vial",
+    "spec": "10ml (pH 4.5) x1 vial",
     "cost": 1.3,
     "category": "Supplies",
     "group": "Supplies",
     "fixedPublicPrice": 8.99,
+    "imageFile": "WA10-sterile-bacteriostatic-clean.png",
     "quantityDiscounts": {
       "3": 5,
       "5": 10
@@ -425,12 +419,12 @@
   {
     "sku": "WA30",
     "name": "Bacteriostatic Water",
-    "spec": "30ml x1 vial",
+    "spec": "30ml (pH 4.5) x1 vial",
     "cost": 3.9,
     "category": "Supplies",
     "group": "Supplies",
     "fixedPublicPrice": 17.98,
-    "imageSku": "WA10",
+    "imageFile": "WA30-sterile-bacteriostatic-clean.png",
     "quantityDiscounts": {
       "3": 5,
       "5": 10
@@ -440,17 +434,33 @@
   {
     "sku": "WA50",
     "name": "Bacteriostatic Water",
-    "spec": "50ml x1 vial",
+    "spec": "50ml (pH 4.5) x1 vial",
     "cost": 6.5,
     "category": "Supplies",
     "group": "Supplies",
-    "fixedPublicPrice": 27.98,
-    "imageSku": "WA10",
+    "fixedPublicPrice": 23.99,
+    "imageFile": "WA50-sterile-bacteriostatic-clean.png",
     "quantityDiscounts": {
       "3": 5,
       "5": 10
     },
-    "promoEligible": false
+    "promoEligible": true
+  },
+  {
+    "sku": "WA100",
+    "name": "Bacteriostatic Water",
+    "spec": "100ml (pH 4.5) x1 vial",
+    "description": "Bacteriostatic water specified at pH 4.5 for laboratory and research-use preparation.",
+    "cost": 13,
+    "category": "Supplies",
+    "group": "Supplies",
+    "fixedPublicPrice": 38.99,
+    "imageFile": "WA100-sterile-bacteriostatic-clean.png",
+    "quantityDiscounts": {
+      "3": 5,
+      "5": 10
+    },
+    "promoEligible": true
   },
   {
     "sku": "5AD",
@@ -522,7 +532,8 @@
     "cost": 7,
     "category": "Peptide",
     "group": "Metabolic",
-    "salePrice": 16.513043
+    "salePrice": 16.513043,
+    "imageFile": "TR20-branded-clean.png"
   },
   {
     "sku": "TR30",
@@ -531,7 +542,8 @@
     "cost": 8.6,
     "category": "Peptide",
     "group": "Metabolic",
-    "salePrice": 19.991304
+    "salePrice": 19.991304,
+    "imageFile": "TR30-branded-clean.png"
   },
   {
     "sku": "TR40",
@@ -540,7 +552,8 @@
     "cost": 11,
     "category": "Peptide",
     "group": "Metabolic",
-    "salePrice": 26.078261
+    "salePrice": 26.078261,
+    "imageFile": "TR40-branded-clean.png"
   },
   {
     "sku": "RT15",
@@ -550,7 +563,8 @@
     "category": "Peptide",
     "group": "Metabolic",
     "salePrice": 22.6,
-    "fixedPublicPrice": 24.99
+    "fixedPublicPrice": 24.99,
+    "imageFile": "RT15-branded-clean.png"
   },
   {
     "sku": "RT20",
@@ -560,7 +574,8 @@
     "category": "Peptide",
     "group": "Metabolic",
     "salePrice": 27.817391,
-    "fixedPublicPrice": 29.99
+    "fixedPublicPrice": 29.99,
+    "imageFile": "RT20-branded-clean.png"
   },
   {
     "sku": "RT30",
@@ -570,7 +585,8 @@
     "category": "Peptide",
     "group": "Metabolic",
     "salePrice": 36.513043,
-    "fixedPublicPrice": 39.99
+    "fixedPublicPrice": 39.99,
+    "imageFile": "RT30-branded-clean.png"
   },
   {
     "sku": "SM2",
@@ -708,31 +724,14 @@
     "salePrice": 33.904348
   },
   {
-    "sku": "G10K",
-    "name": "HCG",
-    "spec": "10000IU x1 vial",
-    "cost": 11,
-    "category": "Peptide",
-    "group": "Hormone",
-    "salePrice": 26.078261
-  },
-  {
-    "sku": "G5K",
-    "name": "HCG",
-    "spec": "5000IU x1 vial",
-    "cost": 6,
-    "category": "Peptide",
-    "group": "Hormone",
-    "salePrice": 13.904348
-  },
-  {
     "sku": "TSM10",
     "name": "Tesamorelin",
     "spec": "10mg x1 vial",
     "cost": 15,
     "category": "Peptide",
     "group": "Growth Hormone",
-    "salePrice": 31.295652
+    "salePrice": 31.295652,
+    "imageFile": "TSM10-branded-clean.png"
   },
   {
     "sku": "TSM20",
@@ -741,7 +740,8 @@
     "cost": 24.5,
     "category": "Peptide",
     "group": "Growth Hormone",
-    "salePrice": 52.165217
+    "salePrice": 52.165217,
+    "imageFile": "TSM20-branded-clean.png"
   },
   {
     "sku": "BT10",

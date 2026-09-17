@@ -150,6 +150,16 @@
     <form id="checkoutForm" autocomplete="on">
       <label>Full Name <input type="text" id="buyerName" name="name" autocomplete="name" required></label>
       <label>Email <input type="email" id="buyerEmail" name="email" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" required placeholder="you@example.com"></label>
+      <section class="checkout-email-verify" aria-labelledby="checkoutVerifyTitle">
+        <h4 id="checkoutVerifyTitle">Verify your research email</h4>
+        <p>We will send a six-digit code to the email above. Use the same email for this order.</p>
+        <button type="button" id="checkoutSendCodeBtn">Send code</button>
+        <label for="checkoutEmailCode">Verification code</label>
+        <input id="checkoutEmailCode" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" placeholder="6-digit code">
+        <button type="button" id="checkoutVerifyCodeBtn">Verify code</button>
+        <label class="checkout-remember-device"><input id="checkoutRememberDevice" type="checkbox"> Remember this device for future checkouts</label>
+        <p id="checkoutEmailStatus" class="form-msg" role="status" aria-live="polite"></p>
+      </section>
       <div id="addressAutocompleteField" class="address-autocomplete-field" hidden>
         <label for="addressAutocompleteMount">Find your shipping address <span>Recommended</span></label>
         <div id="addressAutocompleteMount"></div>
@@ -430,15 +440,17 @@
         </label>
       </fieldset>
 
+      <details class="checkout-research-terms"><summary>Read the Terms of Sale</summary><p>By purchasing, you confirm that you are a qualified researcher or authorized entity buying solely for lawful laboratory research, and you assume responsibility for proper handling, storage, and lawful use. Products are not for human or veterinary use, consumption, injection, administration, diagnosis, or treatment. Email verification confirms access to an email address; it does not establish research credentials. Except for our 30-day non-delivery refund guarantee and rights required by law, completed sales are final. <a href="/terms-of-sale.html">Read the full Terms of Sale</a>.</p></details>
       <label class="checkbox-label">
         <input type="checkbox" id="checkoutCertify" required>
-        I certify I am an independent research company or independent researcher, purchasing solely for laboratory / research use, not for human or animal consumption, injection, or administration.
+        I confirm I am 21 or older, am a qualified researcher or authorized entity, and am purchasing solely for lawful laboratory research, not for human or animal consumption, injection, or administration.
       </label>
 
       <label class="checkbox-label payment-policy-confirm">
         <input type="checkbox" id="paymentPolicyConfirm" required>
-        I understand payment must be sent for the exact total shown. If the amount is incorrect, Highland Peptides will send a confirmation email. If no response is received within 72 hours, fulfillment will not proceed and the payment will not be refunded except where required by law.
+        I understand payment must be sent for the exact total shown. If the amount is incorrect, Highland Peptides will contact me and pause fulfillment until the payment is resolved. My refund rights remain in effect.
       </label>
+      <p class="checkout-refund-promise">If your paid order has not been received within 30 calendar days of placing it, we guarantee a full refund of the amount paid, including shipping. Contact <a href="mailto:support@highlandpeptides.com">support@highlandpeptides.com</a> with your order number.</p>
 
       <div class="payment-divider"><span>Choose payment method</span></div>
       <div class="manual-payment-grid">
@@ -498,8 +510,9 @@
   Not evaluated by the FDA.
 </footer>
 
-<script src="/js/shared.js?v=bac-water-bundles-v1-20260913"></script>
-<script src="/js/cart.js?v=bac-water-bundles-v1-20260913"></script>
+<script src="/js/shared.js?v=search-aliases-20260916"></script>
+<script src="/js/cart.js?v=sterile-water-20260916"></script>
+<script src="/js/site-notice.js?v=20260916"></script>
 </body>
 </html>
 

@@ -5,6 +5,9 @@ function money(value) {
   return '$' + Number(value || 0).toFixed(2);
 }
 
+const PAYMENT_MISMATCH_TEXT = 'If the amount is incorrect, we will contact you and pause fulfillment until the payment is resolved. Your refund rights remain in effect.';
+const DELIVERY_REFUND_TEXT = 'If your paid order has not been received within 30 calendar days of placing it, we guarantee a full refund of the amount paid, including shipping. Contact support@highlandpeptides.com with your order number.';
+
 function htmlEscape(value) {
   return String(value || '')
     .replace(/&/g, '&amp;')
@@ -254,7 +257,7 @@ function customerInstructionsText(order) {
       ``,
       `After sending, reply to this email with your transaction ID (TXID) or submit it on our site so we can confirm your payment quickly.`,
       `Please reference your order number: ${ref}`,
-      `If the amount is incorrect, we will send a confirmation email. If no response is received within 72 hours, fulfillment will not proceed and the payment will not be refunded except where required by law.`,
+      PAYMENT_MISMATCH_TEXT,
     );
   } else if (order.payment_provider === 'manual_paypal') {
     lines.push(
@@ -265,7 +268,7 @@ function customerInstructionsText(order) {
       `Leave the PayPal note completely blank. Do not include the order number, product names, or any other text.`,
       ``,
       `Use the exact amount shown above so we can match your payment to ${ref}.`,
-      `If the amount is incorrect, we will send a confirmation email. If no response is received within 72 hours, fulfillment will not proceed and the payment will not be refunded except where required by law.`,
+      PAYMENT_MISMATCH_TEXT,
       `Payment is manually reviewed before fulfillment. Once confirmed, your order ships the next business day.`,
       `If you have questions, reply to this email.`,
     );
@@ -277,7 +280,7 @@ function customerInstructionsText(order) {
       `Zelle note: enter only ${ref} and nothing else.`,
       `Do not include product names, comments, or any other text in the note.`,
       `Use the exact amount shown above so we can match your payment to ${ref}.`,
-      `If the amount is incorrect, we will send a confirmation email. If no response is received within 72 hours, fulfillment will not proceed and the payment will not be refunded except where required by law.`,
+      PAYMENT_MISMATCH_TEXT,
       `Payment is manually reviewed before fulfillment. Once confirmed, your order ships the next business day.`,
       `If you have questions, reply to this email.`,
     );
@@ -288,6 +291,7 @@ function customerInstructionsText(order) {
     );
   }
 
+  lines.push('', DELIVERY_REFUND_TEXT);
   return lines.join('\n');
 }
 
@@ -303,7 +307,7 @@ function customerInstructionsHtml(order) {
       <p style="font-family:monospace; font-size:15px;">${htmlEscape(address)}</p>
       <p>After sending, reply to this email with your transaction ID (TXID) or submit it on our site so we can confirm your payment quickly.</p>
       <p>Please reference your order number: <strong>${htmlEscape(ref)}</strong></p>
-      <p>If the amount is incorrect, we will send a confirmation email. If no response is received within 72 hours, fulfillment will not proceed and the payment will not be refunded except where required by law.</p>
+      <p>${htmlEscape(PAYMENT_MISMATCH_TEXT)}</p>
     `;
   } else if (order.payment_provider === 'manual_paypal') {
     body = `
@@ -312,7 +316,7 @@ function customerInstructionsHtml(order) {
       <p><strong>Send using PayPal Goods and Services.</strong></p>
       <p><strong>Leave the PayPal note completely blank.</strong> Do not include the order number, product names, or any other text.</p>
       <p>Use the exact amount shown above so we can match your payment to <strong>${htmlEscape(ref)}</strong>.</p>
-      <p>If the amount is incorrect, we will send a confirmation email. If no response is received within 72 hours, fulfillment will not proceed and the payment will not be refunded except where required by law.</p>
+      <p>${htmlEscape(PAYMENT_MISMATCH_TEXT)}</p>
       <p>Payment is manually reviewed before fulfillment. Once confirmed, your order ships the next business day.</p>
       <p>If you have questions, reply to this email.</p>
     `;
@@ -323,7 +327,7 @@ function customerInstructionsHtml(order) {
       <p><strong>Zelle note: enter only ${htmlEscape(ref)} and nothing else.</strong></p>
       <p>Do not include product names, comments, or any other text in the note.</p>
       <p>Use the exact amount shown above so we can match your payment to <strong>${htmlEscape(ref)}</strong>.</p>
-      <p>If the amount is incorrect, we will send a confirmation email. If no response is received within 72 hours, fulfillment will not proceed and the payment will not be refunded except where required by law.</p>
+      <p>${htmlEscape(PAYMENT_MISMATCH_TEXT)}</p>
       <p>Payment is manually reviewed before fulfillment. Once confirmed, your order ships the next business day.</p>
       <p>If you have questions, reply to this email.</p>
     `;
@@ -335,6 +339,7 @@ function customerInstructionsHtml(order) {
     <h2>Thanks for your order at ${htmlEscape(config.SITE_NAME)}!</h2>
     <p><strong>Order ${htmlEscape(ref)}</strong> &mdash; Total due: ${money(order.total)}</p>
     ${body}
+    <p>${htmlEscape(DELIVERY_REFUND_TEXT)}</p>
   `;
 }
 
@@ -517,6 +522,20 @@ function isCustomerEmailConfigured() {
   return Boolean(config.SMTP_HOST && config.CUSTOMER_EMAIL_FROM);
 }
 
+async function sendCheckoutVerificationCode(email, code) {
+  const transport = smtpTransport();
+  if (!transport) throw new Error('Customer email is not configured.');
+  await transport.sendMail({
+    from: config.CUSTOMER_EMAIL_FROM,
+    to: email,
+    replyTo: config.CUSTOMER_EMAIL_FROM,
+    subject: `Your ${config.SITE_NAME} checkout code`,
+    text: `Your Highland Peptides checkout verification code is ${code}. It expires in 10 minutes. If you did not request it, you can ignore this email.`,
+    html: accountEmailLayout('Verify your checkout email', `<p style="font-size:16px;line-height:1.6;">Your checkout verification code is <strong style="font-size:24px;letter-spacing:3px;">${htmlEscape(code)}</strong>.</p><p>This code expires in 10 minutes. If you did not request it, you can ignore this email.</p>`),
+  });
+  return 'email';
+}
+
 module.exports = {
   sendOrderBackup,
   sendPendingTrackingDiscord,
@@ -526,6 +545,7 @@ module.exports = {
   sendTrackingEmail,
   sendAccountVerificationEmail,
   sendPasswordResetEmail,
+  sendCheckoutVerificationCode,
   isCustomerEmailConfigured,
   trackingUrl,
   orderText,

@@ -6,6 +6,20 @@ const raw = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'produ
 const descriptions = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'descriptions.json'), 'utf8'));
 const PRODUCT_IMAGE_REVISION = 'offwhite-closeup-20260825';
 
+// Brand codes are displayed alongside, never instead of, the compound identity.
+const DISPLAY_NAME_OVERRIDES = {
+  Tirzepatide: 'HP-TRZ',
+  Retatrutide: 'HP-3RT',
+  Tesamorelin: 'HP-TSM',
+  'SS-31': 'HP-31',
+};
+
+function publicProductName(name) {
+  const code = DISPLAY_NAME_OVERRIDES[name];
+  if (name === 'Bacteriostatic Water') return 'Sterile Water (Bacteriostatic, 0.9% benzyl alcohol)';
+  return code ? `${code} (${name})` : name;
+}
+
 const LABEL_NAME_OVERRIDES = {
   'CJC-1295 without DAC + Ipamorelin': 'CJC W/O DAC + IPA',
   'CJC-1295 without DAC': 'CJC W/O DAC',
@@ -17,6 +31,7 @@ const LABEL_NAME_OVERRIDES = {
   'BPC-157 + TB-500 Blend': 'BPC + TB-500',
   'Bacteriostatic Water': 'BAC WATER',
   'MOTS-c': 'MOTS-C',
+  'SS-31': 'HP-31 (SS-31)',
 };
 
 function labelNameForProduct(name) {
@@ -43,6 +58,11 @@ function labelDoseFromSpec(spec) {
 function round(n, d) {
   const f = Math.pow(10, d);
   return Math.round(n * f) / f;
+}
+
+function priceEndingIn99(value) {
+  const roundedPrice = round(Number(value), PRICE_DECIMALS);
+  return round(Math.floor(roundedPrice) + 0.99, PRICE_DECIMALS);
 }
 
 function slugify(name) {
@@ -103,10 +123,12 @@ function quantityPricing(product, quantity) {
 
 // Public catalog: cost is never exposed to the frontend, only the sale price.
 // Price rule: supplier per-vial cost * markup * adjustment, unless a fixed public salePrice is set.
+// Storefront prices are normalized to end in .99.
 const pricedCatalog = raw
   .map(p => ({
     sku: p.sku,
-    name: p.name,
+    name: publicProductName(p.name),
+    compoundName: p.name,
     spec: p.spec,
     category: p.category,
     group: p.group,
@@ -123,9 +145,9 @@ const pricedCatalog = raw
     image: `/images/product-mockups/generated/${p.imageFile || `${p.imageSku || p.sku}.webp`}?v=${PRODUCT_IMAGE_REVISION}`,
     labelName: labelNameForProduct(p.name),
     labelDose: labelDoseFromSpec(p.spec),
-    price: p.fixedPublicPrice != null
-      ? round(p.fixedPublicPrice, PRICE_DECIMALS)
-      : round((p.salePrice != null ? p.salePrice : p.cost * MARKUP_MULTIPLIER * PRICE_ADJUSTMENT) * PUBLIC_PRICE_MULTIPLIER, PRICE_DECIMALS),
+    price: priceEndingIn99(p.fixedPublicPrice != null
+      ? p.fixedPublicPrice
+      : (p.salePrice != null ? p.salePrice : p.cost * MARKUP_MULTIPLIER * PRICE_ADJUSTMENT) * PUBLIC_PRICE_MULTIPLIER),
   }));
 
 const byNameForPricing = new Map();
@@ -181,7 +203,8 @@ function getProductFamily({ sku, slug }) {
   return {
     name: product.name,
     slug: product.slug,
-    description: descriptions[product.name] || '',
+    compoundName: product.compoundName,
+    description: product.description,
     category: product.category,
     group: product.group,
     variants,

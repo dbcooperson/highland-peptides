@@ -6,7 +6,7 @@ const { applyBundlePromotion, qualifyingQuantity } = require('./promotions');
 const bySku = {
   A: { sku: 'A', name: 'Product A', spec: '10mg x1 vial', category: 'Peptide', group: 'Metabolic' },
   B: { sku: 'B', name: 'Product B', spec: '10mg x1 vial', category: 'Peptide', group: 'Recovery' },
-  WA10: { sku: 'WA10', name: 'Bacteriostatic Water', spec: '10ml x1 vial', category: 'Supplies', group: 'Supplies' },
+  WA10: { sku: 'WA10', name: 'Sterile Water (Bacteriostatic, 0.9% benzyl alcohol)', spec: '10ml x1 vial', category: 'Supplies', group: 'Supplies' },
 };
 
 test('bundle promotion does not unlock below five paid research products', () => {
@@ -15,17 +15,17 @@ test('bundle promotion does not unlock below five paid research products', () =>
   assert.equal(result.items.length, 1);
 });
 
-test('bundle promotion adds exactly one free Bac Water at five products', () => {
+test('bundle promotion adds exactly one free Sterile Water at five products', () => {
   const result = applyBundlePromotion([{ sku: 'A', quantity: 3 }, { sku: 'B', quantity: 2 }], bySku);
   assert.equal(result.applied, true);
   assert.equal(result.items.length, 3);
   assert.deepEqual(result.items[2], {
     sku: 'WA10',
-    name: 'Bacteriostatic Water (Free bundle reward)',
+    name: 'Sterile Water (Bacteriostatic, 0.9% benzyl alcohol) (Free bundle reward)',
     spec: '10ml x1 vial',
     quantity: 1,
     unit_price: 0,
-    promotion: 'Buy 5+ paid research products (Bac Water excluded)',
+    promotion: 'Buy 5+ paid research products (Sterile Water excluded)',
   });
 });
 

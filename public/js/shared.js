@@ -220,7 +220,7 @@ function bundlePromotionConfig() {
     qualifyingQuantity: 5,
     freeSku: 'WA10',
     freeQuantity: 1,
-    label: 'Buy 5+ paid research products and receive a free Bac Water 10ml (Bac Water does not count)',
+    label: 'Buy 5+ paid research products and receive free Sterile Water (bacteriostatic) 10ml (water does not count)',
   };
 }
 
@@ -248,8 +248,8 @@ function bundlePromotionState(cart = getCart()) {
 function bundlePromotionMessage(cart = getCart()) {
   const state = bundlePromotionState(cart);
   return state.unlocked
-    ? '<strong>Free Bac Water 10ml unlocked</strong><span>It will be added automatically at checkout.</span>'
-    : `<strong>Buy 5 research products, get Bac Water 10ml free</strong><span>Add ${state.remaining} more qualifying product${state.remaining === 1 ? '' : 's'}. Bac Water purchases do not count toward the five.</span>`;
+    ? '<strong>Free Sterile Water (bacteriostatic) 10ml unlocked</strong><span>It will be added automatically at checkout.</span>'
+    : `<strong>Buy 5 research products, get Sterile Water (bacteriostatic) 10ml free</strong><span>Add ${state.remaining} more qualifying product${state.remaining === 1 ? '' : 's'}. Water purchases do not count toward the five.</span>`;
 }
 
 function showAddedToCartPopup(sku, qty = 1) {
@@ -406,15 +406,16 @@ function vialLabelHTML(name, spec, className = '') {
 }
 
 const SEARCH_ALIASES = {
-  'Retatrutide': ['reta', 'rt'],
-  'Tirzepatide': ['tirz', 'tr'],
+  'Retatrutide': ['retatrutide', 'reta', 'rt', 'hp-3rt'],
+  'Tirzepatide': ['tirzepatide', 'tirz', 'tr', 'hp-trz'],
+  'Tesamorelin': ['tesamorelin', 'tesa', 'hp-tsm'],
   'Semaglutide': ['sema', 'sem'],
   'Cagrilintide': ['cagri', 'cag'],
   'Cagrilintide + Semaglutide': ['cagri sema', 'cag sem', 'cagsem'],
   'CJC-1295 without DAC + Ipamorelin': ['cjc ipa', 'cjc ipamorelin', 'cjc w/o dac ipa', 'cjc no dac ipa'],
   'CJC-1295 without DAC': ['cjc no dac', 'cjc w/o dac'],
   'CJC-1295 with DAC': ['cjc dac'],
-  'Bacteriostatic Water': ['bac water', 'bac', 'water'],
+  'Bacteriostatic Water': ['bac water', 'bac', 'bacteriostatic water', 'sterile water'],
   'BPC-157': ['bpc'],
   'TB-500': ['tb500', 'tb'],
   'BPC-157 + TB-500 Blend': ['bpc tb', 'bpc tb500'],
@@ -428,14 +429,16 @@ const SEARCH_ALIASES = {
 };
 
 function searchableValues(product) {
+  const originalName = product.compoundName || product.name;
   return [
     product.name,
+    originalName,
     product.spec,
     product.sku,
     product.category,
     product.group,
     product.description,
-    ...(SEARCH_ALIASES[product.name] || []),
+    ...(SEARCH_ALIASES[originalName] || []),
   ].filter(Boolean).map(value => String(value).toLowerCase());
 }
 
@@ -580,9 +583,9 @@ function showAccountWelcomePrompt() {
   overlay.className = 'account-welcome-overlay';
   overlay.innerHTML = `<section class="account-welcome-card" role="dialog" aria-modal="true" aria-labelledby="accountWelcomeTitle">
     <button class="account-welcome-close" type="button" aria-label="Continue as guest">&times;</button>
-    <h2 id="accountWelcomeTitle">A little more value, without slowing checkout.</h2>
-    <p>Create a verified account to <strong>track your order progress</strong>, choose one personal referral code, get an extra <strong>5% off crypto orders</strong>, and submit a weekly TikTok video for a <strong>$5 store-credit review</strong>.</p>
-    <div class="account-welcome-benefits"><span>Track order progress</span><span>Member crypto savings</span><span>Weekly creator credit</span></div>
+    <h2 id="accountWelcomeTitle">Help us grow. We&rsquo;ll reward you.</h2>
+    <p>Create a verified account to <strong>track your order progress</strong> and make one personal referral code. Friends save <strong>10%</strong> when they use it, and you earn that same <strong>10% as store credit</strong> after Highland reviews the order. Members also get an extra <strong>5% off crypto orders</strong> and can submit one TikTok video each week for a <strong>$5 store-credit review</strong>.</p>
+    <div class="account-welcome-benefits"><span>Track order progress</span><span>Your code · 10% both ways</span><span>Weekly creator credit</span></div>
     <a class="account-welcome-cta" href="/account.html?view=register">Create my account</a>
     <button class="account-welcome-skip" type="button">Continue as guest</button>
     <small>Accounts are optional. Referral and creator credits are reviewed by Highland before being added.</small>
@@ -782,6 +785,57 @@ function focusAddressError(error) {
 }
 
 // ---------- Checkout modal (lives on the cart page only) ----------
+let checkoutVerifiedEmail = '';
+
+function checkoutResearchEmail() {
+  return String(document.getElementById('buyerEmail')?.value || '').trim().toLowerCase();
+}
+
+function setCheckoutEmailStatus(message, verified = false, error = false) {
+  const status = document.getElementById('checkoutEmailStatus');
+  checkoutVerifiedEmail = verified ? checkoutResearchEmail() : '';
+  if (status) {
+    status.textContent = message;
+    status.style.color = verified ? 'var(--success)' : error ? 'var(--danger)' : 'var(--muted-on-light)';
+  }
+}
+
+async function refreshCheckoutEmailStatus() {
+  const email = checkoutResearchEmail();
+  if (!email) return setCheckoutEmailStatus('Enter your email to receive a code.');
+  try {
+    const result = await api(`/api/checkout-email/status?email=${encodeURIComponent(email)}`);
+    if (checkoutResearchEmail() !== email) return;
+    setCheckoutEmailStatus(result.verified ? 'Email verified for this checkout.' : 'Verify this email before choosing a payment method.', result.verified);
+  } catch { setCheckoutEmailStatus('Could not check email verification status.', false, true); }
+}
+
+async function sendCheckoutEmailCode() {
+  const email = checkoutResearchEmail();
+  const button = document.getElementById('checkoutSendCodeBtn');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return setCheckoutEmailStatus('Enter a valid email first.', false, true);
+  button.disabled = true;
+  try {
+    const result = await api('/api/checkout-email/send', { method: 'POST', body: { email } });
+    if (checkoutResearchEmail() === email) setCheckoutEmailStatus(result.message);
+  } catch (err) { setCheckoutEmailStatus(err.message, false, true); }
+  finally { button.disabled = false; }
+}
+
+async function verifyCheckoutEmailCode() {
+  const email = checkoutResearchEmail();
+  const code = String(document.getElementById('checkoutEmailCode').value || '').trim();
+  const button = document.getElementById('checkoutVerifyCodeBtn');
+  if (!/^\d{6}$/.test(code)) return setCheckoutEmailStatus('Enter the six-digit code from your email.', false, true);
+  button.disabled = true;
+  try {
+    await api('/api/checkout-email/verify', { method: 'POST', body: {
+      email, code, rememberDevice: document.getElementById('checkoutRememberDevice').checked,
+    } });
+    if (checkoutResearchEmail() === email) setCheckoutEmailStatus('Email verified for this checkout.', true);
+  } catch (err) { setCheckoutEmailStatus(err.message, false, true); }
+  finally { button.disabled = false; }
+}
 
 let appliedDiscount = null; // { code, percentOff } | null
 let paypalConfigPromise = null;
@@ -968,8 +1022,11 @@ function validateCheckoutPayload(payload, msgEl) {
   if (!payload.certified) {
     return fail('You must certify research/business use before payment.', 'research_certification_missing');
   }
+  if (checkoutVerifiedEmail !== payload.buyer.email.toLowerCase()) {
+    return fail('Verify your checkout email with the six-digit code before payment.', 'email_verification_missing');
+  }
   if (!payload.paymentPolicyAccepted) {
-    return fail('Confirm the exact-payment and 72-hour mismatch policy before payment.', 'payment_policy_missing');
+    return fail('Confirm the exact-payment policy before payment.', 'payment_policy_missing');
   }
   msgEl.textContent = '';
   return true;
@@ -981,6 +1038,7 @@ function clearCartAfterCheckout() {
   updateCartBadge();
   document.dispatchEvent(new CustomEvent('cart:updated'));
   document.getElementById('checkoutForm').reset();
+  setCheckoutEmailStatus('Enter your email to receive a code.');
   if (shippingAddressAutocomplete) shippingAddressAutocomplete.value = '';
   setAddressValidationStatus('');
   finishCheckoutAttempt();
@@ -1011,6 +1069,7 @@ async function refreshCheckoutAccountStatus() {
   const emailInput = document.getElementById('buyerEmail');
   if (nameInput && !nameInput.value) nameInput.value = state.account.name;
   if (emailInput && !emailInput.value) emailInput.value = state.account.email;
+  refreshCheckoutEmailStatus();
   renderCheckoutSummary();
 }
 
@@ -1044,6 +1103,7 @@ function openCheckoutModal() {
   initShippingAddressAutocomplete();
   renderCheckoutSummary();
   refreshCheckoutAccountStatus();
+  refreshCheckoutEmailStatus();
   renderCryptoPricePreview();
   document.body.classList.add('checkout-modal-open');
   document.getElementById('checkoutModal').style.display = 'flex';
@@ -1249,7 +1309,7 @@ async function submitCryptoCheckout() {
     msgEl.textContent = 'Order submitted. Please send the exact total shown below for manual verification.';
     lastCryptoOrder = { id: result.orderId, email: buyerEmail };
 
-    showManualPaymentShell('Crypto payment instructions', `<strong>Order #${result.orderId}</strong><br>Exact total due: <strong>$${result.total.toFixed(2)}</strong><br><span class="hint">Unique matching cents: $${Number(result.paymentMatchAdjustment || 0).toFixed(2)}</span><br><span class="hint">If the amount sent is incorrect, we will email you for confirmation. If no response is received within 72 hours, fulfillment will not proceed and the payment will not be refunded except where required by law.</span>`);
+    showManualPaymentShell('Crypto payment instructions', `<strong>Order #${result.orderId}</strong><br>Exact total due: <strong>$${result.total.toFixed(2)}</strong><br><span class="hint">Unique matching cents: $${Number(result.paymentMatchAdjustment || 0).toFixed(2)}</span><br><span class="hint">If the amount sent is incorrect, we will contact you and pause fulfillment until the payment is resolved. Your refund rights remain in effect.</span>`);
 
     if (result.crypto) {
       document.getElementById('cryptoAddressText').textContent = result.crypto.address;
@@ -1323,7 +1383,7 @@ async function submitManualPaypalCheckout() {
     if (zelleDetails) zelleDetails.style.display = 'none';
     if (paypalDetails) paypalDetails.style.display = 'block';
     document.getElementById('paypalPaymentEmail').textContent = result.paypal ? result.paypal.email : 'at475756@gmail.com';
-    showManualPaymentShell('PayPal payment instructions', `<strong>Order #${result.orderId}</strong><br>Exact total due: <strong>$${result.total.toFixed(2)}</strong><br>Send payment to: <strong>${result.paypal ? result.paypal.email : 'at475756@gmail.com'}</strong><br><span class="manual-payment-alert"><strong>Send using PayPal Goods and Services.</strong><br>Leave the PayPal note completely blank. Do not include the order number, product names, or any other text.</span><br><span class="hint">Please send the exact total shown. If the amount is incorrect, we will email you for confirmation. If no response is received within 72 hours, fulfillment will not proceed and the payment will not be refunded except where required by law. Confirmed orders ship the next business day.</span>`);
+    showManualPaymentShell('PayPal payment instructions', `<strong>Order #${result.orderId}</strong><br>Exact total due: <strong>$${result.total.toFixed(2)}</strong><br>Send payment to: <strong>${result.paypal ? result.paypal.email : 'at475756@gmail.com'}</strong><br><span class="manual-payment-alert"><strong>Send using PayPal Goods and Services.</strong><br>Leave the PayPal note completely blank. Do not include the order number, product names, or any other text.</span><br><span class="hint">Please send the exact total shown. If the amount is incorrect, we will contact you and pause fulfillment until the payment is resolved. Your refund rights remain in effect. Confirmed orders ship the next business day.</span>`);
     clearCartAfterCheckout();
   } catch (err) {
     msgEl.style.color = 'var(--danger)';
@@ -1366,7 +1426,7 @@ async function submitZelleCheckout() {
     if (zelleDetails) zelleDetails.style.display = 'block';
     document.getElementById('zellePaymentRecipient').textContent = recipient;
     const reference = result.zelle ? result.zelle.reference : `HP-${result.orderId}`;
-    showManualPaymentShell('Zelle payment instructions', `<strong>Order #${result.orderId}</strong><br>Exact total due: <strong>$${result.total.toFixed(2)}</strong><br>Send by Zelle to: <strong>${escapeHTML(recipient)}</strong><br><span class="manual-payment-alert">Zelle note: enter only <strong>${escapeHTML(reference)}</strong> and nothing else.</span><br><span class="hint">Do not include product names, comments, or any other text in the note. Please send the exact total shown. If the amount is incorrect, we will email you for confirmation. If no response is received within 72 hours, fulfillment will not proceed and the payment will not be refunded except where required by law. Confirmed orders ship the next business day.</span>`);
+    showManualPaymentShell('Zelle payment instructions', `<strong>Order #${result.orderId}</strong><br>Exact total due: <strong>$${result.total.toFixed(2)}</strong><br>Send by Zelle to: <strong>${escapeHTML(recipient)}</strong><br><span class="manual-payment-alert">Zelle note: enter only <strong>${escapeHTML(reference)}</strong> and nothing else.</span><br><span class="hint">Do not include product names, comments, or any other text in the note. Please send the exact total shown. If the amount is incorrect, we will contact you and pause fulfillment until the payment is resolved. Your refund rights remain in effect. Confirmed orders ship the next business day.</span>`);
     clearCartAfterCheckout();
   } catch (err) {
     msgEl.style.color = 'var(--danger)';
@@ -1379,6 +1439,12 @@ async function submitZelleCheckout() {
 }
 
 function wireCheckout() {
+  document.getElementById('buyerEmail')?.addEventListener('input', () => {
+    setCheckoutEmailStatus('Verify this email before choosing a payment method.');
+  });
+  document.getElementById('buyerEmail')?.addEventListener('change', refreshCheckoutEmailStatus);
+  document.getElementById('checkoutSendCodeBtn')?.addEventListener('click', sendCheckoutEmailCode);
+  document.getElementById('checkoutVerifyCodeBtn')?.addEventListener('click', verifyCheckoutEmailCode);
   document.getElementById('checkoutBtn').addEventListener('click', () => {
     const cartMsg = document.getElementById('cartMsg');
     const skus = Object.keys(getCart()).filter(s => getCart()[s] > 0);
