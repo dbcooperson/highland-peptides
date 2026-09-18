@@ -37,6 +37,8 @@ const { registerAccountRoutes } = require('./accounts');
 const { registerCheckoutVerificationRoutes, isCheckoutEmailVerified } = require('./checkout-verification');
 const { pirateShipCsv, pirateShipExportCandidates, parseInboundTrackingEmail, matchPendingTrackingOrder, verifyResendWebhook, fetchResendReceivedEmail, normalizeInboundDomain, validOrderAliasToken } = require('./pirate-ship');
 const { configuredPromoManagers } = require('./promo-managers');
+const { CAMPAIGN_CODE, hasHighlandReferral, referralOfferDiscount } = require('./referral-offer');
+const { stripeMode, stripeClient, checkoutSessionParams, verifiedPaidSession } = require('./stripe-checkout');
 
 const CONFIRMED_ORDER_STATUSES = new Set(['paid', 'pending_tracking', 'fulfilled']);
 const promoManagers = configuredPromoManagers(config);
@@ -81,6 +83,27 @@ app.use((req, res, next) => {
     res.setHeader('Strict-Transport-Security', 'max-age=15552000; includeSubDomains');
   }
   next();
+});
+
+app.post('/api/stripe/webhook', express.raw({ type: 'application/json', limit: '1mb' }), async (req, res) => {
+  const mode = stripeMode();
+  if (!mode) return res.sendStatus(404);
+  let event;
+  try {
+    const signingSecret = mode === 'live' ? process.env.STRIPE_LIVE_WEBHOOK_SECRET : process.env.STRIPE_TEST_WEBHOOK_SECRET;
+    event = stripeClient().webhooks.constructEvent(req.body, req.get('stripe-signature'), signingSecret);
+  } catch (_) {
+    return res.status(400).json({ error: 'Invalid Stripe webhook signature.' });
+  }
+  const payment = verifiedPaidSession(event, mode);
+  if (!payment) return res.json({ received: true });
+  const result = db.markStripeOrderPaid(payment.id, payment.sessionId, payment.amountCents, payment.currency);
+  if (!result) return res.status(409).json({ error: 'Stripe payment does not match a pending order.' });
+  if (result.newlyPaid) {
+    analytics.recordEvent({ type: 'payment_confirmed', paymentMethod: 'stripe' });
+    await backupOrderIfNeeded(result.order, 'stripe_webhook');
+  }
+  return res.json({ received: true });
 });
 
 app.use(express.json({
@@ -294,6 +317,10 @@ app.get('/api/discount-code', (req, res) => {
   res.json({ valid: true, code: match.code, percentOff: Math.round(match.rate * 100), referral: match.type === 'referral' });
 });
 
+app.get('/api/referral-offer', (req, res) => {
+  res.json({ valid: hasHighlandReferral(req.query.ref), code: CAMPAIGN_CODE, percentOff: 10, extraCodePercent: 5 });
+});
+
 function cleanText(value, maxLength) {
   return String(value || '').trim().replace(/[\u0000-\u001f\u007f]/g, '').slice(0, maxLength);
 }
@@ -336,7 +363,7 @@ function checkCheckoutRateLimit(req, res, next) {
 
 // ---------- Checkout (guest checkout remains available; accounts are optional) ----------
 function prepareCheckout(body, accountId = null) {
-  const { items: rawItems, buyer, certified, discountCode, paymentMethod, cryptoAsset, shippingMethod, paymentPolicyAccepted, applyStoreCredit } = body || {};
+  const { items: rawItems, buyer, certified, discountCode, referralCampaign, paymentMethod, cryptoAsset, shippingMethod, paymentPolicyAccepted, applyStoreCredit } = body || {};
 
   if (certified !== true) {
     return { error: 'You must certify research/business use to place an order.' };
@@ -359,7 +386,7 @@ function prepareCheckout(body, accountId = null) {
     return { error: 'Name, valid email, destination country, and full shipping address are required.' };
   }
 
-  const normalizedPaymentMethod = ['paypal', 'manual_paypal', 'zelle', 'crypto'].includes(paymentMethod) ? paymentMethod : 'manual_paypal';
+  const normalizedPaymentMethod = ['paypal', 'manual_paypal', 'zelle', 'crypto', 'stripe'].includes(paymentMethod) ? paymentMethod : 'manual_paypal';
   const normalizedCryptoAsset = normalizedPaymentMethod === 'crypto' && cryptoAsset === 'USDC' ? 'USDC' : 'BTC';
 
   const items = Array.isArray(rawItems) ? rawItems : [];
@@ -396,6 +423,7 @@ function prepareCheckout(body, accountId = null) {
   const promotionResult = applyBundlePromotion(resolved, bySku);
 
   const discountMatch = resolveDiscountCode(discountCode);
+  const highlandReferral = hasHighlandReferral(referralCampaign);
   const customerAccount = accountId ? db.getAccountById(accountId) : null;
   if (discountMatch && discountMatch.type === 'referral') {
     const isSameAccount = customerAccount && customerAccount.id === discountMatch.referralAccountId;
@@ -404,18 +432,21 @@ function prepareCheckout(body, accountId = null) {
       return { error: 'Referral codes are for other customers and cannot be used on your own order.' };
     }
   }
-  if (['crypto', 'zelle'].includes(normalizedPaymentMethod) && discountMatch) {
+  if (!highlandReferral && ['crypto', 'zelle'].includes(normalizedPaymentMethod) && discountMatch) {
     const methodLabel = normalizedPaymentMethod === 'zelle' ? 'Zelle' : 'Crypto';
     return { error: `${methodLabel} discounts cannot be combined with codes. Remove the code or choose PayPal checkout.` };
   }
-  const codeDiscount = discountMatch ? promoEligibleSubtotal * discountMatch.rate : 0;
-  const altPaymentDiscount = normalizedPaymentMethod === 'crypto' ? subtotal * config.ALT_PAYMENT_DISCOUNT_RATE : 0;
-  const memberCryptoDiscount = normalizedPaymentMethod === 'crypto' && customerAccount && customerAccount.verified_at ? subtotal * config.ACCOUNT_CRYPTO_DISCOUNT_RATE : 0;
-  const zelleDiscount = normalizedPaymentMethod === 'zelle' ? subtotal * config.ZELLE_PAYMENT_DISCOUNT_RATE : 0;
-  const discountAmount = Math.round((codeDiscount + altPaymentDiscount + memberCryptoDiscount + zelleDiscount) * 100) / 100;
-  const discountLabel = discountMatch
-    ? discountMatch.code
-    : (zelleDiscount ? 'ZELLE10' : (memberCryptoDiscount ? 'CRYPTO5+MEMBER5' : (altPaymentDiscount ? 'CRYPTO5' : null)));
+  const codeDiscount = !highlandReferral && discountMatch ? promoEligibleSubtotal * discountMatch.rate : 0;
+  const altPaymentDiscount = !highlandReferral && normalizedPaymentMethod === 'crypto' ? subtotal * config.ALT_PAYMENT_DISCOUNT_RATE : 0;
+  const memberCryptoDiscount = !highlandReferral && normalizedPaymentMethod === 'crypto' && customerAccount && customerAccount.verified_at ? subtotal * config.ACCOUNT_CRYPTO_DISCOUNT_RATE : 0;
+  const zelleDiscount = !highlandReferral && normalizedPaymentMethod === 'zelle' ? subtotal * config.ZELLE_PAYMENT_DISCOUNT_RATE : 0;
+  const referralDiscount = highlandReferral ? referralOfferDiscount(promoEligibleSubtotal, discountMatch) : null;
+  const discountAmount = highlandReferral
+    ? referralDiscount.amount
+    : Math.round((codeDiscount + altPaymentDiscount + memberCryptoDiscount + zelleDiscount) * 100) / 100;
+  const discountLabel = highlandReferral
+    ? `${CAMPAIGN_CODE}${discountMatch ? `+${discountMatch.code}` : ''}`
+    : (discountMatch ? discountMatch.code : (zelleDiscount ? 'ZELLE10' : (memberCryptoDiscount ? 'CRYPTO5+MEMBER5' : (altPaymentDiscount ? 'CRYPTO5' : null))));
   const availableCredit = customerAccount && customerAccount.verified_at
     ? Math.max(0, Number(customerAccount.credit_balance_cents || 0) / 100)
     : 0;
@@ -566,6 +597,9 @@ app.post('/api/paypal/create-order', checkCheckoutRateLimit, async (req, res) =>
 // instructions directly. Used when PayPal is down/restricted, or as a plain
 // alternative to it.
 app.post('/api/checkout', checkCheckoutRateLimit, async (req, res) => {
+  if (req.body?.paymentMethod === 'stripe') {
+    return res.status(400).json({ error: 'Stripe orders must use the hosted sandbox Checkout flow.' });
+  }
   const prepared = prepareCheckout(req.body, req.session && req.session.accountId);
   if (prepared.error) {
     analytics.recordEvent({ type: 'checkout_error', stage: 'server_validation', reason: 'invalid_checkout', visitorId: cleanText(req.body && req.body.analyticsVisitorId, 128), sessionId: cleanText(req.body && req.body.analyticsSessionId, 128), checkoutAttemptId: cleanText(req.body && req.body.analyticsCheckoutAttemptId, 128) });
@@ -923,6 +957,43 @@ app.get('/api/admin/analytics', requireAdmin, (req, res) => {
     },
     storage: analytics.getStorageInfo(),
   });
+});
+
+app.get('/api/stripe/config', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  const mode = stripeMode();
+  res.json({ enabled: Boolean(mode), mode });
+});
+
+app.post('/api/stripe/create-checkout-session', checkCheckoutRateLimit, async (req, res) => {
+  const mode = stripeMode();
+  if (!mode) return res.status(503).json({ error: 'Stripe checkout is not enabled.' });
+  if (req.body?.paymentMethod !== 'stripe') return res.status(400).json({ error: 'Select Stripe checkout.' });
+  const prepared = prepareCheckout(req.body, req.session && req.session.accountId);
+  if (prepared.error) return res.status(400).json({ error: prepared.error });
+  if (!isCheckoutEmailVerified(req, prepared.orderInput.buyer.email)) {
+    return res.status(403).json({ error: 'Verify your checkout email before placing the order.' });
+  }
+  const addressValidation = await validatePreparedCheckoutAddress(prepared);
+  if (!addressValidation.valid) return checkoutAddressError(res, addressValidation);
+  let order;
+  try {
+    order = db.createOrder({ ...prepared.orderInput, paymentProvider: 'stripe' });
+    const origin = mode === 'live' ? 'https://highlandpeptides.com' : `http://localhost:${process.env.PORT || 3000}`;
+    const stripeSession = await stripeClient().checkout.sessions.create(checkoutSessionParams(order, origin, mode), {
+      idempotencyKey: `highland-${mode}-order-${order.id}`,
+    });
+    if (!(mode === 'live' ? /^cs_live_/ : /^cs_test_/).test(stripeSession.id || '') || !/^https:\/\//.test(stripeSession.url || '')) {
+      throw new Error('Stripe did not return a valid Checkout Session.');
+    }
+    if (!db.setStripeCheckoutSessionId(order.id, stripeSession.id)) throw new Error('Could not save Checkout Session.');
+    analytics.recordEvent({ type: 'order_created', paymentMethod: 'stripe', ...prepared.analytics });
+    return res.json({ orderId: order.id, url: stripeSession.url, mode });
+  } catch (err) {
+    if (order && !db.getOrderById(order.id)?.stripe_checkout_session_id) db.deleteOrder(order.id);
+    console.error('Stripe Checkout failed:', err.type || err.message);
+    return res.status(502).json({ error: 'Could not start Stripe checkout.' });
+  }
 });
 
 app.get('/api/admin/top-products', requireAdmin, (req, res) => {

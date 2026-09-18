@@ -302,7 +302,7 @@ function setAccountReferralCode(id, code) {
 
 // ---------- Orders ----------
 function paymentMatchAdjustmentCents(orderId, paymentProvider) {
-  if (paymentProvider === 'paypal') return 0;
+  if (paymentProvider === 'paypal' || paymentProvider === 'stripe') return 0;
   return (Number(orderId) % 49) + 1;
 }
 
@@ -402,6 +402,30 @@ function setPayPalOrderId(id, paypalOrderId) {
   order.paypal_order_id = paypalOrderId || null;
   save(data);
   return order;
+}
+
+function setStripeCheckoutSessionId(id, sessionId) {
+  const data = load();
+  const order = data.orders.find(item => item.id === Number(id));
+  if (!order || order.payment_provider !== 'stripe' || order.stripe_checkout_session_id) return null;
+  if (data.orders.some(item => item.stripe_checkout_session_id === sessionId)) return null;
+  order.stripe_checkout_session_id = sessionId;
+  save(data);
+  return order;
+}
+
+function markStripeOrderPaid(id, sessionId, amountCents, currency) {
+  const data = load();
+  const order = data.orders.find(item => item.id === Number(id));
+  if (!order || order.payment_provider !== 'stripe' || order.stripe_checkout_session_id !== sessionId
+    || currency !== 'usd' || cents(order.total) !== amountCents) return null;
+  if (order.status !== 'pending_payment') return { order, newlyPaid: false };
+  order.status = 'paid';
+  order.payment_reference = sessionId;
+  order.paid_at = new Date().toISOString();
+  syncReferralCredit(data, order);
+  save(data);
+  return { order, newlyPaid: true };
 }
 
 function syncReferralCredit(data, order) {
@@ -918,7 +942,7 @@ function getStorageInfo() {
 }
 
 module.exports = {
-  createOrder, getAllOrders, getOrderById, setPayPalOrderId, markOrderPaid, updateOrderStatus, applyOrderStatusMigration, updateOrderNotes, deleteOrder, markOrderBackupSent, claimPaymentReminder, markPaymentReminderSent, markPaymentReminderFailed, claimTrackingDispatch, markTrackingSent, markTrackingFailed, hasInboundTrackingEvent, markInboundTrackingEvent, claimFulfillmentDiscordPost, markFulfillmentDiscordSent, markFulfillmentDiscordFailed, markPirateShipOrdersExported, getStorageInfo, isTxidUsed, setPaymentReference,
+  createOrder, getAllOrders, getOrderById, setPayPalOrderId, setStripeCheckoutSessionId, markStripeOrderPaid, markOrderPaid, updateOrderStatus, applyOrderStatusMigration, updateOrderNotes, deleteOrder, markOrderBackupSent, claimPaymentReminder, markPaymentReminderSent, markPaymentReminderFailed, claimTrackingDispatch, markTrackingSent, markTrackingFailed, hasInboundTrackingEvent, markInboundTrackingEvent, claimFulfillmentDiscordPost, markFulfillmentDiscordSent, markFulfillmentDiscordFailed, markPirateShipOrdersExported, getStorageInfo, isTxidUsed, setPaymentReference,
   createAccount, getAccountById, getAccountByEmail, setAccountVerificationToken, verifyAccountByTokenHash, touchAccountLogin, setPasswordResetToken, resetPasswordByTokenHash, getAccountByReferralCode, setAccountReferralCode, getAccountDashboard, createPayoutRequest, updatePayoutRequest, getAdminReferralData, reviewReferralCredit, createSocialCreditSubmission, reviewSocialCreditSubmission,
   createPromotionCode, getPromotionCodeByCode, getPromotionCodes,
   recordPromoAudit, getPromoAuditLog,

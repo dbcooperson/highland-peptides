@@ -21,6 +21,27 @@ function initEntryGate() {
 }
 initEntryGate();
 
+// Preserve the public Highland referral offer while a visitor shops across pages.
+// Checkout independently validates this token and calculates the discount.
+const HP_REFERRAL_CAMPAIGN_KEY = 'hp_referral_campaign';
+const HP_REFERRAL_CAMPAIGN_CODE = 'HIGHLAND10';
+function activeReferralCampaign() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(HP_REFERRAL_CAMPAIGN_KEY) || 'null');
+    return saved && saved.code === HP_REFERRAL_CAMPAIGN_CODE && saved.expiresAt > Date.now() ? saved.code : null;
+  } catch { return null; }
+}
+function captureReferralCampaign() {
+  const ref = new URLSearchParams(window.location.search).get('ref');
+  if (String(ref || '').trim().toUpperCase() !== HP_REFERRAL_CAMPAIGN_CODE) return;
+  try {
+    localStorage.setItem(HP_REFERRAL_CAMPAIGN_KEY, JSON.stringify({
+      code: HP_REFERRAL_CAMPAIGN_CODE, expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
+    }));
+  } catch {}
+}
+captureReferralCampaign();
+
 async function api(path, opts = {}) {
   const res = await fetch(path, {
     method: opts.method || 'GET',
@@ -926,7 +947,11 @@ function renderCheckoutSummary() {
   const subtotal = round2(cartSubtotal());
   const promoEligibleSubtotal = round2(cartPromoEligibleSubtotal());
   const shippingFee = selectedShippingFee();
-  const discountAmount = appliedDiscount ? round2(promoEligibleSubtotal * appliedDiscount.percentOff / 100) : 0;
+  const referralCampaign = activeReferralCampaign();
+  const extraCodePercent = referralCampaign && appliedDiscount ? Math.min(5, appliedDiscount.percentOff) : 0;
+  const discountAmount = referralCampaign
+    ? round2(promoEligibleSubtotal * (10 + extraCodePercent) / 100)
+    : (appliedDiscount ? round2(promoEligibleSubtotal * appliedDiscount.percentOff / 100) : 0);
   const creditToggle = document.getElementById('applyStoreCredit');
   const availableCredit = hpAccountState.authenticated && hpAccountState.account
     ? Number(hpAccountState.account.creditBalance || 0)
@@ -952,7 +977,7 @@ function renderCheckoutSummary() {
 
   const breakdown = [
     `<div class="cart-row"><span>Subtotal</span><span>$${subtotal.toFixed(2)}</span></div>`,
-    appliedDiscount ? `<div class="cart-row"><span>Discount (${appliedDiscount.code})</span><span>-$${discountAmount.toFixed(2)}</span></div>` : '',
+    referralCampaign ? `<div class="cart-row"><span>Referral link (10%)${appliedDiscount ? ` + ${escapeHTML(appliedDiscount.code)} (${extraCodePercent}%)` : ''}</span><span>-$${discountAmount.toFixed(2)}</span></div>` : (appliedDiscount ? `<div class="cart-row"><span>Discount (${escapeHTML(appliedDiscount.code)})</span><span>-$${discountAmount.toFixed(2)}</span></div>` : ''),
     storeCreditAmount ? `<div class="cart-row account-credit-summary"><span>Store credit</span><span>-$${storeCreditAmount.toFixed(2)}</span></div>` : '',
     `<div class="cart-row"><span>${selectedShippingLabel()}</span><span>$${shippingFee.toFixed(2)}</span></div>`,
     orderFeeRate ? `<div class="cart-row"><span>Processing fee</span><span>$${orderFee.toFixed(2)}</span></div>` : '',
@@ -985,6 +1010,7 @@ function checkoutPayloadFromForm() {
     shippingMethod: selectedShippingMethod(),
     paymentPolicyAccepted: document.getElementById('paymentPolicyConfirm')?.checked === true,
     discountCode: appliedDiscount ? appliedDiscount.code : null,
+    referralCampaign: activeReferralCampaign(),
     applyStoreCredit: document.getElementById('applyStoreCredit')?.checked === true,
     paymentMethod: 'manual_paypal',
     analyticsVisitorId: analytics.visitorId,
@@ -1062,7 +1088,7 @@ async function refreshCheckoutAccountStatus() {
       <span>${escapeHTML(state.account.email)}</span>
     </div>
     ${balance > 0 ? `<label class="store-credit-toggle"><input id="applyStoreCredit" type="checkbox"> Apply up to <strong>$${balance.toFixed(2)}</strong> store credit</label>` : '<span class="store-credit-empty">Approved referral and creator credit will appear here.</span>'}
-    <span class="member-crypto-note">Verified member benefit: an extra 5% off crypto orders. It does not apply to PayPal.</span>`;
+    <span class="member-crypto-note">${activeReferralCampaign() ? 'Referral link savings replace payment-method and member discounts; one valid code can add up to 5%.' : 'Verified member benefit: an extra 5% off crypto orders. It does not apply to PayPal.'}</span>`;
   const toggle = document.getElementById('applyStoreCredit');
   if (toggle) toggle.addEventListener('change', renderCheckoutSummary);
   const nameInput = document.getElementById('buyerName');
@@ -1084,7 +1110,7 @@ function openCheckoutModal() {
   const cryptoMsg = document.getElementById('cryptoMsg');
   const cryptoDetails = document.getElementById('cryptoPaymentDetails');
   if (promoInput) promoInput.value = '';
-  if (promoMsg) promoMsg.textContent = '';
+  if (promoMsg) promoMsg.textContent = activeReferralCampaign() ? 'Referral link applied: 10% off. One valid code adds up to 5% more.' : '';
   if (checkoutMsg) checkoutMsg.textContent = '';
   if (paypalMsg) paypalMsg.textContent = '';
   if (cryptoMsg) cryptoMsg.textContent = '';
@@ -1098,7 +1124,15 @@ function openCheckoutModal() {
   if (cryptoChoice) cryptoChoice.style.display = 'none';
   if (cryptoDetails) cryptoDetails.style.display = 'none';
   const cryptoButton = document.getElementById('cryptoCheckoutBtn');
-  if (cryptoButton) cryptoButton.querySelector('strong').innerHTML = hpAccountState.authenticated ? 'Crypto <em>10% total savings</em>' : 'Crypto <em>5% off</em>';
+  if (cryptoButton) cryptoButton.querySelector('strong').innerHTML = activeReferralCampaign()
+    ? 'Crypto <em>Referral 10% off</em>'
+    : (hpAccountState.authenticated ? 'Crypto <em>10% total savings</em>' : 'Crypto <em>5% off</em>');
+  if (cryptoButton && activeReferralCampaign()) cryptoButton.querySelector('span').textContent = 'Referral savings apply; one valid code can add 5%. No separate crypto discount.';
+  const zelleButton = document.getElementById('zelleCheckoutBtn');
+  if (zelleButton && activeReferralCampaign()) {
+    zelleButton.querySelector('strong').innerHTML = 'Zelle <em>Referral 10% off</em>';
+    zelleButton.querySelector('span').textContent = 'Referral savings apply; one valid code can add 5%. No separate Zelle discount. Put only your order number in the Zelle note.';
+  }
   updateShippingCountryNote();
   initShippingAddressAutocomplete();
   renderCheckoutSummary();
@@ -1122,8 +1156,9 @@ async function applyPromoCode() {
   const code = input.value.trim();
   if (!code) {
     appliedDiscount = null;
-    msgEl.textContent = '';
+    msgEl.textContent = activeReferralCampaign() ? 'Referral link applied: 10% off. One valid code adds up to 5% more.' : '';
     renderCheckoutSummary();
+    renderCryptoPricePreview();
     return;
   }
   try {
@@ -1131,7 +1166,9 @@ async function applyPromoCode() {
     if (result.valid) {
       appliedDiscount = { code: result.code, percentOff: result.percentOff };
       msgEl.style.color = 'var(--success)';
-      msgEl.textContent = `${result.percentOff}% off applied.`;
+      msgEl.textContent = activeReferralCampaign()
+        ? `Referral 10% + ${Math.min(5, result.percentOff)}% from ${result.code} applied (15% maximum).`
+        : `${result.percentOff}% off applied.`;
     } else {
       appliedDiscount = null;
       msgEl.style.color = 'var(--danger)';
@@ -1145,6 +1182,7 @@ async function applyPromoCode() {
     trackCheckoutError('promo', 'lookup_failed');
   }
   renderCheckoutSummary();
+  renderCryptoPricePreview();
 }
 
 function getPayPalConfig() {
@@ -1245,7 +1283,7 @@ let cryptoChoiceOpen = false;
 function renderCryptoPricePreview() {
   const previewEl = document.getElementById('cryptoPricePreview');
   if (!previewEl) return;
-  if (appliedDiscount) {
+  if (appliedDiscount && !activeReferralCampaign()) {
     previewEl.textContent = 'Crypto discount cannot be combined with a promo code.';
     return;
   }
@@ -1254,11 +1292,16 @@ function renderCryptoPricePreview() {
   const memberRate = hpAccountState.authenticated ? ((window.siteFees && window.siteFees.accountCryptoDiscountRate) || 0) : 0;
   const shippingFee = selectedShippingFee();
   const orderFeeRate = (window.siteFees && window.siteFees.orderFeeRate) || 0;
-  const discount = round2(subtotal * (rate + memberRate));
+  const referralCampaign = activeReferralCampaign();
+  const discount = referralCampaign
+    ? round2(cartPromoEligibleSubtotal() * (10 + (appliedDiscount ? Math.min(5, appliedDiscount.percentOff) : 0)) / 100)
+    : round2(subtotal * (rate + memberRate));
   const feeBase = Math.max(0, subtotal - discount + shippingFee);
   const orderFee = round2(feeBase * orderFeeRate);
   const total = round2(feeBase + orderFee);
-  previewEl.textContent = rate ? `Crypto price: $${total.toFixed(2)} (saves $${discount.toFixed(2)}${memberRate ? ' — includes your 5% member benefit' : ''})` : '';
+  previewEl.textContent = referralCampaign
+    ? `Referral price: $${total.toFixed(2)} (saves $${discount.toFixed(2)}; no separate crypto discount)`
+    : (rate ? `Crypto price: $${total.toFixed(2)} (saves $${discount.toFixed(2)}${memberRate ? ' — includes your 5% member benefit' : ''})` : '');
 }
 
 function showManualPaymentShell(title, summary) {
@@ -1278,7 +1321,7 @@ async function submitCryptoCheckout() {
   const zelleDetails = document.getElementById('zellePaymentDetails');
   trackPaymentMethod('crypto');
 
-  if (appliedDiscount) {
+  if (appliedDiscount && !activeReferralCampaign()) {
     msgEl.style.color = 'var(--danger)';
     msgEl.textContent = 'Crypto discount cannot be combined with promo codes. Remove the promo code or choose PayPal.';
     return;
@@ -1289,8 +1332,12 @@ async function submitCryptoCheckout() {
     if (paypalDetails) paypalDetails.style.display = 'none';
     if (zelleDetails) zelleDetails.style.display = 'none';
     if (choice) choice.style.display = 'block';
-    showManualPaymentShell('Crypto payment', 'Choose BTC or USDC, then submit the order to get the exact payment total and address. Crypto discount cannot be combined with promo codes.');
-    btn.querySelector('strong').innerHTML = hpAccountState.authenticated ? 'Submit Crypto Order <em>10% total savings</em>' : 'Submit Crypto Order <em>5% off</em>';
+    showManualPaymentShell('Crypto payment', activeReferralCampaign()
+      ? 'Choose BTC or USDC, then submit the order. Referral savings replace the separate crypto discount; one valid code adds up to 5%.'
+      : 'Choose BTC or USDC, then submit the order to get the exact payment total and address. Crypto discount cannot be combined with promo codes.');
+    btn.querySelector('strong').innerHTML = activeReferralCampaign()
+      ? 'Submit Crypto Order <em>Referral 10% off</em>'
+      : (hpAccountState.authenticated ? 'Submit Crypto Order <em>10% total savings</em>' : 'Submit Crypto Order <em>5% off</em>');
     return;
   }
 
@@ -1395,6 +1442,42 @@ async function submitManualPaypalCheckout() {
   }
 }
 
+async function initStripeSandboxCheckout() {
+  const btn = document.getElementById('stripeSandboxCheckoutBtn');
+  if (!btn) return;
+  let stripeMode = null;
+  try {
+    const config = await api('/api/stripe/config');
+    if (config.enabled && ['test', 'live'].includes(config.mode)) {
+      stripeMode = config.mode;
+      btn.hidden = false;
+      btn.style.display = '';
+      if (stripeMode === 'test') {
+        document.getElementById('stripeCheckoutTitle').textContent = 'Card (Stripe test mode)';
+        document.getElementById('stripeCheckoutDescription').textContent = 'Sandbox only. No real charge or fulfillment; available during local integration testing.';
+      }
+    }
+  } catch (_) { /* Stripe is optional and remains hidden when unavailable. */ }
+  btn.addEventListener('click', async () => {
+    const msgEl = document.getElementById('checkoutMsg');
+    const payload = checkoutPayloadFromForm();
+    payload.paymentMethod = 'stripe';
+    trackPaymentMethod('stripe');
+    if (!validateCheckoutPayload(payload, msgEl)) return;
+    btn.disabled = true;
+    try {
+      const result = await api('/api/stripe/create-checkout-session', { method: 'POST', body: payload });
+      if (result.mode !== stripeMode || !/^https:\/\//.test(result.url || '')) throw new Error('Stripe checkout is unavailable.');
+      window.location.assign(result.url);
+    } catch (err) {
+      msgEl.style.color = 'var(--danger)';
+      msgEl.textContent = err.message;
+      focusAddressError(err);
+      btn.disabled = false;
+    }
+  });
+}
+
 async function submitZelleCheckout() {
   const msgEl = document.getElementById('checkoutMsg');
   const btn = document.getElementById('zelleCheckoutBtn');
@@ -1402,7 +1485,7 @@ async function submitZelleCheckout() {
   payload.paymentMethod = 'zelle';
   trackPaymentMethod('zelle');
 
-  if (appliedDiscount) {
+  if (appliedDiscount && !activeReferralCampaign()) {
     msgEl.style.color = 'var(--danger)';
     msgEl.textContent = 'The Zelle 10% discount cannot be combined with codes. Remove the code or choose PayPal.';
     return;
@@ -1490,6 +1573,7 @@ function wireCheckout() {
   }
 
   const manualPaypalBtn = document.getElementById('manualPaypalCheckoutBtn');
+  initStripeSandboxCheckout();
   if (manualPaypalBtn) manualPaypalBtn.addEventListener('click', submitManualPaypalCheckout);
 
   const zelleBtn = document.getElementById('zelleCheckoutBtn');

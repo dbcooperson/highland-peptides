@@ -50,7 +50,6 @@
     <nav class="site-nav">
       <a href="/index.html#catalogSection">Shop</a>
       <a href="/about.html">About Us</a>
-      <a href="/calculator.html">Research Calculator</a>
       <a href="/support.html">Support</a>
     </nav>
     <div class="header-actions">
@@ -102,11 +101,20 @@
   Not evaluated by the FDA.
 </footer>
 
-<script src="/js/shared.js?v=search-aliases-20260916"></script>
+<script src="/js/shared.js?v=highland-referral-20260917"></script>
 <script>
-  const order = new URLSearchParams(window.location.search).get('order');
+  const query = new URLSearchParams(window.location.search);
+  const order = query.get('order');
   const target = document.getElementById('successOrderNumber');
-  if (order && target) {
+  if (query.has('stripe_session_id')) {
+    const live = query.get('stripe_mode') === 'live';
+    document.querySelector('.success-eyebrow').textContent = live ? 'Stripe checkout returned' : 'Stripe sandbox checkout returned';
+    document.querySelector('.success-card h1').textContent = live ? 'We’re confirming your payment.' : 'Test payment is being verified.';
+    document.querySelector('.success-lede').textContent = live
+      ? 'Your order is not marked paid until Stripe confirms it. Please keep your order number and don’t pay again while confirmation is pending.'
+      : 'This was a test-mode checkout. No real money was charged or order fulfilled. The signed webhook determines payment status.';
+  }
+  if (/^\d{1,10}$/.test(order || '') && target) {
     target.hidden = false;
     target.textContent = `Order #${order}`;
   }

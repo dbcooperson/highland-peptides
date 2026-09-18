@@ -87,13 +87,15 @@ function unavailableCartLineHTML(sku, qty) {
 function cartSummaryHTML(subtotal, promotionState) {
   const shippingFee = (window.siteFees && window.siteFees.shippingFee) || 0;
   const orderFeeRate = (window.siteFees && window.siteFees.orderFeeRate) || 0;
-  const feeBase = subtotal + shippingFee;
+  const referralDiscount = activeReferralCampaign() ? Math.round(cartPromoEligibleSubtotal() * 10) / 100 : 0;
+  const feeBase = subtotal - referralDiscount + shippingFee;
   const orderFee = Math.round(feeBase * orderFeeRate * 100) / 100;
   const estimatedTotal = feeBase + orderFee;
   return `
     <div class="cart-summary-trust"><span>Secure checkout</span><span>RUO certification required</span><span>Support: support@highlandpeptides.com</span></div>
     <div class="cart-summary-lines">
       <div><span>Subtotal</span><strong>$${subtotal.toFixed(2)}</strong></div>
+      ${referralDiscount ? `<div><span>Referral link (10%)</span><strong>-$${referralDiscount.toFixed(2)}</strong></div>` : ''}
       ${promotionState && promotionState.unlocked ? '<div class="bundle-summary-line"><span>Sterile Water (bacteriostatic) 10ml bundle reward</span><strong>FREE</strong></div>' : ''}
       <div><span>U.S. shipping</span><strong>$${shippingFee.toFixed(2)}</strong></div>
       ${orderFeeRate ? `<div><span>Processing fee</span><strong>$${orderFee.toFixed(2)}</strong></div>` : ''}
