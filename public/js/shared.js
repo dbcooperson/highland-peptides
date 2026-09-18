@@ -859,9 +859,6 @@ async function verifyCheckoutEmailCode() {
 }
 
 let appliedDiscount = null; // { code, percentOff } | null
-let paypalConfigPromise = null;
-let paypalButtonsRendered = false;
-let pendingPayPalLocalOrderId = null;
 const HP_CHECKOUT_ATTEMPT_KEY = 'hp_checkout_attempt';
 let currentCheckoutAttemptId = '';
 let checkoutShippingTracked = false;
@@ -1012,7 +1009,7 @@ function checkoutPayloadFromForm() {
     discountCode: appliedDiscount ? appliedDiscount.code : null,
     referralCampaign: activeReferralCampaign(),
     applyStoreCredit: document.getElementById('applyStoreCredit')?.checked === true,
-    paymentMethod: 'manual_paypal',
+    paymentMethod: null,
     analyticsVisitorId: analytics.visitorId,
     analyticsSessionId: analytics.sessionId,
     analyticsCheckoutAttemptId: checkoutAttemptId(),
@@ -1088,7 +1085,7 @@ async function refreshCheckoutAccountStatus() {
       <span>${escapeHTML(state.account.email)}</span>
     </div>
     ${balance > 0 ? `<label class="store-credit-toggle"><input id="applyStoreCredit" type="checkbox"> Apply up to <strong>$${balance.toFixed(2)}</strong> store credit</label>` : '<span class="store-credit-empty">Approved referral and creator credit will appear here.</span>'}
-    <span class="member-crypto-note">${activeReferralCampaign() ? 'Referral link savings replace payment-method and member discounts; one valid code can add up to 5%.' : 'Verified member benefit: an extra 5% off crypto orders. It does not apply to PayPal.'}</span>`;
+    <span class="member-crypto-note">${activeReferralCampaign() ? 'Referral link savings replace payment-method and member discounts; one valid code can add up to 5%.' : 'Verified member benefit: an extra 5% off crypto orders.'}</span>`;
   const toggle = document.getElementById('applyStoreCredit');
   if (toggle) toggle.addEventListener('change', renderCheckoutSummary);
   const nameInput = document.getElementById('buyerName');
@@ -1106,20 +1103,16 @@ function openCheckoutModal() {
   const promoInput = document.getElementById('promoInput');
   const promoMsg = document.getElementById('promoMsg');
   const checkoutMsg = document.getElementById('checkoutMsg');
-  const paypalMsg = document.getElementById('paypalMsg');
   const cryptoMsg = document.getElementById('cryptoMsg');
   const cryptoDetails = document.getElementById('cryptoPaymentDetails');
   if (promoInput) promoInput.value = '';
   if (promoMsg) promoMsg.textContent = activeReferralCampaign() ? 'Referral link applied: 10% off. One valid code adds up to 5% more.' : '';
   if (checkoutMsg) checkoutMsg.textContent = '';
-  if (paypalMsg) paypalMsg.textContent = '';
   if (cryptoMsg) cryptoMsg.textContent = '';
   const manualDetails = document.getElementById('manualPaymentDetails');
-  const paypalDetails = document.getElementById('paypalPaymentDetails');
   const zelleDetails = document.getElementById('zellePaymentDetails');
   const cryptoChoice = document.getElementById('cryptoChoiceDetails');
   if (manualDetails) manualDetails.style.display = 'none';
-  if (paypalDetails) paypalDetails.style.display = 'none';
   if (zelleDetails) zelleDetails.style.display = 'none';
   if (cryptoChoice) cryptoChoice.style.display = 'none';
   if (cryptoDetails) cryptoDetails.style.display = 'none';
@@ -1185,98 +1178,6 @@ async function applyPromoCode() {
   renderCryptoPricePreview();
 }
 
-function getPayPalConfig() {
-  if (!paypalConfigPromise) paypalConfigPromise = api('/api/paypal/config');
-  return paypalConfigPromise;
-}
-
-function loadPayPalSdk(clientId, currency) {
-  if (window.paypal) return Promise.resolve();
-  const existing = document.querySelector('script[data-paypal-sdk="true"]');
-  if (existing) {
-    return new Promise((resolve, reject) => {
-      existing.addEventListener('load', resolve, { once: true });
-      existing.addEventListener('error', reject, { once: true });
-    });
-  }
-  return new Promise((resolve, reject) => {
-    const script = document.createElement('script');
-    script.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(clientId)}&currency=${encodeURIComponent(currency)}&intent=capture`;
-    script.dataset.paypalSdk = 'true';
-    script.onload = resolve;
-    script.onerror = () => reject(new Error('Could not load PayPal checkout.'));
-    document.head.appendChild(script);
-  });
-}
-
-async function initPayPalCheckout() {
-  const paypalButtons = document.getElementById('paypalButtons');
-  const paypalMsg = document.getElementById('paypalMsg');
-  if (!paypalButtons || paypalButtonsRendered) return;
-
-  try {
-    const config = await getPayPalConfig();
-    if (!config.enabled) {
-      paypalButtons.innerHTML = '<div class="paypal-disabled">PayPal is ready in the code, but credentials still need to be added in Render before online payment can go live.</div>';
-      return;
-    }
-    await loadPayPalSdk(config.clientId, config.currency || 'USD');
-    if (!window.paypal) throw new Error('PayPal checkout did not load.');
-
-    window.paypal.Buttons({
-      style: { layout: 'vertical', color: 'gold', shape: 'pill', label: 'paypal' },
-      onClick(data, actions) {
-        const payload = checkoutPayloadFromForm();
-        payload.paymentMethod = 'paypal';
-        trackPaymentMethod('paypal');
-        return validateCheckoutPayload(payload, paypalMsg) ? actions.resolve() : actions.reject();
-      },
-      async createOrder() {
-        const payload = checkoutPayloadFromForm();
-        payload.paymentMethod = 'paypal';
-        const result = await api('/api/paypal/create-order', { method: 'POST', body: payload });
-        pendingPayPalLocalOrderId = result.orderId;
-        return result.paypalOrderId;
-      },
-      async onApprove(data) {
-        const analytics = analyticsContext();
-        const result = await api('/api/paypal/capture-order', {
-          method: 'POST',
-          body: {
-            paypalOrderId: data.orderID,
-            orderId: pendingPayPalLocalOrderId,
-            analyticsVisitorId: analytics.visitorId,
-            analyticsSessionId: analytics.sessionId,
-            analyticsCheckoutAttemptId: checkoutAttemptId(),
-          },
-        });
-        paypalMsg.style.color = 'var(--success)';
-        paypalMsg.textContent = 'Payment confirmed. Redirecting to your order confirmation...';
-        clearCartAfterCheckout();
-        window.location.href = `/success.html?order=${encodeURIComponent(result.orderId)}`;
-      },
-      onCancel() {
-        paypalMsg.style.color = 'var(--muted-on-light)';
-        paypalMsg.textContent = 'PayPal checkout was cancelled.';
-      },
-      onError(err) {
-        trackPaymentFailure('paypal', 'paypal_sdk_error');
-        paypalMsg.style.color = 'var(--danger)';
-        paypalMsg.textContent = err && err.message ? err.message : 'PayPal checkout failed. Please try again.';
-        focusAddressError(err);
-      },
-    }).render('#paypalButtons');
-    paypalButtonsRendered = true;
-  } catch (err) {
-    trackPaymentFailure('paypal', 'paypal_unavailable');
-    paypalButtons.innerHTML = '<div class="paypal-disabled">PayPal could not load. Please refresh the page or contact support@highlandpeptides.com.</div>';
-    if (paypalMsg) {
-      paypalMsg.style.color = 'var(--danger)';
-      paypalMsg.textContent = err.message || 'PayPal is unavailable right now.';
-    }
-  }
-}
-
 let lastCryptoOrder = null; // { id, email } | null
 let cryptoChoiceOpen = false;
 
@@ -1317,19 +1218,17 @@ async function submitCryptoCheckout() {
   const msgEl = document.getElementById('checkoutMsg');
   const btn = document.getElementById('cryptoCheckoutBtn');
   const choice = document.getElementById('cryptoChoiceDetails');
-  const paypalDetails = document.getElementById('paypalPaymentDetails');
   const zelleDetails = document.getElementById('zellePaymentDetails');
   trackPaymentMethod('crypto');
 
   if (appliedDiscount && !activeReferralCampaign()) {
     msgEl.style.color = 'var(--danger)';
-    msgEl.textContent = 'Crypto discount cannot be combined with promo codes. Remove the promo code or choose PayPal.';
+    msgEl.textContent = 'Crypto discount cannot be combined with promo codes. Remove the promo code or choose another payment method.';
     return;
   }
 
   if (!cryptoChoiceOpen) {
     cryptoChoiceOpen = true;
-    if (paypalDetails) paypalDetails.style.display = 'none';
     if (zelleDetails) zelleDetails.style.display = 'none';
     if (choice) choice.style.display = 'block';
     showManualPaymentShell('Crypto payment', activeReferralCampaign()
@@ -1407,41 +1306,6 @@ async function confirmCryptoPayment() {
   }
 }
 
-async function submitManualPaypalCheckout() {
-  const msgEl = document.getElementById('checkoutMsg');
-  const btn = document.getElementById('manualPaypalCheckoutBtn');
-  const payload = checkoutPayloadFromForm();
-  payload.paymentMethod = 'manual_paypal';
-  trackPaymentMethod('manual_paypal');
-
-  if (!validateCheckoutPayload(payload, msgEl)) return;
-
-  btn.disabled = true;
-  try {
-    const result = await api('/api/checkout', { method: 'POST', body: payload });
-    msgEl.style.color = 'var(--success)';
-    msgEl.textContent = 'Order submitted. Send the exact amount shown below.';
-    const paypalDetails = document.getElementById('paypalPaymentDetails');
-    const zelleDetails = document.getElementById('zellePaymentDetails');
-    const cryptoChoice = document.getElementById('cryptoChoiceDetails');
-    const cryptoDetails = document.getElementById('cryptoPaymentDetails');
-    if (cryptoChoice) cryptoChoice.style.display = 'none';
-    if (cryptoDetails) cryptoDetails.style.display = 'none';
-    if (zelleDetails) zelleDetails.style.display = 'none';
-    if (paypalDetails) paypalDetails.style.display = 'block';
-    document.getElementById('paypalPaymentEmail').textContent = result.paypal ? result.paypal.email : 'at475756@gmail.com';
-    showManualPaymentShell('PayPal payment instructions', `<strong>Order #${result.orderId}</strong><br>Exact total due: <strong>$${result.total.toFixed(2)}</strong><br>Send payment to: <strong>${result.paypal ? result.paypal.email : 'at475756@gmail.com'}</strong><br><span class="manual-payment-alert"><strong>Send using PayPal Goods and Services.</strong><br>Leave the PayPal note completely blank. Do not include the order number, product names, or any other text.</span><br><span class="hint">Please send the exact total shown. If the amount is incorrect, we will contact you and pause fulfillment until the payment is resolved. Your refund rights remain in effect. Confirmed orders ship the next business day.</span>`);
-    clearCartAfterCheckout();
-  } catch (err) {
-    msgEl.style.color = 'var(--danger)';
-    msgEl.textContent = err.message;
-    focusAddressError(err);
-    trackCheckoutError('order_creation', 'submission_failed', 'manual_paypal');
-  } finally {
-    btn.disabled = false;
-  }
-}
-
 async function initStripeSandboxCheckout() {
   const btn = document.getElementById('stripeSandboxCheckoutBtn');
   if (!btn) return;
@@ -1487,7 +1351,7 @@ async function submitZelleCheckout() {
 
   if (appliedDiscount && !activeReferralCampaign()) {
     msgEl.style.color = 'var(--danger)';
-    msgEl.textContent = 'The Zelle 10% discount cannot be combined with codes. Remove the code or choose PayPal.';
+    msgEl.textContent = 'The Zelle 10% discount cannot be combined with codes. Remove the code or choose another payment method.';
     return;
   }
 
@@ -1500,10 +1364,8 @@ async function submitZelleCheckout() {
     msgEl.style.color = 'var(--success)';
     msgEl.textContent = 'Order submitted. Send the exact amount shown below by Zelle.';
     const zelleDetails = document.getElementById('zellePaymentDetails');
-    const paypalDetails = document.getElementById('paypalPaymentDetails');
     const cryptoChoice = document.getElementById('cryptoChoiceDetails');
     const cryptoDetails = document.getElementById('cryptoPaymentDetails');
-    if (paypalDetails) paypalDetails.style.display = 'none';
     if (cryptoChoice) cryptoChoice.style.display = 'none';
     if (cryptoDetails) cryptoDetails.style.display = 'none';
     if (zelleDetails) zelleDetails.style.display = 'block';
@@ -1572,9 +1434,7 @@ function wireCheckout() {
     });
   }
 
-  const manualPaypalBtn = document.getElementById('manualPaypalCheckoutBtn');
   initStripeSandboxCheckout();
-  if (manualPaypalBtn) manualPaypalBtn.addEventListener('click', submitManualPaypalCheckout);
 
   const zelleBtn = document.getElementById('zelleCheckoutBtn');
   if (zelleBtn) zelleBtn.addEventListener('click', submitZelleCheckout);

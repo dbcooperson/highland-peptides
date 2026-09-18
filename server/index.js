@@ -25,7 +25,7 @@ const {
   requirePromoManager,
 } = require('./auth');
 const { buildPackingSlip, buildContentsLabel } = require('./labels');
-const { isPayPalConfigured, createPayPalOrder, capturePayPalOrder } = require('./paypal');
+const { capturePayPalOrder } = require('./paypal');
 const { sendOrderBackup, sendPendingTrackingDiscord, checkFulfillmentDiscordConnection, sendCustomerPaymentInstructions, sendPaymentReminder, sendTrackingEmail, isCustomerEmailConfigured } = require('./notifications');
 const { createBitcoinMonitor } = require('./btc-monitor');
 const { acceptAddressAsEntered, validateShippingAddress } = require('./address-validation');
@@ -386,7 +386,10 @@ function prepareCheckout(body, accountId = null) {
     return { error: 'Name, valid email, destination country, and full shipping address are required.' };
   }
 
-  const normalizedPaymentMethod = ['paypal', 'manual_paypal', 'zelle', 'crypto', 'stripe'].includes(paymentMethod) ? paymentMethod : 'manual_paypal';
+  if (!['zelle', 'crypto', 'stripe'].includes(paymentMethod)) {
+    return { error: 'Select an available payment method.' };
+  }
+  const normalizedPaymentMethod = paymentMethod;
   const normalizedCryptoAsset = normalizedPaymentMethod === 'crypto' && cryptoAsset === 'USDC' ? 'USDC' : 'BTC';
 
   const items = Array.isArray(rawItems) ? rawItems : [];
@@ -434,7 +437,7 @@ function prepareCheckout(body, accountId = null) {
   }
   if (!highlandReferral && ['crypto', 'zelle'].includes(normalizedPaymentMethod) && discountMatch) {
     const methodLabel = normalizedPaymentMethod === 'zelle' ? 'Zelle' : 'Crypto';
-    return { error: `${methodLabel} discounts cannot be combined with codes. Remove the code or choose PayPal checkout.` };
+    return { error: `${methodLabel} discounts cannot be combined with codes. Remove the code or choose another payment method.` };
   }
   const codeDiscount = !highlandReferral && discountMatch ? promoEligibleSubtotal * discountMatch.rate : 0;
   const altPaymentDiscount = !highlandReferral && normalizedPaymentMethod === 'crypto' ? subtotal * config.ALT_PAYMENT_DISCOUNT_RATE : 0;
@@ -551,54 +554,20 @@ app.get('/api/address/config', (req, res) => {
 });
 
 app.get('/api/paypal/config', (req, res) => {
-  res.json({
-    enabled: isPayPalConfigured(),
-    clientId: isPayPalConfigured() ? config.PAYPAL_CLIENT_ID : null,
-    currency: config.PAYPAL_CURRENCY,
-    environment: config.PAYPAL_ENV,
-  });
+  res.json({ enabled: false });
 });
 
-app.post('/api/paypal/create-order', checkCheckoutRateLimit, async (req, res) => {
-  if (!isPayPalConfigured()) {
-    return res.status(503).json({ error: 'PayPal is not configured yet.' });
-  }
-
-  const prepared = prepareCheckout(req.body, req.session && req.session.accountId);
-  if (prepared.error) {
-    analytics.recordEvent({ type: 'checkout_error', stage: 'server_validation', reason: 'invalid_checkout', visitorId: cleanText(req.body && req.body.analyticsVisitorId, 128), sessionId: cleanText(req.body && req.body.analyticsSessionId, 128), checkoutAttemptId: cleanText(req.body && req.body.analyticsCheckoutAttemptId, 128) });
-    return res.status(400).json({ error: prepared.error });
-  }
-  if (!isCheckoutEmailVerified(req, prepared.orderInput.buyer.email)) {
-    return res.status(403).json({ error: 'Verify your checkout email before placing the order.' });
-  }
-  const addressValidation = await validatePreparedCheckoutAddress(prepared);
-  if (!addressValidation.valid) {
-    analytics.recordEvent({ type: 'checkout_error', stage: 'address_validation', reason: addressValidation.code || 'invalid_address', ...prepared.analytics });
-    return checkoutAddressError(res, addressValidation);
-  }
-
-  let order = null;
-  try {
-    order = db.createOrder({ ...prepared.orderInput, paymentProvider: 'paypal' });
-    analytics.recordEvent({ type: 'order_created', ...prepared.analytics });
-    const paypalOrder = await createPayPalOrder(order);
-    db.setPayPalOrderId(order.id, paypalOrder.id);
-    res.json({ ok: true, orderId: order.id, paypalOrderId: paypalOrder.id, total: order.total });
-  } catch (err) {
-    if (order && !order.paypal_order_id) db.deleteOrder(order.id);
-    analytics.recordEvent({ type: 'payment_failed', paymentMethod: 'paypal', reason: 'create_order_failed', ...prepared.analytics });
-    res.status(502).json({ error: err.message || 'Could not start PayPal checkout.' });
-  }
+app.post('/api/paypal/create-order', checkCheckoutRateLimit, (req, res) => {
+  res.status(410).json({ error: 'PayPal checkout is no longer available.' });
 });
 
-// Manual/invoice checkout fallback -- records the order as pending_payment and
-// notifies us (Discord/email backup) so we can follow up with payment
-// instructions directly. Used when PayPal is down/restricted, or as a plain
-// alternative to it.
+// Manual crypto/Zelle checkout records a pending order for payment matching.
 app.post('/api/checkout', checkCheckoutRateLimit, async (req, res) => {
+  if (['paypal', 'manual_paypal'].includes(req.body?.paymentMethod)) {
+    return res.status(410).json({ error: 'PayPal checkout is no longer available.' });
+  }
   if (req.body?.paymentMethod === 'stripe') {
-    return res.status(400).json({ error: 'Stripe orders must use the hosted sandbox Checkout flow.' });
+    return res.status(400).json({ error: 'Stripe orders must use the hosted Checkout flow.' });
   }
   const prepared = prepareCheckout(req.body, req.session && req.session.accountId);
   if (prepared.error) {
@@ -635,11 +604,6 @@ app.post('/api/checkout', checkCheckoutRateLimit, async (req, res) => {
     paymentMethod: order.payment_provider,
     message: 'Order received. Send the exact total shown for manual payment verification.',
   };
-
-  if (paymentMethod === 'manual_paypal') {
-    response.paypal = { email: config.PAYPAL_MANUAL_EMAIL, reference: `HP-${order.id}` };
-    response.message = 'Order received. Send the exact total shown to PayPal. We manually verify payment before fulfillment.';
-  }
 
   if (paymentMethod === 'zelle') {
     response.zelle = { recipient: config.ZELLE_RECIPIENT, reference: `HP-${order.id}` };
@@ -1200,12 +1164,12 @@ app.get('/api/admin/launch-checks', requireAdmin, async (req, res) => {
         : 'Orders are not using /var/data. Add/confirm a Render Persistent Disk before taking live orders.',
     },
     {
-      key: 'paypal',
-      label: 'PayPal credentials',
-      ok: isPayPalConfigured() && config.PAYPAL_ENV === 'live',
-      detail: isPayPalConfigured()
-        ? `PayPal is configured in ${config.PAYPAL_ENV} mode.`
-        : 'PayPal credentials are missing, checkout cannot take online payment yet.',
+      key: 'stripe',
+      label: 'Stripe card checkout',
+      ok: stripeMode() === 'live',
+      detail: stripeMode() === 'live'
+        ? 'Live Stripe Checkout and webhook credentials are configured.'
+        : 'Live Stripe Checkout remains disabled until the live key, webhook secret, and explicit switch are set.',
     },
     {
       key: 'discord',

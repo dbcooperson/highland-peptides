@@ -457,10 +457,6 @@
           <strong id="stripeCheckoutTitle">Card</strong>
           <span id="stripeCheckoutDescription">Pay securely by card using Stripe Checkout.</span>
         </button>
-        <button type="button" id="manualPaypalCheckoutBtn" class="payment-choice-card">
-          <strong>PayPal</strong>
-          <span>Submit your order, then send the exact total to at475756@gmail.com using Goods and Services. Leave the PayPal note completely blank.</span>
-        </button>
         <button type="button" id="cryptoCheckoutBtn" class="payment-choice-card">
           <strong>Crypto <em>5% off</em></strong>
           <span>Submit order and pay by BTC or USDC. Cannot be combined with promo codes.</span>
@@ -470,17 +466,12 @@
           <span>Submit your order, then send the discounted exact total to <span id="zelleRecipientPreview" class="zelle-recipient-inline">+1 (213) 424-4643</span>. Cannot be combined with codes. The Zelle note must contain only your order number and nothing else.</span>
         </button>
       </div>
-      <p class="manual-payment-note">Each order receives a unique exact total. Payments are manually reviewed, and confirmed orders ship the next business day. Wrong payment amounts require email confirmation within 72 hours before fulfillment can proceed.</p>
+      <p class="manual-payment-note">Each order receives a unique exact total. Manual payments are reviewed before fulfillment, and confirmed orders ship the next business day. Wrong payment amounts require email confirmation within 72 hours before fulfillment can proceed.</p>
       <p class="form-msg" id="checkoutMsg"></p>
 
       <div id="manualPaymentDetails" class="manual-payment-details" style="display:none;">
         <h4 id="manualPaymentTitle">Payment instructions</h4>
         <p id="manualPaymentSummary"></p>
-        <div id="paypalPaymentDetails" style="display:none;">
-          <p class="crypto-address-label">Send the exact total to PayPal:</p>
-          <p class="crypto-address" id="paypalPaymentEmail"></p>
-          <p class="crypto-network-note">Send using Goods and Services and leave the PayPal note completely blank. Use the exact total shown so we can match your payment to this order. We manually verify payment before fulfillment; confirmed orders ship the next business day.</p>
-        </div>
         <div id="zellePaymentDetails" style="display:none;">
           <p class="crypto-address-label">Send the exact total by Zelle to:</p>
           <p class="crypto-address" id="zellePaymentRecipient"></p>
@@ -513,7 +504,7 @@
   Not evaluated by the FDA.
 </footer>
 
-<script src="/js/shared.js?v=highland-stripe-live-20260918"></script>
+<script src="/js/shared.js?v=checkout-20260918"></script>
 <script src="/js/cart.js?v=highland-referral-20260917"></script>
 <script src="/js/site-notice.js?v=20260916"></script>
 </body>

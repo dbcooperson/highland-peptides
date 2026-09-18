@@ -24,7 +24,7 @@ test('Zelle checkout uses the configured recipient across customer and admin flo
   assert.match(sharedJs, /result\.zelle\.recipient/);
   assert.match(sharedJs, /enter only <strong>.*reference.*and nothing else/);
   assert.match(sharedJs, /Zelle 10% discount cannot be combined with codes/);
-  assert.match(indexJs, /'manual_paypal', 'zelle', 'crypto'/);
+  assert.match(indexJs, /'zelle', 'crypto', 'stripe'/);
   assert.match(indexJs, /response\.zelle = \{ recipient: config\.ZELLE_RECIPIENT/);
   assert.match(indexJs, /normalizedPaymentMethod === 'zelle' \? subtotal \* config\.ZELLE_PAYMENT_DISCOUNT_RATE/);
   assert.match(indexJs, /'ZELLE10'/);
@@ -34,15 +34,14 @@ test('Zelle checkout uses the configured recipient across customer and admin flo
   assert.match(adminJs, /admin-payment-manual">Zelle/);
 });
 
-test('manual PayPal instructs buyers to use Goods and Services with a blank note', () => {
+test('PayPal is unavailable for new checkout while historical captures remain supported', () => {
   const cartHtml = read('public/cart.html');
   const sharedJs = read('public/js/shared.js');
-  const notificationsJs = read('server/notifications.js');
+  const indexJs = read('server/index.js');
 
-  assert.doesNotMatch(cartHtml, /Friends and Family/i);
-  assert.doesNotMatch(sharedJs, /Friends and Family/i);
-  assert.doesNotMatch(notificationsJs, /Friends and Family/i);
-  assert.match(cartHtml, /Goods and Services/);
-  assert.match(sharedJs, /Leave the PayPal note completely blank/);
-  assert.match(notificationsJs, /Leave the PayPal note completely blank/);
+  assert.doesNotMatch(cartHtml, /PayPal/i);
+  assert.doesNotMatch(sharedJs, /PayPal/i);
+  assert.match(indexJs, /app\.post\('\/api\/paypal\/create-order'[\s\S]*?res\.status\(410\)/);
+  assert.match(indexJs, /\['paypal', 'manual_paypal'\]\.includes\(req\.body\?\.paymentMethod\)/);
+  assert.match(indexJs, /app\.post\('\/api\/paypal\/capture-order'/);
 });

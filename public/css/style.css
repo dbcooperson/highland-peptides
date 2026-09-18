@@ -1410,24 +1410,6 @@ body.search-open { overflow: hidden; }
   height: 1px;
   background: var(--border-on-light);
 }
-.paypal-section {
-  margin: 0 0 12px;
-}
-.paypal-disabled {
-  padding: 12px;
-  border: 1px solid var(--border-on-light);
-  border-radius: var(--radius-sm);
-  background: #f4efe4;
-  color: var(--muted-on-light);
-  font-size: 12px;
-  line-height: 1.45;
-}
-.paypal-setup-note {
-  margin: 8px 0 0;
-  color: var(--muted-on-light);
-  font-size: 12px;
-  line-height: 1.45;
-}
 .manual-checkout-btn {
   width: 100%;
   background: var(--card);
