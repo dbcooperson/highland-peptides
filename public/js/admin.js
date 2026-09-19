@@ -780,6 +780,7 @@ function initLabelMaker() {
     }
   });
   document.getElementById('exportPirateShipCsv')?.addEventListener('click', exportPirateShipCsv);
+  document.getElementById('pirateShipRequeueForm')?.addEventListener('submit', requeuePirateShipOrders);
   document.getElementById('checkFulfillmentDiscord')?.addEventListener('click', async event => {
     const button = event.currentTarget;
     const message = document.getElementById('labelMakerMessage');
@@ -1270,9 +1271,54 @@ function renderPirateShipCsvQueue() {
   exportLink.classList.toggle('is-disabled', orders.length === 0);
   exportLink.setAttribute('aria-disabled', orders.length === 0 ? 'true' : 'false');
   exportLink.textContent = orders.length ? `Export new Pirate Ship CSV (${orders.length})` : 'No new Pirate Ship orders';
-  target.innerHTML = orders.length
+  const exported = adminOrdersCache.filter(order => order.pirate_ship_exported_at);
+  const latestExportedAt = exported.reduce((latest, order) => {
+    const value = String(order.pirate_ship_exported_at || '');
+    return value > latest ? value : latest;
+  }, '');
+  const latestOrders = latestExportedAt
+    ? exported.filter(order => String(order.pirate_ship_exported_at || '') === latestExportedAt)
+      .sort((a, b) => Number(a.id) - Number(b.id))
+    : [];
+  const nextMarkup = orders.length
     ? `<strong>Next CSV (${orders.length})</strong><span>${orders.map(order => `HP-${escapeHtml(order.id)} · ${escapeHtml(paidOrderBuyerDisplayName(order))}`).join(' &nbsp;·&nbsp; ')}</span>`
     : '<strong>Next CSV is empty</strong><span>Previously exported orders will not be repeated.</span>';
+  const lastMarkup = latestOrders.length
+    ? `<strong>Last CSV (${latestOrders.length})</strong><span>${latestOrders.map(order => `HP-${escapeHtml(order.id)} · ${escapeHtml(paidOrderBuyerDisplayName(order))}`).join(' &nbsp;·&nbsp; ')}</span>`
+    : '<strong>No prior CSV recorded</strong>';
+  target.innerHTML = `<div>${nextMarkup}</div><div>${lastMarkup}</div>`;
+}
+
+async function requeuePirateShipOrders(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const input = document.getElementById('pirateShipRequeueIds');
+  const button = form.querySelector('button[type="submit"]');
+  const orderIds = [...new Set(String(input?.value || '')
+    .split(/[^0-9]+/)
+    .filter(Boolean)
+    .map(Number)
+    .filter(Number.isSafeInteger))];
+  if (!orderIds.length) return window.alert('Enter at least one valid order number.');
+  button.disabled = true;
+  button.textContent = 'Requeueing…';
+  try {
+    const response = await fetch('/api/admin/pirate-ship/requeue', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderIds })
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || 'Could not requeue those orders.');
+    input.value = '';
+    await loadOrders();
+  } catch (err) {
+    window.alert(err.message || 'Could not requeue those orders.');
+  } finally {
+    button.disabled = false;
+    button.textContent = 'Requeue orders';
+  }
 }
 
 async function exportPirateShipCsv(event) {

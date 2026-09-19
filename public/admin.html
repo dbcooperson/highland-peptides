@@ -7,7 +7,7 @@
 <link rel="icon" type="image/png" href="/images/branding/highland-social-avatar-v1.png">
 <link rel="apple-touch-icon" href="/images/branding/highland-social-avatar-v1.png">
 <link rel="manifest" href="/site.webmanifest">
-<link rel="stylesheet" href="/css/style.css?v=photo-calibrated-labels-v2-20260902">
+<link rel="stylesheet" href="/css/style.css?v=pirate-ship-queue-v1-20260918">
 </head>
 <body class="admin-page">
 <header class="topbar">
@@ -160,6 +160,14 @@
           <p class="paid-label-order-empty">Loading paid orders…</p>
         </div>
         <div id="pirateShipCsvQueue" class="pirate-ship-csv-queue" aria-live="polite"></div>
+        <form id="pirateShipRequeueForm" class="pirate-ship-requeue-form">
+          <label for="pirateShipRequeueIds">Rebuild a CSV for specific order numbers</label>
+          <div>
+            <input id="pirateShipRequeueIds" type="text" inputmode="numeric" placeholder="286, 326, 249" autocomplete="off">
+            <button type="submit">Requeue orders</button>
+          </div>
+          <small>Use this only to replace a bad CSV. It does not change order statuses.</small>
+        </form>
         <p class="pirate-ship-export-note">The CSV contains only newly queued Pending tracking orders and exports each order once, so old shipments are not repeated. Upload it in Pirate Ship, map the columns once, and enable <strong>Email recipients</strong>. Each tracking notice returns through Highland’s secure cloud inbox and fulfills the matching order automatically.</p>
       </section>
 
@@ -292,7 +300,7 @@
 
 <div id="labelPrintPortal" class="label-print-sheet" aria-hidden="true"></div>
 
-<script src="/js/admin.js?v=photo-calibrated-labels-v5-20260902"></script>
+<script src="/js/admin.js?v=pirate-ship-queue-v1-20260918"></script>
 <script src="/js/site-notice.js?v=20260916"></script>
 </body>
 </html>
