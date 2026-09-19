@@ -190,6 +190,16 @@ function discountHTML(order) {
   return '<strong>' + code + '</strong><br><span class="admin-savings">Saved ' + money(saved) + '</span>';
 }
 
+function promoManagerVisibilityHTML(order) {
+  if (String(order.discount_code || '').toUpperCase() !== 'OGRE') return '';
+  const approved = (order.promo_manager_approved_for || []).map(value => String(value).toLowerCase()).includes('promo02');
+  return `<div class="admin-promo-visibility">
+    <strong>promo02 OGRE view</strong><br>
+    <span class="admin-muted">${approved ? 'Approved: name, email, items, total, status' : 'Hidden until you approve it'}</span><br>
+    <button type="button" class="admin-promo-visibility-button" data-id="${escapeHtml(order.id)}" data-approved="${approved ? 'false' : 'true'}">${approved ? 'Hide from promo02' : 'Approve for promo02'}</button>
+  </div>`;
+}
+
 function orderTotalHTML(order) {
   const financials = order.financials || {};
   const subtotal = Number(order.subtotal || 0);
@@ -1514,6 +1524,7 @@ function renderOrdersTable() {
         ${td(`<a href="/api/admin/orders/${o.id}/packing-slip.pdf" target="_blank">Packing Slip</a><br>
                <a href="/api/admin/orders/${o.id}/contents-label.pdf" target="_blank">4x6 Label</a><br>
                <a href="#" class="admin-delete-order" data-id="${o.id}" data-label="#${o.id} ${escapeHtml(o.buyer.name)}">Delete order</a>
+               ${promoManagerVisibilityHTML(o)}
                ${adminFulfillmentHTML(o)}
                ${adminNotesHTML(o)}`)}
       </tr>
@@ -1560,6 +1571,21 @@ function renderOrdersTable() {
         btn.disabled = false;
         btn.textContent = 'Send payment reminder';
         window.alert(err.message || 'Could not send reminder.');
+      }
+    };
+  });
+  document.querySelectorAll('.admin-promo-visibility-button').forEach(btn => {
+    btn.onclick = async () => {
+      const approved = btn.dataset.approved === 'true';
+      if (approved && !window.confirm('Approve this OGRE order for promo02? Promo02 will see the customer name, email, items, total, status, date, and order number. Shipping, payment, tracking, and private notes stay hidden.')) return;
+      btn.disabled = true;
+      try {
+        await api(`/api/admin/orders/${btn.dataset.id}/promo-visibility`, { method: 'POST', body: { approved } });
+        await loadOrders();
+        loadPromoAudit();
+      } catch (err) {
+        btn.disabled = false;
+        window.alert(err.message || 'Could not update promo02 visibility.');
       }
     };
   });

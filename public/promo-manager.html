@@ -14,7 +14,7 @@
 <main style="display:block;max-width:720px">
   <section id="loginPanel" class="panel">
     <h2>Promo Manager Login</h2>
-    <p class="hint">This account can only create fixed 15%-off codes. It cannot access orders, customers, payments, analytics, or admin settings.</p>
+    <p class="hint">This account can only create fixed 15%-off codes. Promo02 may also view individual OGRE orders after the owner explicitly approves them. No shipping address, payment reference, tracking, private notes, analytics, or admin settings are shared.</p>
     <form id="loginForm">
       <label>Username <input id="username" autocomplete="username" required></label>
       <label>Password <input id="password" type="password" autocomplete="current-password" required></label>
@@ -32,9 +32,14 @@
     </form>
     <h3>Codes created by this account</h3>
     <div id="codeList" class="panel"><p class="hint">Loading…</p></div>
+    <section id="ogreOrdersPanel" hidden>
+      <h3>Owner-approved OGRE orders</h3>
+      <p class="hint">Only orders individually approved by the Highland owner appear here. Shipping, payment, tracking, and private-note details remain hidden.</p>
+      <div id="ogreOrderList" class="panel"><p class="hint">Loading…</p></div>
+    </section>
   </section>
 </main>
-<script src="/js/promo-manager.js?v=20260911"></script>
+<script src="/js/promo-manager.js?v=approved-ogre-orders-20260919"></script>
 <script src="/js/site-notice.js?v=20260916"></script>
 </body>
 </html>

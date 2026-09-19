@@ -1075,7 +1075,13 @@ app.post('/api/admin/logout', (req, res) => {
 
 app.get('/api/promo-manager/session', (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
-  res.json({ authenticated: Boolean(req.session?.isPromoManager), role: req.session?.isPromoManager ? 'promo_manager' : null });
+  const username = req.session?.isPromoManager ? String(req.session.promoManagerUsername || '').toLowerCase() : '';
+  res.json({
+    authenticated: Boolean(req.session?.isPromoManager),
+    role: req.session?.isPromoManager ? 'promo_manager' : null,
+    username: username || null,
+    canViewApprovedOgreOrders: username === 'promo02',
+  });
 });
 
 app.post('/api/promo-manager/login', checkAdminLoginLimit, (req, res) => {
@@ -1095,7 +1101,7 @@ app.post('/api/promo-manager/login', checkAdminLoginLimit, (req, res) => {
     req.session.isPromoManager = true;
     req.session.promoManagerUsername = manager.username;
     db.recordPromoAudit({ username: manager.username, action: 'login', outcome: 'success', ip: clientIp(req) });
-    res.json({ ok: true, role: 'promo_manager' });
+    res.json({ ok: true, role: 'promo_manager', username: manager.username, canViewApprovedOgreOrders: manager.username === 'promo02' });
   });
 });
 
@@ -1110,6 +1116,26 @@ app.post('/api/promo-manager/logout', requirePromoManager, (req, res) => {
 
 app.get('/api/promo-manager/codes', requirePromoManager, (_req, res) => {
   res.json({ codes: db.getPromotionCodes().map(item => ({ code: item.code, percentOff: 15, createdAt: item.created_at })) });
+});
+
+app.get('/api/promo-manager/ogre-orders', requirePromoManager, (req, res) => {
+  const username = String(req.session.promoManagerUsername || '').toLowerCase();
+  if (username !== 'promo02') return res.status(403).json({ error: 'This account cannot view approved OGRE orders.' });
+  const orders = db.getApprovedPromoManagerOrders(username, 'OGRE').map(order => ({
+    orderId: Number(order.id),
+    customerName: String(order.buyer?.name || '').slice(0, 100),
+    customerEmail: String(order.buyer?.email || '').slice(0, 254),
+    status: String(order.status || '').slice(0, 40),
+    total: Math.round(Number(order.total || 0) * 100) / 100,
+    createdAt: order.created_at,
+    items: (order.items || []).map(item => ({
+      name: String(item.name || '').slice(0, 160),
+      spec: String(item.spec || '').slice(0, 160),
+      quantity: Math.max(0, Number(item.quantity || 0)),
+    })),
+  }));
+  res.setHeader('Cache-Control', 'no-store');
+  res.json({ orders });
 });
 
 app.post('/api/promo-manager/codes', requirePromoManager, (req, res) => {
@@ -1422,6 +1448,22 @@ app.post('/api/admin/orders/:id/status', requireAdmin, async (req, res) => {
     ? await dispatchPendingTrackingAddress(order)
     : null;
   res.json({ ok: true, fulfillmentDispatch });
+});
+
+app.post('/api/admin/orders/:id/promo-visibility', requireAdmin, (req, res) => {
+  if (typeof req.body?.approved !== 'boolean') {
+    return res.status(400).json({ error: 'Choose whether this order is approved for promo02.' });
+  }
+  const order = db.setPromoManagerOrderVisibility(req.params.id, 'promo02', req.body.approved);
+  if (!order) return res.status(400).json({ error: 'Only OGRE orders can be approved for promo02.' });
+  db.recordPromoAudit({
+    username: 'admin',
+    action: req.body.approved ? 'ogre_order_approved' : 'ogre_order_hidden',
+    outcome: 'success',
+    code: 'OGRE',
+    ip: clientIp(req),
+  });
+  res.json({ ok: true, orderId: order.id, approved: req.body.approved });
 });
 
 app.post('/api/admin/orders/:id/fulfillment-discord', requireAdmin, async (req, res) => {

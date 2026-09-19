@@ -156,6 +156,34 @@ function getPromoAuditLog(limit = 500) {
   return load().promoAuditLog.slice().sort((left, right) => Number(right.id) - Number(left.id)).slice(0, safeLimit);
 }
 
+function setPromoManagerOrderVisibility(orderId, username, approved) {
+  const data = load();
+  const order = data.orders.find(item => item.id === Number(orderId));
+  const manager = String(username || '').trim().toLowerCase();
+  if (!order || normalizedCode(order.discount_code) !== 'OGRE' || manager !== 'promo02') return null;
+  const approvedFor = new Set((Array.isArray(order.promo_manager_approved_for) ? order.promo_manager_approved_for : [])
+    .map(value => String(value || '').trim().toLowerCase())
+    .filter(Boolean));
+  if (approved) approvedFor.add(manager);
+  else approvedFor.delete(manager);
+  order.promo_manager_approved_for = [...approvedFor];
+  order.promo_manager_visibility_updated_at = new Date().toISOString();
+  save(data);
+  return order;
+}
+
+function getApprovedPromoManagerOrders(username, code = 'OGRE') {
+  const manager = String(username || '').trim().toLowerCase();
+  const promotionCode = normalizedCode(code);
+  if (!manager || !promotionCode) return [];
+  return load().orders
+    .filter(order => normalizedCode(order.discount_code) === promotionCode
+      && (Array.isArray(order.promo_manager_approved_for) ? order.promo_manager_approved_for : [])
+        .map(value => String(value || '').trim().toLowerCase())
+        .includes(manager))
+    .sort((left, right) => Number(right.id) - Number(left.id));
+}
+
 function addLedgerEntry(data, accountId, amountCents, type, details = {}) {
   const entry = {
     id: data.nextCreditLedgerId++,
@@ -956,5 +984,5 @@ module.exports = {
   createOrder, getAllOrders, getOrderById, setPayPalOrderId, setStripeCheckoutSessionId, markStripeOrderPaid, markOrderPaid, updateOrderStatus, applyOrderStatusMigration, updateOrderNotes, deleteOrder, markOrderBackupSent, claimPaymentReminder, markPaymentReminderSent, markPaymentReminderFailed, claimTrackingDispatch, markTrackingSent, markTrackingFailed, hasInboundTrackingEvent, markInboundTrackingEvent, claimFulfillmentDiscordPost, markFulfillmentDiscordSent, markFulfillmentDiscordFailed, markPirateShipOrdersExported, requeuePirateShipOrders, getStorageInfo, isTxidUsed, setPaymentReference,
   createAccount, getAccountById, getAccountByEmail, setAccountVerificationToken, verifyAccountByTokenHash, touchAccountLogin, setPasswordResetToken, resetPasswordByTokenHash, getAccountByReferralCode, setAccountReferralCode, getAccountDashboard, createPayoutRequest, updatePayoutRequest, getAdminReferralData, reviewReferralCredit, createSocialCreditSubmission, reviewSocialCreditSubmission,
   createPromotionCode, getPromotionCodeByCode, getPromotionCodes,
-  recordPromoAudit, getPromoAuditLog,
+  recordPromoAudit, getPromoAuditLog, setPromoManagerOrderVisibility, getApprovedPromoManagerOrders,
 };

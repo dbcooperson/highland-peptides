@@ -57,6 +57,31 @@ test('promo account activity is recorded newest-first for owner review', () => {
   assert.equal(entries[1].action, 'login');
 });
 
+test('promo02 sees only owner-approved OGRE orders', () => {
+  const order = db.createOrder({
+    buyer: { name: 'Approved Researcher', email: 'approved@example.com', address1: 'Private address', city: 'Private city', state: 'CA', zip: '90001', country: 'US' },
+    certifiedAt: new Date().toISOString(),
+    items: [{ name: 'Research item', spec: '10mg', sku: 'TEST10', quantity: 1, price: 50 }],
+    subtotal: 50,
+    promoEligibleSubtotal: 50,
+    packagingFee: 0,
+    shippingFee: 10,
+    orderFee: 0,
+    discountCode: 'OGRE',
+    discountType: 'promotion',
+    discountAmount: 7.50,
+    total: 52.50,
+    paymentProvider: 'zelle',
+  });
+  assert.deepEqual(db.getApprovedPromoManagerOrders('promo02', 'OGRE'), []);
+  assert.equal(db.setPromoManagerOrderVisibility(order.id, 'promo03', true), null);
+  assert.equal(db.setPromoManagerOrderVisibility(order.id, 'promo02', true).id, order.id);
+  assert.deepEqual(db.getApprovedPromoManagerOrders('promo02', 'OGRE').map(item => item.id), [order.id]);
+  assert.deepEqual(db.getApprovedPromoManagerOrders('promo03', 'OGRE'), []);
+  assert.equal(db.setPromoManagerOrderVisibility(order.id, 'promo02', false).id, order.id);
+  assert.deepEqual(db.getApprovedPromoManagerOrders('promo02', 'OGRE'), []);
+});
+
 test('promo manager middleware grants only its dedicated session role', () => {
   let nextCalled = false;
   requirePromoManager({ session: { isPromoManager: true } }, {}, () => { nextCalled = true; });
@@ -78,6 +103,19 @@ test('promo manager page exposes no general admin data or controls', () => {
   assert.match(html, /only create fixed 15%-off codes/i);
   assert.doesNotMatch(script, /\/api\/admin\//);
   assert.doesNotMatch(html, /id="ordersTable"|data-admin-tab|adminOrderSearch|adminTracking/i);
+});
+
+test('approved OGRE order access is gated to promo02 and owner approval', () => {
+  const html = fs.readFileSync(path.join(__dirname, '..', 'public', 'promo-manager.html'), 'utf8');
+  const script = fs.readFileSync(path.join(__dirname, '..', 'public', 'js', 'promo-manager.js'), 'utf8');
+  const adminScript = fs.readFileSync(path.join(__dirname, '..', 'public', 'js', 'admin.js'), 'utf8');
+  const serverSource = fs.readFileSync(path.join(__dirname, 'index.js'), 'utf8');
+  assert.match(html, /Owner-approved OGRE orders/i);
+  assert.match(script, /\/api\/promo-manager\/ogre-orders/);
+  assert.match(adminScript, /\/api\/admin\/orders\/\$\{btn\.dataset\.id\}\/promo-visibility/);
+  assert.match(serverSource, /username !== 'promo02'/);
+  assert.match(serverSource, /db\.getApprovedPromoManagerOrders\(username, 'OGRE'\)/);
+  assert.doesNotMatch(script, /address|payment_reference|tracking_number|private notes/i);
 });
 
 test('promo audit UI and API are confined to the full admin area', () => {
