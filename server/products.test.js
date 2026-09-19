@@ -35,9 +35,9 @@ test('Retatrutide variants have requested fixed pre-code prices', () => {
   assert.equal(bySku.RT30.price, 39.99);
 });
 
-test('branded product names retain the compound identity and original product URLs', () => {
-  assert.equal(bySku.RT20.name, 'HP-3RT (Retatrutide)');
-  assert.equal(bySku.TR30.name, 'HP-TRZ (Tirzepatide)');
+test('HP-3RT and HP-TRZ use brand-only display names while retaining original product URLs', () => {
+  assert.equal(bySku.RT20.name, 'HP-3RT');
+  assert.equal(bySku.TR30.name, 'HP-TRZ');
   const tesa = catalog.find(product => product.compoundName === 'Tesamorelin');
   assert.ok(tesa);
   assert.equal(tesa.name, 'HP-TSM (Tesamorelin)');

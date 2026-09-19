@@ -19,6 +19,8 @@ test('hero launches Glutathione and orders L-Carnitine, Retatrutide, then Tirzep
   const tirzepatide = hero.indexOf('/product/tirzepatide');
   assert.ok(lCarnitine > -1 && lCarnitine < retatrutide);
   assert.ok(retatrutide < tirzepatide);
+  assert.doesNotMatch(hero, />Retatrutide\s*·|alt="[^"]*Retatrutide/);
+  assert.doesNotMatch(hero, />Tirzepatide\s*·|alt="[^"]*Tirzepatide/);
   assert.doesNotMatch(hero, /\/product\/bpc-157/);
 });
 

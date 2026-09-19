@@ -6,7 +6,8 @@ const raw = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'produ
 const descriptions = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'descriptions.json'), 'utf8'));
 const PRODUCT_IMAGE_REVISION = 'offwhite-closeup-20260825';
 
-// Brand codes are displayed alongside, never instead of, the compound identity.
+// Customer-facing brand names. The underlying catalog identity remains available
+// internally for legacy URLs, search aliases, COA matching, and fulfillment.
 const DISPLAY_NAME_OVERRIDES = {
   Tirzepatide: 'HP-TRZ',
   Retatrutide: 'HP-3RT',
@@ -17,6 +18,7 @@ const DISPLAY_NAME_OVERRIDES = {
 function publicProductName(name) {
   const code = DISPLAY_NAME_OVERRIDES[name];
   if (name === 'Bacteriostatic Water') return 'Sterile Water (Bacteriostatic, 0.9% benzyl alcohol)';
+  if (name === 'Tirzepatide' || name === 'Retatrutide') return code;
   return code ? `${code} (${name})` : name;
 }
 
