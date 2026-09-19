@@ -26,7 +26,7 @@ function createTestOrder() {
   });
 }
 
-test('Pirate Ship export state is durable and resets only when re-queued', () => {
+test('Pirate Ship export state survives status changes and resets only through explicit requeue', () => {
   const created = createTestOrder();
   assert.equal(created.pirate_ship_exported_at, null);
 
@@ -40,7 +40,11 @@ test('Pirate Ship export state is durable and resets only when re-queued', () =>
 
   db.updateOrderStatus(created.id, 'paid');
   db.updateOrderStatus(created.id, 'pending_tracking');
+  assert.equal(db.getOrderById(created.id).pirate_ship_exported_at, exportedAt);
+
+  db.requeuePirateShipOrders([created.id], '2026-09-15T09:00:00.000Z');
   assert.equal(db.getOrderById(created.id).pirate_ship_exported_at, null);
+  assert.equal(db.getOrderById(created.id).pirate_ship_requeued_at, '2026-09-15T09:00:00.000Z');
 });
 
 test.after(() => fs.rmSync(tempDir, { recursive: true, force: true }));

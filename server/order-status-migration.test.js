@@ -22,7 +22,7 @@ test('selected order status migration runs once and queues newly pending orders'
   assert.deepEqual(first.updatedOrderIds, [291, 278]);
   assert.deepEqual(first.missingOrderIds, [999]);
   assert.equal(db.getOrderById(291).status, 'pending_tracking');
-  assert.equal(db.getOrderById(291).pirate_ship_exported_at, null);
+  assert.equal(db.getOrderById(291).pirate_ship_exported_at, 'old-export');
   assert.equal(db.getOrderById(278).status, 'pending_tracking');
 
   const second = db.applyOrderStatusMigration('selected-orders', [291], 'paid');

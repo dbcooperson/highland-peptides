@@ -511,12 +511,10 @@ function updateOrderStatus(id, status) {
   const data = load();
   const order = data.orders.find(item => item.id === Number(id));
   if (!order) return null;
-  const previousStatus = order.status;
   order.status = status;
   if (isConfirmedOrderStatus(status)) order.paid_at = order.paid_at || new Date().toISOString();
   if (status === 'pending_tracking') {
     order.labels_printed_at = order.labels_printed_at || new Date().toISOString();
-    if (previousStatus !== 'pending_tracking') order.pirate_ship_exported_at = null;
   }
   syncReferralCredit(data, order);
   if (status === 'cancelled') refundStoreCredit(data, order);
@@ -544,12 +542,10 @@ function applyOrderStatusMigration(key, ids, status) {
       missingOrderIds.push(id);
       continue;
     }
-    const previousStatus = order.status;
     order.status = status;
     if (isConfirmedOrderStatus(status)) order.paid_at = order.paid_at || new Date().toISOString();
     if (status === 'pending_tracking') {
       order.labels_printed_at = order.labels_printed_at || new Date().toISOString();
-      if (previousStatus !== 'pending_tracking') order.pirate_ship_exported_at = null;
     }
     syncReferralCredit(data, order);
     if (status === 'cancelled') refundStoreCredit(data, order);
@@ -579,6 +575,21 @@ function markPirateShipOrdersExported(ids, exportedAt = new Date().toISOString()
   });
   if (exported.length) save(data);
   return exported;
+}
+
+function requeuePirateShipOrders(ids, requeuedAt = new Date().toISOString()) {
+  const orderIds = new Set((ids || []).map(Number).filter(Number.isFinite));
+  if (!orderIds.size) return [];
+  const data = load();
+  const requeued = [];
+  data.orders.forEach(order => {
+    if (!orderIds.has(Number(order.id)) || order.status !== 'pending_tracking' || order.tracking_number) return;
+    order.pirate_ship_exported_at = null;
+    order.pirate_ship_requeued_at = requeuedAt;
+    requeued.push(order);
+  });
+  if (requeued.length) save(data);
+  return requeued;
 }
 
 function updateOrderNotes(id, notes) {
@@ -942,7 +953,7 @@ function getStorageInfo() {
 }
 
 module.exports = {
-  createOrder, getAllOrders, getOrderById, setPayPalOrderId, setStripeCheckoutSessionId, markStripeOrderPaid, markOrderPaid, updateOrderStatus, applyOrderStatusMigration, updateOrderNotes, deleteOrder, markOrderBackupSent, claimPaymentReminder, markPaymentReminderSent, markPaymentReminderFailed, claimTrackingDispatch, markTrackingSent, markTrackingFailed, hasInboundTrackingEvent, markInboundTrackingEvent, claimFulfillmentDiscordPost, markFulfillmentDiscordSent, markFulfillmentDiscordFailed, markPirateShipOrdersExported, getStorageInfo, isTxidUsed, setPaymentReference,
+  createOrder, getAllOrders, getOrderById, setPayPalOrderId, setStripeCheckoutSessionId, markStripeOrderPaid, markOrderPaid, updateOrderStatus, applyOrderStatusMigration, updateOrderNotes, deleteOrder, markOrderBackupSent, claimPaymentReminder, markPaymentReminderSent, markPaymentReminderFailed, claimTrackingDispatch, markTrackingSent, markTrackingFailed, hasInboundTrackingEvent, markInboundTrackingEvent, claimFulfillmentDiscordPost, markFulfillmentDiscordSent, markFulfillmentDiscordFailed, markPirateShipOrdersExported, requeuePirateShipOrders, getStorageInfo, isTxidUsed, setPaymentReference,
   createAccount, getAccountById, getAccountByEmail, setAccountVerificationToken, verifyAccountByTokenHash, touchAccountLogin, setPasswordResetToken, resetPasswordByTokenHash, getAccountByReferralCode, setAccountReferralCode, getAccountDashboard, createPayoutRequest, updatePayoutRequest, getAdminReferralData, reviewReferralCredit, createSocialCreditSubmission, reviewSocialCreditSubmission,
   createPromotionCode, getPromotionCodeByCode, getPromotionCodes,
   recordPromoAudit, getPromoAuditLog,

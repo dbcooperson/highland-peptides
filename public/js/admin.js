@@ -779,6 +779,7 @@ function initLabelMaker() {
       button.textContent = 'Refresh orders';
     }
   });
+  document.getElementById('exportPirateShipCsv')?.addEventListener('click', exportPirateShipCsv);
   document.getElementById('checkFulfillmentDiscord')?.addEventListener('click', async event => {
     const button = event.currentTarget;
     const message = document.getElementById('labelMakerMessage');
@@ -1252,6 +1253,58 @@ function renderPaidOrderLabelQueue() {
   updatePaidLabelQueuePosition();
 }
 
+function pirateShipQueueOrders() {
+  return adminOrdersCache
+    .filter(order => order.status === 'pending_tracking'
+      && !order.tracking_number
+      && Object.prototype.hasOwnProperty.call(order, 'pirate_ship_exported_at')
+      && !order.pirate_ship_exported_at)
+    .sort((a, b) => Number(a.id) - Number(b.id));
+}
+
+function renderPirateShipCsvQueue() {
+  const target = document.getElementById('pirateShipCsvQueue');
+  const exportLink = document.getElementById('exportPirateShipCsv');
+  if (!target || !exportLink) return;
+  const orders = pirateShipQueueOrders();
+  exportLink.classList.toggle('is-disabled', orders.length === 0);
+  exportLink.setAttribute('aria-disabled', orders.length === 0 ? 'true' : 'false');
+  exportLink.textContent = orders.length ? `Export new Pirate Ship CSV (${orders.length})` : 'No new Pirate Ship orders';
+  target.innerHTML = orders.length
+    ? `<strong>Next CSV (${orders.length})</strong><span>${orders.map(order => `HP-${escapeHtml(order.id)} · ${escapeHtml(paidOrderBuyerDisplayName(order))}`).join(' &nbsp;·&nbsp; ')}</span>`
+    : '<strong>Next CSV is empty</strong><span>Previously exported orders will not be repeated.</span>';
+}
+
+async function exportPirateShipCsv(event) {
+  event.preventDefault();
+  const link = event.currentTarget;
+  if (!pirateShipQueueOrders().length || link.getAttribute('aria-disabled') === 'true') return;
+  const originalText = link.textContent;
+  link.setAttribute('aria-disabled', 'true');
+  link.textContent = 'Preparing CSV…';
+  try {
+    const response = await fetch('/api/admin/pirate-ship.csv', { credentials: 'same-origin', cache: 'no-store' });
+    if (response.status === 204) throw new Error('There are no new Pending tracking orders to export.');
+    if (!response.ok) throw new Error('Could not export the Pirate Ship CSV.');
+    const blob = await response.blob();
+    const disposition = response.headers.get('content-disposition') || '';
+    const filename = disposition.match(/filename="([^"]+)"/i)?.[1] || 'highland-pirate-ship.csv';
+    const url = URL.createObjectURL(blob);
+    const download = document.createElement('a');
+    download.href = url;
+    download.download = filename;
+    document.body.appendChild(download);
+    download.click();
+    download.remove();
+    URL.revokeObjectURL(url);
+    await loadOrders();
+  } catch (err) {
+    window.alert(err.message || 'Could not export the Pirate Ship CSV.');
+    link.removeAttribute('aria-disabled');
+    link.textContent = originalText;
+  }
+}
+
 function orderSearchText(order) {
   const buyer = order.buyer || {};
   const itemText = (order.items || []).map(item => [item.name, item.spec, item.sku].join(' ')).join(' ');
@@ -1501,6 +1554,7 @@ async function loadOrders() {
   if (panel) panel.insertAdjacentHTML('afterbegin', summaryHTML(orders));
   renderOrdersTable();
   renderPaidOrderLabelQueue();
+  renderPirateShipCsvQueue();
   const searchInput = document.getElementById('adminOrderSearch');
   const statusFilter = document.getElementById('adminStatusFilter');
   const paymentFilter = document.getElementById('adminPaymentFilter');

@@ -1296,6 +1296,16 @@ app.get('/api/admin/pirate-ship.csv', requireAdmin, (req, res) => {
   res.send(csv);
 });
 
+app.post('/api/admin/pirate-ship/requeue', requireAdmin, (req, res) => {
+  const ids = Array.isArray(req.body?.orderIds) ? req.body.orderIds : [];
+  if (!ids.length || ids.length > 50 || ids.some(id => !Number.isSafeInteger(Number(id)) || Number(id) <= 0)) {
+    return res.status(400).json({ error: 'Choose between 1 and 50 valid order numbers.' });
+  }
+  const orders = db.requeuePirateShipOrders(ids);
+  if (!orders.length) return res.status(400).json({ error: 'No eligible Pending tracking orders were requeued.' });
+  res.json({ ok: true, orderIds: orders.map(order => order.id) });
+});
+
 app.post('/api/admin/orders/:id/notes', requireAdmin, (req, res) => {
   const notes = cleanText(req.body && req.body.notes, 2000);
   const order = db.updateOrderNotes(req.params.id, notes);

@@ -4382,6 +4382,20 @@ body.admin-page select {
   gap: 7px;
   margin-top: 13px;
 }
+.pirate-ship-csv-queue {
+  display: grid;
+  gap: 4px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid rgba(148, 197, 157, 0.22);
+  border-radius: 10px;
+  background: rgba(12, 28, 18, 0.38);
+  color: rgba(243,239,230,0.72);
+  font-size: 11px;
+  line-height: 1.45;
+}
+.pirate-ship-csv-queue strong { color: #dcecdf; }
+.paid-label-tool-link.is-disabled { opacity: 0.5; pointer-events: none; }
 .pirate-ship-export-note {
   margin: 11px 2px 0;
   color: rgba(243,239,230,0.52);
