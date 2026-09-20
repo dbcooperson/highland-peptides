@@ -31,7 +31,7 @@ const LABEL_NAME_OVERRIDES = {
   'BPC-157 + GHK-Cu + TB-500 + KPV Blend (Klow)': 'KLOW BLEND',
   'BPC-157 + GHK-Cu + TB-500 Blend (Glow)': 'GLOW BLEND',
   'BPC-157 + TB-500 Blend': 'BPC + TB-500',
-  'Bacteriostatic Water': 'BAC WATER',
+  'Bacteriostatic Water': 'STERILE WATER',
   'MOTS-c': 'MOTS-C',
   'SS-31': 'HP-31 (SS-31)',
 };

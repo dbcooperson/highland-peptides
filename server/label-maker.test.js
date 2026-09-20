@@ -123,7 +123,7 @@ test('label maker receives every current storefront SKU and strength', () => {
 
 test('storefront specs are converted into production label text', () => {
   assert.equal(labelNameForProduct('MOTS-c'), 'MOTS-C');
-  assert.equal(labelNameForProduct('Bacteriostatic Water'), 'BAC WATER');
+  assert.equal(labelNameForProduct('Bacteriostatic Water'), 'STERILE WATER');
   assert.equal(labelNameForProduct('BPC-157 + GHK-Cu + TB-500 Blend (Glow)'), 'GLOW BLEND');
   assert.equal(labelDoseFromSpec('40mg x1 vial'), '40 MG');
   assert.equal(labelDoseFromSpec('5mg+5mg x1 vial'), '5 MG + 5 MG');

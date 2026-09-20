@@ -388,7 +388,7 @@ const VIAL_LABEL_ALIASES = {
   'BPC-157 + GHK-Cu + TB-500 + KPV Blend (Klow)': 'KLOW BLEND',
   'BPC-157 + GHK-Cu + TB-500 Blend (Glow)': 'GLOW BLEND',
   'BPC-157 + TB-500 Blend': 'BPC + TB-500',
-  'Bacteriostatic Water': 'BAC WATER',
+  'Bacteriostatic Water': 'STERILE WATER',
 };
 
 function productImageStyle(product) {

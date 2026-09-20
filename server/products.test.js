@@ -63,6 +63,7 @@ test('HCG variants are not listed or purchasable in the current catalog', () => 
 test('water is displayed as sterile while disclosing the bacteriostatic preservative', () => {
   assert.match(bySku.WA10.name, /^Sterile Water \(Bacteriostatic, 0\.9% benzyl alcohol\)$/);
   assert.equal(bySku.WA10.compoundName, 'Bacteriostatic Water');
+  assert.equal(bySku.WA10.labelName, 'STERILE WATER');
   assert.equal(bySku.WA10.slug, 'bacteriostatic-water');
 });
 

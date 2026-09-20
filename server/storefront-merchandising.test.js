@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'public', 'index.html'), 'utf8');
+const productHtml = fs.readFileSync(path.join(__dirname, '..', 'public', 'product.html'), 'utf8');
 
 test('hero launches Glutathione and orders L-Carnitine, Retatrutide, then Tirzepatide', () => {
   const heroStart = indexHtml.indexOf('<aside class="hero-commerce-panel"');
@@ -28,4 +29,9 @@ test('Glutathione launch photograph is present in the generated catalog', () => 
   const imagePath = path.join(__dirname, '..', 'public', 'images', 'product-mockups', 'generated', 'GTT9000.webp');
   assert.equal(fs.existsSync(imagePath), true);
   assert.ok(fs.statSync(imagePath).size > 100000);
+});
+
+test('product handling notice excludes storage instructions and states no human use', () => {
+  assert.match(productHtml, /<li>Not intended for human use\.<\/li>/);
+  assert.doesNotMatch(productHtml, /Storage notes|Store lyophilized material|freeze-thaw/i);
 });
