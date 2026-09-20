@@ -32,7 +32,7 @@ function renderActivity(container, items, renderer, emptyText) {
 }
 
 function renderDashboard(data) {
-  const { account, stats, orders, payouts, socialSubmissions = [], nextSocialEligibleAt, referral = {} } = data;
+  const { account, stats, orders, payouts } = data;
   document.getElementById('accountWelcome').textContent = `Welcome, ${account.name.split(/\s+/)[0]}`;
   document.getElementById('accountEmail').textContent = account.email;
   document.getElementById('creditBalance').textContent = money(stats.creditBalance);
@@ -83,14 +83,6 @@ function renderDashboard(data) {
     return `<div class="account-activity-row"><div><strong>Order HP-${item.id}</strong><span>${item.itemCount} item${item.itemCount === 1 ? '' : 's'} · ${safeDate(item.createdAt)}</span>${tracking}${delivery}</div><div><strong>${money(item.total)}</strong><span class="account-order-status">${escapeHTML(statusLabel(item.status))}</span></div></div>`;
   }, 'Orders using this verified email will appear here.');
 
-  renderActivity(document.getElementById('tiktokActivity'), socialSubmissions, item => `
-    <div class="account-activity-row"><div><strong><a href="${escapeHTML(item.video_url)}" target="_blank" rel="noopener">TikTok submission #${item.id}</a></strong><span>${safeDate(item.created_at)}</span></div><div><strong>${money(item.creditAmount || referral.tiktokCredit || 5)}</strong><span>${escapeHTML(statusLabel(item.status))}</span></div></div>`, 'Your submitted videos will appear here.');
-  const tiktokButton = document.getElementById('tiktokSubmitButton');
-  const tiktokMessage = document.getElementById('tiktokCreditMessage');
-  const stillCoolingDown = nextSocialEligibleAt && new Date(nextSocialEligibleAt).getTime() > Date.now();
-  tiktokButton.disabled = Boolean(stillCoolingDown);
-  tiktokButton.textContent = stillCoolingDown ? `Available ${safeDate(nextSocialEligibleAt)}` : 'Submit for review';
-  if (stillCoolingDown) tiktokMessage.textContent = `Your next weekly submission opens ${safeDate(nextSocialEligibleAt)}.`;
 }
 
 async function loadDashboard() {
@@ -208,23 +200,6 @@ document.getElementById('payoutRequestButton').addEventListener('click', async (
     await loadDashboard();
   } catch (err) {
     message.textContent = err.message;
-    button.disabled = false;
-  }
-});
-
-document.getElementById('tiktokCreditForm').addEventListener('submit', async event => {
-  event.preventDefault();
-  const button = document.getElementById('tiktokSubmitButton');
-  const message = document.getElementById('tiktokCreditMessage');
-  button.disabled = true;
-  accountMessage(message, 'Submitting for review…');
-  try {
-    const result = await api('/api/account/tiktok-submissions', { method: 'POST', body: { videoUrl: document.getElementById('tiktokVideoUrl').value } });
-    document.getElementById('tiktokVideoUrl').value = '';
-    accountMessage(message, result.message, 'success');
-    await loadDashboard();
-  } catch (err) {
-    accountMessage(message, err.message, 'error');
     button.disabled = false;
   }
 });

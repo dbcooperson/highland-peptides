@@ -112,8 +112,6 @@ body {
 .checkout-account-status a { color:#315b43; font-weight:800; }
 .checkout-account-status.signed-in { background:#e9f0e8; border-color:#b8ccb9; }
 .member-crypto-note { flex-basis:100%; color:#27583c !important; font-weight:800; }
-.checkout-creator-credit { margin:0 0 16px; padding:14px 16px; display:grid; grid-template-columns:1fr auto; gap:5px 16px; border:1px solid #d9c49e; border-radius:14px; background:linear-gradient(135deg,#fff7e6,#eef3e8); color:#1c1a17; }
-.checkout-creator-credit strong { font-size:13px; }.checkout-creator-credit span { grid-column:1; font-size:11px; color:#6c6458; line-height:1.45; }.checkout-creator-credit > a { grid-column:2; grid-row:1 / 3; align-self:center; color:#173d2b; font-size:11px; font-weight:900; }.checkout-creator-credit span a { color:#315b43; font-weight:900; }
 .store-credit-toggle { display:flex; flex-direction:row !important; align-items:center; gap:7px; font-size:12px !important; cursor:pointer; }
 .store-credit-toggle input { width:17px !important; height:17px; margin:0; }
 .store-credit-empty { max-width:220px; text-align:right; }
@@ -198,8 +196,6 @@ body {
 .payout-panel .account-primary-button { width:100%; margin-top:10px; }
 .account-panel-heading { display:flex; align-items:center; justify-content:space-between; gap:10px; border-bottom:1px solid #e3dbcf; padding-bottom:12px; }.account-panel-heading h3 { margin:0; }.account-panel-heading span { font-size:10px; color:#81786d; text-transform:uppercase; letter-spacing:.08em; }
 .account-activity-list { display:grid; }.account-activity-row { display:flex; justify-content:space-between; gap:16px; padding:13px 0; border-bottom:1px solid #eee6da; }.account-activity-row:last-child { border-bottom:0; }.account-activity-row > div { display:flex; flex-direction:column; gap:3px; }.account-activity-row > div:last-child { text-align:right; }.account-activity-row strong { font-size:13px; }.account-activity-row span { color:#7b7369; font-size:11px; }.account-order-status { color:#315b43 !important; font-weight:800; }.account-tracking-link { color:#315b43; font-size:11px; font-weight:800; overflow-wrap:anywhere; }.account-empty-state { padding:22px 0; color:#81786d; font-size:12px; }
-.creator-credit-panel { margin-top:12px; display:grid; grid-template-columns:1fr 1fr 1.15fr; gap:24px; align-items:start; background:linear-gradient(135deg,#fffaf2,#edf2e9); }
-.creator-credit-panel a { color:#24563a; font-weight:850; }.creator-credit-form { display:grid; gap:8px; }.creator-credit-form label { font-size:11px; text-transform:uppercase; letter-spacing:.08em; font-weight:900; color:#6b6257; }.creator-credit-form > div { display:grid; gap:8px; }.creator-credit-form input { width:100%; box-sizing:border-box; border:1px solid #cfc4b5; border-radius:11px; padding:13px; font:inherit; }.creator-credit-form .form-msg { min-height:18px; margin:0; font-size:11px; }
 .account-welcome-overlay { position:fixed; inset:0; z-index:10020; display:grid; place-items:center; padding:18px; background:rgba(7,12,13,.72); backdrop-filter:blur(10px); }
 .account-welcome-card { position:relative; width:min(520px,calc(100vw - 36px)); box-sizing:border-box; padding:36px; border-radius:24px; border:1px solid rgba(255,255,255,.42); background:linear-gradient(150deg,#faf7f1,#e4eadf); color:#1c1a17; box-shadow:0 28px 90px rgba(0,0,0,.5); }
 .account-welcome-card h2 { margin:0; font-size:36px; line-height:1; letter-spacing:-.045em; }.account-welcome-card p { color:#5f584f; line-height:1.55; }.account-welcome-benefits { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; margin:20px 0; }.account-welcome-benefits span { display:grid; place-items:center; min-height:54px; padding:8px; text-align:center; border-radius:12px; background:#173d2b; color:#f3efe6; font-size:10px; font-weight:900; line-height:1.3; }
@@ -216,7 +212,7 @@ body {
   .account-join-heading { max-width:640px; }
   .account-auth-card { padding:28px 22px; }
   .account-dashboard { padding:20px 14px; }.account-dashboard-heading { align-items:flex-start; }.account-dashboard-heading h2 { font-size:30px; }
-  .account-summary-grid,.account-dashboard-grid,.creator-credit-panel { grid-template-columns:1fr; }.referral-code-form,.referral-code-display { flex-direction:column; align-items:stretch; }.referral-code-display > strong { font-size:22px; overflow-wrap:anywhere; }.checkout-account-status { align-items:flex-start; flex-direction:column; }.store-credit-empty { text-align:left; }.checkout-creator-credit { grid-template-columns:1fr; }.checkout-creator-credit > a { grid-column:1; grid-row:auto; }.account-welcome-card { padding:30px 20px 22px; }.account-welcome-card h2 { font-size:30px; }.account-welcome-benefits { grid-template-columns:1fr; }
+  .account-summary-grid,.account-dashboard-grid { grid-template-columns:1fr; }.referral-code-form,.referral-code-display { flex-direction:column; align-items:stretch; }.referral-code-display > strong { font-size:22px; overflow-wrap:anywhere; }.checkout-account-status { align-items:flex-start; flex-direction:column; }.store-credit-empty { text-align:left; }.account-welcome-card { padding:30px 20px 22px; }.account-welcome-card h2 { font-size:30px; }.account-welcome-benefits { grid-template-columns:1fr; }
 }
 @media (max-width: 620px) {
   .account-main { padding:42px 14px 64px; }

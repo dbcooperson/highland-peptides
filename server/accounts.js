@@ -63,17 +63,6 @@ function dashboardOptions() {
   };
 }
 
-function cleanTikTokUrl(value) {
-  try {
-    const url = new URL(cleanText(value, 500));
-    const host = url.hostname.toLowerCase();
-    if (url.protocol !== 'https:' || !(host === 'tiktok.com' || host.endsWith('.tiktok.com'))) return '';
-    return url.toString();
-  } catch {
-    return '';
-  }
-}
-
 async function issueVerificationEmail(account) {
   const token = createToken();
   db.setAccountVerificationToken(account.id, hashToken(token), addHours(config.ACCOUNT_VERIFICATION_TTL_HOURS));
@@ -174,10 +163,6 @@ function registerAccountRoutes(app, requireAdmin) {
         payoutMinCustomers: config.REFERRAL_PAYOUT_MIN_CUSTOMERS,
         payoutMinSpend: config.REFERRAL_PAYOUT_MIN_SPEND,
         manualCreditReview: true,
-        tiktokCredit: config.TIKTOK_CREDIT_CENTS / 100,
-        tiktokCooldownDays: config.TIKTOK_SUBMISSION_COOLDOWN_DAYS,
-        tiktokHandle: config.TIKTOK_HANDLE,
-        tiktokProfileUrl: config.TIKTOK_PROFILE_URL,
       },
     });
   });
@@ -225,34 +210,17 @@ function registerAccountRoutes(app, requireAdmin) {
       })),
       ledger: dashboard.ledger,
       payouts: dashboard.payouts,
-      socialSubmissions: dashboard.socialSubmissions,
-      nextSocialEligibleAt: dashboard.nextSocialEligibleAt,
       referral: {
         customerDiscountPercent: Math.round(config.REFERRAL_DISCOUNT_RATE * 100),
         creditPercent: Math.round(config.REFERRAL_CREDIT_RATE * 100),
         cryptoMemberPercent: Math.round(config.ACCOUNT_CRYPTO_DISCOUNT_RATE * 100),
         manualCreditReview: true,
-        tiktokCredit: config.TIKTOK_CREDIT_CENTS / 100,
-        tiktokCooldownDays: config.TIKTOK_SUBMISSION_COOLDOWN_DAYS,
-        tiktokHandle: config.TIKTOK_HANDLE,
-        tiktokProfileUrl: config.TIKTOK_PROFILE_URL,
       },
     });
   });
 
-  app.post('/api/account/tiktok-submissions', requireAccount, (req, res) => {
-    if (!allowAttempt(req, 'tiktok-submit', 8)) return res.status(429).json({ error: 'Too many attempts. Please try again later.' });
-    const videoUrl = cleanTikTokUrl(req.body && req.body.videoUrl);
-    if (!videoUrl) return res.status(400).json({ error: 'Paste a valid TikTok video link.' });
-    try {
-      const submission = db.createSocialCreditSubmission(req.account.id, videoUrl, {
-        cooldownDays: config.TIKTOK_SUBMISSION_COOLDOWN_DAYS,
-        creditCents: config.TIKTOK_CREDIT_CENTS,
-      });
-      res.status(201).json({ ok: true, submission, message: 'Video submitted. Highland will review the tag before adding store credit.' });
-    } catch (err) {
-      res.status(400).json({ error: err.message || 'Could not submit the video.' });
-    }
+  app.post('/api/account/tiktok-submissions', requireAccount, (_req, res) => {
+    res.status(410).json({ error: 'Creator-credit submissions are no longer available.' });
   });
 
   app.post('/api/account/referral-code', requireAccount, (req, res) => {

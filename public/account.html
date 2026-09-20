@@ -41,7 +41,6 @@
           <span>Free to join</span>
           <span>Order tracking</span>
           <span>Member crypto savings</span>
-          <span>Weekly creator credit</span>
         </div>
       </header>
 
@@ -64,7 +63,7 @@
       <section class="account-feature-grid" aria-label="Member account features">
         <article><span class="account-feature-icon" aria-hidden="true">↗</span><h3>One personal code</h3><p>Create a memorable code your community can use at checkout. One code is available per verified account.</p></article>
         <article><span class="account-feature-icon" aria-hidden="true">%</span><h3>10% both ways</h3><p>Your referred customer saves 10%, and you receive the same 10% as store credit after review.</p></article>
-        <article><span class="account-feature-icon" aria-hidden="true">◇</span><h3>Member extras</h3><p>Get an extra 5% off crypto orders and submit one TikTok every seven days for a $5 credit review.</p></article>
+        <article><span class="account-feature-icon" aria-hidden="true">◇</span><h3>Member extras</h3><p>Get an extra 5% off crypto orders as a verified Highland member.</p></article>
         <article><span class="account-feature-icon" aria-hidden="true">◎</span><h3>Track all packages</h3><p>Follow order progress and see your Highland purchase history from one verified account.</p></article>
       </section>
 
@@ -73,7 +72,7 @@
           <span class="account-section-label">Create your account</span>
           <h2 id="accountJoinTitle">Ready to get started?</h2>
           <p>Join in under a minute. Accounts are optional, and guest checkout will always remain available.</p>
-          <div class="account-rule-note"><strong>Transparent review process</strong><span>Referral and creator rewards are added only after Highland approval. Cash-out requests unlock after 5 unique referred customers and $500 total paid referral spend. Self-referrals do not qualify.</span></div>
+          <div class="account-rule-note"><strong>Transparent review process</strong><span>Referral rewards are added only after Highland approval. Cash-out requests unlock after 5 unique referred customers and $500 total paid referral spend. Self-referrals do not qualify.</span></div>
         </div>
 
         <div class="account-auth-card">
@@ -149,20 +148,6 @@
         </article>
       </div>
 
-      <article id="creator-credit" class="account-panel creator-credit-panel">
-        <div>
-          <span class="account-kicker">Weekly creator reward</span>
-          <h3>Post, tag Highland, and submit your video.</h3>
-          <p>Make a TikTok about Highland Peptides and tag <a href="https://www.tiktok.com/@highlandoffical" target="_blank" rel="noopener">@highlandoffical</a>. Submit the public video link below for a $5 store-credit review. One submission is allowed every 7 days.</p>
-        </div>
-        <form id="tiktokCreditForm" class="creator-credit-form">
-          <label for="tiktokVideoUrl">TikTok video link</label>
-          <div><input id="tiktokVideoUrl" type="url" inputmode="url" placeholder="https://www.tiktok.com/@you/video/..." required><button id="tiktokSubmitButton" class="account-primary-button" type="submit">Submit for review</button></div>
-          <p id="tiktokCreditMessage" class="form-msg" aria-live="polite"></p>
-        </form>
-        <div><div class="account-panel-heading"><h3>Creator submissions</h3><span>Manual review</span></div><div id="tiktokActivity" class="account-activity-list"></div></div>
-      </article>
-
       <div class="account-dashboard-grid lower">
         <article class="account-panel"><div class="account-panel-heading"><h3>Referral activity</h3><span>Paid orders · manual review</span></div><div id="referralActivity" class="account-activity-list"></div></article>
         <article class="account-panel"><div class="account-panel-heading"><h3>Your orders</h3><span>Verified email history</span></div><div id="accountOrders" class="account-activity-list"></div></article>
@@ -170,8 +155,8 @@
     </section>
   </main>
 
-<script src="/js/shared.js?v=sterile-water-v3-20260920"></script>
-  <script src="/js/account.js?v=pending-tracking-v1-20260901"></script>
+<script src="/js/shared.js?v=referral-only-v1-20260920"></script>
+  <script src="/js/account.js?v=referral-only-v1-20260920"></script>
 <script src="/js/site-notice.js?v=20260916"></script>
 </body>
 </html>

@@ -605,11 +605,11 @@ function showAccountWelcomePrompt() {
   overlay.innerHTML = `<section class="account-welcome-card" role="dialog" aria-modal="true" aria-labelledby="accountWelcomeTitle">
     <button class="account-welcome-close" type="button" aria-label="Continue as guest">&times;</button>
     <h2 id="accountWelcomeTitle">Help us grow. We&rsquo;ll reward you.</h2>
-    <p>Create a verified account to <strong>track your order progress</strong> and make one personal referral code. Friends save <strong>10%</strong> when they use it, and you earn that same <strong>10% as store credit</strong> after Highland reviews the order. Members also get an extra <strong>5% off crypto orders</strong> and can submit one TikTok video each week for a <strong>$5 store-credit review</strong>.</p>
-    <div class="account-welcome-benefits"><span>Track order progress</span><span>Your code · 10% both ways</span><span>Weekly creator credit</span></div>
+    <p>Create a verified account to <strong>track your order progress</strong> and make one personal referral code. Friends save <strong>10%</strong> when they use it, and you earn that same <strong>10% as store credit</strong> after Highland reviews the order. Members also get an extra <strong>5% off crypto orders</strong>.</p>
+    <div class="account-welcome-benefits"><span>Track order progress</span><span>Your code · 10% both ways</span><span>Extra 5% off crypto</span></div>
     <a class="account-welcome-cta" href="/account.html?view=register">Create my account</a>
     <button class="account-welcome-skip" type="button">Continue as guest</button>
-    <small>Accounts are optional. Referral and creator credits are reviewed by Highland before being added.</small>
+    <small>Accounts are optional. Referral credits are reviewed by Highland before being added.</small>
   </section>`;
   const close = () => { overlay.remove(); document.body.classList.remove('account-welcome-open'); };
   overlay.querySelector('.account-welcome-close').onclick = close;
@@ -1084,7 +1084,7 @@ async function refreshCheckoutAccountStatus() {
       <strong>Signed in as ${escapeHTML(state.account.name)}</strong>
       <span>${escapeHTML(state.account.email)}</span>
     </div>
-    ${balance > 0 ? `<label class="store-credit-toggle"><input id="applyStoreCredit" type="checkbox"> Apply up to <strong>$${balance.toFixed(2)}</strong> store credit</label>` : '<span class="store-credit-empty">Approved referral and creator credit will appear here.</span>'}
+    ${balance > 0 ? `<label class="store-credit-toggle"><input id="applyStoreCredit" type="checkbox"> Apply up to <strong>$${balance.toFixed(2)}</strong> store credit</label>` : '<span class="store-credit-empty">Approved referral credit will appear here.</span>'}
     <span class="member-crypto-note">${activeReferralCampaign() ? 'Referral link savings replace payment-method and member discounts; one valid code can add up to 5%.' : 'Verified member benefit: an extra 5% off crypto orders.'}</span>`;
   const toggle = document.getElementById('applyStoreCredit');
   if (toggle) toggle.addEventListener('change', renderCheckoutSummary);
