@@ -241,7 +241,7 @@ function bundlePromotionConfig() {
     qualifyingQuantity: 5,
     freeSku: 'WA10',
     freeQuantity: 1,
-    label: 'Buy 5+ paid research products and receive free Sterile Water (bacteriostatic) 10ml (water does not count)',
+    label: 'Buy 5+ paid research products and receive free Sterile Water 10ml · pH 4.5 (water does not count)',
   };
 }
 
@@ -269,8 +269,8 @@ function bundlePromotionState(cart = getCart()) {
 function bundlePromotionMessage(cart = getCart()) {
   const state = bundlePromotionState(cart);
   return state.unlocked
-    ? '<strong>Free Sterile Water (bacteriostatic) 10ml unlocked</strong><span>It will be added automatically at checkout.</span>'
-    : `<strong>Buy 5 research products, get Sterile Water (bacteriostatic) 10ml free</strong><span>Add ${state.remaining} more qualifying product${state.remaining === 1 ? '' : 's'}. Water purchases do not count toward the five.</span>`;
+    ? '<strong>Free Sterile Water 10ml · pH 4.5 unlocked</strong><span>It will be added automatically at checkout.</span>'
+    : `<strong>Buy 5 research products, get Sterile Water 10ml · pH 4.5 free</strong><span>Add ${state.remaining} more qualifying product${state.remaining === 1 ? '' : 's'}. Water purchases do not count toward the five.</span>`;
 }
 
 function showAddedToCartPopup(sku, qty = 1) {

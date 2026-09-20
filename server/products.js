@@ -17,7 +17,7 @@ const DISPLAY_NAME_OVERRIDES = {
 
 function publicProductName(name) {
   const code = DISPLAY_NAME_OVERRIDES[name];
-  if (name === 'Bacteriostatic Water') return 'Sterile Water (Bacteriostatic, 0.9% benzyl alcohol)';
+  if (name === 'Bacteriostatic Water') return 'Sterile Water · pH 4.5';
   if (name === 'Tirzepatide' || name === 'Retatrutide') return code;
   return code ? `${code} (${name})` : name;
 }

@@ -96,7 +96,7 @@ function cartSummaryHTML(subtotal, promotionState) {
     <div class="cart-summary-lines">
       <div><span>Subtotal</span><strong>$${subtotal.toFixed(2)}</strong></div>
       ${referralDiscount ? `<div><span>Referral link (10%)</span><strong>-$${referralDiscount.toFixed(2)}</strong></div>` : ''}
-      ${promotionState && promotionState.unlocked ? '<div class="bundle-summary-line"><span>Sterile Water (bacteriostatic) 10ml bundle reward</span><strong>FREE</strong></div>' : ''}
+      ${promotionState && promotionState.unlocked ? '<div class="bundle-summary-line"><span>Sterile Water 10ml · pH 4.5 bundle reward</span><strong>FREE</strong></div>' : ''}
       <div><span>U.S. shipping</span><strong>$${shippingFee.toFixed(2)}</strong></div>
       ${orderFeeRate ? `<div><span>Processing fee</span><strong>$${orderFee.toFixed(2)}</strong></div>` : ''}
       <div class="cart-summary-total"><span>Estimated total</span><strong>$${estimatedTotal.toFixed(2)}</strong></div>

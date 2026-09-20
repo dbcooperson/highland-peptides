@@ -46,7 +46,7 @@ function publicPromotion() {
     qualifyingQuantity: config.BUNDLE_PROMOTION.qualifyingQuantity,
     freeSku: config.BUNDLE_PROMOTION.freeSku,
     freeQuantity: config.BUNDLE_PROMOTION.freeQuantity,
-    label: 'Buy 5+ paid research products and receive free Sterile Water (bacteriostatic) 10ml (water does not count)',
+    label: 'Buy 5+ paid research products and receive free Sterile Water 10ml · pH 4.5 (water does not count)',
   };
 }
 
