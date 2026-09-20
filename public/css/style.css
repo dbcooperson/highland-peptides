@@ -5158,6 +5158,54 @@ body.admin-page .highland-print-label .highland-label-compound {
   box-shadow: 0 14px 34px rgba(0,0,0,0.22);
   backdrop-filter: blur(12px);
 }
+.discord-shipping-callout {
+  grid-column: 1 / -1;
+  justify-self: center;
+  align-self: end;
+  width: min(760px, 100%);
+  min-height: 48px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: -22px;
+  padding: 9px 12px;
+  border: 1px solid rgba(145, 125, 219, 0.42);
+  border-radius: 16px;
+  background: linear-gradient(100deg, rgba(49, 45, 78, 0.94), rgba(66, 57, 106, 0.9));
+  color: #f7f4ff;
+  font-size: 11px;
+  line-height: 1.4;
+  text-decoration: none;
+  box-shadow: 0 14px 34px rgba(0,0,0,0.2);
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+.discord-shipping-callout:hover,
+.discord-shipping-callout:focus-visible {
+  transform: translateY(-1px);
+  border-color: rgba(186, 169, 255, 0.75);
+  background: linear-gradient(100deg, rgba(61, 54, 98, 0.98), rgba(81, 68, 132, 0.95));
+}
+.discord-shipping-mark,
+.discord-shipping-action {
+  border-radius: 10px;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.discord-shipping-mark {
+  padding: 7px 9px;
+  background: #5865f2;
+  color: #fff;
+}
+.discord-shipping-callout strong { color: #fff; }
+.discord-shipping-action {
+  padding: 7px 10px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.08);
+}
 .fulfillment-header-label {
   padding-right: 12px;
   border-right: 1px solid rgba(243,239,230,0.24);
@@ -5432,6 +5480,12 @@ body.admin-page .highland-print-label .highland-label-compound {
     font-size: 10px;
   }
   .fulfillment-header-label { padding-right: 0; border-right: 0; }
+  .discord-shipping-callout {
+    grid-template-columns: auto minmax(0, 1fr);
+    margin-bottom: -12px;
+    padding: 10px;
+  }
+  .discord-shipping-action { display: none; }
   .catalog-selectors { display: grid; grid-template-columns: 1fr; }
   .fulfillment-process { padding: 20px 16px; }
   .fulfillment-process-grid { grid-template-columns: 1fr; }

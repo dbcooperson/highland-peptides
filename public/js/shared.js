@@ -945,7 +945,7 @@ function renderCheckoutSummary() {
   const promoEligibleSubtotal = round2(cartPromoEligibleSubtotal());
   const shippingFee = selectedShippingFee();
   const referralCampaign = activeReferralCampaign();
-  const extraCodePercent = referralCampaign && appliedDiscount ? Math.min(5, appliedDiscount.percentOff) : 0;
+  const extraCodePercent = referralCampaign && appliedDiscount ? 5 : 0;
   const discountAmount = referralCampaign
     ? round2(promoEligibleSubtotal * (10 + extraCodePercent) / 100)
     : (appliedDiscount ? round2(promoEligibleSubtotal * appliedDiscount.percentOff / 100) : 0);
@@ -1160,7 +1160,7 @@ async function applyPromoCode() {
       appliedDiscount = { code: result.code, percentOff: result.percentOff };
       msgEl.style.color = 'var(--success)';
       msgEl.textContent = activeReferralCampaign()
-        ? `Referral 10% + ${Math.min(5, result.percentOff)}% from ${result.code} applied (15% maximum).`
+        ? `Referral 10% + 5% from ${result.code} applied (15% total).`
         : `${result.percentOff}% off applied.`;
     } else {
       appliedDiscount = null;
@@ -1195,7 +1195,7 @@ function renderCryptoPricePreview() {
   const orderFeeRate = (window.siteFees && window.siteFees.orderFeeRate) || 0;
   const referralCampaign = activeReferralCampaign();
   const discount = referralCampaign
-    ? round2(cartPromoEligibleSubtotal() * (10 + (appliedDiscount ? Math.min(5, appliedDiscount.percentOff) : 0)) / 100)
+    ? round2(cartPromoEligibleSubtotal() * (10 + (appliedDiscount ? 5 : 0)) / 100)
     : round2(subtotal * (rate + memberRate));
   const feeBase = Math.max(0, subtotal - discount + shippingFee);
   const orderFee = round2(feeBase * orderFeeRate);

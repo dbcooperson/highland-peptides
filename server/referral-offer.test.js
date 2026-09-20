@@ -12,11 +12,8 @@ test('referral link saves 10% without a promo code', () => {
   assert.deepEqual(referralOfferDiscount(100, null), { amount: 10, basePercent: 10, extraPercent: 0 });
 });
 
-test('any valid higher-value code adds no more than five percentage points', () => {
+test('any valid code adds exactly five percentage points', () => {
   assert.deepEqual(referralOfferDiscount(100, { rate: 0.15 }), { amount: 15, basePercent: 10, extraPercent: 5 });
   assert.equal(referralOfferDiscount(99.99, { rate: 0.2 }).amount, 15);
-});
-
-test('a lower-value code cannot be increased to five percent', () => {
-  assert.equal(referralOfferDiscount(100, { rate: 0.03 }).amount, 13);
+  assert.deepEqual(referralOfferDiscount(100, { rate: 0.03 }), { amount: 15, basePercent: 10, extraPercent: 5 });
 });

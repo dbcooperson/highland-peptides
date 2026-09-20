@@ -35,3 +35,9 @@ test('product handling notice excludes storage instructions and states no human 
   assert.match(productHtml, /<li>Not intended for human use\.<\/li>/);
   assert.doesNotMatch(productHtml, /Storage notes|Store lyophilized material|freeze-thaw/i);
 });
+
+test('home page offers the requested Discord shipping-updates link', () => {
+  assert.match(indexHtml, /href="https:\/\/discord\.gg\/4dfNB78NQr"/);
+  assert.match(indexHtml, /Want a photo of your package before it ships\?/);
+  assert.match(indexHtml, /package updates, FAQs, and support/);
+});
