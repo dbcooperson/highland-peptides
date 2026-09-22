@@ -48,6 +48,7 @@ function initialData() {
     nextSocialCreditSubmissionId: 1,
     inboundTrackingEvents: [],
     promotionCodes: [],
+    limitedPromotionUses: [],
     promoAuditLog: [],
     nextPromoAuditId: 1,
     appliedMigrations: [],
@@ -63,6 +64,7 @@ function normalizeData(raw) {
   data.socialCreditSubmissions = Array.isArray(data.socialCreditSubmissions) ? data.socialCreditSubmissions : [];
   data.inboundTrackingEvents = Array.isArray(data.inboundTrackingEvents) ? data.inboundTrackingEvents : [];
   data.promotionCodes = Array.isArray(data.promotionCodes) ? data.promotionCodes : [];
+  data.limitedPromotionUses = Array.isArray(data.limitedPromotionUses) ? data.limitedPromotionUses : [];
   data.promoAuditLog = Array.isArray(data.promoAuditLog) ? data.promoAuditLog : [];
   data.appliedMigrations = Array.isArray(data.appliedMigrations) ? data.appliedMigrations : [];
   data.nextOrderId = Math.max(Number(data.nextOrderId || 1), ...data.orders.map(item => Number(item.id || 0) + 1), 1);
@@ -115,6 +117,24 @@ function getPromotionCodeByCode(code) {
 
 function getPromotionCodes() {
   return load().promotionCodes.slice().sort((left, right) => String(right.created_at).localeCompare(String(left.created_at)));
+}
+
+function normalizedLimitedPromotion(campaign, fallbackRate = 0.15) {
+  if (!campaign || typeof campaign !== 'object') return null;
+  const id = String(campaign.id || '').trim().slice(0, 100);
+  const code = normalizedCode(campaign.code);
+  const boostedRate = Number(campaign.boostedRate);
+  const safeFallbackRate = Number(campaign.fallbackRate == null ? fallbackRate : campaign.fallbackRate);
+  const maxUses = Math.max(0, Math.floor(Number(campaign.maxUses || 0)));
+  if (!id || !code || !Number.isFinite(boostedRate) || !Number.isFinite(safeFallbackRate) || !maxUses) return null;
+  return { id, code, boostedRate, fallbackRate: safeFallbackRate, maxUses };
+}
+
+function getLimitedPromotionRate(campaign, fallbackRate = 0.15) {
+  const normalized = normalizedLimitedPromotion(campaign, fallbackRate);
+  if (!normalized) return Number(fallbackRate);
+  const uses = load().limitedPromotionUses.filter(use => use.campaign_id === normalized.id);
+  return uses.length < normalized.maxUses ? normalized.boostedRate : normalized.fallbackRate;
 }
 
 function createPromotionCode(code, createdBy = 'promo-manager') {
@@ -334,7 +354,7 @@ function paymentMatchAdjustmentCents(orderId, paymentProvider) {
   return (Number(orderId) % 49) + 1;
 }
 
-function createOrder({ buyer, certifiedAt, items, subtotal, promoEligibleSubtotal, packagingFee, shippingFee, shippingMethod, orderFee, orderFeeRate, discountCode, discountType, discountAmount, total, paymentProvider, cryptoAsset, customerAccountId, referralAccountId, referralCreditRate, storeCreditAmount, shippingAddressValidation }) {
+function createOrder({ buyer, certifiedAt, items, subtotal, promoEligibleSubtotal, packagingFee, shippingFee, shippingMethod, orderFee, orderFeeRate, discountCode, discountType, discountAmount, total, paymentProvider, cryptoAsset, customerAccountId, referralAccountId, referralCreditRate, storeCreditAmount, shippingAddressValidation, limitedPromotion }) {
   const data = load();
   const id = data.nextOrderId++;
   const normalizedProvider = paymentProvider || 'manual';
@@ -346,6 +366,28 @@ function createOrder({ buyer, certifiedAt, items, subtotal, promoEligibleSubtota
   const safeReferralAccountId = normalizedDiscountType === 'referral' && referralAccountId
     ? Number(referralAccountId)
     : null;
+  const campaign = normalizedLimitedPromotion(limitedPromotion);
+  const normalizedBuyerEmail = normalizedEmail(buyer && buyer.email);
+  if (campaign && normalizedDiscountType === 'promotion' && normalizedCode(discountCode) === campaign.code) {
+    const campaignUses = data.limitedPromotionUses.filter(use => use.campaign_id === campaign.id);
+    const boosted = campaignUses.length < campaign.maxUses;
+    const appliedRate = boosted ? campaign.boostedRate : campaign.fallbackRate;
+    discountAmount = Math.round(Number(promoEligibleSubtotal == null ? subtotal : promoEligibleSubtotal) * appliedRate * 100) / 100;
+    const feeBase = Math.max(0, Number(subtotal || 0) - discountAmount - Number(storeCreditAmount || 0)
+      + Number(packagingFee || 0) + Number(shippingFee || 0));
+    orderFee = Math.round(feeBase * Number(orderFeeRate || 0) * 100) / 100;
+    total = Math.round((feeBase + orderFee) * 100) / 100;
+    if (boosted) {
+      data.limitedPromotionUses.push({
+        campaign_id: campaign.id,
+        code: campaign.code,
+        order_id: id,
+        customer_email: normalizedBuyerEmail,
+        rate: appliedRate,
+        claimed_at: new Date().toISOString(),
+      });
+    }
+  }
   if (appliedCreditCents > 0) {
     if (!customerAccount || !customerAccount.verified_at) throw new Error('Sign in to use store credit.');
     if (Number(customerAccount.credit_balance_cents || 0) < appliedCreditCents) throw new Error('Store-credit balance changed. Refresh checkout and try again.');
@@ -810,6 +852,7 @@ function deleteOrder(id) {
   }
   refundStoreCredit(data, order);
   const [removed] = data.orders.splice(index, 1);
+  data.limitedPromotionUses = data.limitedPromotionUses.filter(use => Number(use.order_id) !== Number(id));
   save(data);
   return removed;
 }
@@ -983,6 +1026,6 @@ function getStorageInfo() {
 module.exports = {
   createOrder, getAllOrders, getOrderById, setPayPalOrderId, setStripeCheckoutSessionId, markStripeOrderPaid, markOrderPaid, updateOrderStatus, applyOrderStatusMigration, updateOrderNotes, deleteOrder, markOrderBackupSent, claimPaymentReminder, markPaymentReminderSent, markPaymentReminderFailed, claimTrackingDispatch, markTrackingSent, markTrackingFailed, hasInboundTrackingEvent, markInboundTrackingEvent, claimFulfillmentDiscordPost, markFulfillmentDiscordSent, markFulfillmentDiscordFailed, markPirateShipOrdersExported, requeuePirateShipOrders, getStorageInfo, isTxidUsed, setPaymentReference,
   createAccount, getAccountById, getAccountByEmail, setAccountVerificationToken, verifyAccountByTokenHash, touchAccountLogin, setPasswordResetToken, resetPasswordByTokenHash, getAccountByReferralCode, setAccountReferralCode, getAccountDashboard, createPayoutRequest, updatePayoutRequest, getAdminReferralData, reviewReferralCredit, createSocialCreditSubmission, reviewSocialCreditSubmission,
-  createPromotionCode, getPromotionCodeByCode, getPromotionCodes,
+  createPromotionCode, getPromotionCodeByCode, getPromotionCodes, getLimitedPromotionRate,
   recordPromoAudit, getPromoAuditLog, setPromoManagerOrderVisibility, getApprovedPromoManagerOrders,
 };

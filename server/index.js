@@ -298,7 +298,12 @@ function resolveDiscountCode(code) {
   if (!code) return null;
   const normalized = String(code).trim().toUpperCase();
   const rate = config.DISCOUNT_CODES[normalized];
-  if (rate != null) return { code: normalized, rate, type: 'promotion', referralAccountId: null };
+  if (rate != null) {
+    const campaignConfig = config.LIMITED_PROMOTION_CAMPAIGNS && config.LIMITED_PROMOTION_CAMPAIGNS[normalized];
+    const limitedPromotion = campaignConfig ? { ...campaignConfig, code: normalized, fallbackRate: rate } : null;
+    const currentRate = limitedPromotion ? db.getLimitedPromotionRate(limitedPromotion, rate) : rate;
+    return { code: normalized, rate: currentRate, type: 'promotion', referralAccountId: null, limitedPromotion };
+  }
   const managedPromotion = db.getPromotionCodeByCode(normalized);
   if (managedPromotion) return { code: normalized, rate: 0.15, type: 'promotion', referralAccountId: null };
   const referralAccount = db.getAccountByReferralCode(normalized);
@@ -491,6 +496,7 @@ function prepareCheckout(body, accountId = null) {
       discountCode: discountLabel,
       discountType: discountMatch ? discountMatch.type : null,
       discountAmount,
+      limitedPromotion: !highlandReferral && discountMatch ? discountMatch.limitedPromotion : null,
       storeCreditAmount,
       customerAccountId: customerAccount && customerAccount.verified_at ? customerAccount.id : null,
       referralAccountId: discountMatch && discountMatch.type === 'referral' ? discountMatch.referralAccountId : null,

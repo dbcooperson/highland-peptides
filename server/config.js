@@ -62,6 +62,17 @@ module.exports = {
     CHRIS: 0.15,
   },
 
+  // Temporary promotion boosts are tracked in the persistent order database.
+  // Change the campaign ID for any future offer so this usage counter cannot
+  // reset after a deployment or server restart.
+  LIMITED_PROMOTION_CAMPAIGNS: {
+    NM: {
+      id: 'nm-next-two-20-2026-09-22',
+      boostedRate: 0.20,
+      maxUses: 2,
+    },
+  },
+
 
   // Extra global price multiplier applied after formula/overrides (1.15 = raise all public prices by 15%).
   PUBLIC_PRICE_MULTIPLIER: Number(process.env.PUBLIC_PRICE_MULTIPLIER || 1.15),

@@ -46,6 +46,41 @@ test('promo manager creates persistent fixed 15% codes', () => {
   assert.throws(() => db.createPromotionCode('bad code', 'promo15'), /letters or numbers/i);
 });
 
+test('NM gives the next two order redemptions 20% off, then returns to 15%', () => {
+  const campaign = {
+    id: 'nm-next-two-20-2026-09-22',
+    code: 'NM',
+    boostedRate: 0.20,
+    fallbackRate: 0.15,
+    maxUses: 2,
+  };
+  const createNmOrder = email => db.createOrder({
+    buyer: { name: 'NM Customer', email },
+    certifiedAt: new Date().toISOString(),
+    items: [{ name: 'Research item', spec: '10mg', sku: 'TEST10', quantity: 1, unit_price: 100 }],
+    subtotal: 100,
+    promoEligibleSubtotal: 100,
+    packagingFee: 0,
+    shippingFee: 0,
+    orderFee: 0,
+    orderFeeRate: 0,
+    discountCode: 'NM',
+    discountType: 'promotion',
+    discountAmount: 15,
+    total: 85,
+    paymentProvider: 'stripe',
+    limitedPromotion: campaign,
+  });
+
+  assert.equal(db.getLimitedPromotionRate(campaign), 0.20);
+  const first = createNmOrder('first-nm@example.com');
+  const second = createNmOrder('second-nm@example.com');
+  const third = createNmOrder('third-nm@example.com');
+  assert.deepEqual([first.discount_amount, second.discount_amount, third.discount_amount], [20, 20, 15]);
+  assert.deepEqual([first.total, second.total, third.total], [80, 80, 85]);
+  assert.equal(db.getLimitedPromotionRate(campaign), 0.15);
+});
+
 test('promo account activity is recorded newest-first for owner review', () => {
   db.recordPromoAudit({ username: 'promo15', action: 'login', outcome: 'success', ip: '192.0.2.10' });
   db.recordPromoAudit({ username: 'promo15', action: 'code_create', outcome: 'success', code: 'LAUNCH15', ip: '192.0.2.10' });
