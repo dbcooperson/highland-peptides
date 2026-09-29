@@ -6,6 +6,7 @@ const path = require('node:path');
 const root = path.join(__dirname, '..');
 const indexSource = fs.readFileSync(path.join(root, 'server', 'index.js'), 'utf8');
 const adminSource = fs.readFileSync(path.join(root, 'public', 'js', 'admin.js'), 'utf8');
+const adminHtml = fs.readFileSync(path.join(root, 'public', 'admin.html'), 'utf8');
 const accountSource = fs.readFileSync(path.join(root, 'public', 'js', 'account.js'), 'utf8');
 
 test('fulfillment workflow recognizes pending tracking as a confirmed order state', () => {
@@ -15,6 +16,7 @@ test('fulfillment workflow recognizes pending tracking as a confirmed order stat
   assert.match(indexSource, /dispatchPendingTrackingAddress/);
   assert.match(indexSource, /claimFulfillmentDiscordPost/);
   assert.match(adminSource, /copy-ready address is in Discord/);
+  assert.match(adminHtml, /<option value="pending_tracking">Pending tracking<\/option>/);
 });
 
 test('tracking cannot be emailed twice and fulfills only an awaiting order', () => {
