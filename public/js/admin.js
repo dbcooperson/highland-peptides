@@ -214,11 +214,16 @@ function orderTotalHTML(order) {
   const referralReward = Number(financials.referralReward ?? (Number(order.referral_credit_cents || 0) / 100));
   const grossProfit = Number(financials.grossProfit ?? (productRevenue - cogs));
   const grossMargin = Number(financials.grossMargin || 0);
+  const isInternationalShipping = String(order.shipping_method || '').toLowerCase() === 'international';
+  const internationalShippingLabel = order.status === 'pending_payment'
+    ? 'International shipping included'
+    : 'International shipping paid';
   return `
     <div class="admin-total-breakdown admin-money-breakdown">
       <div><span>Before code</span><strong>${money(beforeDiscountTotal)}</strong></div>
       ${saved > 0 ? `<div class="admin-savings"><span>Code saved</span><strong>-${money(saved)}</strong></div>` : '<div><span>Code saved</span><strong>$0.00</strong></div>'}
       <div class="admin-final-total"><span>Customer spent</span><strong>${money(totalSpent)}</strong></div>
+      ${isInternationalShipping ? `<div class="admin-international-shipping"><span>${internationalShippingLabel}</span><strong>${money(shipping)}</strong></div>` : ''}
       ${storeCreditUsed > 0 ? `<div><span>Store credit used</span><strong>${money(storeCreditUsed)}</strong></div>` : ''}
       <div><span>Product revenue</span><strong>${money(productRevenue)}</strong></div>
       <div><span>COGS</span><strong>${money(cogs)}</strong></div>
