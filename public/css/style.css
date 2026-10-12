@@ -5128,6 +5128,68 @@ body.admin-page .highland-print-label .highland-label-compound {
 }
 
 /* ---------- CVR and fulfillment pass ---------- */
+.shipping-delay-notice {
+  position: relative;
+  z-index: 18;
+  width: min(1280px, calc(100% - 24px));
+  min-height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin: 16px auto 0;
+  padding: 17px 24px;
+  border: 2px solid #ffb64d;
+  border-radius: 16px;
+  background: linear-gradient(105deg, #6f281d, #8a431f 56%, #714019);
+  color: #fffaf0;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.5;
+  text-align: center;
+  box-shadow: 0 0 0 3px rgba(255, 182, 77, 0.13), 0 16px 38px rgba(0, 0, 0, 0.34);
+}
+.shipping-delay-notice::before {
+  content: '!';
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #ffbd59;
+  color: #4b2418;
+  font-size: 22px;
+  font-weight: 950;
+  line-height: 1;
+}
+.shipping-delay-notice strong {
+  flex: 0 0 auto;
+  color: #ffd99c;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+@media (max-width: 640px) {
+  .shipping-delay-notice {
+    display: grid;
+    grid-template-columns: 30px 1fr;
+    gap: 4px 10px;
+    width: calc(100% - 16px);
+    min-height: 0;
+    padding: 14px;
+    font-size: 14px;
+    text-align: left;
+  }
+  .shipping-delay-notice::before {
+    grid-row: 1 / span 2;
+    width: 30px;
+    height: 30px;
+    font-size: 19px;
+  }
+  .shipping-delay-notice strong { font-size: 11px; }
+}
 .nav-wrap {
   flex-direction: row;
   align-items: center;

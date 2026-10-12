@@ -21,6 +21,24 @@ function initEntryGate() {
 }
 initEntryGate();
 
+// ---------- Temporary fulfillment delay notice ----------
+function initShippingDelayNotice() {
+  if (document.querySelector('.shipping-delay-notice')) return;
+  const notice = document.createElement('section');
+  notice.className = 'shipping-delay-notice';
+  notice.setAttribute('role', 'status');
+  notice.setAttribute('aria-label', 'Important shipping delay notice');
+  notice.innerHTML = '<strong>Important shipping delay</strong><span>Orders placed now may experience significant fulfillment delays. Timing is currently undetermined; please allow up to 3 weeks for your order to ship.</span>';
+  const navigation = document.querySelector('.nav-wrap');
+  if (navigation) navigation.insertAdjacentElement('afterend', notice);
+  else document.body.prepend(notice);
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initShippingDelayNotice, { once: true });
+} else {
+  initShippingDelayNotice();
+}
+
 // Preserve the public Highland referral offer while a visitor shops across pages.
 // Checkout independently validates this token and calculates the discount.
 const HP_REFERRAL_CAMPAIGN_KEY = 'hp_referral_campaign';

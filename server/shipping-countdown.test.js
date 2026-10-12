@@ -18,8 +18,8 @@ test('shipping countdown advances to the next cutoff after 2 PM Pacific', () => 
   assert.equal(status.shipDate.toISOString(), '2026-09-03T19:00:00.000Z');
 });
 
-test('shipping copy converts the cutoff to the shopper time zone', () => {
+test('shipping copy displays the temporary fulfillment-delay warning', () => {
   const copy = shippingCountdown.getCopy('card', '2026-09-01T19:00:00Z', 'America/New_York');
-  assert.match(copy, /Order within 2h 0m/);
-  assert.match(copy, /5:00 PM EDT your time \(2:00 PM PDT\)/);
+  assert.match(copy, /timing is undetermined/i);
+  assert.match(copy, /up to 3 weeks/i);
 });

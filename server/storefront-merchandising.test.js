@@ -47,6 +47,14 @@ test('home page offers the requested Discord shipping-updates link', () => {
   assert.match(indexHtml, /package updates, FAQs, and support/);
 });
 
+test('customer storefront warns about the temporary shipping delay', () => {
+  const shared = fs.readFileSync(path.join(__dirname, '../public/js/shared.js'), 'utf8');
+  const index = fs.readFileSync(path.join(__dirname, '../public/index.html'), 'utf8');
+  assert.match(shared, /Important shipping delay/);
+  assert.match(shared, /allow up to 3 weeks for your order to ship/);
+  assert.doesNotMatch(index, /Next-day shipping/i);
+});
+
 test('customer pages no longer promote or accept TikTok creator-credit submissions', () => {
   const customerSurface = [cartHtml, accountHtml, sharedJs, accountJs].join('\n');
   assert.doesNotMatch(customerSurface, /TikTok|creator.credit|weekly creator/i);

@@ -90,8 +90,8 @@ module.exports = {
   // Promo-only bootstrap accounts. Only strong one-way hashes are committed;
   // the plaintext passwords are delivered privately to the site owner.
   PROMO_MANAGER_BUILTIN_ACCOUNTS: [
-    { username: 'promo02', passwordSha256: '1c143eec12ca6af3b9da8dff23436a815671493acb9ca6d62d97612d6b053cb3' },
-    { username: 'promo03', passwordSha256: '6630c7fd76033c93d9b9824955763e5f9250d518afd4b13eb7ef83fc1b963f00' },
+    { username: 'promo02', passwordSha256: '393bdec8afad773da04b9f8295699fb54f240e8ad1c6b63ca683c011476a7d58' },
+    { username: 'promo03', passwordSha256: 'c28293318320acfa1a3a18be453dd89d82f24ebeebf4d5d5287e27b3373c8f88' },
   ],
   // Optional JSON array for additional promo-only staff accounts:
   // [{"username":"promo2","passwordSha256":"<64-char sha256>"}]

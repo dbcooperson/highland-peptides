@@ -97,29 +97,16 @@
   }
 
   function countdownCopy(variant, now = new Date(), shopperTimeZoneOverride = '') {
-    const status = shippingStatus(now);
-    const shopperTimeZone = shopperTimeZoneOverride || Intl.DateTimeFormat().resolvedOptions().timeZone || FULFILLMENT_TIME_ZONE;
-    const remaining = formatRemaining(status.remainingMs);
-    const shipDay = shipDayLabel(status.shipDate);
-    const localCutoff = timeLabel(status.cutoff, shopperTimeZone);
-    const pacificCutoff = timeLabel(status.cutoff, FULFILLMENT_TIME_ZONE);
-    const cutoff = shopperTimeZone === FULFILLMENT_TIME_ZONE
-      ? localCutoff
-      : `${localCutoff} your time (${pacificCutoff})`;
-    const timing = status.beforeTodayCutoff
-      ? `Order within ${remaining} to ship ${shipDay}`
-      : `Next cutoff in ${remaining}; order now to ship ${shipDay}`;
-
-    if (variant === 'pill') return `${remaining} left · cutoff ${localCutoff}`;
-    if (variant === 'summary') return `${timing}. Your cutoff is ${cutoff}.`;
-    return `${timing}. Cutoff: ${cutoff}.`;
+    if (variant === 'pill') return 'Shipping delay · allow up to 3 weeks';
+    if (variant === 'summary') return 'Orders placed now may be significantly delayed. Please allow up to 3 weeks for fulfillment.';
+    return 'Current fulfillment timing is undetermined. Please allow up to 3 weeks for your order to ship.';
   }
 
   function updateShippingCountdowns(now = new Date()) {
     document.querySelectorAll('[data-shipping-countdown]').forEach(element => {
       const variant = element.dataset.shippingCountdown || 'card';
       element.textContent = countdownCopy(variant, now);
-      element.setAttribute('title', 'Cutoff is calculated in Pacific Time and displayed in your local time zone. Business days exclude weekends.');
+      element.setAttribute('title', 'Orders placed now may experience significant fulfillment delays of up to 3 weeks.');
     });
   }
 
