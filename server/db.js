@@ -683,6 +683,22 @@ function markPaymentReminderSent(id) {
   return order;
 }
 
+function markShippingDelayNoticeSent(ids, recipientEmail, sentAt = new Date().toISOString()) {
+  const orderIds = new Set((ids || []).map(Number).filter(Number.isFinite));
+  const email = normalizedEmail(recipientEmail);
+  if (!orderIds.size || !email) return [];
+  const data = load();
+  const updated = [];
+  data.orders.forEach(order => {
+    if (!orderIds.has(Number(order.id)) || normalizedEmail(order.buyer && order.buyer.email) !== email) return;
+    order.shipping_delay_notice_sent_at = sentAt;
+    order.shipping_delay_notice_error = null;
+    updated.push(order);
+  });
+  if (updated.length) save(data);
+  return updated;
+}
+
 function claimPaymentReminder(id, staleAfterMs = 30 * 60 * 1000) {
   const data = load();
   const order = data.orders.find(item => item.id === Number(id));
@@ -1024,7 +1040,7 @@ function getStorageInfo() {
 }
 
 module.exports = {
-  createOrder, getAllOrders, getOrderById, setPayPalOrderId, setStripeCheckoutSessionId, markStripeOrderPaid, markOrderPaid, updateOrderStatus, applyOrderStatusMigration, updateOrderNotes, deleteOrder, markOrderBackupSent, claimPaymentReminder, markPaymentReminderSent, markPaymentReminderFailed, claimTrackingDispatch, markTrackingSent, markTrackingFailed, hasInboundTrackingEvent, markInboundTrackingEvent, claimFulfillmentDiscordPost, markFulfillmentDiscordSent, markFulfillmentDiscordFailed, markPirateShipOrdersExported, requeuePirateShipOrders, getStorageInfo, isTxidUsed, setPaymentReference,
+  createOrder, getAllOrders, getOrderById, setPayPalOrderId, setStripeCheckoutSessionId, markStripeOrderPaid, markOrderPaid, updateOrderStatus, applyOrderStatusMigration, updateOrderNotes, deleteOrder, markOrderBackupSent, claimPaymentReminder, markPaymentReminderSent, markPaymentReminderFailed, markShippingDelayNoticeSent, claimTrackingDispatch, markTrackingSent, markTrackingFailed, hasInboundTrackingEvent, markInboundTrackingEvent, claimFulfillmentDiscordPost, markFulfillmentDiscordSent, markFulfillmentDiscordFailed, markPirateShipOrdersExported, requeuePirateShipOrders, getStorageInfo, isTxidUsed, setPaymentReference,
   createAccount, getAccountById, getAccountByEmail, setAccountVerificationToken, verifyAccountByTokenHash, touchAccountLogin, setPasswordResetToken, resetPasswordByTokenHash, getAccountByReferralCode, setAccountReferralCode, getAccountDashboard, createPayoutRequest, updatePayoutRequest, getAdminReferralData, reviewReferralCredit, createSocialCreditSubmission, reviewSocialCreditSubmission,
   createPromotionCode, getPromotionCodeByCode, getPromotionCodes, getLimitedPromotionRate,
   recordPromoAudit, getPromoAuditLog, setPromoManagerOrderVisibility, getApprovedPromoManagerOrders,

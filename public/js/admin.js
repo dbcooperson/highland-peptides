@@ -1638,7 +1638,47 @@ async function loadOrders() {
   if (searchInput) searchInput.oninput = renderOrdersTable;
   if (statusFilter) statusFilter.onchange = renderOrdersTable;
   if (paymentFilter) paymentFilter.onchange = renderOrdersTable;
+  await loadDelayNoticePreview();
 }
+
+async function loadDelayNoticePreview() {
+  const preview = document.getElementById('delayNoticePreview');
+  const button = document.getElementById('sendDelayNoticeBtn');
+  if (!preview || !button) return;
+  try {
+    const data = await api('/api/admin/shipping-delay-notice/preview');
+    button.dataset.recipientCount = String(data.recipientCount || 0);
+    button.disabled = !data.recipientCount;
+    preview.textContent = data.recipientCount
+      ? `${data.recipientCount} unique customers across ${data.orderCount} paid, unfulfilled orders created after September 16 have not received this notice.`
+      : 'No eligible customers are waiting for this notice.';
+  } catch (err) {
+    button.disabled = true;
+    preview.textContent = err.message || 'Could not load the recipient preview.';
+  }
+}
+
+document.getElementById('sendDelayNoticeBtn')?.addEventListener('click', async event => {
+  const button = event.currentTarget;
+  const recipientCount = Number(button.dataset.recipientCount || 0);
+  if (!recipientCount) return;
+  const confirmed = window.confirm(`Send the 3–4 week shortage-delay notice and complimentary-bonus promise to ${recipientCount} customers now? Successful sends are recorded to prevent duplicates.`);
+  if (!confirmed) return;
+  button.disabled = true;
+  button.textContent = 'Sending…';
+  try {
+    const result = await api('/api/admin/shipping-delay-notice/send', {
+      method: 'POST',
+      body: { expectedRecipientCount: recipientCount },
+    });
+    window.alert(`Delay notices sent: ${result.sent}. Failed: ${result.failed}.`);
+  } catch (err) {
+    window.alert(err.message || 'Could not send the delay notices.');
+  } finally {
+    button.textContent = 'Send delay notices';
+    await loadDelayNoticePreview();
+  }
+});
 document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   try {

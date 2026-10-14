@@ -3000,6 +3000,20 @@ body.search-open { overflow: hidden; }
   gap: 12px;
   margin: 16px 0 20px;
 }
+
+.admin-delay-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0 0 1rem;
+  padding: 1rem;
+  border: 1px solid rgba(214, 173, 96, .45);
+  border-radius: 14px;
+  background: rgba(214, 173, 96, .09);
+}
+.admin-delay-notice p { margin: .35rem 0 0; }
+.admin-delay-notice button { flex: 0 0 auto; }
 .admin-summary-grid div {
   padding: 14px;
   border: 1px solid rgba(243,239,230,0.14);

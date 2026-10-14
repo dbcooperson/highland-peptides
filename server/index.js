@@ -26,7 +26,7 @@ const {
 } = require('./auth');
 const { buildPackingSlip, buildContentsLabel } = require('./labels');
 const { capturePayPalOrder } = require('./paypal');
-const { sendOrderBackup, sendPendingTrackingDiscord, checkFulfillmentDiscordConnection, sendCustomerPaymentInstructions, sendPaymentReminder, sendTrackingEmail, isCustomerEmailConfigured } = require('./notifications');
+const { sendOrderBackup, sendPendingTrackingDiscord, checkFulfillmentDiscordConnection, sendCustomerPaymentInstructions, sendPaymentReminder, sendTrackingEmail, sendShippingDelayNotice, isCustomerEmailConfigured } = require('./notifications');
 const { createBitcoinMonitor } = require('./btc-monitor');
 const { acceptAddressAsEntered, validateShippingAddress } = require('./address-validation');
 const analytics = require('./analytics');
@@ -39,6 +39,7 @@ const { pirateShipCsv, pirateShipExportCandidates, parseInboundTrackingEmail, ma
 const { configuredPromoManagers } = require('./promo-managers');
 const { CAMPAIGN_CODE, hasHighlandReferral, referralOfferDiscount } = require('./referral-offer');
 const { stripeMode, stripeClient, checkoutSessionParams, verifiedPaidSession } = require('./stripe-checkout');
+const { DELAY_NOTICE_CUTOFF, buildDelayNoticeRecipients } = require('./shipping-delay');
 
 const CONFIRMED_ORDER_STATUSES = new Set(['paid', 'pending_tracking', 'fulfilled']);
 const promoManagers = configuredPromoManagers(config);
@@ -1309,6 +1310,42 @@ app.get('/api/admin/orders.csv', requireAdmin, (req, res) => {
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
   res.setHeader('Content-Disposition', 'attachment; filename="highland-orders.csv"');
   res.send(ordersCsv(orders));
+});
+
+app.get('/api/admin/shipping-delay-notice/preview', requireAdmin, (req, res) => {
+  const recipients = buildDelayNoticeRecipients(db.getAllOrders());
+  res.json({
+    cutoff: DELAY_NOTICE_CUTOFF,
+    recipientCount: recipients.length,
+    orderCount: recipients.reduce((sum, recipient) => sum + recipient.orderIds.length, 0),
+    recipients,
+  });
+});
+
+app.post('/api/admin/shipping-delay-notice/send', requireAdmin, async (req, res) => {
+  const recipients = buildDelayNoticeRecipients(db.getAllOrders());
+  const expectedCount = Number(req.body && req.body.expectedRecipientCount);
+  if (!recipients.length) return res.json({ ok: true, sent: 0, failed: 0, errors: [] });
+  if (expectedCount !== recipients.length) {
+    return res.status(409).json({ error: `Recipient count changed. Preview again before sending (${recipients.length} currently eligible).` });
+  }
+  if (!isCustomerEmailConfigured()) {
+    return res.status(503).json({ error: 'Customer email is not configured. Add SMTP settings in Render.' });
+  }
+
+  const errors = [];
+  let sent = 0;
+  for (const recipient of recipients) {
+    try {
+      await sendShippingDelayNotice(recipient);
+      db.markShippingDelayNoticeSent(recipient.orderIds, recipient.email);
+      sent += 1;
+    } catch (err) {
+      errors.push({ email: recipient.email, message: String(err && err.message || err).slice(0, 300) });
+      console.error(`Shipping delay notice failed for ${recipient.email}:`, err.message || err);
+    }
+  }
+  res.status(errors.length ? 207 : 200).json({ ok: errors.length === 0, sent, failed: errors.length, errors });
 });
 
 app.get('/api/admin/pirate-ship.csv', requireAdmin, (req, res) => {

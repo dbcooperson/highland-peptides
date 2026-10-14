@@ -43,6 +43,13 @@
     </div>
     <div class="panel admin-tab-panel" id="ordersPanel" data-admin-panel="orders">
       <h2>Orders <span class="hint">(guest and optional-account checkout)</span></h2>
+      <section class="admin-delay-notice" aria-labelledby="delayNoticeHeading">
+        <div>
+          <strong id="delayNoticeHeading">Shipping delay email</strong>
+          <p id="delayNoticePreview" class="hint">Loading eligible customers…</p>
+        </div>
+        <button type="button" id="sendDelayNoticeBtn" disabled>Send delay notices</button>
+      </section>
       <div class="admin-order-toolbar">
         <input id="adminOrderSearch" type="search" placeholder="Search name, email, SKU, address, notes">
         <select id="adminStatusFilter">
@@ -301,7 +308,7 @@
 
 <div id="labelPrintPortal" class="label-print-sheet" aria-hidden="true"></div>
 
-<script src="/js/admin.js?v=promo02-ogre-approval-20260919"></script>
+<script src="/js/admin.js?v=shipping-delay-notice-20261014"></script>
 <script src="/js/site-notice.js?v=20260916"></script>
 </body>
 </html>
