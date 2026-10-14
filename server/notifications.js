@@ -546,6 +546,8 @@ async function sendShippingDelayNotice(recipient) {
   const text = [
     `Hi ${name},`,
     '',
+    `If you haven't received your package yet, your order${plural} ${orderRefs} ${orderIds.length === 1 ? 'is' : 'are'} included in this fulfillment update.`,
+    '',
     `We are writing with an important update regarding your Highland Peptides order${plural} ${orderRefs}. An unexpected product shortage has affected our fulfillment schedule, and your order is taking longer than anticipated.`,
     '',
     'We currently expect fulfillment within an additional 3–4 weeks at most. We sincerely apologize for the inconvenience and appreciate your patience while we restock and complete every affected order.',
@@ -559,6 +561,7 @@ async function sendShippingDelayNotice(recipient) {
   ].join('\n');
   const html = accountEmailLayout('Important order update', `
     <p style="font-size:16px;line-height:1.6;">Hi ${htmlEscape(name)},</p>
+    <p style="font-size:16px;line-height:1.6;"><strong>If you haven't received your package yet</strong>, your order${plural} <strong>${htmlEscape(orderRefs)}</strong> ${orderIds.length === 1 ? 'is' : 'are'} included in this fulfillment update.</p>
     <p style="font-size:16px;line-height:1.6;">An unexpected product shortage has affected the fulfillment schedule for your order${plural} <strong>${htmlEscape(orderRefs)}</strong>, and your order is taking longer than anticipated.</p>
     <p style="font-size:16px;line-height:1.6;">We currently expect fulfillment within an additional <strong>3–4 weeks at most</strong>. We sincerely apologize for the inconvenience and appreciate your patience while we restock and complete every affected order.</p>
     <p style="font-size:16px;line-height:1.6;">As a thank-you for your understanding, we will include a complimentary bonus with your shipment when it is fulfilled.</p>
