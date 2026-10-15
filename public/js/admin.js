@@ -1662,8 +1662,17 @@ document.getElementById('sendDelayNoticeBtn')?.addEventListener('click', async e
   const button = event.currentTarget;
   const recipientCount = Number(button.dataset.recipientCount || 0);
   if (!recipientCount) return;
-  const confirmed = window.confirm(`Send the 3–4 week shortage-delay notice and complimentary-bonus promise to ${recipientCount} customers now? Successful sends are recorded to prevent duplicates.`);
-  if (!confirmed) return;
+  if (button.dataset.sendArmed !== 'true') {
+    button.dataset.sendArmed = 'true';
+    button.textContent = `Confirm send to ${recipientCount}`;
+    window.setTimeout(() => {
+      if (button.dataset.sendArmed !== 'true' || button.disabled) return;
+      button.dataset.sendArmed = 'false';
+      button.textContent = 'Send delay notices';
+    }, 15000);
+    return;
+  }
+  button.dataset.sendArmed = 'false';
   button.disabled = true;
   button.textContent = 'Sending…';
   try {
