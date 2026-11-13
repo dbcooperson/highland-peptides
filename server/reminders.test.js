@@ -9,7 +9,7 @@ test('payment reminder becomes due after the configured first delay', () => {
   const created = new Date(now - (config.PAYMENT_REMINDER_FIRST_HOURS + 1) * 60 * 60 * 1000).toISOString();
   assert.equal(reminderIsDue({
     status: 'pending_payment',
-    payment_provider: 'manual_paypal',
+    payment_provider: 'crypto',
     created_at: created,
     payment_reminders_enabled: true,
     payment_reminder_count: 0,
@@ -19,7 +19,7 @@ test('payment reminder becomes due after the configured first delay', () => {
 test('historical pending orders are not enrolled automatically', () => {
   assert.equal(reminderIsDue({
     status: 'pending_payment',
-    payment_provider: 'manual_paypal',
+    payment_provider: 'crypto',
     created_at: '2020-01-01T00:00:00.000Z',
     payment_reminder_count: 0,
   }, Date.now()), false);
@@ -28,7 +28,7 @@ test('historical pending orders are not enrolled automatically', () => {
 test('paid orders never receive payment reminders', () => {
   assert.equal(reminderIsDue({
     status: 'paid',
-    payment_provider: 'manual_paypal',
+    payment_provider: 'crypto',
     created_at: '2020-01-01T00:00:00.000Z',
   }, Date.now()), false);
 });
@@ -54,7 +54,7 @@ test('reminder scan claims an order before sending it', async () => {
   const order = {
     id: 91,
     status: 'pending_payment',
-    payment_provider: 'manual_paypal',
+    payment_provider: 'crypto',
     payment_reminders_enabled: true,
     payment_reminder_count: 0,
     created_at: new Date(now - (config.PAYMENT_REMINDER_FIRST_HOURS + 1) * 60 * 60 * 1000).toISOString(),

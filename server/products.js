@@ -1,24 +1,35 @@
 const fs = require('fs');
 const path = require('path');
-const { MARKUP_MULTIPLIER, PRICE_ADJUSTMENT, PUBLIC_PRICE_MULTIPLIER, PRICE_DECIMALS } = require('./config');
+const { MARKUP_MULTIPLIER, PRICE_ADJUSTMENT, PUBLIC_PRICE_MULTIPLIER, PUBLIC_PRICE_INCREASE, PRICE_DECIMALS } = require('./config');
 
 const raw = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'products.json'), 'utf8'));
 const descriptions = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'descriptions.json'), 'utf8'));
 const PRODUCT_IMAGE_REVISION = 'offwhite-closeup-20260825';
+const SNOW_IMAGE_REVISION = 'snow-20261112';
+const SNOW_IMAGE_DIR = path.join(__dirname, '..', 'public', 'images', 'product-mockups', 'snow');
+
+function productImageUrl(p) {
+  // Prefer the Snowy Research snow photo for this SKU; fall back to the older mockup.
+  if (fs.existsSync(path.join(SNOW_IMAGE_DIR, `${p.sku}.webp`))) {
+    return `/images/product-mockups/snow/${p.sku}.webp?v=${SNOW_IMAGE_REVISION}`;
+  }
+  return `/images/product-mockups/generated/${p.imageFile || `${p.imageSku || p.sku}.webp`}?v=${PRODUCT_IMAGE_REVISION}`;
+}
 
 // Customer-facing brand names. The underlying catalog identity remains available
 // internally for legacy URLs, search aliases, COA matching, and fulfillment.
 const DISPLAY_NAME_OVERRIDES = {
-  Tirzepatide: 'HP-TRZ',
-  Retatrutide: 'HP-3RT',
-  Tesamorelin: 'HP-TSM',
-  'SS-31': 'HP-31',
+  Tirzepatide: 'SR-2TZ',
+  Retatrutide: 'SR-3RT',
+  Tesamorelin: 'SR-TSM',
+  'SS-31': 'SR-31',
+  'BPC-157 + TB-500 Blend': 'Wolverine Stack',
 };
 
 function publicProductName(name) {
   const code = DISPLAY_NAME_OVERRIDES[name];
-  if (name === 'Bacteriostatic Water') return 'Sterile Water · pH 4.5';
-  if (name === 'Tirzepatide' || name === 'Retatrutide') return code;
+  if (name === 'Bacteriostatic Water') return 'Reconstitution Solution';
+  if (name === 'Tirzepatide' || name === 'Retatrutide' || name === 'SS-31' || name === 'Tesamorelin') return code;
   return code ? `${code} (${name})` : name;
 }
 
@@ -30,10 +41,13 @@ const LABEL_NAME_OVERRIDES = {
   'Semax 5mg + Selank 5mg': 'SEMAX + SELANK',
   'BPC-157 + GHK-Cu + TB-500 + KPV Blend (Klow)': 'KLOW BLEND',
   'BPC-157 + GHK-Cu + TB-500 Blend (Glow)': 'GLOW BLEND',
-  'BPC-157 + TB-500 Blend': 'BPC + TB-500',
-  'Bacteriostatic Water': 'STERILE WATER',
+  'BPC-157 + TB-500 Blend': 'WOLVERINE STACK',
+  Retatrutide: 'SR-3RT',
+  Tirzepatide: 'SR-2TZ',
+  'Bacteriostatic Water': 'RECONSTITUTION SOLUTION',
   'MOTS-c': 'MOTS-C',
-  'SS-31': 'HP-31 (SS-31)',
+  'SS-31': 'SR-31',
+  Tesamorelin: 'SR-TSM',
 };
 
 function labelNameForProduct(name) {
@@ -50,10 +64,12 @@ function labelDoseFromSpec(spec) {
     .replace(/\s+/g, ' ')
     .toUpperCase();
 
-  dose = dose.replace(
-    /^(\d+(?:\.\d+)?) MG\/ML\s+(\d+(?:\.\d+)?) ML(?:\s+\(([\d,]+) MG\))?$/,
-    (_match, concentration, volume, total) => `${concentration} MG/ML · ${volume} ML${total ? ` (${total} MG)` : ''}`,
-  );
+  // Concentration products print only their strength on the vial (e.g. 300 MG/ML);
+  // the storefront spec still shows the volume and total.
+  const concentration = dose.match(/^(\d+(?:\.\d+)?) MG\/ML\b/);
+  if (concentration) return `${concentration[1]} MG/ML`;
+  const solution = dose.match(/^(\d+(?:\.\d+)?)% SOLUTION,?\s*(\d+(?:\.\d+)?) ML\b/);
+  if (solution) return `${solution[1]}% · ${solution[2]} ML`;
   return dose;
 }
 
@@ -91,7 +107,7 @@ function compareVariants(a, b) {
   return a.price - b.price || a.spec.localeCompare(b.spec);
 }
 // Completed-order merchandising snapshot, refreshed from paid and fulfilled
-// Highland orders on 2026-08-22. Keep these labels factual when inventory or
+// orders on 2026-08-22. Keep these labels factual when inventory or
 // sales patterns change.
 const BEST_SELLER_SKUS = new Set([
   'MS40', 'RT20', 'CU100', 'RT30', 'CP10',
@@ -144,12 +160,13 @@ const pricedCatalog = raw
     quantityDiscounts: p.quantityDiscounts || null,
     containerLabel: p.containerLabel || 'vial',
     description: p.description || descriptions[p.name] || '',
-    image: `/images/product-mockups/generated/${p.imageFile || `${p.imageSku || p.sku}.webp`}?v=${PRODUCT_IMAGE_REVISION}`,
+    image: productImageUrl(p),
     labelName: labelNameForProduct(p.name),
     labelDose: labelDoseFromSpec(p.spec),
-    price: priceEndingIn99(p.fixedPublicPrice != null
+    price: priceEndingIn99((p.fixedPublicPrice != null
       ? p.fixedPublicPrice
-      : (p.salePrice != null ? p.salePrice : p.cost * MARKUP_MULTIPLIER * PRICE_ADJUSTMENT) * PUBLIC_PRICE_MULTIPLIER),
+      : (p.salePrice != null ? p.salePrice : p.cost * MARKUP_MULTIPLIER * PRICE_ADJUSTMENT) * PUBLIC_PRICE_MULTIPLIER)
+      + (PUBLIC_PRICE_INCREASE || 0)),
   }));
 
 const byNameForPricing = new Map();

@@ -11,23 +11,16 @@ const sharedJs = fs.readFileSync(path.join(__dirname, '..', 'public', 'js', 'sha
 const accountJs = fs.readFileSync(path.join(__dirname, '..', 'public', 'js', 'account.js'), 'utf8');
 const accountRoutes = fs.readFileSync(path.join(__dirname, 'accounts.js'), 'utf8');
 
-test('hero launches Glutathione and orders L-Carnitine, Retatrutide, then Tirzepatide', () => {
-  const heroStart = indexHtml.indexOf('<aside class="hero-commerce-panel"');
-  const heroEnd = indexHtml.indexOf('</aside>', heroStart);
-  const hero = indexHtml.slice(heroStart, heroEnd);
-
-  assert.match(hero, /\/product\/glutathione\?sku=GTT9000/);
-  assert.match(hero, /300mg\/ml · 30ml \(9,000mg\)/);
-  assert.match(hero, /\$38\.99 after code/);
-
-  const lCarnitine = hero.indexOf('/product/l-carnitine?sku=LCARN50');
-  const retatrutide = hero.indexOf('/product/retatrutide');
-  const tirzepatide = hero.indexOf('/product/tirzepatide');
-  assert.ok(lCarnitine > -1 && lCarnitine < retatrutide);
-  assert.ok(retatrutide < tirzepatide);
-  assert.doesNotMatch(hero, />Retatrutide\s*·|alt="[^"]*Retatrutide/);
-  assert.doesNotMatch(hero, />Tirzepatide\s*·|alt="[^"]*Tirzepatide/);
-  assert.doesNotMatch(hero, /\/product\/bpc-157/);
+test('homepage Most popular row shows SR-3RT, SR-2TZ, Wolverine Stack, then MOTS-c', () => {
+  const appJs = fs.readFileSync(path.join(__dirname, '../public/js/app.js'), 'utf8');
+  assert.match(appJs, /const BEST_SELLER_SKUS = \['RT20', 'TR30', 'BB20', 'MS40'\];/);
+  assert.match(indexHtml, /<h2>Most popular<\/h2>/);
+  assert.match(indexHtml, /id="bestSellersGrid"/);
+  const { bySku } = require('./products');
+  assert.equal(bySku.RT20.name, 'SR-3RT');
+  assert.equal(bySku.TR30.name, 'SR-2TZ');
+  assert.match(bySku.BB20.name, /^Wolverine Stack/);
+  assert.equal(bySku.MS40.spec, '40mg x1 vial');
 });
 
 test('Glutathione launch photograph is present in the generated catalog', () => {
@@ -41,18 +34,13 @@ test('product handling notice excludes storage instructions and states no human 
   assert.doesNotMatch(productHtml, /Storage notes|Store lyophilized material|freeze-thaw/i);
 });
 
-test('home page offers the requested Discord shipping-updates link', () => {
-  assert.match(indexHtml, /href="https:\/\/discord\.gg\/4dfNB78NQr"/);
-  assert.match(indexHtml, /Want a photo of your package before it ships\?/);
-  assert.match(indexHtml, /package updates, FAQs, and support/);
+test('the storefront no longer links to Discord', () => {
+  assert.doesNotMatch(indexHtml, /discord/i);
 });
 
-test('customer storefront warns about the temporary shipping delay', () => {
+test('the temporary shipping-delay notice has been lifted from the storefront', () => {
   const shared = fs.readFileSync(path.join(__dirname, '../public/js/shared.js'), 'utf8');
-  const index = fs.readFileSync(path.join(__dirname, '../public/index.html'), 'utf8');
-  assert.match(shared, /Important shipping delay/);
-  assert.match(shared, /allow up to 3 weeks for your order to ship/);
-  assert.doesNotMatch(index, /Next-day shipping/i);
+  assert.doesNotMatch(shared, /Important shipping delay|allow up to 3 weeks/);
 });
 
 test('customer pages no longer promote or accept TikTok creator-credit submissions', () => {
@@ -62,6 +50,37 @@ test('customer pages no longer promote or accept TikTok creator-credit submissio
   assert.match(accountRoutes, /status\(410\)/);
 });
 
-test('first-visit account prompt ends with the requested referral and crypto message', () => {
-  assert.match(sharedJs, /Create a verified account to <strong>track your order progress<\/strong> and make one personal referral code\. Friends save <strong>10%<\/strong> when they use it, and you earn that same <strong>10% as store credit<\/strong> after Highland reviews the order\. Members also get an extra <strong>5% off crypto orders<\/strong>\.<\/p>/);
+test('first-visit account prompt no longer advertises referral codes', () => {
+  assert.match(sharedJs, /Create a verified account to <strong>track your order progress<\/strong>, keep your order history in one place, and keep any referral store credit in one place\.<\/p>/);
+  assert.doesNotMatch(sharedJs, /5% off crypto/);
+  assert.doesNotMatch(sharedJs, /referral code\. Friends save/);
+});
+
+test('product page has no expiry claim or shipping cutoff countdown', () => {
+  const productJs = fs.readFileSync(path.join(__dirname, '..', 'public', 'js', 'product.js'), 'utf8');
+  assert.doesNotMatch(productJs, /Expiry|Good for the next 2 years|data-shipping-countdown|cutoff/i);
+});
+
+test('internal Discord alerts and the shipping-delay email tool are gone', () => {
+  for (const rel of ['server/index.js', 'server/notifications.js', 'server/config.js', 'server/db.js', 'public/js/admin.js', 'public/admin.html']) {
+    const source = fs.readFileSync(path.join(__dirname, '..', rel), 'utf8');
+    assert.doesNotMatch(source, /discord/i, rel);
+    assert.doesNotMatch(source, /shipping-delay-notice|ShippingDelayNotice|DelayNotice/, rel);
+  }
+  assert.equal(fs.existsSync(path.join(__dirname, 'shipping-delay.js')), false);
+  assert.equal(fs.existsSync(path.join(__dirname, 'btc-monitor.js')), false);
+});
+
+test('crypto orders get a flat 15% off that never stacks with codes', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const config = require('./config');
+  const index = fs.readFileSync(path.join(__dirname, 'index.js'), 'utf8');
+  const cart = fs.readFileSync(path.join(__dirname, '..', 'public', 'cart.html'), 'utf8');
+  assert.equal(config.ALT_PAYMENT_DISCOUNT_RATE, 0.15);
+  assert.match(index, /if \(cryptoOrder && discountMatch\)/);
+  assert.match(index, /cannot be combined with promo or referral codes/);
+  assert.doesNotMatch(index, /memberCryptoDiscount/);
+  assert.match(cart, /Crypto <em>15% off<\/em>/);
+  assert.doesNotMatch(cart, /(^|[^0-9])5% off/);
 });

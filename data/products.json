@@ -318,7 +318,7 @@
     "category": "Research Material",
     "group": "Antioxidant",
     "fixedPublicPrice": 45.87,
-    "description": "Glutathione (GSH) is an endogenous tripeptide antioxidant that helps cells reduce peroxides, maintain redox balance, protect protein thiols, and support glutathione-transferase conjugation pathways. In parenteral pharmacokinetic research, glutathione bypasses gastrointestinal exposure and transiently increases plasma glutathione and cysteine availability. Common research contexts include oxidative-stress response, mitochondrial antioxidant defense, hepatic detoxification pathways, redox signaling, and drug-toxicity models. For laboratory research only—not for human or veterinary administration."
+    "description": "Glutathione (GSH) is the body's own tripeptide antioxidant. It reduces peroxides, keeps cellular redox balance in check, protects protein thiols and supports glutathione-transferase conjugation. In parenteral pharmacokinetic research it avoids gastrointestinal exposure and briefly raises plasma glutathione and cysteine. Typical research settings include oxidative stress, mitochondrial antioxidant defense, liver detoxification, redox signaling and drug-toxicity models. For laboratory research only; not for human or veterinary administration."
   },
   {
     "sku": "F410",
@@ -404,8 +404,8 @@
   {
     "sku": "WA10",
     "name": "Bacteriostatic Water",
-    "spec": "10ml (pH 4.5) x1 vial",
-    "cost": 1.3,
+    "spec": "10ml x1 vial",
+    "cost": 1.01,
     "category": "Supplies",
     "group": "Supplies",
     "fixedPublicPrice": 8.99,
@@ -419,8 +419,8 @@
   {
     "sku": "WA30",
     "name": "Bacteriostatic Water",
-    "spec": "30ml (pH 4.5) x1 vial",
-    "cost": 3.9,
+    "spec": "30ml x1 vial",
+    "cost": 1.03,
     "category": "Supplies",
     "group": "Supplies",
     "fixedPublicPrice": 17.98,
@@ -434,8 +434,8 @@
   {
     "sku": "WA50",
     "name": "Bacteriostatic Water",
-    "spec": "50ml (pH 4.5) x1 vial",
-    "cost": 6.5,
+    "spec": "50ml x1 vial",
+    "cost": 1.05,
     "category": "Supplies",
     "group": "Supplies",
     "fixedPublicPrice": 23.99,
@@ -449,9 +449,9 @@
   {
     "sku": "WA100",
     "name": "Bacteriostatic Water",
-    "spec": "100ml (pH 4.5) x1 vial",
-    "description": "Bacteriostatic water specified at pH 4.5 for laboratory and research-use preparation.",
-    "cost": 13,
+    "spec": "100ml x1 vial",
+    "description": "Bacteriostatic water for laboratory and research-use preparation.",
+    "cost": 1.11,
     "category": "Supplies",
     "group": "Supplies",
     "fixedPublicPrice": 38.99,
@@ -474,7 +474,7 @@
   {
     "sku": "PE10",
     "name": "PE 22-28",
-    "spec": "10ml x1 vial",
+    "spec": "10mg x1 vial",
     "cost": 6,
     "category": "Peptide",
     "group": "Nootropic",
@@ -492,7 +492,7 @@
   {
     "sku": "NSK30",
     "name": "NA-Selank Amidate",
-    "spec": "30ml x1 vial",
+    "spec": "30mg x1 vial",
     "cost": 10.5,
     "category": "Peptide",
     "group": "Nootropic",
@@ -504,13 +504,13 @@
     "spec": "5mg x1 vial",
     "cost": 12,
     "category": "Peptide",
-    "group": "Metabolic",
+    "group": "Nootropic",
     "salePrice": 27.817391
   },
   {
     "sku": "XS10",
     "name": "Semax 5mg + Selank 5mg",
-    "spec": "10ml x1 vial",
+    "spec": "5mg+5mg x1 vial",
     "cost": 5.7,
     "category": "Peptide",
     "group": "Nootropic",
@@ -519,7 +519,7 @@
   {
     "sku": "XS20",
     "name": "Semax 10mg + Selank 10mg",
-    "spec": "20ml x1 vial",
+    "spec": "10mg+10mg x1 vial",
     "cost": 8.6,
     "category": "Peptide",
     "group": "Nootropic",
@@ -543,7 +543,7 @@
     "category": "Peptide",
     "group": "Metabolic",
     "salePrice": 19.991304,
-    "imageFile": "TR30-branded-clean.png"
+    "imageFile": "HP-TRZ-30MG-higgsfield.webp"
   },
   {
     "sku": "TR40",
@@ -801,7 +801,7 @@
   {
     "sku": "LCARN50",
     "name": "L-Carnitine",
-    "spec": "600mg/ml 50ml",
+    "spec": "600mg/ml 50ml (30,000mg)",
     "cost": 12.5,
     "category": "Research Material",
     "group": "Aminos",
@@ -811,7 +811,7 @@
   {
     "sku": "RU58841",
     "name": "RU58841",
-    "spec": "5% solution, 30ml",
+    "spec": "5% solution, 30ml (1,500mg)",
     "containerLabel": "dropper bottle",
     "cost": 15,
     "category": "Research Compound",

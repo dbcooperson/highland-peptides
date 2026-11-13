@@ -18,17 +18,17 @@ function matches(query) {
 
 test('scientific names and brand codes find the same research products', () => {
   for (const [query, compound] of [
-    ['retatrutide', 'Retatrutide'], ['hp-3rt', 'Retatrutide'],
-    ['tirzepatide', 'Tirzepatide'], ['hp-trz', 'Tirzepatide'],
+    ['retatrutide', 'Retatrutide'], ['hp-3rt', 'Retatrutide'], ['glp-3rt', 'Retatrutide'], ['sr-3rt', 'Retatrutide'],
+    ['tirzepatide', 'Tirzepatide'], ['hp-trz', 'Tirzepatide'], ['glp-2tz', 'Tirzepatide'], ['sr-2tz', 'Tirzepatide'],
     ['tesamorelin', 'Tesamorelin'], ['hp-tsm', 'Tesamorelin'],
-    ['ss-31', 'SS-31'], ['hp-31', 'SS-31'],
+    ['ss-31', 'SS-31'], ['hp-31', 'SS-31'], ['sr-31', 'SS-31'],
   ]) {
     assert.ok(matches(query).some(product => product.compoundName === compound), query);
   }
 });
 
 test('bac water and sterile water both find the disclosed bacteriostatic listing', () => {
-  for (const query of ['bac water', 'bacteriostatic water', 'sterile water']) {
+  for (const query of ['bac water', 'bacteriostatic water', 'sterile water', 'reconstitution solution', 'recon']) {
     assert.ok(matches(query).some(product => product.sku === 'WA100'), query);
   }
 });

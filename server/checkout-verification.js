@@ -8,6 +8,22 @@ const REMEMBER_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000;
 const SEND_COOLDOWN_MS = 60 * 1000;
 const COOKIE_NAME = 'hp.checkout_email';
 const sendAttempts = new Map();
+// Hourly caps stop the code sender being used to spam inboxes: cookies are not
+// needed to call it, so the per-session cooldown alone is easy to sidestep.
+const HOURLY_WINDOW_MS = 60 * 60 * 1000;
+const MAX_CODES_PER_IP_PER_HOUR = 10;
+const MAX_CODES_PER_EMAIL_PER_HOUR = 5;
+const hourlySends = new Map();
+
+function underHourlyCap(key, max, now) {
+  const recent = (hourlySends.get(key) || []).filter(time => time > now - HOURLY_WINDOW_MS);
+  hourlySends.set(key, recent);
+  return recent.length < max;
+}
+
+function countHourlySend(key, now) {
+  hourlySends.get(key).push(now);
+}
 
 function cleanEmail(value) {
   const email = String(value || '').trim().toLowerCase();
@@ -69,10 +85,18 @@ function registerCheckoutVerificationRoutes(app) {
     const ip = String(req.ip || req.socket.remoteAddress || 'unknown');
     const key = crypto.createHash('sha256').update(`${ip}:${email}`).digest('hex');
     for (const [entry, until] of sendAttempts) if (until <= now) sendAttempts.delete(entry);
+    for (const [entry, times] of hourlySends) if (!times.some(time => time > now - HOURLY_WINDOW_MS)) hourlySends.delete(entry);
+    const ipKey = `ip:${ip}`;
+    const emailKey = `email:${email}`;
+    if (!underHourlyCap(ipKey, MAX_CODES_PER_IP_PER_HOUR, now) || !underHourlyCap(emailKey, MAX_CODES_PER_EMAIL_PER_HOUR, now)) {
+      return res.status(429).json({ error: 'Too many codes requested. Please try again in an hour.' });
+    }
     if ((sendAttempts.get(key) || 0) > now || (req.session.checkoutEmailLastSentAt || 0) + SEND_COOLDOWN_MS > now) {
       return res.status(429).json({ error: 'Please wait one minute before requesting another code.' });
     }
     sendAttempts.set(key, now + SEND_COOLDOWN_MS);
+    countHourlySend(ipKey, now);
+    countHourlySend(emailKey, now);
     req.session.checkoutEmailLastSentAt = now;
     const code = String(crypto.randomInt(0, 1000000)).padStart(6, '0');
     req.session.checkoutEmailChallenge = { email, hash: codeHash(email, code), expiresAt: now + CODE_LIFETIME_MS, attempts: 0 };

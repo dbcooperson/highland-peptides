@@ -21,44 +21,11 @@ function initEntryGate() {
 }
 initEntryGate();
 
-// ---------- Temporary fulfillment delay notice ----------
-function initShippingDelayNotice() {
-  if (document.querySelector('.shipping-delay-notice')) return;
-  const notice = document.createElement('section');
-  notice.className = 'shipping-delay-notice';
-  notice.setAttribute('role', 'status');
-  notice.setAttribute('aria-label', 'Important shipping delay notice');
-  notice.innerHTML = '<strong>Important shipping delay</strong><span>Orders placed now may experience significant fulfillment delays. Timing is currently undetermined; please allow up to 3 weeks for your order to ship.</span>';
-  const navigation = document.querySelector('.nav-wrap');
-  if (navigation) navigation.insertAdjacentElement('afterend', notice);
-  else document.body.prepend(notice);
-}
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initShippingDelayNotice, { once: true });
-} else {
-  initShippingDelayNotice();
-}
-
-// Preserve the public Highland referral offer while a visitor shops across pages.
-// Checkout independently validates this token and calculates the discount.
+// The referral-link discount was retired in Nov 2026. These stay as no-ops so
+// existing checkout code keeps working; any saved referral token is cleared.
 const HP_REFERRAL_CAMPAIGN_KEY = 'hp_referral_campaign';
-const HP_REFERRAL_CAMPAIGN_CODE = 'HIGHLAND10';
-function activeReferralCampaign() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(HP_REFERRAL_CAMPAIGN_KEY) || 'null');
-    return saved && saved.code === HP_REFERRAL_CAMPAIGN_CODE && saved.expiresAt > Date.now() ? saved.code : null;
-  } catch { return null; }
-}
-function captureReferralCampaign() {
-  const ref = new URLSearchParams(window.location.search).get('ref');
-  if (String(ref || '').trim().toUpperCase() !== HP_REFERRAL_CAMPAIGN_CODE) return;
-  try {
-    localStorage.setItem(HP_REFERRAL_CAMPAIGN_KEY, JSON.stringify({
-      code: HP_REFERRAL_CAMPAIGN_CODE, expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
-    }));
-  } catch {}
-}
-captureReferralCampaign();
+function activeReferralCampaign() { return null; }
+try { localStorage.removeItem(HP_REFERRAL_CAMPAIGN_KEY); } catch {}
 
 async function api(path, opts = {}) {
   const res = await fetch(path, {
@@ -255,40 +222,243 @@ function productQuantityPricing(product, quantity) {
 }
 
 function bundlePromotionConfig() {
-  return window.sitePromotion || {
-    qualifyingQuantity: 5,
-    freeSku: 'WA10',
-    freeQuantity: 1,
-    label: 'Buy 5+ paid research products and receive free Sterile Water 10ml · pH 4.5 (water does not count)',
-  };
+  const promotion = window.sitePromotion || {};
+  let tiers = Array.isArray(promotion.tiers) && promotion.tiers.length
+    ? promotion.tiers
+    : [{ minimumSubtotal: Number(promotion.minimumSubtotal) || 50, freeSku: promotion.freeSku || 'WA10', freeQuantity: Number(promotion.freeQuantity) || 1 }];
+  tiers = tiers
+    .map(tier => ({ minimumSubtotal: Number(tier.minimumSubtotal) || 0, freeSku: tier.freeSku, freeQuantity: Number(tier.freeQuantity) || 1 }))
+    .filter(tier => tier.freeSku && tier.minimumSubtotal > 0)
+    .sort((a, b) => a.minimumSubtotal - b.minimumSubtotal);
+  return { tiers, label: promotion.label || '' };
 }
 
-function bundleQualifyingQuantity(cart = getCart()) {
-  const promotion = bundlePromotionConfig();
-  return Object.keys(cart).reduce((total, itemSku) => {
+function bundleQualifyingSubtotal(cart = getCart()) {
+  return round2(Object.keys(cart).reduce((total, itemSku) => {
     const product = getCatalogProductBySku(itemSku);
-    if (!product || product.sku === promotion.freeSku || product.category === 'Supplies' || product.group === 'Supplies') return total;
-    return total + Number(cart[itemSku] || 0);
-  }, 0);
+    const quantity = Number(cart[itemSku] || 0);
+    return product && quantity > 0 ? total + cartLinePricing(itemSku, cart).total : total;
+  }, 0));
 }
 
+function bundleTierGiftName(tier) {
+  const product = tier && getCatalogProductBySku(tier.freeSku);
+  if (!product) return 'Reconstitution Solution';
+  return `${product.name} ${cleanVialSpec(product.spec)}`.trim();
+}
+
+// Current tier = highest reached; next tier = the one to push toward.
 function bundlePromotionState(cart = getCart()) {
-  const promotion = bundlePromotionConfig();
-  const qualifying = bundleQualifyingQuantity(cart);
+  const { tiers, label } = bundlePromotionConfig();
+  const qualifying = bundleQualifyingSubtotal(cart);
+  const current = tiers.filter(tier => qualifying >= tier.minimumSubtotal).pop() || null;
+  const next = tiers.find(tier => qualifying < tier.minimumSubtotal) || null;
+  const shown = current || tiers[0] || { minimumSubtotal: 50, freeSku: 'WA10', freeQuantity: 1 };
   return {
-    ...promotion,
+    tiers,
+    label,
     qualifying,
-    remaining: Math.max(0, promotion.qualifyingQuantity - qualifying),
-    unlocked: qualifying >= promotion.qualifyingQuantity,
-    freeProduct: getCatalogProductBySku(promotion.freeSku),
+    current,
+    next,
+    unlocked: !!current,
+    minimumSubtotal: shown.minimumSubtotal,
+    freeSku: current ? current.freeSku : null,
+    freeQuantity: current ? current.freeQuantity : 1,
+    freeProduct: current ? getCatalogProductBySku(current.freeSku) : null,
+    remaining: next ? round2(Math.max(0, next.minimumSubtotal - qualifying)) : 0,
+    progress: next ? Math.min(100, Math.round((qualifying / next.minimumSubtotal) * 100)) : 100,
   };
+}
+
+function bundleTierLadderHTML(state) {
+  return `<span class="bundle-tier-ladder">${state.tiers.map(tier => {
+    const reached = state.qualifying >= tier.minimumSubtotal;
+    const size = cleanVialSpec((getCatalogProductBySku(tier.freeSku) || {}).spec || '');
+    return `<em class="${reached ? 'is-reached' : ''}">$${tier.minimumSubtotal}+ &rarr; ${escapeHTML(size || 'free gift')}</em>`;
+  }).join('')}</span>`;
 }
 
 function bundlePromotionMessage(cart = getCart()) {
   const state = bundlePromotionState(cart);
-  return state.unlocked
-    ? '<strong>Free Sterile Water 10ml · pH 4.5 unlocked</strong><span>It will be added automatically at checkout.</span>'
-    : `<strong>Buy 5 research products, get Sterile Water 10ml · pH 4.5 free</strong><span>Add ${state.remaining} more qualifying product${state.remaining === 1 ? '' : 's'}. Water purchases do not count toward the five.</span>`;
+  let headline;
+  let detail;
+  if (!state.current && state.next) {
+    headline = `Add $${state.remaining.toFixed(2)} for a free ${escapeHTML(bundleTierGiftName(state.next))}`;
+    detail = 'Free Reconstitution Solution with every order over $' + state.next.minimumSubtotal + ' (before shipping). Bigger orders get bigger bottles.';
+  } else if (state.current && state.next) {
+    headline = `Free ${escapeHTML(bundleTierGiftName(state.current))} unlocked`;
+    detail = `Add $${state.remaining.toFixed(2)} more to upgrade it to a free ${escapeHTML(bundleTierGiftName(state.next))}.`;
+  } else {
+    headline = `Free ${escapeHTML(bundleTierGiftName(state.current))} unlocked`;
+    detail = 'Top tier reached. It will be added to your order automatically.';
+  }
+  return `<strong>${headline}</strong><span>${detail}</span>
+    <span class="bundle-progress" aria-hidden="true"><i style="width:${state.progress}%"></i></span>
+    ${bundleTierLadderHTML(state)}${giveawayCartLineHTML(cart)}`;
+}
+
+// ---- Launch giveaway (site ribbon + cart entry count) ----------------------
+function giveawayCartEntries(cart = getCart()) {
+  return Object.keys(cart).reduce((sum, itemSku) => {
+    const product = getCatalogProductBySku(itemSku);
+    return product && product.category !== 'Supplies' ? sum + Math.max(0, Number(cart[itemSku] || 0)) : sum;
+  }, 0);
+}
+
+function giveawayCartLineHTML(cart = getCart()) {
+  if (!window.siteGiveaway || window.siteGiveaway.status !== 'active') return '';
+  const entries = giveawayCartEntries(cart);
+  return `<span class="gw-cart-entries">${entries
+    ? `This order = ${entries} giveaway entr${entries === 1 ? 'y' : 'ies'} for $100 store credit. <a href="/giveaway.html">Details</a>`
+    : 'Every peptide vial = 1 entry to win $100 store credit. <a href="/giveaway.html">Details</a>'}</span>`;
+}
+
+function initGiveawayRibbon() {
+  fetch('/api/giveaway', { credentials: 'same-origin' })
+    .then(response => (response.ok ? response.json() : null))
+    .then(info => {
+      if (!info || (info.status !== 'active' && info.status !== 'upcoming')) return;
+      window.siteGiveaway = info;
+      const end = new Date(new Date(info.endsAt).getTime() - 1)
+        .toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/Los_Angeles' });
+      const start = new Date(info.startsAt)
+        .toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/Los_Angeles' });
+      const strip = document.querySelector('.ruo-strip');
+      if (strip && !document.querySelector('.gw-ribbon')) {
+        strip.insertAdjacentHTML('beforebegin', info.status === 'active'
+          ? `<a class="gw-ribbon" href="/giveaway.html">Launch giveaway: every vial = 1 entry to win <b>$100 store credit</b> · ends ${end}</a>`
+          : `<a class="gw-ribbon" href="/giveaway.html">Launch giveaway starts ${start}: win <b>$100 store credit</b></a>`);
+      }
+      if (info.status === 'active') {
+        document.querySelectorAll('.bundle-promo-banner').forEach(banner => {
+          if (!banner.querySelector('.gw-cart-entries')) banner.insertAdjacentHTML('beforeend', giveawayCartLineHTML());
+        });
+      }
+    })
+    .catch(() => {});
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initGiveawayRibbon);
+else initGiveawayRibbon();
+
+// ---- Research sets (bundles) ------------------------------------------------
+// Mirrors server/bundles.js. The server recalculates everything at checkout.
+function siteBundleList() {
+  return Array.isArray(window.siteBundles) ? window.siteBundles : [];
+}
+
+function cartBundleAllocation(cart = getCart()) {
+  const remaining = {};
+  Object.keys(cart).forEach(sku => { remaining[sku] = Math.max(0, Math.floor(Number(cart[sku] || 0))); });
+  const bundledUnits = {};
+  const bundleSavings = {};
+  const applied = [];
+  [...siteBundleList()].sort((a, b) => b.savings - a.savings).forEach(bundle => {
+    const sets = Math.min(...bundle.skus.map(sku => remaining[sku] || 0));
+    if (!(sets > 0)) return;
+    bundle.skus.forEach(sku => {
+      const product = getCatalogProductBySku(sku);
+      remaining[sku] -= sets;
+      bundledUnits[sku] = (bundledUnits[sku] || 0) + sets;
+      bundleSavings[sku] = round2((bundleSavings[sku] || 0) + (product ? product.price : 0) * Number(bundle.rate || 0) * sets);
+    });
+    applied.push({ ...bundle, sets, totalSavings: round2(bundle.savings * sets) });
+  });
+  return { bundledUnits, bundleSavings, applied };
+}
+
+// Bundle-aware price for one cart line.
+function cartLinePricing(sku, cart = getCart(), allocation = cartBundleAllocation(cart)) {
+  const product = getCatalogProductBySku(sku);
+  const qty = Math.max(1, Math.floor(Number(cart[sku]) || 1));
+  if (!product) return { quantity: qty, total: 0, savings: 0, bundleSavings: 0 };
+  const inSets = Math.min(qty, allocation.bundledUnits[sku] || 0);
+  const rest = qty - inSets;
+  const restPricing = rest > 0 ? productQuantityPricing(product, rest) : { total: 0, savings: 0 };
+  const bundleSavings = round2(inSets ? (allocation.bundleSavings[sku] || 0) * (inSets / (allocation.bundledUnits[sku] || inSets)) : 0);
+  return {
+    quantity: qty,
+    total: round2(product.price * inSets - bundleSavings + restPricing.total),
+    savings: round2(restPricing.savings + bundleSavings),
+    bundleSavings,
+  };
+}
+
+function addBundleToCart(bundleId) {
+  const bundle = siteBundleList().find(item => item.id === bundleId);
+  if (!bundle) return;
+  const cart = getCart();
+  bundle.skus.forEach(sku => { cart[sku] = (cart[sku] || 0) + 1; });
+  saveCart(cart);
+  if (typeof hpTrack === 'function') hpTrack('add_to_cart', { sku: bundle.skus.join('+'), productName: bundle.name, quantity: 1 });
+  updateCartBadge();
+  setTimeout(() => showAddedToCartPopup(bundle.skus[0], 1), 0);
+}
+
+function bundleCardHTML(bundle) {
+  const products = bundle.skus.map(sku => getCatalogProductBySku(sku)).filter(Boolean);
+  return `
+    <article class="sn-bundle-card">
+      ${bundle.image
+        ? `<div class="sn-bundle-photo"><img src="${escapeHTML(bundle.image)}" alt="${escapeHTML(bundle.name)}" loading="lazy" decoding="async"></div>`
+        : `<div class="sn-bundle-imgs">${products.map(p => `<span class="sn-bundle-img">${productMockupImageHTML(p)}</span>`).join('')}</div>`}
+      <div class="sn-bundle-body">
+        <span class="sn-bundle-area">${escapeHTML(bundle.area || 'Research set')}${bundle.tier === 'starter' ? ' · Starter' : ''}</span>
+        <h3>${escapeHTML(bundle.name)}</h3>
+        <ul>${products.map(p => `<li>${escapeHTML(p.name)} <span>${escapeHTML(cleanVialSpec(p.spec))}</span></li>`).join('')}</ul>
+        <div class="sn-bundle-price"><s>$${bundle.listPrice.toFixed(2)}</s><strong>$${bundle.price.toFixed(2)}</strong><em>Save $${bundle.savings.toFixed(2)} (${Math.round(Number(bundle.rate || 0) * 100)}%)</em></div>
+        <button type="button" class="sn-bundle-add" data-bundle="${escapeHTML(bundle.id)}">Add set to cart</button>
+      </div>
+    </article>`;
+}
+
+function renderBundleCards(container, bundles) {
+  if (!container) return;
+  const list = (bundles || siteBundleList()).filter(bundle => bundle.skus.every(sku => getCatalogProductBySku(sku)));
+  container.innerHTML = list.map(bundleCardHTML).join('');
+  container.querySelectorAll('.sn-bundle-add').forEach(button => {
+    button.addEventListener('click', () => addBundleToCart(button.dataset.bundle));
+  });
+  const section = container.closest('[data-bundle-section]');
+  if (section) section.hidden = !list.length;
+}
+
+// A set the cart is one item away from completing (best saving first).
+function nearlyCompleteBundle(cart = getCart()) {
+  const allocation = cartBundleAllocation(cart);
+  const leftover = {};
+  Object.keys(cart).forEach(sku => { leftover[sku] = Math.max(0, (cart[sku] || 0) - (allocation.bundledUnits[sku] || 0)); });
+  return [...siteBundleList()]
+    .map(bundle => ({ bundle, missing: bundle.skus.filter(sku => !(leftover[sku] > 0)) }))
+    .filter(item => item.missing.length === 1 && item.bundle.skus.length > 1 && getCatalogProductBySku(item.missing[0]))
+    .sort((a, b) => b.bundle.savings - a.bundle.savings)[0] || null;
+}
+
+// Up to 2 one-click suggestions: finish a research set first, then items that
+// push the cart over the next free-solution tier, then popular items.
+function smartCartSuggestions(cart, addedProduct) {
+  const catalog = (Array.isArray(window.siteCatalog) ? window.siteCatalog : [])
+    .filter(item => !cart[item.sku] && item.category !== 'Supplies');
+  const picks = [];
+  const take = (item, reason) => {
+    if (item && picks.length < 2 && !picks.some(pick => pick.item.sku === item.sku)) picks.push({ item, reason });
+  };
+  const nearSet = nearlyCompleteBundle(cart);
+  if (nearSet) take(getCatalogProductBySku(nearSet.missing[0]), `Completes the ${nearSet.bundle.name} · save $${nearSet.bundle.savings.toFixed(2)}`);
+
+  const tier = bundlePromotionState(cart);
+  if (tier.next) {
+    const nextGift = bundleTierGiftName(tier.next);
+    const sameGroup = item => (addedProduct && item.group === addedProduct.group ? 0 : 1);
+    const crossers = catalog
+      .filter(item => item.price >= tier.remaining)
+      .sort((a, b) => sameGroup(a) - sameGroup(b) || a.price - b.price);
+    crossers.slice(0, 2).forEach(item => take(item, `Unlocks a free ${nextGift.replace('Reconstitution Solution ', '')} solution`));
+  }
+  catalog
+    .filter(item => item.popular)
+    .sort((a, b) => (addedProduct && a.group === addedProduct.group ? 0 : 1) - (addedProduct && b.group === addedProduct.group ? 0 : 1))
+    .forEach(item => take(item, addedProduct && item.group === addedProduct.group ? `Popular in ${item.group}` : 'Popular with researchers'));
+  return picks;
 }
 
 function showAddedToCartPopup(sku, qty = 1) {
@@ -305,19 +475,11 @@ function showAddedToCartPopup(sku, qty = 1) {
   }
 
   const cart = getCart();
-  const subtotal = Object.keys(cart).reduce((sum, itemSku) => {
-    const item = getCatalogProductBySku(itemSku);
-    return item ? sum + item.price * cart[itemSku] : sum;
-  }, 0);
+  const subtotal = round2(Object.keys(cart).reduce((sum, itemSku) => (
+    getCatalogProductBySku(itemSku) ? sum + cartLinePricing(itemSku, cart).total : sum
+  ), 0));
   const count = cartItemCount(cart);
-  const suggestionPool = (Array.isArray(window.siteCatalog) ? window.siteCatalog : [])
-    .filter(item => item.sku !== sku);
-  const bacWater = suggestionPool.find(item => item.sku === 'WA10');
-  const suggestions = [
-    ...(bacWater ? [bacWater] : []),
-    ...suggestionPool.filter(item => item.sku !== 'WA10' && item.popular),
-  ].slice(0, 2);
-
+  const suggestions = smartCartSuggestions(cart, product);
   overlay.innerHTML = `
     <div class="cart-popup-card" role="dialog" aria-modal="true" aria-labelledby="cartPopupTitle">
       <button type="button" class="cart-popup-close" aria-label="Close">&times;</button>
@@ -344,13 +506,14 @@ function showAddedToCartPopup(sku, qty = 1) {
       </div>
       ${suggestions.length ? `
         <div class="cart-popup-suggestions">
-          <div class="cart-popup-suggestions-title">Suggested research products</div>
+          <div class="cart-popup-suggestions-title">Add one more</div>
           <div class="cart-popup-suggestion-grid">
-            ${suggestions.map(item => `
-              <a href="/product/${encodeURIComponent(item.slug)}?sku=${encodeURIComponent(item.sku)}" class="cart-popup-suggestion">
-                <span class="cart-popup-suggestion-media photo sku-mockup">${productMockupImageHTML(item)}</span>
-                <span><strong>${escapeHTML(item.name)}</strong><em>${escapeHTML(cleanVialSpec(item.spec))} &bull; $${item.price.toFixed(2)}</em></span>
-              </a>
+            ${suggestions.map(({ item, reason }) => `
+              <div class="cart-popup-suggestion">
+                <a href="/product/${encodeURIComponent(item.slug)}?sku=${encodeURIComponent(item.sku)}" class="cart-popup-suggestion-media photo sku-mockup">${productMockupImageHTML(item)}</a>
+                <span><strong>${escapeHTML(item.name)}</strong><em>${escapeHTML(cleanVialSpec(item.spec))} &bull; $${item.price.toFixed(2)}</em><small class="cart-popup-suggestion-reason">${escapeHTML(reason)}</small></span>
+                <button type="button" class="cart-popup-suggestion-add" data-sku="${escapeHTML(item.sku)}">Add</button>
+              </div>
             `).join('')}
           </div>
         </div>
@@ -378,6 +541,13 @@ function showAddedToCartPopup(sku, qty = 1) {
   overlay.onclick = event => {
     if (event.target === overlay) close();
   };
+  overlay.querySelectorAll('.cart-popup-suggestion-add').forEach(button => {
+    button.onclick = () => {
+      addToCart(button.dataset.sku, 1);
+      updateCartBadge();
+      if (typeof renderCartPage === 'function' && window.location.pathname.endsWith('/cart.html')) renderCartPage();
+    };
+  });
 }
 
 
@@ -406,7 +576,8 @@ const VIAL_LABEL_ALIASES = {
   'BPC-157 + GHK-Cu + TB-500 + KPV Blend (Klow)': 'KLOW BLEND',
   'BPC-157 + GHK-Cu + TB-500 Blend (Glow)': 'GLOW BLEND',
   'BPC-157 + TB-500 Blend': 'BPC + TB-500',
-  'Bacteriostatic Water': 'STERILE WATER',
+  'Bacteriostatic Water': 'RECONSTITUTION SOLUTION',
+  Tesamorelin: 'SR-TSM',
 };
 
 function productImageStyle(product) {
@@ -418,7 +589,8 @@ function productMockupImageHTML(product) {
   if (!product || !product.image) return '';
   const src = escapeHTML(product.image);
   const label = `${product.name || 'Product'} ${cleanVialSpec(product.spec || '')} research vial mockup`.trim();
-  return `<img class="sku-mockup-img" src="${src}" alt="${escapeHTML(label)}" loading="lazy" decoding="async">`;
+  const studioClass = /higgsfield/i.test(product.image) ? ' studio-product-render' : '';
+  return `<img class="sku-mockup-img${studioClass}" src="${src}" alt="${escapeHTML(label)}" loading="lazy" decoding="async">`;
 }
 function vialDisplayName(name) {
   const cleanName = String(name || '').trim();
@@ -445,19 +617,20 @@ function vialLabelHTML(name, spec, className = '') {
 }
 
 const SEARCH_ALIASES = {
-  'Retatrutide': ['retatrutide', 'reta', 'rt', 'hp-3rt'],
-  'Tirzepatide': ['tirzepatide', 'tirz', 'tr', 'hp-trz'],
-  'Tesamorelin': ['tesamorelin', 'tesa', 'hp-tsm'],
+  'Retatrutide': ['retatrutide', 'reta', 'rt', 'hp-3rt', 'glp-3rt', 'glp3rt', 'glp-3', '3rt', 'sr-3rt', 'sr3rt'],
+  'Tirzepatide': ['tirzepatide', 'tirz', 'tr', 'hp-trz', 'glp-2tz', 'glp2tz', 'glp-2', '2tz', 'sr-2tz', 'sr2tz', 'sr-2rt'],
+  'Tesamorelin': ['tesamorelin', 'tesa', 'hp-tsm', 'sr-tsm', 'srtsm'],
+  'SS-31': ['ss-31', 'ss31', 'hp-31', 'sr-31', 'sr31'],
   'Semaglutide': ['sema', 'sem'],
   'Cagrilintide': ['cagri', 'cag'],
   'Cagrilintide + Semaglutide': ['cagri sema', 'cag sem', 'cagsem'],
   'CJC-1295 without DAC + Ipamorelin': ['cjc ipa', 'cjc ipamorelin', 'cjc w/o dac ipa', 'cjc no dac ipa'],
   'CJC-1295 without DAC': ['cjc no dac', 'cjc w/o dac'],
   'CJC-1295 with DAC': ['cjc dac'],
-  'Bacteriostatic Water': ['bac water', 'bac', 'bacteriostatic water', 'sterile water'],
+  'Bacteriostatic Water': ['bac water', 'bac', 'bacteriostatic water', 'sterile water', 'reconstitution solution', 'recon solution', 'recon'],
   'BPC-157': ['bpc'],
   'TB-500': ['tb500', 'tb'],
-  'BPC-157 + TB-500 Blend': ['bpc tb', 'bpc tb500'],
+  'BPC-157 + TB-500 Blend': ['bpc tb', 'bpc tb500', 'wolverine', 'wolverine stack'],
   'BPC-157 + GHK-Cu + TB-500 Blend (Glow)': ['glow', 'glow blend'],
   'BPC-157 + GHK-Cu + TB-500 + KPV Blend (Klow)': ['klow', 'klow blend'],
   'GHK-Cu': ['ghk', 'ghk cu'],
@@ -537,7 +710,7 @@ function getProductSearchCatalog() {
   if (!productSearchCatalogPromise) {
     productSearchCatalogPromise = api('/api/catalog').then(data => {
       window.siteCatalog = data.products;
-      window.siteFees = { packagingFee: data.packagingFee, shippingFee: data.shippingFee, internationalShippingFee: data.internationalShippingFee || 35, shippingOptions: data.shippingOptions || [], orderFeeRate: data.orderFeeRate || 0, altPaymentDiscountRate: data.altPaymentDiscountRate || 0, accountCryptoDiscountRate: data.accountCryptoDiscountRate || 0, zellePaymentDiscountRate: data.zellePaymentDiscountRate || 0 };
+      window.siteFees = { packagingFee: data.packagingFee, shippingFee: data.shippingFee, internationalShippingFee: data.internationalShippingFee || 35, priorityShippingFee: data.priorityShippingFee || 19.99, shippingOptions: data.shippingOptions || [], orderFeeRate: data.orderFeeRate || 0, altPaymentDiscountRate: data.altPaymentDiscountRate || 0, accountCryptoDiscountRate: data.accountCryptoDiscountRate || 0 };
       window.sitePromotion = data.promotion || null;
       return data.products;
     });
@@ -622,12 +795,12 @@ function showAccountWelcomePrompt() {
   overlay.className = 'account-welcome-overlay';
   overlay.innerHTML = `<section class="account-welcome-card" role="dialog" aria-modal="true" aria-labelledby="accountWelcomeTitle">
     <button class="account-welcome-close" type="button" aria-label="Continue as guest">&times;</button>
-    <h2 id="accountWelcomeTitle">Help us grow. We&rsquo;ll reward you.</h2>
-    <p>Create a verified account to <strong>track your order progress</strong> and make one personal referral code. Friends save <strong>10%</strong> when they use it, and you earn that same <strong>10% as store credit</strong> after Highland reviews the order. Members also get an extra <strong>5% off crypto orders</strong>.</p>
-    <div class="account-welcome-benefits"><span>Track order progress</span><span>Your code · 10% both ways</span><span>Extra 5% off crypto</span></div>
+    <h2 id="accountWelcomeTitle">Make checkout faster next time.</h2>
+    <p>Create a verified account to <strong>track your order progress</strong>, keep your order history in one place, and keep any referral store credit in one place.</p>
+    <div class="account-welcome-benefits"><span>Track order progress</span><span>Order history</span><span>Referral store credit</span></div>
     <a class="account-welcome-cta" href="/account.html?view=register">Create my account</a>
     <button class="account-welcome-skip" type="button">Continue as guest</button>
-    <small>Accounts are optional. Referral credits are reviewed by Highland before being added.</small>
+    <small>Accounts are optional. Guest checkout is always available.</small>
   </section>`;
   const close = () => { overlay.remove(); document.body.classList.remove('account-welcome-open'); };
   overlay.querySelector('.account-welcome-close').onclick = close;
@@ -658,7 +831,7 @@ function cartSubtotal() {
   const cart = getCart();
   return Object.keys(cart).filter(s => cart[s] > 0).reduce((sum, sku) => {
     const p = window.siteCatalog.find(x => x.sku === sku);
-    return p ? sum + productQuantityPricing(p, cart[sku]).total : sum;
+    return p ? sum + cartLinePricing(sku, cart).total : sum;
   }, 0);
 }
 
@@ -666,7 +839,7 @@ function cartPromoEligibleSubtotal() {
   const cart = getCart();
   return Object.keys(cart).filter(s => cart[s] > 0).reduce((sum, sku) => {
     const p = window.siteCatalog.find(x => x.sku === sku);
-    return p && p.promoEligible !== false ? sum + productQuantityPricing(p, cart[sku]).total : sum;
+    return p && p.promoEligible !== false ? sum + cartLinePricing(sku, cart).total : sum;
   }, 0);
 }
 
@@ -676,18 +849,20 @@ function round2(n) {
 
 function selectedShippingMethod() {
   const checked = document.querySelector('input[name="shippingMethod"]:checked');
-  return checked && checked.value === 'international' ? 'international' : 'domestic';
+  return checked && ['international', 'priority'].includes(checked.value) ? checked.value : 'domestic';
 }
 
 function selectedShippingFee() {
   const fees = window.siteFees || {};
-  return selectedShippingMethod() === 'international'
-    ? Number(fees.internationalShippingFee || 35)
-    : Number(fees.shippingFee || 0);
+  const method = selectedShippingMethod();
+  if (method === 'international') return Number(fees.internationalShippingFee || 35);
+  if (method === 'priority') return Number(fees.priorityShippingFee || 19.99);
+  return Number(fees.shippingFee || 0);
 }
 
 function selectedShippingLabel() {
-  return selectedShippingMethod() === 'international' ? 'International shipping' : 'U.S. shipping';
+  const method = selectedShippingMethod();
+  return method === 'international' ? 'International shipping' : method === 'priority' ? 'Priority Mail' : 'U.S. shipping';
 }
 
 function selectedCountryCode() {
@@ -708,7 +883,9 @@ function updateShippingCountryNote() {
   const method = selectedShippingMethod();
   note.textContent = method === 'international'
     ? `International shipping selected for ${country}. Please confirm this is the correct destination country before payment.`
-    : `U.S. shipping selected. Use International shipping for any destination outside the U.S.`;
+    : method === 'priority'
+      ? `Priority Mail selected. Priority Mail ships to U.S. addresses only.`
+      : `U.S. shipping selected. Use International shipping for any destination outside the U.S.`;
 }
 
 let shippingAddressAutocomplete = null;
@@ -725,7 +902,7 @@ function googleAddressScript(browserKey) {
   if (window.google?.maps?.importLibrary) return Promise.resolve();
   if (googleAddressLoader) return googleAddressLoader;
   googleAddressLoader = new Promise((resolve, reject) => {
-    const callbackName = `__highlandGoogleMapsReady${Date.now()}`;
+    const callbackName = `__snowyGoogleMapsReady${Date.now()}`;
     window[callbackName] = () => {
       delete window[callbackName];
       resolve();
@@ -839,6 +1016,20 @@ function setCheckoutEmailStatus(message, verified = false, error = false) {
   }
 }
 
+// Saves this cart against the verified email so we can send one "you left
+// something in your cart" reminder if checkout is not finished.
+function reportCheckoutStarted(email) {
+  const cart = getCart();
+  const items = Object.keys(cart).filter(sku => cart[sku] > 0).map(sku => ({ sku, quantity: cart[sku] }));
+  if (!email || !items.length) return;
+  fetch('/api/checkout-started', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, items }),
+  }).catch(() => {});
+}
+
 async function refreshCheckoutEmailStatus() {
   const email = checkoutResearchEmail();
   if (!email) return setCheckoutEmailStatus('Enter your email to receive a code.');
@@ -846,6 +1037,7 @@ async function refreshCheckoutEmailStatus() {
     const result = await api(`/api/checkout-email/status?email=${encodeURIComponent(email)}`);
     if (checkoutResearchEmail() !== email) return;
     setCheckoutEmailStatus(result.verified ? 'Email verified for this checkout.' : 'Verify this email before choosing a payment method.', result.verified);
+    if (result.verified) reportCheckoutStarted(email);
   } catch { setCheckoutEmailStatus('Could not check email verification status.', false, true); }
 }
 
@@ -872,6 +1064,7 @@ async function verifyCheckoutEmailCode() {
       email, code, rememberDevice: document.getElementById('checkoutRememberDevice').checked,
     } });
     if (checkoutResearchEmail() === email) setCheckoutEmailStatus('Email verified for this checkout.', true);
+    reportCheckoutStarted(email);
   } catch (err) { setCheckoutEmailStatus(err.message, false, true); }
   finally { button.disabled = false; }
 }
@@ -963,10 +1156,12 @@ function renderCheckoutSummary() {
   const promoEligibleSubtotal = round2(cartPromoEligibleSubtotal());
   const shippingFee = selectedShippingFee();
   const referralCampaign = activeReferralCampaign();
+  const cryptoChosen = typeof cryptoChoiceOpen !== 'undefined' && cryptoChoiceOpen;
   const extraCodePercent = referralCampaign && appliedDiscount ? 5 : 0;
-  const discountAmount = referralCampaign
+  // Crypto orders get one flat discount that replaces codes and referral offers.
+  const discountAmount = cryptoChosen ? 0 : (referralCampaign
     ? round2(promoEligibleSubtotal * (10 + extraCodePercent) / 100)
-    : (appliedDiscount ? round2(promoEligibleSubtotal * appliedDiscount.percentOff / 100) : 0);
+    : (appliedDiscount ? round2(promoEligibleSubtotal * appliedDiscount.percentOff / 100) : 0));
   const creditToggle = document.getElementById('applyStoreCredit');
   const availableCredit = hpAccountState.authenticated && hpAccountState.account
     ? Number(hpAccountState.account.creditBalance || 0)
@@ -974,32 +1169,45 @@ function renderCheckoutSummary() {
   const storeCreditAmount = creditToggle && creditToggle.checked
     ? round2(Math.min(availableCredit, Math.max(0, subtotal - discountAmount)))
     : 0;
-  const orderFeeRate = (window.siteFees && window.siteFees.orderFeeRate) || 0;
-  const feeBase = Math.max(0, subtotal - discountAmount - storeCreditAmount + shippingFee);
+  const baseFeeRate = (window.siteFees && window.siteFees.orderFeeRate) || 0;
+  const cryptoSelected = typeof cryptoChoiceOpen !== 'undefined' && cryptoChoiceOpen;
+  const orderFeeRate = cryptoSelected ? 0 : baseFeeRate;
+  // Crypto orders get a flat 15% off (never combined with codes or referral offers).
+  const cryptoRate = cryptoSelected && !appliedDiscount
+    ? ((window.siteFees && window.siteFees.altPaymentDiscountRate) || 0)
+    : 0;
+  const cryptoDiscount = round2(subtotal * cryptoRate);
+  const feeBase = Math.max(0, subtotal - discountAmount - cryptoDiscount - storeCreditAmount + shippingFee);
   const orderFee = round2(feeBase * orderFeeRate);
+  const waivedFee = round2(feeBase * baseFeeRate);
   const total = round2(feeBase + orderFee);
 
   const lines = skus.map(sku => {
     const p = window.siteCatalog.find(x => x.sku === sku);
     if (!p) return '';
-    const pricing = productQuantityPricing(p, cart[sku]);
+    const pricing = cartLinePricing(sku, cart);
     return `<div class="cart-row"><span>${escapeHTML(p.name)} ${escapeHTML(cleanVialSpec(p.spec))} x${cart[sku]}${pricing.savings ? ` · save $${pricing.savings.toFixed(2)}` : ''}</span><span>$${pricing.total.toFixed(2)}</span></div>`;
   }).join('');
   const promotion = bundlePromotionState(cart);
-  const rewardLine = promotion.unlocked && promotion.freeProduct
-    ? `<div class="cart-row bundle-summary-line"><span>${escapeHTML(promotion.freeProduct.name)} 10ml x${promotion.freeQuantity}</span><strong>FREE</strong></div>`
-    : '';
+  const rewardLine = (promotion.unlocked && promotion.freeProduct
+    ? `<div class="cart-row bundle-summary-line"><span>${escapeHTML(promotion.freeProduct.name)} ${escapeHTML(cleanVialSpec(promotion.freeProduct.spec))} x${promotion.freeQuantity}</span><strong>FREE</strong></div>`
+    : '') + (appliedDiscount && appliedDiscount.gift && !(promotion.unlocked && promotion.freeSku === appliedDiscount.gift.sku)
+    ? `<div class="cart-row bundle-summary-line code-gift-line"><span>${escapeHTML(appliedDiscount.gift.name)} ${escapeHTML(cleanVialSpec(appliedDiscount.gift.spec))} x${appliedDiscount.gift.quantity} · ${escapeHTML(appliedDiscount.code)} gift</span><strong>FREE</strong></div>`
+    : '');
 
   const breakdown = [
     `<div class="cart-row"><span>Subtotal</span><span>$${subtotal.toFixed(2)}</span></div>`,
-    referralCampaign ? `<div class="cart-row"><span>Referral link (10%)${appliedDiscount ? ` + ${escapeHTML(appliedDiscount.code)} (${extraCodePercent}%)` : ''}</span><span>-$${discountAmount.toFixed(2)}</span></div>` : (appliedDiscount ? `<div class="cart-row"><span>Discount (${escapeHTML(appliedDiscount.code)})</span><span>-$${discountAmount.toFixed(2)}</span></div>` : ''),
+    (referralCampaign && !cryptoSelected) ? `<div class="cart-row"><span>Referral link (10%)${appliedDiscount ? ` + ${escapeHTML(appliedDiscount.code)} (${extraCodePercent}%)` : ''}</span><span>-$${discountAmount.toFixed(2)}</span></div>` : (appliedDiscount ? `<div class="cart-row"><span>Discount (${escapeHTML(appliedDiscount.code)})</span><span>-$${discountAmount.toFixed(2)}</span></div>` : ''),
+    cryptoDiscount ? `<div class="cart-row crypto-discount-line"><span>Crypto discount (${Math.round(cryptoRate * 100)}%)</span><span>-$${cryptoDiscount.toFixed(2)}</span></div>` : '',
     storeCreditAmount ? `<div class="cart-row account-credit-summary"><span>Store credit</span><span>-$${storeCreditAmount.toFixed(2)}</span></div>` : '',
     `<div class="cart-row"><span>${selectedShippingLabel()}</span><span>$${shippingFee.toFixed(2)}</span></div>`,
-    orderFeeRate ? `<div class="cart-row"><span>Processing fee</span><span>$${orderFee.toFixed(2)}</span></div>` : '',
+    baseFeeRate ? (cryptoSelected
+      ? `<div class="cart-row fee-waived"><span>Processing fee <em>Waived with crypto</em></span><span><s>$${waivedFee.toFixed(2)}</s> $0.00</span></div>`
+      : `<div class="cart-row"><span>Processing fee <em>Waived if you pay with crypto</em></span><span>$${orderFee.toFixed(2)}</span></div>`) : '',
     `<div class="order-summary-total cart-row"><span>Total</span><span>$${total.toFixed(2)}</span></div>`,
   ].join('');
 
-  summaryEl.innerHTML = lines + rewardLine + '<div style="height:1px; background:var(--border-on-light); margin:10px 0;"></div>' + breakdown;
+  summaryEl.innerHTML = lines + rewardLine + '<div class="order-summary-divider" style="height:1px; background:var(--border-on-light); margin:10px 0;"></div>' + breakdown;
 }
 
 function checkoutPayloadFromForm() {
@@ -1053,6 +1261,9 @@ function validateCheckoutPayload(payload, msgEl) {
   if (!/^[A-Z]{2}$/.test(payload.buyer.country)) {
     return fail('Select a valid destination country from the list.', 'invalid_country');
   }
+  if (payload.shippingMethod === 'priority' && payload.buyer.country !== 'US') {
+    return fail('Priority Mail is only available for U.S. addresses. Choose International shipping instead.', 'priority_country_mismatch');
+  }
   if (payload.shippingMethod === 'domestic' && payload.buyer.country !== 'US') {
     return fail('Choose International shipping for destinations outside the U.S.', 'domestic_country_mismatch');
   }
@@ -1103,7 +1314,7 @@ async function refreshCheckoutAccountStatus() {
       <span>${escapeHTML(state.account.email)}</span>
     </div>
     ${balance > 0 ? `<label class="store-credit-toggle"><input id="applyStoreCredit" type="checkbox"> Apply up to <strong>$${balance.toFixed(2)}</strong> store credit</label>` : '<span class="store-credit-empty">Approved referral credit will appear here.</span>'}
-    <span class="member-crypto-note">${activeReferralCampaign() ? 'Referral link savings replace payment-method and member discounts; one valid code can add up to 5%.' : 'Verified member benefit: an extra 5% off crypto orders.'}</span>`;
+    <span class="member-crypto-note">${activeReferralCampaign() ? 'Referral link: 10% off card orders, and one valid code can add up to 5%. Crypto orders get a flat 15% off instead.' : 'Crypto orders get 15% off automatically.'}</span>`;
   const toggle = document.getElementById('applyStoreCredit');
   if (toggle) toggle.addEventListener('change', renderCheckoutSummary);
   const nameInput = document.getElementById('buyerName');
@@ -1124,26 +1335,16 @@ function openCheckoutModal() {
   const cryptoMsg = document.getElementById('cryptoMsg');
   const cryptoDetails = document.getElementById('cryptoPaymentDetails');
   if (promoInput) promoInput.value = '';
-  if (promoMsg) promoMsg.textContent = activeReferralCampaign() ? 'Referral link applied: 10% off. One valid code adds up to 5% more.' : '';
+  if (promoMsg) promoMsg.textContent = activeReferralCampaign() ? 'Referral link applied: 10% off. One valid code adds up to 5% more. (Crypto orders get a flat 15% off instead.)' : '';
   if (checkoutMsg) checkoutMsg.textContent = '';
   if (cryptoMsg) cryptoMsg.textContent = '';
   const manualDetails = document.getElementById('manualPaymentDetails');
-  const zelleDetails = document.getElementById('zellePaymentDetails');
   const cryptoChoice = document.getElementById('cryptoChoiceDetails');
   if (manualDetails) manualDetails.style.display = 'none';
-  if (zelleDetails) zelleDetails.style.display = 'none';
   if (cryptoChoice) cryptoChoice.style.display = 'none';
   if (cryptoDetails) cryptoDetails.style.display = 'none';
   const cryptoButton = document.getElementById('cryptoCheckoutBtn');
-  if (cryptoButton) cryptoButton.querySelector('strong').innerHTML = activeReferralCampaign()
-    ? 'Crypto <em>Referral 10% off</em>'
-    : (hpAccountState.authenticated ? 'Crypto <em>10% total savings</em>' : 'Crypto <em>5% off</em>');
-  if (cryptoButton && activeReferralCampaign()) cryptoButton.querySelector('span').textContent = 'Referral savings apply; one valid code can add 5%. No separate crypto discount.';
-  const zelleButton = document.getElementById('zelleCheckoutBtn');
-  if (zelleButton && activeReferralCampaign()) {
-    zelleButton.querySelector('strong').innerHTML = 'Zelle <em>Referral 10% off</em>';
-    zelleButton.querySelector('span').textContent = 'Referral savings apply; one valid code can add 5%. No separate Zelle discount. Put only your order number in the Zelle note.';
-  }
+  if (cryptoButton) cryptoButton.querySelector('strong').innerHTML = 'Crypto <em>15% off</em>';
   updateShippingCountryNote();
   initShippingAddressAutocomplete();
   renderCheckoutSummary();
@@ -1175,11 +1376,15 @@ async function applyPromoCode() {
   try {
     const result = await api(`/api/discount-code?code=${encodeURIComponent(code)}`);
     if (result.valid) {
-      appliedDiscount = { code: result.code, percentOff: result.percentOff };
+      appliedDiscount = { code: result.code, percentOff: result.percentOff, gift: result.gift || null };
       msgEl.style.color = 'var(--success)';
-      msgEl.textContent = activeReferralCampaign()
-        ? `Referral 10% + 5% from ${result.code} applied (15% total).`
-        : `${result.percentOff}% off applied.`;
+      const offer = bundlePromotionState(getCart());
+      const giftAlreadyIncluded = result.gift && offer.unlocked && offer.freeSku === result.gift.sku;
+      msgEl.textContent = !result.gift
+        ? `${result.percentOff}% off applied.`
+        : giftAlreadyIncluded
+          ? `${result.percentOff}% off applied. Your free ${result.gift.name} ${cleanVialSpec(result.gift.spec)} is already included.`
+          : `${result.percentOff}% off + a free ${result.gift.name} ${cleanVialSpec(result.gift.spec)} applied.`;
     } else {
       appliedDiscount = null;
       msgEl.style.color = 'var(--danger)';
@@ -1202,25 +1407,18 @@ let cryptoChoiceOpen = false;
 function renderCryptoPricePreview() {
   const previewEl = document.getElementById('cryptoPricePreview');
   if (!previewEl) return;
-  if (appliedDiscount && !activeReferralCampaign()) {
-    previewEl.textContent = 'Crypto discount cannot be combined with a promo code.';
+  if (appliedDiscount) {
+    previewEl.textContent = 'The 15% crypto discount cannot be combined with a promo or referral code.';
     return;
   }
   const subtotal = round2(cartSubtotal());
   const rate = (window.siteFees && window.siteFees.altPaymentDiscountRate) || 0;
-  const memberRate = hpAccountState.authenticated ? ((window.siteFees && window.siteFees.accountCryptoDiscountRate) || 0) : 0;
   const shippingFee = selectedShippingFee();
   const orderFeeRate = (window.siteFees && window.siteFees.orderFeeRate) || 0;
-  const referralCampaign = activeReferralCampaign();
-  const discount = referralCampaign
-    ? round2(cartPromoEligibleSubtotal() * (10 + (appliedDiscount ? 5 : 0)) / 100)
-    : round2(subtotal * (rate + memberRate));
+  const discount = round2(subtotal * rate);
   const feeBase = Math.max(0, subtotal - discount + shippingFee);
-  const orderFee = round2(feeBase * orderFeeRate);
-  const total = round2(feeBase + orderFee);
-  previewEl.textContent = referralCampaign
-    ? `Referral price: $${total.toFixed(2)} (saves $${discount.toFixed(2)}; no separate crypto discount)`
-    : (rate ? `Crypto price: $${total.toFixed(2)} (saves $${discount.toFixed(2)}${memberRate ? ' — includes your 5% member benefit' : ''})` : '');
+  const total = round2(feeBase); // crypto orders have no processing fee
+  previewEl.textContent = rate ? `Crypto price: $${total.toFixed(2)} (saves $${discount.toFixed(2)} with 15% off and no processing fee)` : '';
 }
 
 function showManualPaymentShell(title, summary) {
@@ -1236,25 +1434,20 @@ async function submitCryptoCheckout() {
   const msgEl = document.getElementById('checkoutMsg');
   const btn = document.getElementById('cryptoCheckoutBtn');
   const choice = document.getElementById('cryptoChoiceDetails');
-  const zelleDetails = document.getElementById('zellePaymentDetails');
   trackPaymentMethod('crypto');
 
-  if (appliedDiscount && !activeReferralCampaign()) {
+  if (appliedDiscount) {
     msgEl.style.color = 'var(--danger)';
-    msgEl.textContent = 'Crypto discount cannot be combined with promo codes. Remove the promo code or choose another payment method.';
+    msgEl.textContent = 'Crypto orders already get 15% off and cannot be combined with promo or referral codes. Remove the code or choose another payment method.';
     return;
   }
 
   if (!cryptoChoiceOpen) {
     cryptoChoiceOpen = true;
-    if (zelleDetails) zelleDetails.style.display = 'none';
+    renderCheckoutSummary();
     if (choice) choice.style.display = 'block';
-    showManualPaymentShell('Crypto payment', activeReferralCampaign()
-      ? 'Choose BTC or USDC, then submit the order. Referral savings replace the separate crypto discount; one valid code adds up to 5%.'
-      : 'Choose BTC or USDC, then submit the order to get the exact payment total and address. Crypto discount cannot be combined with promo codes.');
-    btn.querySelector('strong').innerHTML = activeReferralCampaign()
-      ? 'Submit Crypto Order <em>Referral 10% off</em>'
-      : (hpAccountState.authenticated ? 'Submit Crypto Order <em>10% total savings</em>' : 'Submit Crypto Order <em>5% off</em>');
+    showManualPaymentShell('Crypto payment', 'Choose BTC or USDC, then submit the order to get the exact payment total and address. Your 15% crypto discount is applied automatically and replaces any code or referral offer.');
+    btn.querySelector('strong').innerHTML = 'Submit Crypto Order <em>15% off</em>';
     return;
   }
 
@@ -1360,47 +1553,6 @@ async function initStripeSandboxCheckout() {
   });
 }
 
-async function submitZelleCheckout() {
-  const msgEl = document.getElementById('checkoutMsg');
-  const btn = document.getElementById('zelleCheckoutBtn');
-  const payload = checkoutPayloadFromForm();
-  payload.paymentMethod = 'zelle';
-  trackPaymentMethod('zelle');
-
-  if (appliedDiscount && !activeReferralCampaign()) {
-    msgEl.style.color = 'var(--danger)';
-    msgEl.textContent = 'The Zelle 10% discount cannot be combined with codes. Remove the code or choose another payment method.';
-    return;
-  }
-
-  if (!validateCheckoutPayload(payload, msgEl)) return;
-
-  btn.disabled = true;
-  try {
-    const result = await api('/api/checkout', { method: 'POST', body: payload });
-    const recipient = result.zelle ? result.zelle.recipient : ((window.sitePayments && window.sitePayments.zelleRecipient) || '+1 (213) 424-4643');
-    msgEl.style.color = 'var(--success)';
-    msgEl.textContent = 'Order submitted. Send the exact amount shown below by Zelle.';
-    const zelleDetails = document.getElementById('zellePaymentDetails');
-    const cryptoChoice = document.getElementById('cryptoChoiceDetails');
-    const cryptoDetails = document.getElementById('cryptoPaymentDetails');
-    if (cryptoChoice) cryptoChoice.style.display = 'none';
-    if (cryptoDetails) cryptoDetails.style.display = 'none';
-    if (zelleDetails) zelleDetails.style.display = 'block';
-    document.getElementById('zellePaymentRecipient').textContent = recipient;
-    const reference = result.zelle ? result.zelle.reference : `HP-${result.orderId}`;
-    showManualPaymentShell('Zelle payment instructions', `<strong>Order #${result.orderId}</strong><br>Exact total due: <strong>$${result.total.toFixed(2)}</strong><br>Send by Zelle to: <strong>${escapeHTML(recipient)}</strong><br><span class="manual-payment-alert">Zelle note: enter only <strong>${escapeHTML(reference)}</strong> and nothing else.</span><br><span class="hint">Do not include product names, comments, or any other text in the note. Please send the exact total shown. If the amount is incorrect, we will contact you and pause fulfillment until the payment is resolved. Your refund rights remain in effect. Confirmed orders ship the next business day.</span>`);
-    clearCartAfterCheckout();
-  } catch (err) {
-    msgEl.style.color = 'var(--danger)';
-    msgEl.textContent = err.message;
-    focusAddressError(err);
-    trackCheckoutError('order_creation', 'submission_failed', 'zelle');
-  } finally {
-    btn.disabled = false;
-  }
-}
-
 function wireCheckout() {
   document.getElementById('buyerEmail')?.addEventListener('input', () => {
     setCheckoutEmailStatus('Verify this email before choosing a payment method.');
@@ -1454,9 +1606,6 @@ function wireCheckout() {
 
   initStripeSandboxCheckout();
 
-  const zelleBtn = document.getElementById('zelleCheckoutBtn');
-  if (zelleBtn) zelleBtn.addEventListener('click', submitZelleCheckout);
-
   const cryptoBtn = document.getElementById('cryptoCheckoutBtn');
   if (cryptoBtn) cryptoBtn.addEventListener('click', submitCryptoCheckout);
 
@@ -1477,3 +1626,159 @@ function wireCheckout() {
 
 
 
+
+// ---------- Support chat (messages go to the admin inbox on our server) ----------
+const supportChat = { open: false, thread: null, account: null, pollTimer: null, sending: false };
+
+function supportChatTime(iso) {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '';
+  const sameDay = date.toDateString() === new Date().toDateString();
+  return sameDay
+    ? date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+    : date.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' · ' + date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+
+function renderSupportChat() {
+  const list = document.getElementById('snChatMessages');
+  const idFields = document.getElementById('snChatIdentity');
+  const dot = document.getElementById('snChatDot');
+  if (!list) return;
+  const messages = supportChat.thread ? supportChat.thread.messages : [];
+  list.replaceChildren();
+  if (!messages.length) {
+    const intro = document.createElement('p');
+    intro.className = 'sn-chat-empty';
+    intro.textContent = 'Questions about an order, payment, or a product? Send us a message and our team will reply right here.';
+    list.appendChild(intro);
+  }
+  messages.forEach(message => {
+    const bubble = document.createElement('div');
+    bubble.className = `sn-chat-bubble ${message.from === 'admin' ? 'from-team' : 'from-you'}`;
+    const text = document.createElement('p');
+    text.textContent = message.body;
+    const meta = document.createElement('span');
+    meta.textContent = `${message.from === 'admin' ? 'Snowy Support' : 'You'} · ${supportChatTime(message.at)}`;
+    bubble.append(text, meta);
+    list.appendChild(bubble);
+  });
+  list.scrollTop = list.scrollHeight;
+  const needsIdentity = !supportChat.account && !supportChat.thread;
+  if (idFields) idFields.hidden = !needsIdentity;
+  const who = document.getElementById('snChatWho');
+  if (who) {
+    who.textContent = supportChat.account
+      ? `Signed in as ${supportChat.account.email}`
+      : (supportChat.thread ? `Replying as ${supportChat.thread.email}` : '');
+  }
+  if (dot) dot.hidden = !(supportChat.thread && supportChat.thread.customerUnread && !supportChat.open);
+}
+
+async function refreshSupportChat(markSeen = false) {
+  try {
+    const response = await fetch(`/api/support/thread${markSeen ? '?seen=1' : ''}`, { credentials: 'same-origin', cache: 'no-store' });
+    if (!response.ok) return;
+    const data = await response.json();
+    supportChat.thread = data.thread;
+    supportChat.account = data.account;
+    renderSupportChat();
+  } catch (_) {}
+}
+
+function setSupportChatOpen(open) {
+  supportChat.open = open;
+  const panel = document.getElementById('snChatPanel');
+  const launcher = document.getElementById('snChatLauncher');
+  if (!panel || !launcher) return;
+  panel.hidden = !open;
+  launcher.setAttribute('aria-expanded', String(open));
+  clearInterval(supportChat.pollTimer);
+  if (open) {
+    refreshSupportChat(true);
+    supportChat.pollTimer = setInterval(() => refreshSupportChat(true), 15000);
+    const field = document.getElementById('snChatInput');
+    if (field) setTimeout(() => field.focus(), 50);
+  }
+  renderSupportChat();
+}
+
+async function sendSupportChatMessage(event) {
+  event.preventDefault();
+  if (supportChat.sending) return;
+  const input = document.getElementById('snChatInput');
+  const status = document.getElementById('snChatStatus');
+  const message = input.value.trim();
+  if (!message) return;
+  const payload = {
+    message,
+    name: (document.getElementById('snChatName') || {}).value || '',
+    email: (document.getElementById('snChatEmail') || {}).value || '',
+    website: (document.getElementById('snChatWebsite') || {}).value || '',
+  };
+  supportChat.sending = true;
+  status.textContent = 'Sending…';
+  try {
+    const response = await fetch('/api/support/messages', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      status.textContent = data.error || 'Message not sent. Please try again.';
+      return;
+    }
+    input.value = '';
+    status.textContent = 'Sent. We’ll reply right here.';
+    if (data.thread) supportChat.thread = data.thread;
+    renderSupportChat();
+  } catch (_) {
+    status.textContent = 'Message not sent. Check your connection and try again.';
+  } finally {
+    supportChat.sending = false;
+  }
+}
+
+function initSupportChat() {
+  if (document.getElementById('snChatLauncher') || document.body.classList.contains('admin-page')) return;
+  const root = document.createElement('div');
+  root.className = 'sn-chat';
+  if (document.getElementById('mobileAddToCartBtn')) root.classList.add('sn-chat-raised');
+  root.innerHTML = `
+    <section id="snChatPanel" class="sn-chat-panel" role="dialog" aria-label="Message Snowy Support" hidden>
+      <header class="sn-chat-head">
+        <div><strong>Snowy Support</strong><span>Messages go straight to our team.</span></div>
+        <button type="button" class="sn-chat-close" id="snChatClose" aria-label="Close chat">×</button>
+      </header>
+      <div class="sn-chat-messages" id="snChatMessages" aria-live="polite"></div>
+      <form class="sn-chat-form" id="snChatForm" autocomplete="on">
+        <div class="sn-chat-identity" id="snChatIdentity" hidden>
+          <input id="snChatName" type="text" maxlength="80" placeholder="Your name" autocomplete="name">
+          <input id="snChatEmail" type="email" maxlength="254" placeholder="Your email" autocomplete="email">
+        </div>
+        <input id="snChatWebsite" type="text" tabindex="-1" autocomplete="off" class="sn-chat-trap" aria-hidden="true">
+        <textarea id="snChatInput" rows="2" maxlength="2000" placeholder="Type your message…" required></textarea>
+        <div class="sn-chat-actions"><span id="snChatWho" class="sn-chat-who"></span><button type="submit">Send</button></div>
+        <p class="sn-chat-status" id="snChatStatus" role="status"></p>
+      </form>
+    </section>
+    <button type="button" class="sn-chat-launcher" id="snChatLauncher" aria-controls="snChatPanel" aria-expanded="false">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H10l-4.2 3.6c-.5.4-1.3.1-1.3-.6V16A2.5 2.5 0 0 1 4 13.5z" fill="currentColor"/></svg>
+      <span>Message us</span><i id="snChatDot" class="sn-chat-dot" hidden></i>
+    </button>`;
+  document.body.appendChild(root);
+  document.getElementById('snChatLauncher').addEventListener('click', () => setSupportChatOpen(!supportChat.open));
+  document.getElementById('snChatClose').addEventListener('click', () => setSupportChatOpen(false));
+  document.getElementById('snChatForm').addEventListener('submit', sendSupportChatMessage);
+  document.getElementById('snChatInput').addEventListener('keydown', event => {
+    if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); document.getElementById('snChatForm').requestSubmit(); }
+  });
+  document.addEventListener('keydown', event => { if (event.key === 'Escape' && supportChat.open) setSupportChatOpen(false); });
+  refreshSupportChat(false);
+}
+
+window.openSupportChat = () => setSupportChatOpen(true);
+window.refreshSupportChat = refreshSupportChat;
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initSupportChat);
+else initSupportChat();

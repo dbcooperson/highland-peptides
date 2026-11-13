@@ -100,7 +100,7 @@ async function validateWithCensus(buyer, fetchImpl) {
     response = await fetchImpl(censusAddressUrl(buyer), {
       headers: {
         Accept: 'application/json',
-        'User-Agent': 'HighlandPeptides/1.0 (shipping-address-check)',
+        'User-Agent': 'SnowyResearch/1.0 (shipping-address-check)',
       },
     });
   } catch (_) {

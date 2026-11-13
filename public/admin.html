@@ -3,32 +3,45 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin: Highland Peptides</title>
-<link rel="icon" type="image/png" href="/images/branding/highland-social-avatar-v1.png">
-<link rel="apple-touch-icon" href="/images/branding/highland-social-avatar-v1.png">
+<title>Admin: Snowy Research</title>
+<link rel="icon" type="image/png" href="/images/branding/snowy-icon-512.png">
+<link rel="apple-touch-icon" href="/images/branding/snowy-icon-512.png">
 <link rel="manifest" href="/site.webmanifest">
-<link rel="stylesheet" href="/css/style.css?v=pirate-ship-queue-v1-20260918">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css?v=swipe-20261112">
+<link rel="stylesheet" href="/css/snowy-admin.css?v=inbox-20261112b">
 </head>
-<body class="admin-page">
+<body class="admin-page snowy-admin admin-checking">
 <header class="topbar">
-  <div class="brand">Admin Dashboard</div>
+  <div class="brand">Snowy <span class="admin-brand-tag">Admin</span></div>
   <nav><button id="adminLogoutBtn" style="display:none;">Log Out</button></nav>
 </header>
 
-<main style="display:block; max-width: 1400px;">
-  <section id="adminLogin" class="panel">
-    <h2>Admin Login</h2>
-    <form id="adminLoginForm">
-      <label>Password <input type="password" id="adminPassword" required></label>
+<section id="adminLogin" class="admin-login" aria-labelledby="adminLoginTitle">
+  <div class="admin-login-card">
+    <img src="/images/branding/snowy-logo.webp" alt="Snowy" class="admin-login-logo" width="180" height="80">
+    <span class="admin-login-kicker">Staff only</span>
+    <h1 id="adminLoginTitle">Sign in to admin</h1>
+    <p class="admin-login-sub">Orders, labels and launch checks for Snowy Research.</p>
+    <form id="adminLoginForm" novalidate>
+      <label for="adminPassword" class="admin-login-label">Password</label>
+      <div class="admin-login-field">
+        <input type="password" id="adminPassword" required autocomplete="current-password" placeholder="Enter admin password">
+        <button type="button" id="adminShowPassword" class="admin-login-eye" aria-label="Show password" aria-pressed="false">Show</button>
+      </div>
       <label class="admin-remember-device">
         <input type="checkbox" id="adminRememberDevice" checked>
-        <span>Remember this device for 30 days</span>
+        <span>Keep me signed in on this device for 30 days</span>
       </label>
-      <p class="hint">Uses a secure sign-in token. Your password is never saved in the browser.</p>
-      <button type="submit">Log In</button>
-      <p class="form-msg" id="adminLoginMsg"></p>
+      <button type="submit" id="adminLoginBtn" class="admin-login-submit">Log in</button>
+      <p class="admin-login-error" id="adminLoginMsg" role="alert"></p>
+      <p class="admin-login-note">Uses a secure sign-in token. Your password is never saved in the browser.</p>
     </form>
-  </section>
+  </div>
+</section>
+
+<main style="display:block; max-width: 1400px;">
 
     <section id="adminPanels" style="display:none;">
     <div id="adminStorageInfo" class="admin-storage-info"></div>
@@ -38,18 +51,13 @@
       <button type="button" class="admin-tab" data-admin-tab="profit">Profit</button>
       <button type="button" class="admin-tab" data-admin-tab="referrals">Accounts & Referrals</button>
       <button type="button" class="admin-tab" data-admin-tab="labels">Label Maker</button>
-      <button type="button" class="admin-tab" data-admin-tab="promo-audit">Promo Audit</button>
       <button type="button" class="admin-tab" data-admin-tab="launch">Launch Checks</button>
+      <button type="button" class="admin-tab" data-admin-tab="messages">Messages <span id="supportUnreadBadge" class="admin-tab-badge" hidden></span></button>
+      <button type="button" class="admin-tab" data-admin-tab="giveaway">Giveaway</button>
+      <button type="button" class="admin-tab" data-admin-tab="security">Security</button>
     </div>
     <div class="panel admin-tab-panel" id="ordersPanel" data-admin-panel="orders">
       <h2>Orders <span class="hint">(guest and optional-account checkout)</span></h2>
-      <section class="admin-delay-notice" aria-labelledby="delayNoticeHeading">
-        <div>
-          <strong id="delayNoticeHeading">Shipping delay email</strong>
-          <p id="delayNoticePreview" class="hint">Loading eligible customers…</p>
-        </div>
-        <button type="button" id="sendDelayNoticeBtn" disabled>Send delay notices</button>
-      </section>
       <div class="admin-order-toolbar">
         <input id="adminOrderSearch" type="search" placeholder="Search name, email, SKU, address, notes">
         <select id="adminStatusFilter">
@@ -62,7 +70,6 @@
         </select>
         <select id="adminPaymentFilter">
           <option value="all">All payments</option>
-          <option value="paypal_any">PayPal</option>
           <option value="crypto_any">Crypto</option>
           <option value="manual">Manual invoice</option>
         </select>
@@ -119,6 +126,23 @@
       <h2>Profit <span class="hint">(confirmed orders only)</span></h2>
       <div id="profitSummary"></div>
       <table id="profitTable" style="width:100%; border-collapse: collapse;"></table>
+
+      <h2 style="margin-top:28px;">Unit economics <span class="hint">(admin only, never shown to customers)</span></h2>
+      <p class="admin-muted">How much you can afford to spend to win one new customer. Edit the boxes; numbers update instantly and your inputs are remembered in this browser.</p>
+      <div class="unit-econ-inputs">
+        <label>Typical cart (products, $)<input type="number" id="ueCart" min="0" step="1" value="65"></label>
+        <label>Discount used (%)<input type="number" id="ueDiscount" min="0" max="100" step="1" value="15"></label>
+        <label>Product cost (% of price)<input type="number" id="ueCostPct" min="0" max="100" step="0.5"></label>
+        <label>Label + packaging cost ($)<input type="number" id="ueLabel" min="0" step="0.25" value="7"></label>
+        <label>Card fee (% + $0.30)<input type="number" id="ueStripe" min="0" step="0.1" value="2.9"></label>
+        <label>Orders per customer (lifetime)<input type="number" id="ueOrders" min="1" step="0.5" value="2.5"></label>
+        <label>Affiliate commission (%)<input type="number" id="ueAffiliate" min="0" max="100" step="1" value="15"></label>
+      </div>
+      <div id="unitEconSummary"></div>
+      <details style="margin-top:16px;">
+        <summary><strong>Margin by product</strong> <span class="admin-muted">(price vs. your supplier cost)</span></summary>
+        <div class="analytics-table-wrap"><table id="unitEconTable" style="width:100%; border-collapse: collapse;"></table></div>
+      </details>
     </div>
     <div class="panel admin-tab-panel" id="referralsPanel" data-admin-panel="referrals" hidden>
       <div class="analytics-heading-row">
@@ -143,7 +167,7 @@
       <div class="label-maker-heading">
         <div>
           <span class="label-maker-kicker">OL1735WS · 1.75 × 0.75 in · 48 per sheet</span>
-          <h2>Highland Label Maker</h2>
+          <h2>Snowy Label Maker</h2>
           <p class="hint">Choose any current storefront SKU and its approved name and strength will be loaded automatically for printing.</p>
         </div>
         <span class="label-concept-link">Matched to current vial photography</span>
@@ -160,7 +184,6 @@
             <span id="paidLabelNextPosition" class="paid-label-next-position">Next: row 1, label 1</span>
             <a id="exportPirateShipCsv" class="paid-label-tool-link" href="/api/admin/pirate-ship.csv" download>Export new Pirate Ship CSV</a>
             <button id="refreshPaidLabelOrders" type="button">Refresh orders</button>
-            <button id="checkFulfillmentDiscord" type="button">Check Discord</button>
             <button id="restoreRemovedLabelOrders" type="button" hidden>Restore removed</button>
           </div>
         </div>
@@ -176,7 +199,7 @@
           </div>
           <small>Use this only to replace a bad CSV. It does not change order statuses.</small>
         </form>
-        <p class="pirate-ship-export-note">The CSV contains only newly queued Pending tracking orders and exports each order once, so old shipments are not repeated. Upload it in Pirate Ship, map the columns once, and enable <strong>Email recipients</strong>. Each tracking notice returns through Highland’s secure cloud inbox and fulfills the matching order automatically.</p>
+        <p class="pirate-ship-export-note">The CSV contains only newly queued Pending tracking orders and exports each order once, so old shipments are not repeated. Upload it in Pirate Ship, map the columns once, and enable <strong>Email recipients</strong>. Each tracking notice returns through the store’s secure cloud inbox and fulfills the matching order automatically.</p>
       </section>
 
       <div class="label-maker-grid">
@@ -194,17 +217,18 @@
             <small class="label-field-note">Type any part of the product name, dosage, or SKU, then tap the matching product.</small>
           </div>
           <label>Printed compound name
-            <input id="labelProductName" type="text" value="HP-3RT" maxlength="42" autocomplete="off" required>
+            <input id="labelProductName" type="text" value="SR-3RT" maxlength="42" autocomplete="off" required>
           </label>
           <label>Printed dosage / strength
             <input id="labelDosage" type="text" value="20 MG" maxlength="24" autocomplete="off" required>
           </label>
           <div class="label-maker-row">
             <label>Lot number
-              <input id="labelLotNumber" type="text" value="314" maxlength="18" autocomplete="off" required>
+              <input id="labelLotNumber" type="text" value="SR-1042" maxlength="18" autocomplete="off" required>
+              <small class="label-field-note">Order labels use that order's number automatically.</small>
             </label>
             <label>Expiration date
-              <input id="labelExpiryDate" type="text" value="9/1/2027" maxlength="18" autocomplete="off" required>
+              <input id="labelExpiryDate" type="text" value="06/28" maxlength="18" autocomplete="off" required>
             </label>
           </div>
           <label>Storage temperature
@@ -264,10 +288,10 @@
             <small class="label-field-note">After printing, the next unused label is remembered automatically on this phone.</small>
           </label>
 
-          <input type="hidden" name="labelDesign" value="vial-current">
+          <input type="hidden" name="labelDesign" value="label-k">
           <div class="label-current-design" aria-label="Current approved label design">
-            <img class="mini-mark mini-mark-vial-current" src="/images/branding/highland-hp-ridge-mark-v1.png" alt="">
-            <span><strong>Current Highland production label</strong><small>White label · green divider · outlined strength · purity footer</small></span>
+            <img class="mini-mark mini-mark-vial-current" src="/images/branding/snowy-icon-512.png" alt="">
+            <span><strong>Current Snowy production label</strong><small>White label · green divider · outlined strength · purity footer</small></span>
           </div>
 
           <div class="label-print-note">
@@ -292,24 +316,38 @@
       <div id="launchChecks"></div>
       <div id="priceAuditDetails"></div>
     </div>
-    <div class="panel admin-tab-panel" id="promoAuditPanel" data-admin-panel="promo-audit" hidden>
-      <div class="analytics-heading-row">
-        <div>
-          <h2>Promo Account Audit Log</h2>
-          <p class="hint">Visible only through the full admin account. Tracks promo-manager sign-ins and code activity.</p>
-        </div>
-        <button type="button" id="refreshPromoAuditButton">Refresh</button>
+    <div class="panel admin-tab-panel" id="messagesPanel" data-admin-panel="messages" hidden>
+      <div class="admin-security-head">
+        <h2>Messages <span class="hint">(from the chat bubble and the Support page)</span></h2>
+        <button type="button" id="refreshSupportThreads">Refresh</button>
       </div>
-      <div class="analytics-table-wrap"><table id="promoAuditTable"></table></div>
-      <p id="promoAuditMessage" class="form-msg" aria-live="polite"></p>
+      <div class="support-inbox">
+        <div class="support-inbox-list" id="supportThreadList"><p class="admin-muted">Loading…</p></div>
+        <div class="support-inbox-thread" id="supportThreadView"><p class="admin-muted">Select a conversation.</p></div>
+      </div>
+    </div>
+    <div class="panel admin-tab-panel" id="giveawayPanel" data-admin-panel="giveaway" hidden>
+      <h2>Launch giveaway <span class="hint">(1 entry per paid peptide vial + free daily entries)</span></h2>
+      <div id="giveawaySummary"></div>
+      <div id="giveawayDraw" style="margin-top:18px;"></div>
+      <h3 style="margin-top:22px;">Top entrants</h3>
+      <div class="analytics-table-wrap"><table id="giveawayEntrants" style="width:100%; border-collapse: collapse;"></table></div>
+    </div>
+    <div class="panel admin-tab-panel" id="securityPanel" data-admin-panel="security" hidden>
+      <div class="admin-security-head">
+        <h2>Sign-in security <span class="hint">(every admin login attempt)</span></h2>
+        <button type="button" id="refreshSecurityLog">Refresh</button>
+      </div>
+      <div id="securitySummary"></div>
+      <div id="securityBlocked"></div>
+      <div class="admin-table-wrap"><table class="admin-table" id="securityLogTable"></table></div>
     </div>
   </section>
 </main>
 
 <div id="labelPrintPortal" class="label-print-sheet" aria-hidden="true"></div>
 
-<script src="/js/admin.js?v=shipping-delay-notice-20261014b"></script>
-<script src="/js/site-notice.js?v=20260916"></script>
+<script src="/js/admin.js?v=giveaway-20261112"></script>
 </body>
 </html>
 

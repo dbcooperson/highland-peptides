@@ -31,14 +31,14 @@ function referredOrder(referrer, email, subtotal = 100, discount = 10) {
     items: [{ sku: 'TEST', name: 'Test Product', spec: '10mg', quantity: 1, unit_price: subtotal }],
     subtotal,
     packagingFee: 0,
-    shippingFee: 10.27,
+    shippingFee: 11.99,
     shippingMethod: 'domestic',
     orderFee: 3,
     orderFeeRate: 0.03,
     discountCode: referrer.referral_code,
     discountAmount: discount,
     total: subtotal - discount + 13.27,
-    paymentProvider: 'manual_paypal',
+    paymentProvider: 'crypto',
     referralAccountId: referrer.id,
     referralCreditRate: 0.10,
   });
@@ -69,7 +69,7 @@ test('promotion codes never expose customer usage in a referral dashboard', asyn
     items: [{ sku: 'TEST', name: 'Test Product', spec: '10mg', quantity: 1, unit_price: 100 }],
     subtotal: 100,
     packagingFee: 0,
-    shippingFee: 10.27,
+    shippingFee: 11.99,
     shippingMethod: 'domestic',
     orderFee: 3,
     orderFeeRate: 0.03,
@@ -77,7 +77,7 @@ test('promotion codes never expose customer usage in a referral dashboard', asyn
     discountType: 'promotion',
     discountAmount: 15,
     total: 98.27,
-    paymentProvider: 'manual_paypal',
+    paymentProvider: 'crypto',
     referralAccountId: promoter.id,
     referralCreditRate: 0.10,
   });
@@ -112,7 +112,7 @@ test('paid referral orders wait for approval, award credit once, and cancelled c
     items: [{ sku: 'TEST2', name: 'Test Product 2', spec: '5mg', quantity: 1, unit_price: 20 }],
     subtotal: 20,
     packagingFee: 0,
-    shippingFee: 10.27,
+    shippingFee: 11.99,
     shippingMethod: 'domestic',
     orderFee: 1,
     orderFeeRate: 0.03,
@@ -120,7 +120,7 @@ test('paid referral orders wait for approval, award credit once, and cancelled c
     storeCreditAmount: 4,
     customerAccountId: owner.id,
     total: 27.27,
-    paymentProvider: 'manual_paypal',
+    paymentProvider: 'crypto',
   });
   dashboard = db.getAccountDashboard(owner.id, { minCustomers: 5, minSpend: 500 });
   assert.equal(dashboard.stats.creditBalance, 5);
@@ -196,13 +196,13 @@ test('printed orders update a customer account through pending tracking and fulf
     items: [{ sku: 'RT20', name: 'Retatrutide', spec: '20mg', quantity: 3, unit_price: 30 }],
     subtotal: 90,
     packagingFee: 0,
-    shippingFee: 10.27,
+    shippingFee: 11.99,
     shippingMethod: 'domestic',
     orderFee: 3,
     orderFeeRate: 0.03,
     discountAmount: 0,
     total: 103.27,
-    paymentProvider: 'manual_paypal',
+    paymentProvider: 'crypto',
     customerAccountId: customer.id,
   });
 

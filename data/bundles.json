@@ -1,0 +1,150 @@
+[
+  {
+    "id": "metabolic",
+    "name": "Metabolic Research Set",
+    "area": "Metabolic",
+    "skus": [
+      "MS40",
+      "RT30",
+      "TSM20"
+    ],
+    "description": "MOTS-c, SR-3RT and SR-TSM: three compounds studied in metabolic and energy-regulation research.",
+    "tier": "full"
+  },
+  {
+    "id": "metabolic-starter",
+    "name": "Metabolic Starter Set",
+    "area": "Metabolic",
+    "tier": "starter",
+    "rate": 0.05,
+    "skus": [
+      "MS40",
+      "RT20",
+      "TSM10"
+    ],
+    "description": "Smaller sizes of the Metabolic Research Set: MOTS-c, SR-3RT and SR-TSM."
+  },
+  {
+    "id": "mitochondrial",
+    "name": "Mitochondrial Research Set",
+    "area": "Mitochondrial",
+    "skus": [
+      "2S50",
+      "MS40",
+      "NJ1000"
+    ],
+    "description": "SR-31, MOTS-c and NAD+: compounds studied in mitochondrial function and cellular energy research.",
+    "tier": "full"
+  },
+  {
+    "id": "mitochondrial-starter",
+    "name": "Mitochondrial Starter Set",
+    "area": "Mitochondrial",
+    "tier": "starter",
+    "rate": 0.05,
+    "skus": [
+      "2S10",
+      "MS40",
+      "NJ1000"
+    ],
+    "description": "Smaller sizes of the Mitochondrial Research Set: SR-31, MOTS-c and NAD+."
+  },
+  {
+    "id": "circadian",
+    "name": "Circadian Research Set",
+    "area": "Sleep",
+    "skus": [
+      "PIN20",
+      "DS15",
+      "TSM20"
+    ],
+    "description": "Pinealon, DSIP and SR-TSM: compounds studied in circadian-rhythm and neuroendocrine research.",
+    "tier": "full"
+  },
+  {
+    "id": "antioxidant",
+    "name": "Oxidative Stress Research Set",
+    "area": "Antioxidant",
+    "skus": [
+      "GTT9000",
+      "F410",
+      "NJ1000"
+    ],
+    "description": "Glutathione, FOXO4-DRI and NAD+: compounds studied in oxidative-stress and cellular-senescence research.",
+    "tier": "full"
+  },
+  {
+    "id": "antioxidant-starter",
+    "name": "Oxidative Stress Starter Set",
+    "area": "Antioxidant",
+    "tier": "starter",
+    "rate": 0.05,
+    "skus": [
+      "GTT600",
+      "F410",
+      "NJ100"
+    ],
+    "description": "Smaller sizes of the Oxidative Stress Research Set: Glutathione, FOXO4-DRI and NAD+."
+  },
+  {
+    "id": "skin",
+    "name": "Skin Research Set",
+    "area": "Skin & Recovery",
+    "skus": [
+      "CU100",
+      "GTT9000",
+      "TSM20"
+    ],
+    "description": "GHK-Cu, Glutathione and SR-TSM: compounds studied in skin and collagen research.",
+    "tier": "full"
+  },
+  {
+    "id": "skin-starter",
+    "name": "Skin Starter Set",
+    "area": "Skin & Recovery",
+    "tier": "starter",
+    "rate": 0.05,
+    "skus": [
+      "CU",
+      "GTT600",
+      "TSM10"
+    ],
+    "description": "Smaller sizes of the Skin Research Set: GHK-Cu, Glutathione and SR-TSM."
+  },
+  {
+    "id": "tissue",
+    "name": "Tissue Repair Research Set",
+    "area": "Skin & Recovery",
+    "skus": [
+      "BC20",
+      "BT10",
+      "CU100"
+    ],
+    "description": "BPC-157, TB-500 and GHK-Cu: the three most widely studied compounds in tissue-repair research.",
+    "tier": "full"
+  },
+  {
+    "id": "immune",
+    "name": "Immune Research Set",
+    "area": "Immune",
+    "skus": [
+      "TA10",
+      "KPV10",
+      "TY10"
+    ],
+    "description": "Thymosin Alpha-1, KPV and Thymalin: compounds studied in immune-signaling research.",
+    "tier": "full"
+  },
+  {
+    "id": "cognitive",
+    "name": "Neuropeptide Research Set",
+    "area": "Nootropic",
+    "skus": [
+      "XA10",
+      "SK10",
+      "PE10"
+    ],
+    "description": "Semax, Selank and PE 22-28: neuropeptides studied in cognitive and neurological research.",
+    "tier": "full"
+  }
+]

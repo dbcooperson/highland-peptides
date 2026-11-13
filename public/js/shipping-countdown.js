@@ -1,6 +1,6 @@
 (() => {
   const FULFILLMENT_TIME_ZONE = 'America/Los_Angeles';
-  const CUTOFF_HOUR = 14;
+  const CUTOFF_HOUR = 17;
   const CUTOFF_MINUTE = 0;
   let refreshTimer = null;
 
@@ -58,8 +58,8 @@
     const beforeTodayCutoff = isBusinessDay(today) && now.getTime() < todayCutoff.getTime();
     const cutoffDay = beforeTodayCutoff ? today : nextBusinessDay(today);
     const cutoff = beforeTodayCutoff ? todayCutoff : dateAtFulfillmentTime(cutoffDay, CUTOFF_HOUR, CUTOFF_MINUTE);
-    const shipDay = nextBusinessDay(cutoffDay);
-    const shipDate = dateAtFulfillmentTime(shipDay, 12, 0);
+    // Same-day dispatch: orders placed before the cutoff ship on the cutoff day itself.
+    const shipDate = dateAtFulfillmentTime(cutoffDay, 18, 0);
     return {
       beforeTodayCutoff,
       cutoff,
@@ -97,16 +97,29 @@
   }
 
   function countdownCopy(variant, now = new Date(), shopperTimeZoneOverride = '') {
-    if (variant === 'pill') return 'Shipping delay · allow up to 3 weeks';
-    if (variant === 'summary') return 'Orders placed now may be significantly delayed. Please allow up to 3 weeks for fulfillment.';
-    return 'Current fulfillment timing is undetermined. Please allow up to 3 weeks for your order to ship.';
+    const status = shippingStatus(now);
+    const shopperTimeZone = shopperTimeZoneOverride || Intl.DateTimeFormat().resolvedOptions().timeZone || FULFILLMENT_TIME_ZONE;
+    const remaining = formatRemaining(status.remainingMs);
+    const shipDay = status.beforeTodayCutoff ? 'today' : shipDayLabel(status.shipDate);
+    const localCutoff = timeLabel(status.cutoff, shopperTimeZone);
+    const pacificCutoff = timeLabel(status.cutoff, FULFILLMENT_TIME_ZONE);
+    const cutoff = shopperTimeZone === FULFILLMENT_TIME_ZONE
+      ? localCutoff
+      : `${localCutoff} your time (${pacificCutoff})`;
+    const timing = status.beforeTodayCutoff
+      ? `Order within ${remaining} to ship ${shipDay}`
+      : `Next cutoff in ${remaining}; order now to ship ${shipDay}`;
+
+    if (variant === 'pill') return `${remaining} left · cutoff ${localCutoff}`;
+    if (variant === 'summary') return `${timing}.`;
+    return `${timing}. Cutoff: ${cutoff}.`;
   }
 
   function updateShippingCountdowns(now = new Date()) {
     document.querySelectorAll('[data-shipping-countdown]').forEach(element => {
       const variant = element.dataset.shippingCountdown || 'card';
       element.textContent = countdownCopy(variant, now);
-      element.setAttribute('title', 'Orders placed now may experience significant fulfillment delays of up to 3 weeks.');
+      element.setAttribute('title', 'Orders placed before 5 PM Pacific on a business day ship the same day. Cutoff is shown in your local time zone; business days exclude weekends.');
     });
   }
 

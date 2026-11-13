@@ -1,4 +1,4 @@
-document.getElementById('supportForm').addEventListener('submit', event => {
+document.getElementById('supportForm').addEventListener('submit', async event => {
   event.preventDefault();
   const name = document.getElementById('supportName').value.trim();
   const email = document.getElementById('supportEmail').value.trim();
@@ -6,6 +6,7 @@ document.getElementById('supportForm').addEventListener('submit', event => {
   const topic = document.getElementById('supportTopic').value;
   const message = document.getElementById('supportMessage').value.trim();
   const msgEl = document.getElementById('supportMsg');
+  const button = event.target.querySelector('button[type="submit"], button:not([type])');
 
   if (!name || !email || !message) {
     msgEl.style.color = 'var(--danger)';
@@ -13,21 +14,33 @@ document.getElementById('supportForm').addEventListener('submit', event => {
     return;
   }
 
-  const subject = `Highland Peptides Support - ${topic}${order ? ` - Order #${order}` : ''}`;
-  const body = [
-    `Name: ${name}`,
-    `Email: ${email}`,
-    order ? `Order: ${order}` : '',
-    `Topic: ${topic}`,
-    '',
-    message,
-    '',
-    'Research-use-only support request.'
-  ].filter(Boolean).join('\n');
-
-  window.location.href = `mailto:support@highlandpeptides.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  msgEl.style.color = 'var(--success)';
-  msgEl.textContent = 'Opening your email app. If nothing opens, email support@highlandpeptides.com directly.';
+  if (button) button.disabled = true;
+  msgEl.style.color = '';
+  msgEl.textContent = 'Sending…';
+  try {
+    const response = await fetch('/api/support/messages', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, orderNumber: order, message: `[${topic}${order ? ` · Order ${order}` : ''}]\n${message}`, website: (document.getElementById('supportWebsite') || {}).value || '' }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      msgEl.style.color = 'var(--danger)';
+      msgEl.textContent = data.error || 'Message not sent. Please try again.';
+      return;
+    }
+    document.getElementById('supportMessage').value = '';
+    msgEl.style.color = 'var(--success)';
+    msgEl.textContent = 'Message sent. Our reply will appear in the chat window (bottom right of every page).';
+    if (window.refreshSupportChat) window.refreshSupportChat(false);
+    if (window.openSupportChat) window.openSupportChat();
+  } catch (_) {
+    msgEl.style.color = 'var(--danger)';
+    msgEl.textContent = 'Message not sent. Check your connection and try again.';
+  } finally {
+    if (button) button.disabled = false;
+  }
 });
 
 const supportParams = new URLSearchParams(window.location.search);

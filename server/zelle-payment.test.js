@@ -6,42 +6,23 @@ const path = require('node:path');
 const root = path.join(__dirname, '..');
 const read = relativePath => fs.readFileSync(path.join(root, relativePath), 'utf8');
 
-test('Zelle checkout uses the configured recipient across customer and admin flows', () => {
+test('Zelle is removed from checkout, the server and customer emails', () => {
   const config = require('./config');
-  const cartHtml = read('public/cart.html');
-  const cartJs = read('public/js/cart.js');
-  const sharedJs = read('public/js/shared.js');
-  const indexJs = read('server/index.js');
-  const notificationsJs = read('server/notifications.js');
-  const adminJs = read('public/js/admin.js');
-
-  assert.equal(config.ZELLE_RECIPIENT, process.env.ZELLE_RECIPIENT || '+1 (213) 424-4643');
-  assert.equal(config.ZELLE_PAYMENT_DISCOUNT_RATE, Number(process.env.ZELLE_PAYMENT_DISCOUNT_RATE || 0.10));
-  assert.match(cartHtml, /id="zelleCheckoutBtn"/);
-  assert.match(cartHtml, /id="zellePaymentRecipient"/);
-  assert.match(cartJs, /catalogData\.zelleRecipient/);
-  assert.match(sharedJs, /payload\.paymentMethod = 'zelle'/);
-  assert.match(sharedJs, /result\.zelle\.recipient/);
-  assert.match(sharedJs, /enter only <strong>.*reference.*and nothing else/);
-  assert.match(sharedJs, /Zelle 10% discount cannot be combined with codes/);
-  assert.match(indexJs, /'zelle', 'crypto', 'stripe'/);
-  assert.match(indexJs, /response\.zelle = \{ recipient: config\.ZELLE_RECIPIENT/);
-  assert.match(indexJs, /normalizedPaymentMethod === 'zelle' \? subtotal \* config\.ZELLE_PAYMENT_DISCOUNT_RATE/);
-  assert.match(indexJs, /'ZELLE10'/);
-  assert.match(notificationsJs, /order\.payment_provider === 'zelle'/);
-  assert.match(notificationsJs, /config\.ZELLE_RECIPIENT/);
-  assert.match(notificationsJs, /Zelle note: enter only \$\{ref\} and nothing else/);
-  assert.match(adminJs, /admin-payment-manual">Zelle/);
+  const customerSurface = ['public/cart.html', 'public/index.html', 'public/js/cart.js', 'public/js/shared.js',
+    'server/index.js', 'server/notifications.js', 'server/reminders.js'].map(read).join('\n');
+  assert.doesNotMatch(customerSurface, /zelle/i);
+  assert.equal(config.ZELLE_RECIPIENT, undefined);
+  assert.equal(config.ZELLE_PAYMENT_DISCOUNT_RATE, undefined);
+  // Older Zelle orders stay readable in the admin.
+  assert.match(read('public/js/admin.js'), /Zelle \(legacy\)/);
 });
 
-test('PayPal is unavailable for new checkout while historical captures remain supported', () => {
+test('PayPal is fully removed from checkout and the server', () => {
   const cartHtml = read('public/cart.html');
   const sharedJs = read('public/js/shared.js');
   const indexJs = read('server/index.js');
-
   assert.doesNotMatch(cartHtml, /PayPal/i);
   assert.doesNotMatch(sharedJs, /PayPal/i);
-  assert.match(indexJs, /app\.post\('\/api\/paypal\/create-order'[\s\S]*?res\.status\(410\)/);
-  assert.match(indexJs, /\['paypal', 'manual_paypal'\]\.includes\(req\.body\?\.paymentMethod\)/);
-  assert.match(indexJs, /app\.post\('\/api\/paypal\/capture-order'/);
+  assert.doesNotMatch(indexJs, /paypal/i);
+  assert.equal(fs.existsSync(path.join(__dirname, 'paypal.js')), false);
 });

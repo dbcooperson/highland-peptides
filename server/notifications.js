@@ -6,7 +6,7 @@ function money(value) {
 }
 
 const PAYMENT_MISMATCH_TEXT = 'If the amount is incorrect, we will contact you and pause fulfillment until the payment is resolved. Your refund rights remain in effect.';
-const DELIVERY_REFUND_TEXT = 'If your paid order has not been received within 30 calendar days of placing it, we guarantee a full refund of the amount paid, including shipping. Contact support@highlandpeptides.com with your order number.';
+const DELIVERY_REFUND_TEXT = 'If you do not receive your order within 30 days, we will give you your entire order for free, on us. Just email support@snowyresearch.com with your order number.';
 
 function htmlEscape(value) {
   return String(value || '')
@@ -27,7 +27,7 @@ function orderText(order, source = 'payment') {
     .join(', ');
 
   return [
-    `Highland Peptides order backup`,
+    `Snowy Research order backup`,
     `Source: ${source}`,
     `Order #: ${order.id}`,
     `Status: ${order.status}`,
@@ -45,7 +45,7 @@ function orderText(order, source = 'payment') {
     `Subtotal: ${money(order.subtotal)}`,
     order.discount_code ? `Discount (${order.discount_code}): -${money(order.discount_amount)}` : `Discount: ${money(0)}`,
     order.store_credit_amount ? `Store credit used: -${money(order.store_credit_amount)}` : null,
-    `Shipping: ${money(order.shipping_fee)}${order.shipping_method === 'international' ? ' (international)' : ' (U.S.)'}`,
+    `Shipping: ${money(order.shipping_fee)}${order.shipping_method === 'international' ? ' (international)' : order.shipping_method === 'priority' ? ' (U.S. Priority Mail)' : ' (U.S.)'}`,
     order.order_fee ? `Processing: ${money(order.order_fee)}` : null,
     `Total: ${money(order.total)}`,
   ].filter(line => line !== null).join('\n');
@@ -67,7 +67,7 @@ function orderHtml(order, source = 'payment') {
   `).join('');
 
   return `
-    <h2>Highland Peptides order backup</h2>
+    <h2>Snowy Research order backup</h2>
     <p><strong>Source:</strong> ${htmlEscape(source)}</p>
     <p><strong>Order #:</strong> ${htmlEscape(order.id)}<br>
     <strong>Status:</strong> ${htmlEscape(order.status)}<br>
@@ -85,7 +85,7 @@ function orderHtml(order, source = 'payment') {
     <p>Subtotal: ${money(order.subtotal)}<br>
     ${order.discount_code ? `Discount (${htmlEscape(order.discount_code)}): -${money(order.discount_amount)}<br>` : ''}
     ${order.store_credit_amount ? `Store credit used: -${money(order.store_credit_amount)}<br>` : ''}
-    Shipping: ${money(order.shipping_fee)} ${order.shipping_method === 'international' ? '(international)' : '(U.S.)'}<br>
+    Shipping: ${money(order.shipping_fee)} ${order.shipping_method === 'international' ? '(international)' : order.shipping_method === 'priority' ? '(U.S. Priority Mail)' : '(U.S.)'}<br>
     ${order.order_fee ? `Processing: ${money(order.order_fee)}<br>` : ''}
     <strong>Total: ${money(order.total)}</strong></p>
   `;
@@ -111,123 +111,17 @@ async function sendEmailBackup(order, source) {
   await transport.sendMail({
     from: config.ORDER_BACKUP_EMAIL_FROM,
     to: config.ORDER_BACKUP_EMAIL_TO,
-    subject: `Highland Peptides Order #${order.id} - ${money(order.total)}`,
+    subject: `Snowy Research Order #${order.id} - ${money(order.total)}`,
     text: orderText(order, source),
     html: orderHtml(order, source),
   });
   return 'email';
 }
 
-async function sendDiscordBackup(order, source) {
-  if (!config.DISCORD_ORDER_WEBHOOK_URL) return null;
-  const text = orderText(order, source);
-  const response = await fetch(config.DISCORD_ORDER_WEBHOOK_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      username: 'Highland Orders',
-      content: `New order backup: #${order.id} - ${money(order.total)}`,
-      embeds: [{
-        title: `Order #${order.id}`,
-        description: '```' + text.slice(0, 3900) + '```',
-        color: 4545349,
-      }],
-    }),
-  });
-  if (!response.ok) throw new Error(`Discord backup failed: ${response.status}`);
-  return 'discord';
-}
-
-function fulfillmentAddressText(order) {
-  const buyer = order && order.buyer ? order.buyer : {};
-  const cityLine = [buyer.city, buyer.state, buyer.zip].filter(Boolean).join(' ');
-  return [
-    buyer.name,
-    buyer.address1,
-    buyer.address2,
-    cityLine,
-    buyer.country,
-  ]
-    .map(value => String(value || '').trim().replace(/```/g, "'''").replace(/[\u0000-\u001f\u007f]/g, ''))
-    .filter(Boolean)
-    .join('\n');
-}
-
-function discordWaitUrl(webhookUrl) {
-  const url = new URL(webhookUrl);
-  url.searchParams.set('wait', 'true');
-  return url.toString();
-}
-
-async function verifyFulfillmentDiscordWebhook(options = {}) {
-  const webhookUrl = String(options.webhookUrl || config.DISCORD_FULFILLMENT_WEBHOOK_URL || '').trim();
-  const expectedChannelId = String(options.expectedChannelId || config.DISCORD_FULFILLMENT_CHANNEL_ID || '').trim();
-  const fetchImpl = options.fetchImpl || fetch;
-  if (!webhookUrl) return null;
-
-  // Discord webhooks are channel-specific. Verify the destination before
-  // transmitting customer PII so a stale or copied webhook cannot send an
-  // address into the wrong channel.
-  const metadataResponse = await fetchImpl(webhookUrl, { method: 'GET' });
-  if (!metadataResponse.ok) throw new Error(`Discord fulfillment webhook check failed: ${metadataResponse.status}`);
-  const metadata = await metadataResponse.json();
-  if (!expectedChannelId || String(metadata.channel_id || '') !== expectedChannelId) {
-    throw new Error('Discord fulfillment webhook is not attached to the authorized shipping channel.');
-  }
-
-  return {
-    webhookUrl,
-    fetchImpl,
-    channelId: String(metadata.channel_id || ''),
-    webhookId: String(metadata.id || ''),
-    webhookName: String(metadata.name || ''),
-  };
-}
-
-async function checkFulfillmentDiscordConnection(options = {}) {
-  const verified = await verifyFulfillmentDiscordWebhook(options);
-  if (!verified) return { configured: false, authorized: false };
-  return {
-    configured: true,
-    authorized: true,
-    channelId: verified.channelId,
-    webhookId: verified.webhookId,
-    webhookName: verified.webhookName,
-  };
-}
-
-async function sendPendingTrackingDiscord(order, options = {}) {
-  const verified = await verifyFulfillmentDiscordWebhook(options);
-  if (!verified) return null;
-  const addressText = fulfillmentAddressText(order).slice(0, 1900);
-
-  const response = await verified.fetchImpl(discordWaitUrl(verified.webhookUrl), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      username: 'Highland Shipping',
-      // Keep the message body as only the mailing address. Discord's mobile
-      // "Copy Text" action copies message content but not embed descriptions,
-      // so this can be pasted straight into Pirate Ship without cleanup.
-      content: addressText,
-      embeds: [{
-        title: `Pending tracking · Order HP-${order.id}`,
-        description: 'Long-press the message and choose **Copy Text**, then paste it directly into Pirate Ship.',
-        color: 4545349,
-        footer: { text: 'Address verified at checkout when Google validation is enabled.' },
-      }],
-      allowed_mentions: { parse: [] },
-    }),
-  });
-  if (!response.ok) throw new Error(`Discord fulfillment post failed: ${response.status}`);
-  const message = await response.json().catch(() => ({}));
-  return { channel: 'discord', messageId: String(message.id || '') };
-}
-
 async function sendOrderBackup(order, source = 'payment') {
   const channels = [];
   const errors = [];
-  for (const send of [sendEmailBackup, sendDiscordBackup]) {
+  for (const send of [sendEmailBackup]) {
     try {
       const channel = await send(order, source);
       if (channel) channels.push(channel);
@@ -239,7 +133,7 @@ async function sendOrderBackup(order, source = 'payment') {
 }
 
 function customerInstructionsText(order) {
-  const ref = `HP-${order.id}`;
+  const ref = `SR-${order.id}`;
   const lines = [
     `Thanks for your order at ${config.SITE_NAME}!`,
     ``,
@@ -259,31 +153,6 @@ function customerInstructionsText(order) {
       `Please reference your order number: ${ref}`,
       PAYMENT_MISMATCH_TEXT,
     );
-  } else if (order.payment_provider === 'manual_paypal') {
-    lines.push(
-      `Send the exact total due to PayPal:`,
-      config.PAYPAL_MANUAL_EMAIL,
-      ``,
-      `IMPORTANT: Send using PayPal Goods and Services.`,
-      `Leave the PayPal note completely blank. Do not include the order number, product names, or any other text.`,
-      ``,
-      `Use the exact amount shown above so we can match your payment to ${ref}.`,
-      PAYMENT_MISMATCH_TEXT,
-      `Payment is manually reviewed before fulfillment. Once confirmed, your order ships the next business day.`,
-      `If you have questions, reply to this email.`,
-    );
-  } else if (order.payment_provider === 'zelle') {
-    lines.push(
-      `Send the exact total due by Zelle to:`,
-      config.ZELLE_RECIPIENT,
-      ``,
-      `Zelle note: enter only ${ref} and nothing else.`,
-      `Do not include product names, comments, or any other text in the note.`,
-      `Use the exact amount shown above so we can match your payment to ${ref}.`,
-      PAYMENT_MISMATCH_TEXT,
-      `Payment is manually reviewed before fulfillment. Once confirmed, your order ships the next business day.`,
-      `If you have questions, reply to this email.`,
-    );
   } else {
     lines.push(
       `We'll follow up shortly with payment instructions.`,
@@ -296,7 +165,7 @@ function customerInstructionsText(order) {
 }
 
 function customerInstructionsHtml(order) {
-  const ref = `HP-${order.id}`;
+  const ref = `SR-${order.id}`;
   let body;
   if (order.payment_provider === 'crypto') {
     const asset = order.crypto_asset || 'BTC';
@@ -308,28 +177,6 @@ function customerInstructionsHtml(order) {
       <p>After sending, reply to this email with your transaction ID (TXID) or submit it on our site so we can confirm your payment quickly.</p>
       <p>Please reference your order number: <strong>${htmlEscape(ref)}</strong></p>
       <p>${htmlEscape(PAYMENT_MISMATCH_TEXT)}</p>
-    `;
-  } else if (order.payment_provider === 'manual_paypal') {
-    body = `
-      <p>Send the exact total due to PayPal:</p>
-      <p style="font-family:monospace; font-size:16px;"><strong>${htmlEscape(config.PAYPAL_MANUAL_EMAIL)}</strong></p>
-      <p><strong>Send using PayPal Goods and Services.</strong></p>
-      <p><strong>Leave the PayPal note completely blank.</strong> Do not include the order number, product names, or any other text.</p>
-      <p>Use the exact amount shown above so we can match your payment to <strong>${htmlEscape(ref)}</strong>.</p>
-      <p>${htmlEscape(PAYMENT_MISMATCH_TEXT)}</p>
-      <p>Payment is manually reviewed before fulfillment. Once confirmed, your order ships the next business day.</p>
-      <p>If you have questions, reply to this email.</p>
-    `;
-  } else if (order.payment_provider === 'zelle') {
-    body = `
-      <p>Send the exact total due by Zelle to:</p>
-      <p style="font-family:monospace; font-size:16px;"><strong>${htmlEscape(config.ZELLE_RECIPIENT)}</strong></p>
-      <p><strong>Zelle note: enter only ${htmlEscape(ref)} and nothing else.</strong></p>
-      <p>Do not include product names, comments, or any other text in the note.</p>
-      <p>Use the exact amount shown above so we can match your payment to <strong>${htmlEscape(ref)}</strong>.</p>
-      <p>${htmlEscape(PAYMENT_MISMATCH_TEXT)}</p>
-      <p>Payment is manually reviewed before fulfillment. Once confirmed, your order ships the next business day.</p>
-      <p>If you have questions, reply to this email.</p>
     `;
   } else {
     body = `<p>We'll follow up shortly with payment instructions. If you have questions, reply to this email.</p>`;
@@ -350,7 +197,7 @@ async function sendCustomerPaymentInstructions(order) {
   await transport.sendMail({
     from: config.CUSTOMER_EMAIL_FROM,
     to: buyer.email,
-    subject: `${config.SITE_NAME} Order HP-${order.id} - Payment Instructions`,
+    subject: `${config.SITE_NAME} Order SR-${order.id} - Payment Instructions`,
     text: customerInstructionsText(order),
     html: customerInstructionsHtml(order),
   });
@@ -375,17 +222,17 @@ async function sendPaymentReminder(order) {
   const transport = smtpTransport();
   const buyer = order && order.buyer ? order.buyer : {};
   if (!transport || !buyer.email) return null;
-  const ref = `HP-${order.id}`;
+  const ref = `SR-${order.id}`;
   const provider = order.payment_provider === 'crypto'
     ? `${order.crypto_asset || 'crypto'} payment`
-    : order.payment_provider === 'zelle' ? 'Zelle payment' : 'PayPal payment';
+    : 'payment';
   const confirmation = order.payment_provider === 'crypto'
     ? 'the TXID'
-    : order.payment_provider === 'zelle' ? 'your Zelle confirmation' : 'your PayPal confirmation';
+    : 'your payment confirmation';
   const text = [
     `Payment reminder for ${ref}`,
     ``,
-    `We have your Highland Peptides order, but it is still awaiting ${provider}.`,
+    `We have your Snowy Research order, but it is still awaiting ${provider}.`,
     `Exact total due: ${money(order.total)}`,
     ``,
     `If you already sent payment, reply to this email with ${confirmation} so we can match it.`,
@@ -395,7 +242,7 @@ async function sendPaymentReminder(order) {
   ].join('\n');
   const html = `
     <h2>Payment reminder for ${htmlEscape(ref)}</h2>
-    <p>We have your Highland Peptides order, but it is still awaiting ${htmlEscape(provider)}.</p>
+    <p>We have your Snowy Research order, but it is still awaiting ${htmlEscape(provider)}.</p>
     <p><strong>Exact total due: ${money(order.total)}</strong></p>
     <p>If you already sent payment, reply to this email with ${htmlEscape(confirmation)} so we can match it.</p>
     <p>If you no longer want the order, no action is required.</p>
@@ -416,12 +263,12 @@ async function sendTrackingEmail(order, carrier, trackingNumber, details = {}) {
   const transport = smtpTransport();
   const buyer = order && order.buyer ? order.buyer : {};
   if (!transport || !buyer.email) return null;
-  const ref = `HP-${order.id}`;
+  const ref = `SR-${order.id}`;
   const url = trackingUrl(carrier, trackingNumber);
   const service = String(details.service || '').trim();
   const estimatedDelivery = String(details.estimatedDelivery || '').trim();
   const text = [
-    `Your Highland Peptides order has shipped`,
+    `Your Snowy Research order has shipped`,
     ``,
     `Order: ${ref}`,
     `Carrier: ${carrier}`,
@@ -433,7 +280,7 @@ async function sendTrackingEmail(order, carrier, trackingNumber, details = {}) {
     `Carrier scans may take up to one business day to appear. Reply to this email if you need help with your shipment.`,
   ].filter(Boolean).join('\n');
   const html = `
-    <h2>Your Highland Peptides order has shipped</h2>
+    <h2>Your Snowy Research order has shipped</h2>
     <p><strong>Order:</strong> ${htmlEscape(ref)}<br>
     <strong>Carrier:</strong> ${htmlEscape(carrier)}<br>
     ${service ? `<strong>Service:</strong> ${htmlEscape(service)}<br>` : ''}
@@ -457,7 +304,7 @@ function accountEmailLayout(title, body) {
   return `
     <div style="background:#f3efe6;padding:32px 18px;font-family:Arial,sans-serif;color:#1c1a17;">
       <div style="max-width:560px;margin:0 auto;background:#faf7f1;border:1px solid #d9d0c1;border-radius:18px;padding:30px;">
-        <div style="font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#315b43;font-weight:700;">Highland Peptides</div>
+        <div style="font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#315b43;font-weight:700;">Snowy Research</div>
         <h1 style="font-size:26px;line-height:1.15;margin:12px 0 16px;">${htmlEscape(title)}</h1>
         ${body}
         <p style="margin:26px 0 0;font-size:12px;color:#756c60;line-height:1.5;">If you did not request this, you can safely ignore this email. For help, reply to this message.</p>
@@ -469,7 +316,7 @@ async function sendAccountVerificationEmail(account, verificationUrl) {
   const transport = smtpTransport();
   if (!transport || !account || !account.email) return null;
   const text = [
-    `Verify your Highland Peptides account`,
+    `Verify your Snowy Research account`,
     ``,
     `Hi ${account.name || 'there'},`,
     `Open this link to verify your email and finish creating your account:`,
@@ -496,7 +343,7 @@ async function sendPasswordResetEmail(account, resetUrl) {
   const transport = smtpTransport();
   if (!transport || !account || !account.email) return null;
   const text = [
-    `Reset your Highland Peptides password`,
+    `Reset your Snowy Research password`,
     ``,
     `Open this link to choose a new password:`,
     resetUrl,
@@ -504,7 +351,7 @@ async function sendPasswordResetEmail(account, resetUrl) {
     `This link expires in 60 minutes.`,
   ].join('\n');
   const html = accountEmailLayout('Reset your password', `
-    <p style="font-size:16px;line-height:1.6;">Use the secure link below to choose a new password for your Highland Peptides account.</p>
+    <p style="font-size:16px;line-height:1.6;">Use the secure link below to choose a new password for your Snowy Research account.</p>
     <p style="margin:24px 0;"><a href="${htmlEscape(resetUrl)}" style="display:inline-block;background:#173d2b;color:#fff;text-decoration:none;border-radius:999px;padding:13px 22px;font-weight:700;">Reset password</a></p>
     <p style="font-size:13px;color:#756c60;line-height:1.5;">This link expires in 60 minutes and can only be used once.</p>`);
   await transport.sendMail({
@@ -530,67 +377,23 @@ async function sendCheckoutVerificationCode(email, code) {
     to: email,
     replyTo: config.CUSTOMER_EMAIL_FROM,
     subject: `Your ${config.SITE_NAME} checkout code`,
-    text: `Your Highland Peptides checkout verification code is ${code}. It expires in 10 minutes. If you did not request it, you can ignore this email.`,
+    text: `Your Snowy Research checkout verification code is ${code}. It expires in 10 minutes. If you did not request it, you can ignore this email.`,
     html: accountEmailLayout('Verify your checkout email', `<p style="font-size:16px;line-height:1.6;">Your checkout verification code is <strong style="font-size:24px;letter-spacing:3px;">${htmlEscape(code)}</strong>.</p><p>This code expires in 10 minutes. If you did not request it, you can ignore this email.</p>`),
   });
   return 'email';
 }
 
-async function sendShippingDelayNotice(recipient) {
-  const transport = smtpTransport();
-  if (!transport || !recipient || !recipient.email) return null;
-  const orderIds = Array.isArray(recipient.orderIds) ? recipient.orderIds : [];
-  const orderRefs = orderIds.map(id => `#${id}`).join(', ');
-  const name = recipient.name || 'there';
-  const plural = orderIds.length === 1 ? '' : 's';
-  const text = [
-    `Hi ${name},`,
-    '',
-    `If you haven't received your package yet, your order${plural} ${orderRefs} ${orderIds.length === 1 ? 'is' : 'are'} included in this fulfillment update.`,
-    '',
-    `We are writing with an important update regarding your Highland Peptides order${plural} ${orderRefs}. An unexpected product shortage has affected our fulfillment schedule, and your order is taking longer than anticipated.`,
-    '',
-    'We currently expect fulfillment within an additional 3–4 weeks at most. We sincerely apologize for the inconvenience and appreciate your patience while we restock and complete every affected order.',
-    '',
-    'As a thank-you for your understanding, we will include a complimentary bonus with your shipment when it is fulfilled.',
-    '',
-    'You do not need to take any action. We will send tracking information as soon as your package ships. If you have questions, reply to this email and include your order number.',
-    '',
-    'Thank you,',
-    'Highland Peptides Support',
-  ].join('\n');
-  const html = accountEmailLayout('Important order update', `
-    <p style="font-size:16px;line-height:1.6;">Hi ${htmlEscape(name)},</p>
-    <p style="font-size:16px;line-height:1.6;"><strong>If you haven't received your package yet</strong>, your order${plural} <strong>${htmlEscape(orderRefs)}</strong> ${orderIds.length === 1 ? 'is' : 'are'} included in this fulfillment update.</p>
-    <p style="font-size:16px;line-height:1.6;">An unexpected product shortage has affected the fulfillment schedule for your order${plural} <strong>${htmlEscape(orderRefs)}</strong>, and your order is taking longer than anticipated.</p>
-    <p style="font-size:16px;line-height:1.6;">We currently expect fulfillment within an additional <strong>3–4 weeks at most</strong>. We sincerely apologize for the inconvenience and appreciate your patience while we restock and complete every affected order.</p>
-    <p style="font-size:16px;line-height:1.6;">As a thank-you for your understanding, we will include a complimentary bonus with your shipment when it is fulfilled.</p>
-    <p style="font-size:16px;line-height:1.6;">You do not need to take any action. We will send tracking information as soon as your package ships. If you have questions, reply to this email and include your order number.</p>`);
-  await transport.sendMail({
-    from: config.CUSTOMER_EMAIL_FROM,
-    to: recipient.email,
-    replyTo: config.CUSTOMER_EMAIL_FROM,
-    subject: `Important update about your ${config.SITE_NAME} order`,
-    text,
-    html,
-  });
-  return 'email';
-}
-
 module.exports = {
+  smtpTransport, htmlEscape,
   sendOrderBackup,
-  sendPendingTrackingDiscord,
-  checkFulfillmentDiscordConnection,
   sendCustomerPaymentInstructions,
   sendPaymentReminder,
   sendTrackingEmail,
   sendAccountVerificationEmail,
   sendPasswordResetEmail,
   sendCheckoutVerificationCode,
-  sendShippingDelayNotice,
   isCustomerEmailConfigured,
   trackingUrl,
   orderText,
-  fulfillmentAddressText,
 };
 

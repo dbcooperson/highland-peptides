@@ -35,7 +35,7 @@ function order(overrides = {}) {
 test('Pirate Ship CSV includes only mapping-friendly fields and an order-specific inbox', () => {
   const csv = pirateShipCsv([order()], { inboundDomain: 'track.example.resend.app' });
   assert.match(csv, /^\ufeff"Order ID","Full Name","Address Line 1"/);
-  assert.match(csv, /"HP-187","July Researcher","8044 La Crosse Ave","Apt 3","Los Angeles","CA","90001","United States","hp-187-[a-f0-9]{16}@track\.example\.resend\.app","july@example\.com"/);
+  assert.match(csv, /"SR-187","July Researcher","8044 La Crosse Ave","Apt 3","Los Angeles","CA","90001","United States","sr-187-[a-f0-9]{16}@track\.example\.resend\.app","july@example\.com"/);
   assert.match(csv, /"3x Retatrutide 20mg"/);
 });
 
@@ -88,7 +88,7 @@ test('inbound tracking parser supports BCC copies matched by the original custom
 
 test('order-specific inbound aliases use a verifiable private token', () => {
   const csv = pirateShipCsv([order()], { inboundDomain: 'track.example.resend.app', tokenSecret: 'secret-1' });
-  const token = csv.match(/hp-187-([a-f0-9]{16})@/)[1];
+  const token = csv.match(/sr-187-([a-f0-9]{16})@/)[1];
   assert.equal(validOrderAliasToken(187, token, 'secret-1'), true);
   assert.equal(validOrderAliasToken(187, token, 'wrong-secret'), false);
   assert.equal(validOrderAliasToken(188, token, 'secret-1'), false);

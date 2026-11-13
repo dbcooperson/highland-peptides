@@ -1,0 +1,26 @@
+.sn-giveaway { max-width: 1040px; margin: 0 auto; padding: 32px 20px 56px; display: grid; gap: 28px; }
+.sn-giveaway section { background: rgba(238,246,252,0.86); border-radius: 22px; padding: 28px; backdrop-filter: blur(6px); }
+.gw-hero { text-align: center; }
+.gw-hero h1 { margin: 8px 0 6px; font-size: clamp(30px, 5vw, 46px); line-height: 1.05; }
+.gw-window { margin: 0 0 22px; color: #3b4a55; font-weight: 600; }
+.gw-prizes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.gw-prize { background: #0e1b24; color: #fff; border-radius: 18px; padding: 22px 14px; display: grid; gap: 4px; }
+.gw-prize span { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; opacity: .7; }
+.gw-prize strong { font-size: clamp(26px, 4vw, 38px); line-height: 1.05; }
+.gw-prize em { font-style: normal; font-size: 14px; opacity: .85; }
+.gw-prize-1 { box-shadow: 0 0 0 3px #e9c46a inset; }
+.gw-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.gw-step { display: grid; gap: 6px; background: #fff; border-radius: 16px; padding: 18px; }
+.gw-step b { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: #0e1b24; color: #fff; }
+.gw-step span { font-size: 14px; color: #4b5563; }
+.gw-free .sn-support-form { margin: 0; }
+.gw-muted { font-size: 14px; font-weight: 500; color: #6b7280; }
+.sn-support-form .gw-agree { display: flex !important; flex-direction: row !important; grid-template-columns: none; gap: 10px; align-items: flex-start; justify-content: flex-start; margin: 6px 0 14px; text-transform: none; letter-spacing: normal; font-size: 14px; font-weight: 500; color: #374151; }
+.sn-support-form .gw-agree input { margin: 3px 0 0; width: 16px; height: 16px; flex: 0 0 auto; padding: 0; }
+.sn-support-form .gw-agree span { flex: 1; }
+.sn-support-form .gw-agree a { text-transform: none; letter-spacing: normal; }
+.gw-rules ol { padding-left: 20px; display: grid; gap: 8px; font-size: 14px; color: #374151; }
+@media (max-width: 760px) {
+  .gw-prizes, .gw-steps { grid-template-columns: 1fr; }
+  .sn-giveaway section { padding: 20px; }
+}

@@ -57,12 +57,34 @@ function coaHTML(selected) {
   `;
 }
 
+function relatedHTML() {
+  const catalog = Array.isArray(window.siteCatalog) ? window.siteCatalog : [];
+  const bySlug = new Map();
+  for (const item of catalog) {
+    if (!item.slug || item.slug === family.slug) continue;
+    if ((item.group || item.category) !== (family.group || family.category)) continue;
+    const current = bySlug.get(item.slug);
+    if (!current || Number(item.price) < Number(current.price)) bySlug.set(item.slug, item);
+  }
+  const picks = [...bySlug.values()].slice(0, 4);
+  if (!picks.length) return '';
+  return `
+    <section class="sx-related" aria-label="Related compounds">
+      <div class="sx-related-head"><span class="sx-eyebrow">More ${escapeHTML(family.group || 'compounds')}</span><a href="/index.html#catalogSection">View all &rarr;</a></div>
+      <div class="sx-related-row">
+        ${picks.map(item => `
+          <a class="sx-related-card" href="/product/${encodeURIComponent(item.slug)}?sku=${encodeURIComponent(item.sku)}">
+            <span class="sx-related-img">${productMockupImageHTML(item)}</span>
+            <strong>${escapeHTML(item.name)}</strong>
+            <em>from $${Number(item.price).toFixed(2)}</em>
+          </a>`).join('')}
+      </div>
+    </section>`;
+}
+
 function renderProduct() {
   const selected = family.variants.find(v => v.sku === selectedSku) || family.variants[0];
   const coaRecord = family.coaBySku && family.coaBySku[selected.sku];
-  const purityProof = coaRecord
-    ? (coaRecord.purity ? `${coaRecord.purity} reported purity` : 'Laboratory report available')
-    : '';
   const availabilityLabel = selected.availabilityLabel || 'Available to order';
   if (selected.sku !== lastTrackedSku && window.hpTrack) {
     window.hpTrack('product_view', {
@@ -71,68 +93,106 @@ function renderProduct() {
     });
     lastTrackedSku = selected.sku;
   }
-  document.title = `${family.name} - Highland Peptides`;
+  document.title = `${family.name} - Snowy Research`;
   document.getElementById('breadcrumb').innerHTML =
     `<a href="/index.html#catalogSection" style="color:inherit;">Shop</a> / ${escapeHTML(family.group || family.category)} / ${escapeHTML(family.name)}`;
 
+  const researchName = selected.compoundName || family.compoundName || '';
+  const showResearchName = researchName && researchName.toLowerCase() !== String(family.name).toLowerCase();
+  const sizeLabel = cleanVialSpec(selected.spec);
+  const groupLabel = family.group || family.category || 'Research compound';
+  const specRows = [
+    ['Catalog no.', selected.sku],
+    showResearchName ? ['Research name', researchName] : null,
+    ['Category', groupLabel],
+    ['Size', `${sizeLabel} · 1 ${containerLabel(selected)}`],
+    ['Form', /water/i.test(family.name) ? 'Sterile liquid' : 'Lyophilized powder'],
+    ['Lab report', coaRecord ? (coaRecord.purity ? `${coaRecord.purity} purity` : 'Available') : 'On request'],
+    ['Intended use', 'Laboratory research only'],
+  ].filter(Boolean);
+
   document.getElementById('productContent').innerHTML = `
-    <div class="product-layout">
-      <aside class="product-visual-column">
-        <div class="product-media photo sku-mockup">${productMockupImageHTML(selected)}</div>
-        ${coaHTML(selected)}
-      </aside>
-      <div class="product-info">
-        <div class="product-kicker-row">
-          <div class="group">${escapeHTML(family.group || family.category)}</div>
-          <div class="product-kicker-badges">
-            ${selected.salesBadge ? `<span class="sales-pill">${escapeHTML(selected.salesBadge)}</span>` : ''}
-            <span class="ruo-pill">Research Use Only</span>
+    <article class="sx">
+      <header class="sx-head">
+        <div class="sx-head-meta">
+          <span class="sx-catno">No. ${escapeHTML(selected.sku)}</span>
+          <span>${escapeHTML(groupLabel)}</span>
+          ${selected.salesBadge ? `<span class="sx-flag">${escapeHTML(selected.salesBadge)}</span>` : ''}
+        </div>
+        <h1 class="product-title sx-title">${escapeHTML(family.name)}</h1>
+        ${showResearchName ? `<p class="sx-aka">Research name <strong>${escapeHTML(researchName)}</strong></p>` : ''}
+      </header>
+
+      <div class="sx-grid">
+        <figure class="sx-stage">
+          <div class="product-media photo sku-mockup">${productMockupImageHTML(selected)}</div>
+          <figcaption class="sx-stage-tag">
+            <strong>${escapeHTML(sizeLabel)}</strong>
+            <span>per ${escapeHTML(containerLabel(selected))}</span>
+          </figcaption>
+          ${coaRecord && coaRecord.purity ? `<span class="sx-stage-purity">${escapeHTML(coaRecord.purity)}<small>tested purity</small></span>` : ''}
+        </figure>
+
+        <section class="sx-ticket" aria-label="Order ${escapeHTML(family.name)}">
+          <div class="sx-ticket-top">
+            <span class="sx-stock ${availabilityLabel === 'Low stock' ? 'limited' : ''}"><i aria-hidden="true"></i>${escapeHTML(availabilityLabel)}</span>
+            <span class="sx-ruo">Research use only</span>
           </div>
-        </div>
-        <div class="product-proof-pills" aria-label="Product quality highlights">
-          ${coaRecord ? `<span>${escapeHTML(purityProof)}</span>` : ''}
-          <span data-shipping-countdown="pill">Calculating local cutoff…</span>
-        </div>
-        <h1 class="product-title">${escapeHTML(family.name)}</h1>
-        <p class="hint product-description">${escapeHTML(selected.description || family.description)}</p>
-        <div class="product-availability ${availabilityLabel === 'Low stock' ? 'limited' : ''}"><span aria-hidden="true"></span>${escapeHTML(availabilityLabel)}</div>
-        <div class="product-selected-card">
-          <span>Selected ${escapeHTML(containerLabel(selected))}</span>
-          <strong>${escapeHTML(cleanVialSpec(selected.spec))}</strong>
-        </div>
-        <div class="product-trust-grid">
-          ${coaRecord ? `<div><strong>Testing</strong><span>${escapeHTML(purityProof)}</span></div><div><strong>COA</strong><span>View COA below</span></div>` : ''}
-          <div class="shipping-countdown-card"><strong>Ships</strong><span data-shipping-countdown="card">Calculating your local shipping cutoff…</span></div>
-          <div><strong>Expiry</strong><span>Good for the next 2 years</span></div>
-        </div>
-
-        <div class="size-label">Choose size</div>
-        <div class="variant-chips" id="variantChips">${variantButtonsHTML()}</div>
-
-        ${quantityBundleOptionsHTML(selected)}
-
-        <div class="price-block">
-          <span class="price-amount">$${selected.price.toFixed(2)}</span>
-          <span class="price-unit">per ${escapeHTML(containerLabel(selected))}</span>
-        </div>
-
-        <div class="purchase-row">
-          <div class="qty-stepper">
-            <button type="button" class="qty-btn" id="qtyDown" aria-label="Decrease quantity">&minus;</button>
-            <input type="number" id="qtyInput" value="1" min="1">
-            <button type="button" class="qty-btn" id="qtyUp" aria-label="Increase quantity">+</button>
+          <div class="price-block sx-price">
+            <span class="price-amount">$${selected.price.toFixed(2)}</span>
+            <span class="price-unit">/ ${escapeHTML(containerLabel(selected))}</span>
           </div>
-          <button id="addToCartBtn" class="add-to-cart-btn">Add to Cart</button>
-        </div>
-        <p class="product-use-note">Sold strictly for laboratory research use. Not for human or veterinary consumption, administration, diagnostic use, or injection.</p>
-        <p class="form-msg" id="addMsg" style="color:var(--success);"></p>
+
+          <div class="size-label">Size</div>
+          <div class="variant-chips sx-sizes" id="variantChips">${variantButtonsHTML()}</div>
+
+          ${quantityBundleOptionsHTML(selected)}
+
+          <div class="purchase-row">
+            <div class="qty-stepper">
+              <button type="button" class="qty-btn" id="qtyDown" aria-label="Decrease quantity">&minus;</button>
+              <input type="number" id="qtyInput" value="1" min="1" aria-label="Quantity">
+              <button type="button" class="qty-btn" id="qtyUp" aria-label="Increase quantity">+</button>
+            </div>
+            <button id="addToCartBtn" class="add-to-cart-btn">Add to order</button>
+          </div>
+          <p class="form-msg" id="addMsg"></p>
+
+          <ul class="sx-perks">
+            <li><b>Crypto</b><span>No processing fee at checkout</span></li>
+            <li><b>30 days</b><span>Not delivered? Your order is free</span></li>
+            <li><b>TIKTOK15</b><span>15% off + free recon solution</span></li>
+          </ul>
+        </section>
       </div>
-    </div>
+
+      <section class="sx-sheet">
+        <div class="sx-about">
+          <span class="sx-eyebrow">About this compound</span>
+          <p class="product-description">${escapeHTML(selected.description || family.description)}</p>
+          ${coaHTML(selected)}
+        </div>
+        <dl class="sx-specs">
+          ${specRows.map(([k, v]) => `<div><dt>${escapeHTML(k)}</dt><dd>${escapeHTML(v)}</dd></div>`).join('')}
+        </dl>
+      </section>
+
+      <section class="sx-sets" data-bundle-section hidden>
+        <div class="sx-related-head"><span class="sx-eyebrow">Often researched together · save up to 10%</span></div>
+        <div id="productBundleGrid" class="sn-bundle-grid"></div>
+      </section>
+      ${relatedHTML()}
+    </article>
     <div class="mobile-purchase-dock" aria-label="Mobile purchase controls">
-      <div><span>${escapeHTML(family.name)} · ${escapeHTML(cleanVialSpec(selected.spec))}</span><strong>$${selected.price.toFixed(2)}</strong></div>
-      <button type="button" id="mobileAddToCartBtn">Add to Cart</button>
+      <div><span>${escapeHTML(family.name)} · ${escapeHTML(sizeLabel)}</span><strong>$${selected.price.toFixed(2)}</strong></div>
+      <button type="button" id="mobileAddToCartBtn">Add to order</button>
     </div>
   `;
+
+  renderBundleCards(
+    document.getElementById('productBundleGrid'),
+    siteBundleList().filter(bundle => family.variants.some(variant => bundle.skus.includes(variant.sku))).slice(0, 2)
+  );
 
   document.querySelectorAll('.variant-btn').forEach(btn => {
     btn.onclick = () => {
@@ -169,12 +229,11 @@ function renderProduct() {
     addToCart(selectedSku, qty);
     updateCartBadge();
     const msg = document.getElementById('addMsg');
-    msg.textContent = 'Added to cart.';
+    msg.textContent = 'Added to your order.';
     setTimeout(() => { msg.textContent = ''; }, 2000);
   };
   document.getElementById('addToCartBtn').onclick = addSelectedToCart;
   document.getElementById('mobileAddToCartBtn').onclick = addSelectedToCart;
-  if (window.updateShippingCountdowns) window.updateShippingCountdowns();
 }
 
 async function init() {
@@ -188,8 +247,9 @@ async function init() {
     api(`/api/product?${query}`),
   ]);
   window.siteCatalog = catalogData.products;
-  window.siteFees = { packagingFee: catalogData.packagingFee, shippingFee: catalogData.shippingFee, internationalShippingFee: catalogData.internationalShippingFee || 35, shippingOptions: catalogData.shippingOptions || [], orderFeeRate: catalogData.orderFeeRate || 0 };
+  window.siteFees = { packagingFee: catalogData.packagingFee, shippingFee: catalogData.shippingFee, internationalShippingFee: catalogData.internationalShippingFee || 35, priorityShippingFee: catalogData.priorityShippingFee || 19.99, shippingOptions: catalogData.shippingOptions || [], orderFeeRate: catalogData.orderFeeRate || 0 };
   window.sitePromotion = catalogData.promotion || null;
+  window.siteBundles = catalogData.bundles || [];
   family = productData;
   selectedSku = sku || family.variants[0].sku;
   renderProduct();

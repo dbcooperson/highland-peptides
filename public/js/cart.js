@@ -1,4 +1,4 @@
-function clearHighlandCart(event) {
+function clearCart(event) {
   if (event && typeof event.preventDefault === 'function') event.preventDefault();
   try { localStorage.removeItem('hp_cart'); } catch (err) {}
   saveCart({});
@@ -10,11 +10,11 @@ function clearHighlandCart(event) {
   }
   renderCartPage();
 }
-window.clearHighlandCart = clearHighlandCart;
+window.clearCart = clearCart;
 
 document.addEventListener('click', (event) => {
   const clearBtn = event.target && event.target.closest ? event.target.closest('#clearCartBtn, #clearCartSummaryBtn') : null;
-  if (clearBtn) clearHighlandCart(event);
+  if (clearBtn) clearCart(event);
 }, true);
 function sadFaceSVG() {
   return `<svg class="cart-empty-face" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -27,7 +27,7 @@ function sadFaceSVG() {
 }
 
 function cartLineHTML(sku, qty, p) {
-  const pricing = productQuantityPricing(p, qty);
+  const pricing = cartLinePricing(sku, getCart());
   return `
     <div class="cart-line">
       <div class="cart-line-media photo sku-mockup" aria-hidden="true">${productMockupImageHTML(p)}</div>
@@ -35,7 +35,7 @@ function cartLineHTML(sku, qty, p) {
         <div class="cart-line-kicker">${escapeHTML(p.group || p.category || 'Research product')}</div>
         <strong>${escapeHTML(p.name)}</strong>
         <span>${escapeHTML(cleanVialSpec(p.spec))} x${qty} ${escapeHTML(qty === 1 ? (p.containerLabel || 'vial') : `${p.containerLabel || 'vial'}s`)}</span>
-        ${pricing.savings ? `<span class="cart-line-savings">Bundle savings: $${pricing.savings.toFixed(2)}</span>` : ''}
+        ${pricing.savings ? `<span class="cart-line-savings">${pricing.bundleSavings ? 'Research set savings' : 'Bundle savings'}: $${pricing.savings.toFixed(2)}</span>` : ''}
         <em>Guaranteed 99% purity</em>
       </div>
       <div class="cart-line-qty" aria-label="Quantity controls">
@@ -56,10 +56,10 @@ function freeBundleLineHTML(state) {
     <div class="cart-line cart-line-reward">
       <div class="cart-line-media photo sku-mockup" aria-hidden="true">${productMockupImageHTML(product)}</div>
       <div class="cart-line-info">
-        <div class="cart-line-kicker">Bundle reward</div>
+        <div class="cart-line-kicker">Free gift</div>
         <strong>${escapeHTML(product.name)}</strong>
-        <span>10ml x${state.freeQuantity} vial &bull; added automatically</span>
-        <em>Unlocked with 5 paid research products</em>
+        <span>${escapeHTML(cleanVialSpec(product.spec))} x${state.freeQuantity} vial &bull; added automatically</span>
+        <em>Free with orders $${state.minimumSubtotal}+ (before shipping)</em>
       </div>
       <div class="cart-line-reward-badge">FREE</div>
     </div>
@@ -87,18 +87,19 @@ function unavailableCartLineHTML(sku, qty) {
 function cartSummaryHTML(subtotal, promotionState) {
   const shippingFee = (window.siteFees && window.siteFees.shippingFee) || 0;
   const orderFeeRate = (window.siteFees && window.siteFees.orderFeeRate) || 0;
-  const referralDiscount = activeReferralCampaign() ? Math.round(cartPromoEligibleSubtotal() * 10) / 100 : 0;
+  const referralDiscount = 0;
   const feeBase = subtotal - referralDiscount + shippingFee;
   const orderFee = Math.round(feeBase * orderFeeRate * 100) / 100;
   const estimatedTotal = feeBase + orderFee;
   return `
-    <div class="cart-summary-trust"><span>Secure checkout</span><span>RUO certification required</span><span>Support: support@highlandpeptides.com</span></div>
+    <div class="cart-summary-trust"><span>Secure checkout</span><span>RUO certification required</span><span>Support: support@snowyresearch.com</span></div>
     <div class="cart-summary-lines">
       <div><span>Subtotal</span><strong>$${subtotal.toFixed(2)}</strong></div>
+      ${cartBundleAllocation(getCart()).applied.map(set => `<div class="bundle-summary-line"><span>${escapeHTML(set.name)}${set.sets > 1 ? ` x${set.sets}` : ''} (included)</span><strong>-$${set.totalSavings.toFixed(2)}</strong></div>`).join('')}
       ${referralDiscount ? `<div><span>Referral link (10%)</span><strong>-$${referralDiscount.toFixed(2)}</strong></div>` : ''}
-      ${promotionState && promotionState.unlocked ? '<div class="bundle-summary-line"><span>Sterile Water 10ml · pH 4.5 bundle reward</span><strong>FREE</strong></div>' : ''}
+      ${promotionState && promotionState.unlocked && promotionState.freeProduct ? `<div class="bundle-summary-line"><span>Free ${escapeHTML(promotionState.freeProduct.name)} ${escapeHTML(cleanVialSpec(promotionState.freeProduct.spec))}</span><strong>FREE</strong></div>` : ''}
       <div><span>U.S. shipping</span><strong>$${shippingFee.toFixed(2)}</strong></div>
-      ${orderFeeRate ? `<div><span>Processing fee</span><strong>$${orderFee.toFixed(2)}</strong></div>` : ''}
+      ${orderFeeRate ? `<div class="cart-fee-line"><span>Processing fee<small>Waived if you pay with crypto</small></span><strong>$${orderFee.toFixed(2)}</strong></div>` : ''}
       <div class="cart-summary-total"><span>Estimated total</span><strong>$${estimatedTotal.toFixed(2)}</strong></div>
     </div>
   `;
@@ -142,7 +143,7 @@ function renderCartPage() {
       unavailableCount += 1;
       return unavailableCartLineHTML(sku, cart[sku]);
     }
-    subtotal += productQuantityPricing(p, cart[sku]).total;
+    subtotal += cartLinePricing(sku, cart).total;
     return cartLineHTML(sku, cart[sku], p);
   }).join('');
   const promotionState = bundlePromotionState(cart);
@@ -152,6 +153,27 @@ function renderCartPage() {
     </div>
   `);
   itemsEl.insertAdjacentHTML('beforeend', freeBundleLineHTML(promotionState));
+  const nearSet = nearlyCompleteBundle(cart);
+  if (nearSet) {
+    const missing = getCatalogProductBySku(nearSet.missing[0]);
+    itemsEl.insertAdjacentHTML('beforeend', `
+      <div class="cart-set-offer">
+        <span class="cart-set-img" aria-hidden="true">${productMockupImageHTML(missing)}</span>
+        <div class="cart-set-copy">
+          <strong>Complete the ${escapeHTML(nearSet.bundle.name)}</strong>
+          <span>Add ${escapeHTML(missing.name)} ${escapeHTML(cleanVialSpec(missing.spec))} and save $${nearSet.bundle.savings.toFixed(2)} on the set.</span>
+        </div>
+        <button type="button" class="cart-set-add" data-sku="${escapeHTML(missing.sku)}">Add $${missing.price.toFixed(2)}</button>
+      </div>
+    `);
+    itemsEl.querySelector('.cart-set-add').addEventListener('click', event => {
+      const latest = getCart();
+      latest[event.currentTarget.dataset.sku] = (latest[event.currentTarget.dataset.sku] || 0) + 1;
+      saveCart(latest);
+      updateCartBadge();
+      renderCartPage();
+    });
+  }
   if (unavailableCount) {
     itemsEl.insertAdjacentHTML('afterbegin', `
       <div class="cart-cleanup-notice">
@@ -204,16 +226,22 @@ wireCheckout();
 
 async function init() {
   if (new URLSearchParams(window.location.search).get('clearCart') === '1') {
-    clearHighlandCart();
+    clearCart();
+    history.replaceState(null, '', '/cart.html');
+  }
+  const restoreToken = new URLSearchParams(window.location.search).get('restore');
+  if (restoreToken) {
+    try {
+      const restored = await api(`/api/cart/restore?t=${encodeURIComponent(restoreToken)}`);
+      if (restored && restored.cart) saveCart(restored.cart);
+    } catch (_) { /* expired link: keep whatever cart is already here */ }
     history.replaceState(null, '', '/cart.html');
   }
   const catalogData = await api('/api/catalog');
   window.siteCatalog = catalogData.products;
-  window.siteFees = { packagingFee: catalogData.packagingFee, shippingFee: catalogData.shippingFee, internationalShippingFee: catalogData.internationalShippingFee || 35, shippingOptions: catalogData.shippingOptions || [], orderFeeRate: catalogData.orderFeeRate || 0, altPaymentDiscountRate: catalogData.altPaymentDiscountRate || 0, accountCryptoDiscountRate: catalogData.accountCryptoDiscountRate || 0, zellePaymentDiscountRate: catalogData.zellePaymentDiscountRate || 0 };
-  window.sitePayments = { zelleRecipient: catalogData.zelleRecipient || '+1 (213) 424-4643' };
-  const zelleRecipientPreview = document.getElementById('zelleRecipientPreview');
-  if (zelleRecipientPreview) zelleRecipientPreview.textContent = window.sitePayments.zelleRecipient;
+  window.siteFees = { packagingFee: catalogData.packagingFee, shippingFee: catalogData.shippingFee, internationalShippingFee: catalogData.internationalShippingFee || 35, priorityShippingFee: catalogData.priorityShippingFee || 19.99, shippingOptions: catalogData.shippingOptions || [], orderFeeRate: catalogData.orderFeeRate || 0, altPaymentDiscountRate: catalogData.altPaymentDiscountRate || 0, accountCryptoDiscountRate: catalogData.accountCryptoDiscountRate || 0 };
   window.sitePromotion = catalogData.promotion || null;
+  window.siteBundles = catalogData.bundles || [];
   const activeSkus = new Set(window.siteCatalog.map(p => p.sku));
   const currentCart = getCart();
   let prunedCart = false;

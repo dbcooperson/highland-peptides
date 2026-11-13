@@ -52,6 +52,13 @@ function initialData() {
     promoAuditLog: [],
     nextPromoAuditId: 1,
     appliedMigrations: [],
+    supportThreads: [],
+    nextSupportThreadId: 1,
+    giveawayFreeEntries: [],
+    nextGiveawayFreeEntryId: 1,
+    giveawayDraws: [],
+    emailSuppressions: [],
+    checkoutStarts: [],
   };
 }
 
@@ -67,6 +74,13 @@ function normalizeData(raw) {
   data.limitedPromotionUses = Array.isArray(data.limitedPromotionUses) ? data.limitedPromotionUses : [];
   data.promoAuditLog = Array.isArray(data.promoAuditLog) ? data.promoAuditLog : [];
   data.appliedMigrations = Array.isArray(data.appliedMigrations) ? data.appliedMigrations : [];
+  data.supportThreads = Array.isArray(data.supportThreads) ? data.supportThreads : [];
+  data.giveawayFreeEntries = Array.isArray(data.giveawayFreeEntries) ? data.giveawayFreeEntries : [];
+  data.giveawayDraws = Array.isArray(data.giveawayDraws) ? data.giveawayDraws : [];
+  data.emailSuppressions = Array.isArray(data.emailSuppressions) ? data.emailSuppressions : [];
+  data.checkoutStarts = Array.isArray(data.checkoutStarts) ? data.checkoutStarts : [];
+  data.nextGiveawayFreeEntryId = Math.max(Number(data.nextGiveawayFreeEntryId || 1), ...data.giveawayFreeEntries.map(item => Number(item.id || 0) + 1), 1);
+  data.nextSupportThreadId = Math.max(Number(data.nextSupportThreadId || 1), ...data.supportThreads.map(item => Number(item.id || 0) + 1), 1);
   data.nextOrderId = Math.max(Number(data.nextOrderId || 1), ...data.orders.map(item => Number(item.id || 0) + 1), 1);
   data.nextAccountId = Math.max(Number(data.nextAccountId || 1), ...data.accounts.map(item => Number(item.id || 0) + 1), 1);
   data.nextCreditLedgerId = Math.max(Number(data.nextCreditLedgerId || 1), ...data.creditLedger.map(item => Number(item.id || 0) + 1), 1);
@@ -176,33 +190,7 @@ function getPromoAuditLog(limit = 500) {
   return load().promoAuditLog.slice().sort((left, right) => Number(right.id) - Number(left.id)).slice(0, safeLimit);
 }
 
-function setPromoManagerOrderVisibility(orderId, username, approved) {
-  const data = load();
-  const order = data.orders.find(item => item.id === Number(orderId));
-  const manager = String(username || '').trim().toLowerCase();
-  if (!order || normalizedCode(order.discount_code) !== 'OGRE' || manager !== 'promo02') return null;
-  const approvedFor = new Set((Array.isArray(order.promo_manager_approved_for) ? order.promo_manager_approved_for : [])
-    .map(value => String(value || '').trim().toLowerCase())
-    .filter(Boolean));
-  if (approved) approvedFor.add(manager);
-  else approvedFor.delete(manager);
-  order.promo_manager_approved_for = [...approvedFor];
-  order.promo_manager_visibility_updated_at = new Date().toISOString();
-  save(data);
-  return order;
-}
 
-function getApprovedPromoManagerOrders(username, code = 'OGRE') {
-  const manager = String(username || '').trim().toLowerCase();
-  const promotionCode = normalizedCode(code);
-  if (!manager || !promotionCode) return [];
-  return load().orders
-    .filter(order => normalizedCode(order.discount_code) === promotionCode
-      && (Array.isArray(order.promo_manager_approved_for) ? order.promo_manager_approved_for : [])
-        .map(value => String(value || '').trim().toLowerCase())
-        .includes(manager))
-    .sort((left, right) => Number(right.id) - Number(left.id));
-}
 
 function addLedgerEntry(data, accountId, amountCents, type, details = {}) {
   const entry = {
@@ -348,9 +336,143 @@ function setAccountReferralCode(id, code) {
   return account;
 }
 
+// ---------- Support inbox ----------
+const SUPPORT_MAX_MESSAGES_PER_THREAD = 400;
+
+function findCustomerSupportThread(data, { accountId, tokenHash }) {
+  if (accountId) {
+    const byAccount = data.supportThreads.find(thread => thread.account_id === accountId);
+    if (byAccount) return byAccount;
+  }
+  if (tokenHash) return data.supportThreads.find(thread => thread.token_hash === tokenHash) || null;
+  return null;
+}
+
+function supportThreadSummary(thread) {
+  const last = thread.messages[thread.messages.length - 1] || null;
+  return {
+    id: thread.id,
+    name: thread.name,
+    email: thread.email,
+    accountId: thread.account_id || null,
+    orderNumber: thread.order_number || '',
+    status: thread.status,
+    createdAt: thread.created_at,
+    updatedAt: thread.updated_at,
+    adminUnread: thread.admin_unread || 0,
+    messageCount: thread.messages.length,
+    lastMessage: last ? { from: last.from, body: last.body.slice(0, 160), at: last.at } : null,
+  };
+}
+
+function customerSupportView(thread) {
+  if (!thread) return null;
+  return {
+    status: thread.status,
+    name: thread.name,
+    email: thread.email,
+    customerUnread: thread.customer_unread || 0,
+    messages: thread.messages.map(message => ({ id: message.id, from: message.from, body: message.body, at: message.at })),
+  };
+}
+
+// Adds a customer message, creating the conversation on first contact.
+function addSupportCustomerMessage({ accountId = null, tokenHash = null, name, email, orderNumber = '', body }) {
+  const data = load();
+  const now = new Date().toISOString();
+  let thread = findCustomerSupportThread(data, { accountId, tokenHash });
+  if (!thread) {
+    thread = {
+      id: data.nextSupportThreadId++,
+      token_hash: accountId ? null : tokenHash,
+      account_id: accountId || null,
+      name,
+      email,
+      order_number: orderNumber || '',
+      status: 'open',
+      created_at: now,
+      updated_at: now,
+      admin_unread: 0,
+      customer_unread: 0,
+      messages: [],
+    };
+    data.supportThreads.push(thread);
+  }
+  if (thread.messages.length >= SUPPORT_MAX_MESSAGES_PER_THREAD) {
+    return { error: 'This conversation is full. Please start a new one by emailing support.' };
+  }
+  if (name) thread.name = name;
+  if (email) thread.email = email;
+  if (orderNumber) thread.order_number = orderNumber;
+  thread.messages.push({ id: thread.messages.length + 1, from: 'customer', body, at: now });
+  thread.status = 'open';
+  thread.updated_at = now;
+  thread.admin_unread = (thread.admin_unread || 0) + 1;
+  save(data);
+  return { thread: customerSupportView(thread) };
+}
+
+function getCustomerSupportThread({ accountId = null, tokenHash = null, markSeen = false }) {
+  const data = load();
+  const thread = findCustomerSupportThread(data, { accountId, tokenHash });
+  if (!thread) return null;
+  const view = customerSupportView(thread);
+  if (markSeen && thread.customer_unread) {
+    thread.customer_unread = 0;
+    save(data);
+  }
+  return view;
+}
+
+function listSupportThreads() {
+  const data = load();
+  return data.supportThreads
+    .slice()
+    .sort((a, b) => String(b.updated_at).localeCompare(String(a.updated_at)))
+    .map(supportThreadSummary);
+}
+
+function supportUnreadCount() {
+  return load().supportThreads.reduce((sum, thread) => sum + (thread.admin_unread ? 1 : 0), 0);
+}
+
+function getSupportThreadForAdmin(id) {
+  const data = load();
+  const thread = data.supportThreads.find(item => item.id === Number(id));
+  if (!thread) return null;
+  if (thread.admin_unread) {
+    thread.admin_unread = 0;
+    save(data);
+  }
+  return { ...supportThreadSummary(thread), messages: thread.messages.map(message => ({ ...message })) };
+}
+
+function addSupportAdminReply(id, body) {
+  const data = load();
+  const thread = data.supportThreads.find(item => item.id === Number(id));
+  if (!thread) return null;
+  if (thread.messages.length >= SUPPORT_MAX_MESSAGES_PER_THREAD) return { error: 'This conversation is full.' };
+  const now = new Date().toISOString();
+  thread.messages.push({ id: thread.messages.length + 1, from: 'admin', body, at: now });
+  thread.updated_at = now;
+  thread.customer_unread = (thread.customer_unread || 0) + 1;
+  thread.admin_unread = 0;
+  save(data);
+  return { ...supportThreadSummary(thread), messages: thread.messages.map(message => ({ ...message })) };
+}
+
+function setSupportThreadStatus(id, status) {
+  const data = load();
+  const thread = data.supportThreads.find(item => item.id === Number(id));
+  if (!thread) return null;
+  thread.status = status === 'closed' ? 'closed' : 'open';
+  save(data);
+  return supportThreadSummary(thread);
+}
+
 // ---------- Orders ----------
 function paymentMatchAdjustmentCents(orderId, paymentProvider) {
-  if (paymentProvider === 'paypal' || paymentProvider === 'stripe') return 0;
+  if (paymentProvider === 'stripe') return 0;
   return (Number(orderId) % 49) + 1;
 }
 
@@ -392,7 +514,7 @@ function createOrder({ buyer, certifiedAt, items, subtotal, promoEligibleSubtota
     if (!customerAccount || !customerAccount.verified_at) throw new Error('Sign in to use store credit.');
     if (Number(customerAccount.credit_balance_cents || 0) < appliedCreditCents) throw new Error('Store-credit balance changed. Refresh checkout and try again.');
     customerAccount.credit_balance_cents -= appliedCreditCents;
-    addLedgerEntry(data, customerAccount.id, -appliedCreditCents, 'order_credit_used', { orderId: id, note: `Applied to order HP-${id}` });
+    addLedgerEntry(data, customerAccount.id, -appliedCreditCents, 'order_credit_used', { orderId: id, note: `Applied to order SR-${id}` });
   }
   const matchCents = paymentMatchAdjustmentCents(id, normalizedProvider);
   const paymentMatchAdjustment = Math.round(matchCents) / 100;
@@ -402,9 +524,10 @@ function createOrder({ buyer, certifiedAt, items, subtotal, promoEligibleSubtota
     id,
     status: 'pending_payment',
     payment_provider: normalizedProvider,
+    // Opts this order into abandoned-checkout / reorder emails (older orders never get them).
+    lifecycle_emails: true,
     payment_reference: null,
     crypto_asset: normalizedProvider === 'crypto' ? (cryptoAsset || 'BTC') : null,
-    paypal_order_id: null,
     paid_at: null,
     buyer,
     customer_account_id: customerAccount ? customerAccount.id : null,
@@ -446,10 +569,6 @@ function createOrder({ buyer, certifiedAt, items, subtotal, promoEligibleSubtota
     labels_printed_at: null,
     pirate_ship_exported_at: null,
     shipping_address_validation: shippingAddressValidation || null,
-    fulfillment_discord_dispatch_started_at: null,
-    fulfillment_discord_sent_at: null,
-    fulfillment_discord_message_id: null,
-    fulfillment_discord_error: null,
     created_at: new Date().toISOString(),
   };
   data.orders.push(order);
@@ -463,15 +582,6 @@ function getAllOrders() {
 
 function getOrderById(id) {
   return load().orders.find(order => order.id === Number(id)) || null;
-}
-
-function setPayPalOrderId(id, paypalOrderId) {
-  const data = load();
-  const order = data.orders.find(item => item.id === Number(id));
-  if (!order) return null;
-  order.paypal_order_id = paypalOrderId || null;
-  save(data);
-  return order;
 }
 
 function setStripeCheckoutSessionId(id, sessionId) {
@@ -513,7 +623,7 @@ function syncReferralCredit(data, order) {
     const reversal = Number(order.referral_credit_cents || rewardCents);
     account.credit_balance_cents = Math.max(0, Number(account.credit_balance_cents || 0) - reversal);
     order.referral_credit_status = 'reversed';
-    addLedgerEntry(data, account.id, -reversal, 'referral_reversal', { orderId: order.id, note: `Reversed reward from HP-${order.id}` });
+    addLedgerEntry(data, account.id, -reversal, 'referral_reversal', { orderId: order.id, note: `Reversed reward from SR-${order.id}` });
   } else if (!paid && order.referral_credit_status === 'pending_review') {
     order.referral_credit_status = 'void';
   }
@@ -535,7 +645,7 @@ function reviewReferralCredit(orderId, decision, adminNote = '') {
   if (decision === 'approved') {
     const amount = Number(order.referral_credit_cents || 0);
     account.credit_balance_cents = Number(account.credit_balance_cents || 0) + amount;
-    addLedgerEntry(data, account.id, amount, 'referral_reward', { orderId: order.id, note: `Approved referral reward from HP-${order.id}` });
+    addLedgerEntry(data, account.id, amount, 'referral_reward', { orderId: order.id, note: `Approved referral reward from SR-${order.id}` });
   }
   save(data);
   return order;
@@ -548,7 +658,7 @@ function refundStoreCredit(data, order) {
   if (!account || refundCents <= 0) return;
   account.credit_balance_cents = Number(account.credit_balance_cents || 0) + refundCents;
   order.store_credit_status = 'refunded';
-  addLedgerEntry(data, account.id, refundCents, 'order_credit_refund', { orderId: order.id, note: `Credit restored from HP-${order.id}` });
+  addLedgerEntry(data, account.id, refundCents, 'order_credit_refund', { orderId: order.id, note: `Credit restored from SR-${order.id}` });
 }
 
 function markOrderPaid(id, paymentReference) {
@@ -683,22 +793,6 @@ function markPaymentReminderSent(id) {
   return order;
 }
 
-function markShippingDelayNoticeSent(ids, recipientEmail, sentAt = new Date().toISOString()) {
-  const orderIds = new Set((ids || []).map(Number).filter(Number.isFinite));
-  const email = normalizedEmail(recipientEmail);
-  if (!orderIds.size || !email) return [];
-  const data = load();
-  const updated = [];
-  data.orders.forEach(order => {
-    if (!orderIds.has(Number(order.id)) || normalizedEmail(order.buyer && order.buyer.email) !== email) return;
-    order.shipping_delay_notice_sent_at = sentAt;
-    order.shipping_delay_notice_error = null;
-    updated.push(order);
-  });
-  if (updated.length) save(data);
-  return updated;
-}
-
 function claimPaymentReminder(id, staleAfterMs = 30 * 60 * 1000) {
   const data = load();
   const order = data.orders.find(item => item.id === Number(id));
@@ -805,45 +899,6 @@ function markInboundTrackingEvent(eventId, details = {}) {
   if (data.inboundTrackingEvents.length > 1000) data.inboundTrackingEvents = data.inboundTrackingEvents.slice(-1000);
   save(data);
   return event;
-}
-
-function claimFulfillmentDiscordPost(id, staleAfterMs = 10 * 60 * 1000) {
-  const data = load();
-  const order = data.orders.find(item => item.id === Number(id));
-  if (!order) return { claimed: false, reason: 'not_found', order: null };
-  if (order.fulfillment_discord_sent_at) return { claimed: false, reason: 'already_sent', order };
-  const startedAt = order.fulfillment_discord_dispatch_started_at
-    ? new Date(order.fulfillment_discord_dispatch_started_at).getTime()
-    : 0;
-  if (startedAt && Number.isFinite(startedAt) && Date.now() - startedAt < staleAfterMs) {
-    return { claimed: false, reason: 'in_progress', order };
-  }
-  order.fulfillment_discord_dispatch_started_at = new Date().toISOString();
-  order.fulfillment_discord_error = null;
-  save(data);
-  return { claimed: true, reason: 'claimed', order };
-}
-
-function markFulfillmentDiscordSent(id, messageId = '') {
-  const data = load();
-  const order = data.orders.find(item => item.id === Number(id));
-  if (!order) return null;
-  order.fulfillment_discord_sent_at = order.fulfillment_discord_sent_at || new Date().toISOString();
-  order.fulfillment_discord_message_id = String(messageId || '').slice(0, 80) || order.fulfillment_discord_message_id || null;
-  order.fulfillment_discord_dispatch_started_at = null;
-  order.fulfillment_discord_error = null;
-  save(data);
-  return order;
-}
-
-function markFulfillmentDiscordFailed(id, error) {
-  const data = load();
-  const order = data.orders.find(item => item.id === Number(id));
-  if (!order) return null;
-  order.fulfillment_discord_dispatch_started_at = null;
-  order.fulfillment_discord_error = String(error || 'Could not post fulfillment address.').slice(0, 500);
-  save(data);
-  return order;
 }
 
 function markOrderBackupSent(id, channels = [], errors = []) {
@@ -1039,9 +1094,135 @@ function getStorageInfo() {
   return { dbPath: DB_PATH, legacyDbPath: LEGACY_DB_PATH, usingPersistentRenderPath: DB_PATH.replace(/\\/g, '/').startsWith('/var/data/'), exists: fs.existsSync(DB_PATH) };
 }
 
+// ---- Launch giveaway --------------------------------------------------------
+// Free ("no purchase necessary") entries: one per email per calendar day.
+function addGiveawayFreeEntry({ giveawayId, name, email, day }) {
+  const data = load();
+  const normalized = normalizedEmail(email);
+  const duplicate = data.giveawayFreeEntries.some(entry => entry.giveaway_id === giveawayId
+    && normalizedEmail(entry.email) === normalized && entry.day === day);
+  if (duplicate) return { error: 'You already have a free entry today. Come back tomorrow for another one.' };
+  const entry = {
+    id: data.nextGiveawayFreeEntryId++,
+    giveaway_id: giveawayId,
+    name: String(name || '').slice(0, 120),
+    email: String(email || '').slice(0, 254),
+    day,
+    created_at: new Date().toISOString(),
+  };
+  data.giveawayFreeEntries.push(entry);
+  save(data);
+  return { entry };
+}
+
+function getGiveawayFreeEntries(giveawayId) {
+  return load().giveawayFreeEntries.filter(entry => entry.giveaway_id === giveawayId);
+}
+
+function getGiveawayDraw(giveawayId) {
+  return load().giveawayDraws.find(draw => draw.giveaway_id === giveawayId) || null;
+}
+
+// A draw is saved once and never silently replaced.
+function saveGiveawayDraw(draw) {
+  const data = load();
+  if (data.giveawayDraws.some(item => item.giveaway_id === draw.giveaway_id)) {
+    return { error: 'Winners were already drawn for this giveaway.' };
+  }
+  data.giveawayDraws.push(draw);
+  save(data);
+  return { draw };
+}
+
+// Adds a prize's store credit to the winner's account (once per place).
+function awardGiveawayCredit(giveawayId, place) {
+  const data = load();
+  const draw = data.giveawayDraws.find(item => item.giveaway_id === giveawayId);
+  const winner = draw && draw.winners.find(item => Number(item.place) === Number(place));
+  if (!winner) return { error: 'Winner not found.' };
+  if (winner.awarded_at) return { error: 'This prize was already awarded.' };
+  if (!(winner.credit_cents > 0)) return { error: 'This prize is not store credit. Ship it manually, then mark it sent.' };
+  const account = data.accounts.find(item => normalizedEmail(item.email) === normalizedEmail(winner.email));
+  if (!account) return { error: 'No account uses this email yet. Ask the winner to create a free account with it, then try again.' };
+  account.credit_balance_cents = Number(account.credit_balance_cents || 0) + Number(winner.credit_cents);
+  addLedgerEntry(data, account.id, winner.credit_cents, 'giveaway_prize', { note: `Launch giveaway place ${winner.place}` });
+  winner.awarded_at = new Date().toISOString();
+  winner.account_id = account.id;
+  save(data);
+  return { winner };
+}
+
+function markGiveawayPrizeSent(giveawayId, place) {
+  const data = load();
+  const draw = data.giveawayDraws.find(item => item.giveaway_id === giveawayId);
+  const winner = draw && draw.winners.find(item => Number(item.place) === Number(place));
+  if (!winner) return { error: 'Winner not found.' };
+  winner.awarded_at = winner.awarded_at || new Date().toISOString();
+  save(data);
+  return { winner };
+}
+
+// ---- Lifecycle emails (abandoned checkout, reorder reminders) --------------
+function isEmailSuppressed(email) {
+  const normalized = normalizedEmail(email);
+  return load().emailSuppressions.some(item => item.email === normalized);
+}
+
+function suppressEmail(email, reason = 'unsubscribe') {
+  const data = load();
+  const normalized = normalizedEmail(email);
+  if (!normalized || data.emailSuppressions.some(item => item.email === normalized)) return false;
+  data.emailSuppressions.push({ email: normalized, reason, created_at: new Date().toISOString() });
+  save(data);
+  return true;
+}
+
+// One open "checkout started" record per email; refreshed with the latest cart.
+function recordCheckoutStart(email, items) {
+  const data = load();
+  const normalized = normalizedEmail(email);
+  const now = new Date().toISOString();
+  let record = data.checkoutStarts.find(item => item.email === normalized && !item.emailed_at && !item.closed_at);
+  if (!record) {
+    record = { email: normalized, created_at: now };
+    data.checkoutStarts.push(record);
+  }
+  record.items = items;
+  record.updated_at = now;
+  if (data.checkoutStarts.length > 5000) data.checkoutStarts = data.checkoutStarts.slice(-4000);
+  save(data);
+  return record;
+}
+
+function getCheckoutStarts() {
+  return load().checkoutStarts;
+}
+
+function markCheckoutStart(email, createdAt, field) {
+  const data = load();
+  const record = data.checkoutStarts.find(item => item.email === normalizedEmail(email) && item.created_at === createdAt);
+  if (!record) return null;
+  record[field] = new Date().toISOString();
+  save(data);
+  return record;
+}
+
+// Claims an order email so the scheduler never sends it twice.
+function claimOrderLifecycleEmail(orderId, field) {
+  const data = load();
+  const order = data.orders.find(item => Number(item.id) === Number(orderId));
+  if (!order || order[field]) return null;
+  order[field] = new Date().toISOString();
+  save(data);
+  return order;
+}
+
 module.exports = {
-  createOrder, getAllOrders, getOrderById, setPayPalOrderId, setStripeCheckoutSessionId, markStripeOrderPaid, markOrderPaid, updateOrderStatus, applyOrderStatusMigration, updateOrderNotes, deleteOrder, markOrderBackupSent, claimPaymentReminder, markPaymentReminderSent, markPaymentReminderFailed, markShippingDelayNoticeSent, claimTrackingDispatch, markTrackingSent, markTrackingFailed, hasInboundTrackingEvent, markInboundTrackingEvent, claimFulfillmentDiscordPost, markFulfillmentDiscordSent, markFulfillmentDiscordFailed, markPirateShipOrdersExported, requeuePirateShipOrders, getStorageInfo, isTxidUsed, setPaymentReference,
+  createOrder, getAllOrders, getOrderById, setStripeCheckoutSessionId, markStripeOrderPaid, markOrderPaid, updateOrderStatus, applyOrderStatusMigration, updateOrderNotes, deleteOrder, markOrderBackupSent, claimPaymentReminder, markPaymentReminderSent, markPaymentReminderFailed, claimTrackingDispatch, markTrackingSent, markTrackingFailed, hasInboundTrackingEvent, markInboundTrackingEvent, markPirateShipOrdersExported, requeuePirateShipOrders, getStorageInfo, isTxidUsed, setPaymentReference,
   createAccount, getAccountById, getAccountByEmail, setAccountVerificationToken, verifyAccountByTokenHash, touchAccountLogin, setPasswordResetToken, resetPasswordByTokenHash, getAccountByReferralCode, setAccountReferralCode, getAccountDashboard, createPayoutRequest, updatePayoutRequest, getAdminReferralData, reviewReferralCredit, createSocialCreditSubmission, reviewSocialCreditSubmission,
   createPromotionCode, getPromotionCodeByCode, getPromotionCodes, getLimitedPromotionRate,
-  recordPromoAudit, getPromoAuditLog, setPromoManagerOrderVisibility, getApprovedPromoManagerOrders,
+  recordPromoAudit, getPromoAuditLog,
+  addSupportCustomerMessage, getCustomerSupportThread, listSupportThreads, supportUnreadCount, getSupportThreadForAdmin, addSupportAdminReply, setSupportThreadStatus,
+  addGiveawayFreeEntry, getGiveawayFreeEntries, getGiveawayDraw, saveGiveawayDraw, awardGiveawayCredit, markGiveawayPrizeSent,
+  isEmailSuppressed, suppressEmail, recordCheckoutStart, getCheckoutStarts, markCheckoutStart, claimOrderLifecycleEmail,
 };

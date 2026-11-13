@@ -36,29 +36,11 @@ function initAdminTabs() {
       if (tab.dataset.adminTab === 'analytics') loadAnalytics();
       if (tab.dataset.adminTab === 'referrals') loadReferrals();
       if (tab.dataset.adminTab === 'labels') loadOrders();
-      if (tab.dataset.adminTab === 'promo-audit') loadPromoAudit();
+      if (tab.dataset.adminTab === 'security') loadSecurityLog();
+      if (tab.dataset.adminTab === 'messages') loadSupportThreads();
+      if (tab.dataset.adminTab === 'giveaway') loadGiveaway();
     };
   });
-}
-
-async function loadPromoAudit() {
-  const table = document.getElementById('promoAuditTable');
-  const message = document.getElementById('promoAuditMessage');
-  if (!table) return;
-  if (message) message.textContent = '';
-  try {
-    const { entries } = await api('/api/admin/promo-audit?limit=500');
-    table.innerHTML = `<tr>${th('Time')}${th('Account')}${th('Action')}${th('Result')}${th('Code')}${th('IP')}</tr>${entries.map(entry => `<tr>
-      ${td(escapeHtml(new Date(entry.created_at).toLocaleString()))}
-      ${td(`<strong>${escapeHtml(entry.username)}</strong>`)}
-      ${td(escapeHtml(String(entry.action || '').replaceAll('_', ' ')))}
-      ${td(escapeHtml(String(entry.outcome || '').replaceAll('_', ' ')))}
-      ${td(entry.code ? `<strong>${escapeHtml(entry.code)}</strong>` : '<span class="admin-muted">—</span>')}
-      ${td(escapeHtml(entry.ip || '—'))}
-    </tr>`).join('') || `<tr>${td('No promo-account activity has been recorded yet.')}</tr>`}`;
-  } catch (err) {
-    if (message) message.textContent = err.message || 'Could not load the promo audit log.';
-  }
 }
 
 function showAdminDashboard() {
@@ -66,9 +48,11 @@ function showAdminDashboard() {
   document.getElementById('adminPanels').style.display = 'block';
   document.getElementById('adminLogoutBtn').style.display = 'inline-block';
   initAdminTabs();
+  startSupportUnreadPolling();
   loadStorageInfo();
   loadOrders();
   loadProfit();
+  loadUnitEconomics();
   loadLaunchChecks();
   initLabelMaker();
 }
@@ -95,7 +79,7 @@ function reviewQueueHTML(tableId, rows, kind) {
   const isReferral = kind === 'referral';
   table.innerHTML = `<tr>${['Item','Account','Evidence','Credit','Status','Review note','Action'].map(th).join('')}</tr>` + (rows.length ? rows.map(item => `
     <tr>
-      ${td(isReferral ? `<strong>Order HP-${item.orderId}</strong><br><span class="admin-muted">${escapeHtml(item.customerName || '')}</span>` : `<strong>TikTok #${item.id}</strong><br><span class="admin-muted">${escapeHtml(new Date(item.created_at).toLocaleString())}</span>`)}
+      ${td(isReferral ? `<strong>Order SR-${item.orderId}</strong><br><span class="admin-muted">${escapeHtml(item.customerName || '')}</span>` : `<strong>TikTok #${item.id}</strong><br><span class="admin-muted">${escapeHtml(new Date(item.created_at).toLocaleString())}</span>`)}
       ${td(`<strong>${escapeHtml(item.accountName)}</strong><br><a href="${mailtoHref(item.accountEmail)}">${escapeHtml(item.accountEmail)}</a>`)}
       ${td(isReferral ? `${money(item.productSpend)} paid merchandise<br><span class="admin-muted">${escapeHtml(item.referralCode || '')}</span>` : `<a href="${escapeHtml(item.video_url)}" target="_blank" rel="noopener">Open TikTok video</a>`)}
       ${td(`<strong>${money(isReferral ? item.amount : item.creditAmount)}</strong>`)}
@@ -190,15 +174,6 @@ function discountHTML(order) {
   return '<strong>' + code + '</strong><br><span class="admin-savings">Saved ' + money(saved) + '</span>';
 }
 
-function promoManagerVisibilityHTML(order) {
-  if (String(order.discount_code || '').toUpperCase() !== 'OGRE') return '';
-  const approved = (order.promo_manager_approved_for || []).map(value => String(value).toLowerCase()).includes('promo02');
-  return `<div class="admin-promo-visibility">
-    <strong>promo02 OGRE view</strong><br>
-    <span class="admin-muted">${approved ? 'Approved: name, email, items, total, status' : 'Hidden until you approve it'}</span><br>
-    <button type="button" class="admin-promo-visibility-button" data-id="${escapeHtml(order.id)}" data-approved="${approved ? 'false' : 'true'}">${approved ? 'Hide from promo02' : 'Approve for promo02'}</button>
-  </div>`;
-}
 
 function orderTotalHTML(order) {
   const financials = order.financials || {};
@@ -224,6 +199,7 @@ function orderTotalHTML(order) {
       ${saved > 0 ? `<div class="admin-savings"><span>Code saved</span><strong>-${money(saved)}</strong></div>` : '<div><span>Code saved</span><strong>$0.00</strong></div>'}
       <div class="admin-final-total"><span>Customer spent</span><strong>${money(totalSpent)}</strong></div>
       ${isInternationalShipping ? `<div class="admin-international-shipping"><span>${internationalShippingLabel}</span><strong>${money(shipping)}</strong></div>` : ''}
+      ${String(order.shipping_method || '') === 'priority' ? `<div class="admin-international-shipping"><span>Priority Mail paid — buy a Priority label</span><strong>${money(shipping)}</strong></div>` : ''}
       ${storeCreditUsed > 0 ? `<div><span>Store credit used</span><strong>${money(storeCreditUsed)}</strong></div>` : ''}
       <div><span>Product revenue</span><strong>${money(productRevenue)}</strong></div>
       <div><span>COGS</span><strong>${money(cogs)}</strong></div>
@@ -246,14 +222,12 @@ function duplicateTxidWarningHTML(order) {
 
 function paymentHTML(order) {
   const provider = order.payment_provider || 'manual';
-  if (provider === 'paypal') {
-    return `<span class="admin-payment admin-payment-paypal">PayPal checkout</span>${order.paypal_order_id ? `<br><span class="admin-muted">${escapeHtml(order.paypal_order_id)}</span>` : ''}`;
+  if (provider === 'paypal' || provider === 'manual_paypal') {
+    return `<span class="admin-payment">Legacy payment</span>`;
   }
-  if (provider === 'manual_paypal') {
-    return `<span class="admin-payment admin-payment-paypal">PayPal manual</span><br><span class="admin-muted">Match exact total</span>`;
-  }
+
   if (provider === 'zelle') {
-    return `<span class="admin-payment admin-payment-manual">Zelle</span><br><span class="admin-muted">Match exact total</span>`;
+    return `<span class="admin-payment admin-payment-manual">Zelle (legacy)</span><br><span class="admin-muted">Match exact total</span>`;
   }
   if (provider === 'crypto') {
     const asset = escapeHtml(order.crypto_asset || 'BTC');
@@ -354,66 +328,120 @@ function labelTextSizeClass(name) {
   return 'label-name-short';
 }
 
-function buildHighlandLabel({ name, dosage, lot, expiry, storage, design = 'vial-current' }) {
+function labelKNameLines(name) {
+  const clean = String(name || '').trim().toUpperCase().replace(/\s+/g, ' ');
+  if (clean.length <= 10 || !clean.includes(' ')) return [clean];
+  const words = clean.split(' ');
+  let best = [clean];
+  let bestLongest = clean.length;
+  for (let i = 1; i < words.length; i += 1) {
+    const lines = [words.slice(0, i).join(' '), words.slice(i).join(' ')];
+    const longest = Math.max(lines[0].length, lines[1].length);
+    if (longest < bestLongest) { best = lines; bestLongest = longest; }
+  }
+  return best;
+}
+
+// Character widths (in em) measured from the label fonts, so long names are
+// sized to fit their column exactly instead of guessing.
+const LABEL_K_NAME_WIDTHS = {"A":0.508,"B":0.477,"C":0.47,"D":0.48,"E":0.441,"F":0.427,"G":0.473,"H":0.483,"I":0.235,"J":0.462,"K":0.505,"L":0.437,"M":0.558,"N":0.522,"O":0.479,"P":0.474,"Q":0.467,"R":0.481,"S":0.454,"T":0.485,"U":0.48,"V":0.506,"W":0.707,"X":0.49,"Y":0.492,"Z":0.419,"0":0.456,"1":0.294,"2":0.451,"3":0.446,"4":0.508,"5":0.45,"6":0.451,"7":0.422,"8":0.446,"9":0.446," ":0.2,"-":0.337,"+":0.437,"/":0.444,"(":0.343,")":0.343,".":0.235,",":0.223,"%":0.761,"·":0.235,"#":0.626,"&":0.624,"'":0.188};
+const LABEL_K_DOSE_WIDTHS = {"A":0.634,"B":0.664,"C":0.644,"D":0.666,"E":0.554,"F":0.534,"G":0.662,"H":0.656,"I":0.264,"J":0.61,"K":0.626,"L":0.542,"M":0.882,"N":0.67,"O":0.676,"P":0.604,"Q":0.676,"R":0.632,"S":0.606,"T":0.588,"U":0.672,"V":0.618,"W":0.898,"X":0.644,"Y":0.624,"Z":0.576,"0":0.648,"1":0.452,"2":0.594,"3":0.608,"4":0.636,"5":0.6,"6":0.618,"7":0.554,"8":0.6,"9":0.618," ":0.254,"-":0.432,"+":0.62,"/":0.388,"(":0.398,")":0.39,".":0.298,",":0.294,"%":0.758,"·":0.218,"#":0.636,"&":0.591,"'":0.294};
+function labelKTextWidthEm(text, widths, fallback, letterSpacing = 0) {
+  return Array.from(String(text || '')).reduce((sum, ch) => sum + (widths[ch] ?? fallback) + letterSpacing, 0);
+}
+
+const LABEL_K_TAIL_SVG = '<svg viewBox="0 0 672 288" width="672" height="288" aria-hidden="true">'
+  + '<path d="M-12 270 C110 262 230 262 318 252 C352 248 376 242 388 232" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"></path>'
+  + '<path d="M-12 270 C110 262 230 262 318 252 C352 248 376 242 388 232" fill="none" stroke="#0a0a0a" stroke-width="7" stroke-linecap="round"></path>'
+  + '<g fill="none" stroke="#ffffff" stroke-width="1.6"><circle cx="70" cy="264" r="2"></circle><circle cx="170" cy="261" r="2.2"></circle><circle cx="262" cy="259" r="2"></circle><circle cx="340" cy="250" r="2"></circle></g>'
+  + '<circle cx="388" cy="232" r="4.2" fill="#38bdf8"></circle></svg>';
+
+// Label K: the design shown on the Snowy Research vial photos. Drawn at 4x
+// (672 x 288) and scaled to the 1.75 x 0.75 in label so it prints sharp.
+function buildVialLabel({ name, dosage, lot, expiry, storage, design = 'label-k' }) {
   const label = document.createElement('div');
-  label.className = `highland-print-label label-design-${design}`;
+  label.className = `snowy-print-label label-design-${design}`;
 
-  const identity = document.createElement('div');
-  identity.className = 'highland-label-identity';
-  const mark = document.createElement('img');
-  mark.className = 'highland-label-mark';
-  mark.src = '/images/branding/highland-hp-ridge-mark-v1.png';
-  mark.alt = '';
-  mark.setAttribute('aria-hidden', 'true');
-  const brand = document.createElement('span');
-  brand.className = 'highland-label-brand';
-  brand.innerHTML = '<strong>HIGHLAND</strong><small>PEPTIDES</small>';
-  identity.append(mark, brand);
+  const art = document.createElement('div');
+  art.className = 'label-k-art';
 
-  const divider = document.createElement('span');
-  divider.className = 'highland-label-divider';
-  divider.setAttribute('aria-hidden', 'true');
+  const print = document.createElement('div');
+  print.className = 'label-k-print';
+  print.setAttribute('aria-hidden', 'true');
 
+  const tail = document.createElement('div');
+  tail.className = 'label-k-tail';
+  tail.innerHTML = LABEL_K_TAIL_SVG;
+
+  const main = document.createElement('div');
+  main.className = 'label-k-main';
+
+  const lines = labelKNameLines(name);
+  const widestEm = Math.max(1.6, ...lines.map(line => labelKTextWidthEm(line, LABEL_K_NAME_WIDTHS, 0.62, 0.01)));
   const compound = document.createElement('strong');
-  compound.className = `highland-label-compound ${labelTextSizeClass(name)}`;
-  compound.textContent = String(name || '').trim().toUpperCase();
+  compound.className = 'label-k-name';
+  compound.style.fontSize = `${Math.min(56, Math.floor(152 / widestEm))}px`;
+  lines.forEach(line => {
+    const lineEl = document.createElement('span');
+    lineEl.textContent = line;
+    compound.appendChild(lineEl);
+  });
 
-  const accent = document.createElement('span');
-  accent.className = 'highland-label-accent';
-  accent.setAttribute('aria-hidden', 'true');
-
+  const doseText = String(dosage || '').trim().toUpperCase();
   const dose = document.createElement('strong');
-  dose.className = 'highland-label-dose';
-  dose.textContent = String(dosage || '').trim().toUpperCase();
+  dose.className = 'label-k-dose';
+  dose.style.fontSize = `${Math.max(9, Math.min(20, Math.floor(122 / Math.max(0.5, labelKTextWidthEm(doseText, LABEL_K_DOSE_WIDTHS, 0.62)))))}px`;
+  dose.textContent = doseText;
 
-  const storageSide = document.createElement('div');
-  storageSide.className = 'highland-label-side highland-label-side-storage';
-  const storageTitle = document.createElement('span');
-  storageTitle.textContent = 'STORE AT';
-  const storageValue = document.createElement('span');
-  storageValue.textContent = String(storage || '').trim().toUpperCase();
-  storageSide.append(storageTitle, storageValue);
-
-  const batchSide = document.createElement('div');
-  batchSide.className = 'highland-label-side highland-label-side-batch';
-  const lotValue = document.createElement('span');
-  lotValue.textContent = `LOT ${String(lot || '').trim().toUpperCase()}`;
-  const expiryValue = document.createElement('span');
-  expiryValue.textContent = `EXP ${String(expiry || '').trim().toUpperCase()}`;
-  batchSide.append(lotValue, expiryValue);
-
-  const footer = document.createElement('div');
-  footer.className = 'highland-label-footer';
-  const purity = document.createElement('span');
-  purity.textContent = '99% PURITY';
-  const footerDot = document.createElement('i');
-  footerDot.className = 'highland-label-footer-dot';
-  footerDot.setAttribute('aria-hidden', 'true');
+  const ruoBlock = document.createElement('div');
+  ruoBlock.className = 'label-k-ruo';
   const ruo = document.createElement('span');
   ruo.textContent = 'RESEARCH USE ONLY';
-  footer.append(purity, footerDot, ruo);
+  const purity = document.createElement('span');
+  purity.textContent = 'PURITY 99%';
+  ruoBlock.append(ruo, purity);
+  main.append(compound, dose, ruoBlock);
 
-  label.append(identity, divider, compound, accent, dose, storageSide, batchSide, footer);
+  const brand = document.createElement('div');
+  brand.className = 'label-k-brand';
+  brand.textContent = 'SNOWY';
+  const brandSub = document.createElement('div');
+  brandSub.className = 'label-k-brand-sub';
+  brandSub.textContent = 'RESEARCH';
+
+  const side = document.createElement('div');
+  side.className = 'label-k-side';
+  const storageBox = document.createElement('div');
+  storageBox.className = 'label-k-storage';
+  const storageTitle = document.createElement('span');
+  storageTitle.textContent = 'STORE AT';
+  const storageValue = document.createElement('strong');
+  storageValue.textContent = String(storage || '').trim().toUpperCase();
+  storageBox.append(storageTitle, storageValue);
+
+  const batch = document.createElement('div');
+  batch.className = 'label-k-batch';
+  const lotRow = document.createElement('span');
+  const lotKey = document.createElement('em');
+  lotKey.textContent = 'LOT';
+  const lotValue = document.createElement('b');
+  lotValue.textContent = String(lot || '').trim().toUpperCase();
+  lotRow.append(lotKey, lotValue);
+  const expRow = document.createElement('span');
+  const expKey = document.createElement('em');
+  expKey.textContent = 'EXP';
+  const expValue = document.createElement('b');
+  expValue.textContent = String(expiry || '').trim().toUpperCase();
+  expRow.append(expKey, expValue);
+  batch.append(lotRow, expRow);
+
+  const warning = document.createElement('span');
+  warning.className = 'label-k-warning';
+  warning.textContent = 'Not for human or veterinary consumption.';
+  side.append(storageBox, batch, warning);
+
+  art.append(print, tail, main, brand, brandSub, side);
+  label.appendChild(art);
   return label;
 }
 
@@ -457,7 +485,7 @@ function getLabelMakerValues() {
   const offsetY = Math.max(-10, Math.min(10, Number(document.getElementById('labelOffsetY')?.value || 0)));
   const pitchX = Math.max(-3, Math.min(3, Number(document.getElementById('labelPitchX')?.value || 0)));
   const pitchY = Math.max(-3, Math.min(3, Number(document.getElementById('labelPitchY')?.value || 0)));
-  const design = document.querySelector('[name="labelDesign"]')?.value || 'vial-current';
+  const design = document.querySelector('[name="labelDesign"]')?.value || 'label-k';
   const row = Math.max(1, Math.min(12, Number(document.getElementById('labelSheetRow')?.value || 1)));
   const column = Math.max(1, Math.min(4, Number(document.getElementById('labelSheetColumn')?.value || 1)));
   const start = labelPositionFromRowAndColumn(row, column);
@@ -479,7 +507,7 @@ function renderLabelMaker() {
   const values = getLabelMakerValues();
   const preview = document.getElementById('labelLivePreview');
   if (!preview) return;
-  preview.replaceChildren(buildHighlandLabel(values));
+  preview.replaceChildren(buildVialLabel(values));
   const quantityInput = document.getElementById('labelQuantity');
   if (quantityInput) quantityInput.max = String(49 - values.start);
   const message = document.getElementById('labelMakerMessage');
@@ -502,7 +530,7 @@ function buildLabelPrintSheet(values) {
     positionLabelPrintCell(cell, position, values);
     const labelIndex = position - values.start;
     const shouldPrint = labelIndex >= 0 && labelIndex < labels.length;
-    if (shouldPrint) cell.appendChild(buildHighlandLabel(labels[labelIndex]));
+    if (shouldPrint) cell.appendChild(buildVialLabel(labels[labelIndex]));
     portal.appendChild(cell);
   }
 }
@@ -531,8 +559,8 @@ function openLabelPrintWindow(values, preparedWindow = null) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Highland Label Print Sheet</title>
-  <link rel="stylesheet" href="/css/style.css?v=exact-label-pitch-v1-20260902">
+  <title>Snowy Label Print Sheet</title>
+  <link rel="stylesheet" href="/css/style.css?v=label-k-20261112">
   <style>
     * { box-sizing: border-box; }
     html, body { margin: 0; min-height: 100%; background: #e9e6de; color: #171a18; font-family: Arial, Helvetica, sans-serif; }
@@ -568,7 +596,7 @@ function openLabelPrintWindow(values, preparedWindow = null) {
       if (completionSent || printedOrderId === null) return;
       completionSent = true;
       if (window.opener && !window.opener.closed) {
-        window.opener.postMessage({ type: 'highland-order-labels-printed', orderId: printedOrderId }, window.location.origin);
+        window.opener.postMessage({ type: 'snowy-order-labels-printed', orderId: printedOrderId }, window.location.origin);
       }
     }
     window.addEventListener('afterprint', notifyPrintComplete);
@@ -576,7 +604,7 @@ function openLabelPrintWindow(values, preparedWindow = null) {
       try {
         localStorage.setItem('${LABEL_NEXT_POSITION_KEY}', '${nextPosition}');
         if (window.opener && !window.opener.closed) {
-          window.opener.postMessage({ type: 'highland-label-position-used', nextPosition: ${nextPosition} }, window.location.origin);
+          window.opener.postMessage({ type: 'snowy-label-position-used', nextPosition: ${nextPosition} }, window.location.origin);
         }
       } catch (_) {}
       window.print();
@@ -796,40 +824,17 @@ function initLabelMaker() {
   });
   document.getElementById('exportPirateShipCsv')?.addEventListener('click', exportPirateShipCsv);
   document.getElementById('pirateShipRequeueForm')?.addEventListener('submit', requeuePirateShipOrders);
-  document.getElementById('checkFulfillmentDiscord')?.addEventListener('click', async event => {
-    const button = event.currentTarget;
-    const message = document.getElementById('labelMakerMessage');
-    button.disabled = true;
-    button.textContent = 'Checking…';
-    try {
-      const result = await api('/api/admin/launch-checks?checkShipping=1');
-      const shippingCheck = (result.checks || []).find(check => check.key === 'fulfillment-discord');
-      if (!shippingCheck?.ok) throw new Error(shippingCheck?.detail || 'Discord shipping could not be verified.');
-      if (message) {
-        message.style.color = 'var(--success)';
-        message.textContent = `${shippingCheck.detail} No customer data was sent during this check.`;
-      }
-    } catch (err) {
-      if (message) {
-        message.style.color = 'var(--danger)';
-        message.textContent = err.message || 'Discord shipping could not be verified.';
-      }
-    } finally {
-      button.disabled = false;
-      button.textContent = 'Check Discord';
-    }
-  });
   document.getElementById('restoreRemovedLabelOrders')?.addEventListener('click', restoreRemovedLabelOrders);
   window.addEventListener('message', async event => {
     if (event.origin !== window.location.origin) return;
-    if (event.data?.type === 'highland-label-position-used') {
+    if (event.data?.type === 'snowy-label-position-used') {
       try {
         localStorage.setItem(LABEL_NEXT_POSITION_KEY, String(event.data.nextPosition));
       } catch (_) {}
       setLabelSheetPosition(event.data.nextPosition);
       return;
     }
-    if (event.data?.type !== 'highland-order-labels-printed') return;
+    if (event.data?.type !== 'snowy-order-labels-printed') return;
     const order = adminOrdersCache.find(item => String(item.id) === String(event.data.orderId));
     if (!order || order.status !== 'paid') return;
     printedPaidOrderIds.add(String(order.id));
@@ -985,6 +990,90 @@ async function loadAnalytics() {
   }
 }
 
+function securityTime(iso) {
+  const date = new Date(iso);
+  return Number.isNaN(date.getTime()) ? '' : date.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', second: '2-digit' });
+}
+
+function securityDevice(userAgent) {
+  const ua = String(userAgent || '');
+  if (!ua) return 'No browser info';
+  if (/curl|python|wget|go-http|okhttp|axios|node-fetch|httpclient|bot|scan/i.test(ua)) return 'Script / bot';
+  const os = /iPhone|iPad/.test(ua) ? 'iPhone/iPad' : /Android/.test(ua) ? 'Android' : /Windows/.test(ua) ? 'Windows' : /Mac OS X/.test(ua) ? 'Mac' : /Linux/.test(ua) ? 'Linux' : 'Other';
+  const browser = /Edg\//.test(ua) ? 'Edge' : /Chrome\//.test(ua) ? 'Chrome' : /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : 'Browser';
+  return `${browser} · ${os}`;
+}
+
+async function loadSecurityLog() {
+  const summaryEl = document.getElementById('securitySummary');
+  const blockedEl = document.getElementById('securityBlocked');
+  const table = document.getElementById('securityLogTable');
+  if (!table) return;
+  try {
+    const data = await api('/api/admin/security/logins');
+    const day = data.last24h || {};
+    summaryEl.innerHTML = `
+      <div class="admin-security-stats">
+        <div><strong>${Number(day.failed || 0)}</strong><span>Failed, last 24h</span></div>
+        <div><strong>${Number(day.blocked || 0)}</strong><span>Blocked by lockout</span></div>
+        <div><strong>${Number(day.uniqueIps || 0)}</strong><span>IPs that failed</span></div>
+        <div><strong>${Number(day.success || 0)}</strong><span>Successful sign-ins</span></div>
+      </div>
+      <p class="hint">Rules: ${data.rules.perIpLimit} wrong passwords in ${data.rules.windowMinutes} minutes locks that IP (each repeat lockout doubles, up to 24 hours). More than ${data.rules.siteLimit} failures site-wide in ${data.rules.windowMinutes} minutes pauses password sign-in for 15 minutes; devices you ticked "keep me signed in" on still get in.</p>
+      ${data.sitePausedUntil ? `<p class="admin-security-alert">Password sign-in is paused until ${escapeHtml(securityTime(data.sitePausedUntil))}.</p>` : ''}`;
+    blockedEl.innerHTML = data.blockedIps.length ? `
+      <div class="admin-security-blocked">
+        <strong>Currently locked out</strong>
+        ${data.blockedIps.map(item => `
+          <div class="admin-security-blocked-row">
+            <code>${escapeHtml(item.ip)}</code>
+            <span>until ${escapeHtml(securityTime(item.lockedUntil))} · lockout #${Number(item.lockCount || 1)}</span>
+            <button type="button" class="admin-security-unblock" data-ip="${escapeHtml(item.ip)}">Unblock</button>
+          </div>`).join('')}
+      </div>` : '';
+    table.innerHTML = `
+      <tr>${['Time','Result','IP address','Location','Device','Cookies sent','Details'].map(th).join('')}</tr>
+      ${data.attempts.map(entry => {
+        const result = entry.result === 'success' ? 'Signed in' : entry.result === 'blocked' ? 'Blocked' : 'Wrong password';
+        const details = [
+          entry.lockedForMinutes ? `Locked ${entry.lockedForMinutes} min` : '',
+          entry.reason === 'site_paused' ? 'Site-wide pause' : entry.reason === 'ip_locked' ? 'IP locked' : '',
+          entry.forwardedFor && entry.forwardedFor !== entry.ip ? `Via ${entry.forwardedFor}` : '',
+          entry.language ? `Lang ${entry.language.split(',')[0]}` : '',
+          entry.referer ? `From ${entry.referer}` : '',
+        ].filter(Boolean).join(' · ');
+        const cookies = (entry.cookieNames || []).length
+          ? `${escapeHtml(entry.cookieNames.join(', '))}${entry.sessionFingerprint ? `<br><span class="admin-muted">session #${escapeHtml(entry.sessionFingerprint)}</span>` : ''}`
+          : '<span class="admin-muted">none</span>';
+        return `<tr class="admin-security-row is-${escapeHtml(entry.result)}">
+          ${td(escapeHtml(securityTime(entry.at)))}
+          ${td(`<span class="admin-security-pill is-${escapeHtml(entry.result)}">${result}</span>`)}
+          ${td(`<code>${escapeHtml(entry.ip)}</code>`)}
+          ${td(escapeHtml(entry.country || '—'))}
+          ${td(`${escapeHtml(securityDevice(entry.userAgent))}<br><span class="admin-muted" title="${escapeHtml(entry.userAgent)}">${escapeHtml(String(entry.userAgent || '').slice(0, 60))}</span>`)}
+          ${td(cookies)}
+          ${td(escapeHtml(details) || '<span class="admin-muted">—</span>')}
+        </tr>`;
+      }).join('') || `<tr>${td('No sign-in attempts recorded yet.')}</tr>`}`;
+    blockedEl.querySelectorAll('.admin-security-unblock').forEach(button => {
+      button.onclick = async () => {
+        button.disabled = true;
+        try {
+          await api('/api/admin/security/unblock', { method: 'POST', body: { ip: button.dataset.ip } });
+          await loadSecurityLog();
+        } catch (err) {
+          button.disabled = false;
+          window.alert(err.message || 'Could not unblock this IP.');
+        }
+      };
+    });
+  } catch (err) {
+    summaryEl.innerHTML = `<p class="admin-security-alert">${escapeHtml(err.message || 'Could not load the sign-in log.')}</p>`;
+  }
+}
+
+document.getElementById('refreshSecurityLog')?.addEventListener('click', loadSecurityLog);
+
 async function loadLaunchChecks() {
   const data = await api('/api/admin/launch-checks');
   const checksEl = document.getElementById('launchChecks');
@@ -1011,6 +1100,227 @@ async function loadProfit() {
       </tr>
     `).join('') || `<tr>${td('No confirmed orders yet.')}</tr>`}
   `;
+}
+
+// ---- Unit economics (admin only) -------------------------------------------
+let unitEconData = null;
+const UE_FIELDS = ['ueCart', 'ueDiscount', 'ueCostPct', 'ueLabel', 'ueStripe', 'ueOrders', 'ueAffiliate'];
+const UE_STORAGE_KEY = 'snowy.unitEcon.v1';
+
+function ueNum(id) {
+  const el = document.getElementById(id);
+  const value = Number(el && el.value);
+  return Number.isFinite(value) ? value : 0;
+}
+
+function ueSave() {
+  try {
+    const saved = {};
+    UE_FIELDS.forEach(id => { saved[id] = document.getElementById(id).value; });
+    localStorage.setItem(UE_STORAGE_KEY, JSON.stringify(saved));
+  } catch (_) { /* storage unavailable: inputs reset next visit */ }
+}
+
+function ueRestore() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(UE_STORAGE_KEY) || 'null');
+    if (!saved) return;
+    UE_FIELDS.forEach(id => {
+      if (saved[id] != null && saved[id] !== '') document.getElementById(id).value = saved[id];
+    });
+  } catch (_) { /* ignore */ }
+}
+
+// Profit from one order of `cart` dollars of product. Mirrors checkout: discount
+// comes off the product subtotal, the customer pays flat shipping plus the
+// processing fee, and the free reconstitution solution kicks in at the threshold.
+function ueOrderProfit(cart, s) {
+  const st = unitEconData.settings;
+  const discount = cart * (s.discountPct / 100);
+  const productRevenue = cart - discount;
+  const productCost = cart * (s.costPct / 100);
+  const tier = (st.freebieTiers || []).filter(t => cart >= t.minimumSubtotal).pop();
+  const freebie = tier ? tier.cost : 0;
+  const shippingNet = st.shippingFee - s.label;
+  const customerFee = (productRevenue + st.shippingFee) * st.orderFeeRate;
+  const chargeTotal = productRevenue + st.shippingFee + customerFee;
+  const cardFee = chargeTotal * (s.stripePct / 100) + 0.30;
+  const profit = productRevenue - productCost - freebie + shippingNet + customerFee - cardFee;
+  return { profit, productRevenue, productCost, freebie, shippingNet, feeNet: customerFee - cardFee };
+}
+
+function renderUnitEcon() {
+  if (!unitEconData) return;
+  const s = {
+    cart: ueNum('ueCart'),
+    discountPct: ueNum('ueDiscount'),
+    costPct: ueNum('ueCostPct'),
+    label: ueNum('ueLabel'),
+    stripePct: ueNum('ueStripe'),
+    orders: Math.max(1, ueNum('ueOrders')),
+    affiliatePct: ueNum('ueAffiliate'),
+  };
+  const first = ueOrderProfit(s.cart, s);
+  // Repeat orders come from email/reorders, so assume full price on those.
+  const repeat = ueOrderProfit(s.cart, { ...s, discountPct: 0 });
+  const lifetime = first.profit + repeat.profit * (s.orders - 1);
+  const affiliateCost = first.productRevenue * (s.affiliatePct / 100);
+  const carts = [25, 50, 65, 90, 120, 150].map(c => ({ cart: c, profit: ueOrderProfit(c, s).profit }));
+  const tone = v => (v >= 0 ? '' : ' style="color:#b3261e"');
+
+  document.getElementById('unitEconSummary').innerHTML = `
+    <div class="admin-summary-grid profit-summary-grid">
+      <div><span>Profit on first order</span><strong${tone(first.profit)}>${money(first.profit)}</strong></div>
+      <div><span>Break-even cost per new customer</span><strong>${money(Math.max(0, first.profit))}</strong></div>
+      <div><span>Lifetime profit per customer</span><strong>${money(lifetime)}</strong></div>
+      <div><span>Safe max cost per customer (if they reorder)</span><strong>${money(Math.max(0, lifetime * 0.5))}</strong></div>
+      <div><span>Affiliate payout per sale</span><strong>${money(affiliateCost)}</strong></div>
+      <div><span>Profit after affiliate payout</span><strong${tone(first.profit - affiliateCost)}>${money(first.profit - affiliateCost)}</strong></div>
+    </div>
+    <p class="admin-muted" style="margin-top:8px;">
+      First order: ${money(first.productRevenue)} product revenue − ${money(first.productCost)} product cost
+      − ${money(first.freebie)} free solution ${first.shippingNet >= 0 ? '+' : '−'} ${money(Math.abs(first.shippingNet))} shipping
+      ${first.feeNet >= 0 ? '+' : '−'} ${money(Math.abs(first.feeNet))} fees.
+      "Safe max" keeps half of lifetime profit as your cushion. Free solution tiers: ${(unitEconData.settings.freebieTiers || []).map(t => `${money(t.minimumSubtotal)}+ ${escapeHtml(t.sku)}`).join(', ')}.
+    </p>
+    <table style="width:100%; border-collapse: collapse; margin-top: 10px;">
+      <tr>${['Cart size', 'Profit per first order (= break-even ad cost)'].map(th).join('')}</tr>
+      ${carts.map(r => `<tr>${td(money(r.cart))}${td(`<span${tone(r.profit)}>${money(r.profit)}</span>`)}</tr>`).join('')}
+    </table>
+  `;
+}
+
+async function loadUnitEconomics() {
+  const summary = document.getElementById('unitEconSummary');
+  if (!summary) return;
+  try {
+    unitEconData = await api('/api/admin/unit-economics');
+  } catch (err) {
+    summary.textContent = 'Could not load unit economics.';
+    return;
+  }
+  const priced = unitEconData.products.filter(p => p.price > 0 && p.cost > 0);
+  const avgCostPct = priced.length
+    ? priced.reduce((sum, p) => sum + p.cost / p.price, 0) / priced.length * 100
+    : 33;
+  document.getElementById('ueCostPct').value = avgCostPct.toFixed(1);
+  ueRestore();
+  UE_FIELDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && !el.dataset.ueBound) {
+      el.dataset.ueBound = '1';
+      el.addEventListener('input', () => { ueSave(); renderUnitEcon(); });
+    }
+  });
+  const rows = [...unitEconData.products].sort((a, b) => a.margin - b.margin);
+  document.getElementById('unitEconTable').innerHTML = `
+    <tr>${['SKU', 'Product', 'Price', 'Your cost', 'Profit / vial', 'Margin'].map(th).join('')}</tr>
+    ${rows.map(p => `
+      <tr>
+        ${td(escapeHtml(p.sku))}
+        ${td(`<strong>${escapeHtml(p.name)}</strong><br><span class="admin-muted">${escapeHtml(p.spec)}</span>`)}
+        ${td(money(p.price))}
+        ${td(money(p.cost))}
+        ${td(money(p.profit))}
+        ${td(`${p.margin}%`)}
+      </tr>
+    `).join('')}
+  `;
+  renderUnitEcon();
+}
+
+// ---- Launch giveaway (admin) -----------------------------------------------
+function giveawayDateText(iso) {
+  return iso ? new Date(iso).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'America/Los_Angeles' }) + ' PT' : '—';
+}
+
+async function loadGiveaway() {
+  const summary = document.getElementById('giveawaySummary');
+  if (!summary) return;
+  let data;
+  try {
+    data = await api('/api/admin/giveaway');
+  } catch (err) {
+    summary.textContent = err.message;
+    return;
+  }
+  const statusText = {
+    not_scheduled: 'Not scheduled. Set GIVEAWAY_START (for example 2026-11-20) in the host environment on launch day.',
+    upcoming: 'Scheduled, not open yet',
+    active: 'Open now',
+    ended: 'Ended. Ready to draw winners.',
+  }[data.status] || data.status;
+  summary.innerHTML = `
+    <div class="admin-summary-grid profit-summary-grid">
+      <div><span>Status</span><strong>${escapeHtml(statusText)}</strong></div>
+      <div><span>Starts</span><strong>${giveawayDateText(data.startsAt)}</strong></div>
+      <div><span>Ends</span><strong>${giveawayDateText(data.endsAt ? new Date(new Date(data.endsAt).getTime() - 60000).toISOString() : null)}</strong></div>
+      <div><span>People entered</span><strong>${data.entrantCount}</strong></div>
+      <div><span>Total entries</span><strong>${data.totalEntries}</strong></div>
+      <div><span>From purchases / free</span><strong>${data.purchaseEntries} / ${data.freeEntries}</strong></div>
+    </div>`;
+
+  const drawEl = document.getElementById('giveawayDraw');
+  if (data.draw) {
+    drawEl.innerHTML = `
+      <p><strong>Winners drawn ${giveawayDateText(data.draw.drawn_at)}</strong> from ${data.draw.total_entries} entries (${data.draw.entrant_count} people). Email each winner, then award the prize.</p>
+      <table style="width:100%; border-collapse: collapse;">
+        <tr>${['Place', 'Prize', 'Winner', 'Entries', 'Orders', 'Status'].map(th).join('')}</tr>
+        ${data.draw.winners.map(w => `<tr>
+          ${td('#' + w.place)}
+          ${td(escapeHtml(w.prize))}
+          ${td(`<strong>${escapeHtml(w.name || '')}</strong><br><span class="admin-muted">${escapeHtml(w.email)}</span>`)}
+          ${td(w.entries)}
+          ${td(w.order_ids && w.order_ids.length ? w.order_ids.map(id => '#' + id).join(', ') : 'Free entry')}
+          ${td(w.awarded_at
+            ? `Done ${giveawayDateText(w.awarded_at)}`
+            : `<button type="button" class="btn-small giveaway-award-btn" data-place="${w.place}">${w.credit_cents > 0 ? 'Add credit to account' : 'Mark shipped'}</button>`)}
+        </tr>`).join('')}
+      </table>
+      <p class="form-msg" id="giveawayAwardMsg"></p>`;
+    drawEl.querySelectorAll('.giveaway-award-btn').forEach(button => {
+      button.onclick = async () => {
+        button.disabled = true;
+        try {
+          await api('/api/admin/giveaway/award', { method: 'POST', body: { place: Number(button.dataset.place) } });
+          loadGiveaway();
+        } catch (err) {
+          document.getElementById('giveawayAwardMsg').textContent = err.message;
+          button.disabled = false;
+        }
+      };
+    });
+  } else {
+    const canDraw = data.status === 'ended' && data.totalEntries > 0;
+    drawEl.innerHTML = `
+      <button type="button" id="giveawayDrawBtn" class="btn-primary" ${canDraw ? '' : 'disabled'}>Draw 3 winners</button>
+      <span class="admin-muted" style="margin-left:10px;">${canDraw ? 'Random, weighted by entries, one prize per person. Can only be done once.' : 'Available after the giveaway ends.'}</span>
+      <p class="form-msg" id="giveawayDrawMsg"></p>`;
+    const button = document.getElementById('giveawayDrawBtn');
+    if (button && canDraw) {
+      button.onclick = async () => {
+        if (!window.confirm('Draw the 3 winners now? This is final and cannot be redone.')) return;
+        button.disabled = true;
+        try {
+          await api('/api/admin/giveaway/draw', { method: 'POST' });
+          loadGiveaway();
+        } catch (err) {
+          document.getElementById('giveawayDrawMsg').textContent = err.message;
+          button.disabled = false;
+        }
+      };
+    }
+  }
+
+  document.getElementById('giveawayEntrants').innerHTML = `
+    <tr>${['Entrant', 'Purchase entries', 'Free entries', 'Total', 'Chance'].map(th).join('')}</tr>
+    ${data.topEntrants.map(e => `<tr>
+      ${td(`<strong>${escapeHtml(e.name || '')}</strong><br><span class="admin-muted">${escapeHtml(e.email)}</span>`)}
+      ${td(e.purchaseEntries)}
+      ${td(e.freeEntries)}
+      ${td(e.entries)}
+      ${td(data.totalEntries ? ((e.entries / data.totalEntries) * 100).toFixed(1) + '%' : '—')}
+    </tr>`).join('') || `<tr>${td('No entries yet.')}</tr>`}`;
 }
 
 async function loadStorageInfo() {
@@ -1084,7 +1394,7 @@ function paidOrderBuyerDisplayName(order) {
   const fullName = String(buyer.name || [buyer.firstName, buyer.lastName].filter(Boolean).join(' ')).trim();
   if (fullName) return fullName;
   const email = String(buyer.email || '').trim();
-  return email || `HP-${order?.id || 'order'}`;
+  return email || `SR-${order?.id || 'order'}`;
 }
 
 function beginPendingTrackingConfirmation(button) {
@@ -1131,7 +1441,7 @@ function confirmRemoveLabelOrder(button) {
   const message = document.getElementById('labelMakerMessage');
   if (message) {
     message.style.color = 'var(--success)';
-    message.textContent = `HP-${order.id} · ${buyerName} was removed from the label maker. The paid order remains in Orders and profit totals.`;
+    message.textContent = `SR-${order.id} · ${buyerName} was removed from the label maker. The paid order remains in Orders and profit totals.`;
   }
 }
 
@@ -1161,13 +1471,7 @@ async function confirmOrderPendingTracking(button) {
     confirmingPendingTrackingOrderId = '';
     const message = document.getElementById('labelMakerMessage');
     if (message) {
-      if (result.fulfillmentDispatch?.sent || result.fulfillmentDispatch?.alreadySent) {
-        message.style.color = 'var(--success)';
-        message.textContent = `${paidOrderBuyerDisplayName(order)} is now Pending tracking. The copy-ready address is in Discord.`;
-      } else if (result.fulfillmentDispatch?.warning) {
-        message.style.color = 'var(--warning, #f0ae66)';
-        message.textContent = result.fulfillmentDispatch.warning;
-      } else {
+      {
         message.style.color = 'var(--success)';
         message.textContent = `${paidOrderBuyerDisplayName(order)} is now Pending tracking.`;
       }
@@ -1217,25 +1521,25 @@ function renderPaidOrderLabelQueue() {
     return `<article class="paid-label-order-card">
       <div class="paid-label-order-row">
         <button type="button" class="admin-print-order-labels paid-label-customer-button" data-id="${escapeHtml(order.id)}">
-          <span class="paid-label-order-meta"><small>HP-${escapeHtml(order.id)}</small><strong>${escapeHtml(buyerName)}</strong>${buyerEmail ? `<em>${escapeHtml(buyerEmail)}</em>` : ''}</span>
+          <span class="paid-label-order-meta"><small>SR-${escapeHtml(order.id)}</small><strong>${escapeHtml(buyerName)}</strong>${buyerEmail ? `<em>${escapeHtml(buyerEmail)}</em>` : ''}</span>
           <span class="paid-label-order-summary">${escapeHtml(paidOrderLabelItemSummary(order))}</span>
           <span class="paid-label-order-count"><strong>${count}</strong> label${count === 1 ? '' : 's'} <i aria-hidden="true">→</i></span>
         </button>
         <div class="paid-label-order-actions">
           <button type="button" class="paid-label-pending-button${isPrinted ? ' is-ready' : ''}" data-id="${escapeHtml(order.id)}">${isPrinted ? 'Printed · mark pending' : 'Mark pending tracking'}</button>
-          <button type="button" class="paid-label-remove-button" data-id="${escapeHtml(order.id)}" aria-label="Remove order HP-${escapeHtml(order.id)} from label maker">Remove</button>
+          <button type="button" class="paid-label-remove-button" data-id="${escapeHtml(order.id)}" aria-label="Remove order SR-${escapeHtml(order.id)} from label maker">Remove</button>
         </div>
       </div>
       <div class="paid-label-inline-confirm" ${isConfirming ? '' : 'hidden'}>
-        <strong>Move HP-${escapeHtml(order.id)} · ${escapeHtml(buyerName)} to Pending tracking?</strong>
-        <span>This removes it from this paid-label list and sends the shipping address to Discord.</span>
+        <strong>Move SR-${escapeHtml(order.id)} · ${escapeHtml(buyerName)} to Pending tracking?</strong>
+        <span>This removes it from this paid-label list.</span>
         <div>
           <button type="button" class="paid-label-confirm-pending" data-id="${escapeHtml(order.id)}">Yes, mark pending</button>
           <button type="button" class="paid-label-cancel-pending">Cancel</button>
         </div>
       </div>
       <div class="paid-label-inline-confirm is-remove" ${isConfirmingRemove ? '' : 'hidden'}>
-        <strong>Remove HP-${escapeHtml(order.id)} · ${escapeHtml(buyerName)} from the label maker?</strong>
+        <strong>Remove SR-${escapeHtml(order.id)} · ${escapeHtml(buyerName)} from the label maker?</strong>
         <span>The paid transaction stays in Orders and profit totals. You can restore this card later.</span>
         <div>
           <button type="button" class="paid-label-confirm-remove" data-id="${escapeHtml(order.id)}">Yes, remove</button>
@@ -1296,10 +1600,10 @@ function renderPirateShipCsvQueue() {
       .sort((a, b) => Number(a.id) - Number(b.id))
     : [];
   const nextMarkup = orders.length
-    ? `<strong>Next CSV (${orders.length})</strong><span>${orders.map(order => `HP-${escapeHtml(order.id)} · ${escapeHtml(paidOrderBuyerDisplayName(order))}`).join(' &nbsp;·&nbsp; ')}</span>`
+    ? `<strong>Next CSV (${orders.length})</strong><span>${orders.map(order => `SR-${escapeHtml(order.id)} · ${escapeHtml(paidOrderBuyerDisplayName(order))}`).join(' &nbsp;·&nbsp; ')}</span>`
     : '<strong>Next CSV is empty</strong><span>Previously exported orders will not be repeated.</span>';
   const lastMarkup = latestOrders.length
-    ? `<strong>Last CSV (${latestOrders.length})</strong><span>${latestOrders.map(order => `HP-${escapeHtml(order.id)} · ${escapeHtml(paidOrderBuyerDisplayName(order))}`).join(' &nbsp;·&nbsp; ')}</span>`
+    ? `<strong>Last CSV (${latestOrders.length})</strong><span>${latestOrders.map(order => `SR-${escapeHtml(order.id)} · ${escapeHtml(paidOrderBuyerDisplayName(order))}`).join(' &nbsp;·&nbsp; ')}</span>`
     : '<strong>No prior CSV recorded</strong>';
   target.innerHTML = `<div>${nextMarkup}</div><div>${lastMarkup}</div>`;
 }
@@ -1349,7 +1653,7 @@ async function exportPirateShipCsv(event) {
     if (!response.ok) throw new Error('Could not export the Pirate Ship CSV.');
     const blob = await response.blob();
     const disposition = response.headers.get('content-disposition') || '';
-    const filename = disposition.match(/filename="([^"]+)"/i)?.[1] || 'highland-pirate-ship.csv';
+    const filename = disposition.match(/filename="([^"]+)"/i)?.[1] || 'snowy-pirate-ship.csv';
     const url = URL.createObjectURL(blob);
     const download = document.createElement('a');
     download.href = url;
@@ -1377,7 +1681,6 @@ function orderSearchText(order) {
 
 function paymentProviderGroup(order) {
   const provider = String(order.payment_provider || 'manual').toLowerCase();
-  if (provider.includes('paypal')) return 'paypal_any';
   if (provider.includes('crypto') || provider === 'btc' || provider === 'usdc') return 'crypto_any';
   return provider;
 }
@@ -1467,6 +1770,8 @@ function buildOrderLabelValues(order) {
       ...base,
       name: catalogProduct?.labelName || item.name || 'RESEARCH PRODUCT',
       dosage: catalogProduct?.labelDose || fallbackOrderLabelDose(item.spec),
+      // Every vial in an order is stamped with that order's number as its lot.
+      lot: `SR-${order.id}`,
     };
     for (let count = 0; count < quantity; count += 1) labels.push({ ...labelValues });
   });
@@ -1483,7 +1788,7 @@ async function printAdminOrderLabels(button) {
   if (!order || order.status !== 'paid') return window.alert('Only paid, unfulfilled orders can print a full label set.');
   const printWindow = window.open('', '_blank');
   if (!printWindow) return window.alert('Safari blocked the print sheet. Allow pop-ups, then try again.');
-  printWindow.document.write('<!doctype html><title>Preparing Highland labels</title><p style="font:700 16px Arial;padding:24px">Preparing the complete order label sheet…</p>');
+  printWindow.document.write('<!doctype html><title>Preparing Snowy labels</title><p style="font:700 16px Arial;padding:24px">Preparing the complete order label sheet…</p>');
   button.disabled = true;
   const originalText = button.textContent;
   button.textContent = 'Preparing labels…';
@@ -1529,7 +1834,6 @@ function renderOrdersTable() {
         ${td(`<a href="/api/admin/orders/${o.id}/packing-slip.pdf" target="_blank">Packing Slip</a><br>
                <a href="/api/admin/orders/${o.id}/contents-label.pdf" target="_blank">4x6 Label</a><br>
                <a href="#" class="admin-delete-order" data-id="${o.id}" data-label="#${o.id} ${escapeHtml(o.buyer.name)}">Delete order</a>
-               ${promoManagerVisibilityHTML(o)}
                ${adminFulfillmentHTML(o)}
                ${adminNotesHTML(o)}`)}
       </tr>
@@ -1566,7 +1870,7 @@ function renderOrdersTable() {
   });
   document.querySelectorAll('.admin-send-reminder').forEach(btn => {
     btn.onclick = async () => {
-      if (!window.confirm('Send a payment reminder from the configured Highland customer email to this buyer?')) return;
+      if (!window.confirm('Send a payment reminder from the configured customer email to this buyer?')) return;
       btn.disabled = true;
       btn.textContent = 'Sending...';
       try {
@@ -1576,21 +1880,6 @@ function renderOrdersTable() {
         btn.disabled = false;
         btn.textContent = 'Send payment reminder';
         window.alert(err.message || 'Could not send reminder.');
-      }
-    };
-  });
-  document.querySelectorAll('.admin-promo-visibility-button').forEach(btn => {
-    btn.onclick = async () => {
-      const approved = btn.dataset.approved === 'true';
-      if (approved && !window.confirm('Approve this OGRE order for promo02? Promo02 will see the customer name, email, items, total, status, date, and order number. Shipping, payment, tracking, and private notes stay hidden.')) return;
-      btn.disabled = true;
-      try {
-        await api(`/api/admin/orders/${btn.dataset.id}/promo-visibility`, { method: 'POST', body: { approved } });
-        await loadOrders();
-        loadPromoAudit();
-      } catch (err) {
-        btn.disabled = false;
-        window.alert(err.message || 'Could not update promo02 visibility.');
       }
     };
   });
@@ -1638,70 +1927,53 @@ async function loadOrders() {
   if (searchInput) searchInput.oninput = renderOrdersTable;
   if (statusFilter) statusFilter.onchange = renderOrdersTable;
   if (paymentFilter) paymentFilter.onchange = renderOrdersTable;
-  await loadDelayNoticePreview();
 }
 
-async function loadDelayNoticePreview() {
-  const preview = document.getElementById('delayNoticePreview');
-  const button = document.getElementById('sendDelayNoticeBtn');
-  if (!preview || !button) return;
-  try {
-    const data = await api('/api/admin/shipping-delay-notice/preview');
-    button.dataset.recipientCount = String(data.recipientCount || 0);
-    button.disabled = !data.recipientCount;
-    preview.textContent = data.recipientCount
-      ? `${data.recipientCount} unique customers across ${data.orderCount} paid, unfulfilled orders created after September 16 have not received this notice.`
-      : 'No eligible customers are waiting for this notice.';
-  } catch (err) {
-    button.disabled = true;
-    preview.textContent = err.message || 'Could not load the recipient preview.';
-  }
-}
-
-document.getElementById('sendDelayNoticeBtn')?.addEventListener('click', async event => {
-  const button = event.currentTarget;
-  const recipientCount = Number(button.dataset.recipientCount || 0);
-  if (!recipientCount) return;
-  if (button.dataset.sendArmed !== 'true') {
-    button.dataset.sendArmed = 'true';
-    button.textContent = `Confirm send to ${recipientCount}`;
-    window.setTimeout(() => {
-      if (button.dataset.sendArmed !== 'true' || button.disabled) return;
-      button.dataset.sendArmed = 'false';
-      button.textContent = 'Send delay notices';
-    }, 15000);
-    return;
-  }
-  button.dataset.sendArmed = 'false';
-  button.disabled = true;
-  button.textContent = 'Sending…';
-  try {
-    const result = await api('/api/admin/shipping-delay-notice/send', {
-      method: 'POST',
-      body: { expectedRecipientCount: recipientCount },
-    });
-    window.alert(`Delay notices sent: ${result.sent}. Failed: ${result.failed}.`);
-  } catch (err) {
-    window.alert(err.message || 'Could not send the delay notices.');
-  } finally {
-    button.textContent = 'Send delay notices';
-    await loadDelayNoticePreview();
-  }
-});
 document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
+  const passwordInput = document.getElementById('adminPassword');
+  const message = document.getElementById('adminLoginMsg');
+  const button = document.getElementById('adminLoginBtn');
+  message.textContent = '';
+  passwordInput.classList.remove('is-invalid');
+  if (!passwordInput.value) {
+    message.textContent = 'Enter the admin password.';
+    passwordInput.classList.add('is-invalid');
+    passwordInput.focus();
+    return;
+  }
+  button.disabled = true;
+  button.textContent = 'Signing in…';
   try {
     await api('/api/admin/login', {
       method: 'POST',
       body: {
-        password: document.getElementById('adminPassword').value,
+        password: passwordInput.value,
         rememberDevice: document.getElementById('adminRememberDevice').checked,
       },
     });
+    passwordInput.value = '';
     showAdminDashboard();
   } catch (err) {
-    document.getElementById('adminLoginMsg').textContent = err.message;
+    message.textContent = err.message || 'Could not sign in. Try again.';
+    passwordInput.classList.add('is-invalid');
+    passwordInput.select();
+    passwordInput.focus();
+  } finally {
+    button.disabled = false;
+    button.textContent = 'Log in';
   }
+});
+
+document.getElementById('adminShowPassword')?.addEventListener('click', event => {
+  const toggle = event.currentTarget;
+  const input = document.getElementById('adminPassword');
+  const show = input.type === 'password';
+  input.type = show ? 'text' : 'password';
+  toggle.textContent = show ? 'Hide' : 'Show';
+  toggle.setAttribute('aria-pressed', String(show));
+  toggle.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+  input.focus();
 });
 
 document.getElementById('adminLogoutBtn').addEventListener('click', async () => {
@@ -1711,13 +1983,17 @@ document.getElementById('adminLogoutBtn').addEventListener('click', async () => 
 
 document.getElementById('analyticsRange')?.addEventListener('change', loadAnalytics);
 document.getElementById('refreshReferralsButton')?.addEventListener('click', loadReferrals);
-document.getElementById('refreshPromoAuditButton')?.addEventListener('click', loadPromoAudit);
 
 api('/api/admin/session')
   .then(session => {
     if (session.authenticated) showAdminDashboard();
   })
-  .catch(() => {});
+  .catch(() => {})
+  .finally(() => {
+    document.body.classList.remove('admin-checking');
+    const login = document.getElementById('adminLogin');
+    if (login && login.style.display !== 'none') document.getElementById('adminPassword')?.focus();
+  });
 
 
 
@@ -1727,3 +2003,159 @@ api('/api/admin/session')
 
 
 
+
+
+// ---------- Support inbox ----------
+let supportSelectedThreadId = null;
+let supportUnreadTimer = null;
+
+function supportFormatTime(iso) {
+  const date = new Date(iso);
+  return Number.isNaN(date.getTime()) ? '' : date.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+}
+
+async function refreshSupportUnreadBadge() {
+  const badge = document.getElementById('supportUnreadBadge');
+  if (!badge) return;
+  try {
+    const data = await api('/api/admin/support/unread');
+    badge.textContent = data.unread ? String(data.unread) : '';
+    badge.hidden = !data.unread;
+  } catch (_) {}
+}
+
+function startSupportUnreadPolling() {
+  refreshSupportUnreadBadge();
+  clearInterval(supportUnreadTimer);
+  supportUnreadTimer = setInterval(() => {
+    refreshSupportUnreadBadge();
+    const panel = document.getElementById('messagesPanel');
+    if (panel && !panel.hidden) loadSupportThreads(true);
+  }, 30000);
+}
+
+async function loadSupportThreads(quiet = false) {
+  const list = document.getElementById('supportThreadList');
+  if (!list) return;
+  try {
+    const data = await api('/api/admin/support/threads');
+    list.replaceChildren();
+    if (!data.threads.length) {
+      const empty = document.createElement('p');
+      empty.className = 'admin-muted';
+      empty.textContent = 'No messages yet. They will show up here when customers use the chat or the Support page.';
+      list.appendChild(empty);
+    }
+    data.threads.forEach(thread => {
+      const item = document.createElement('button');
+      item.type = 'button';
+      item.className = `support-thread-item${thread.id === supportSelectedThreadId ? ' active' : ''}${thread.adminUnread ? ' unread' : ''}${thread.status === 'closed' ? ' closed' : ''}`;
+      const top = document.createElement('span');
+      top.className = 'support-thread-top';
+      const who = document.createElement('strong');
+      who.textContent = thread.name || thread.email;
+      const when = document.createElement('em');
+      when.textContent = supportFormatTime(thread.updatedAt);
+      top.append(who, when);
+      const email = document.createElement('span');
+      email.className = 'support-thread-email';
+      email.textContent = `${thread.email}${thread.accountId ? ' · account' : ' · guest'}${thread.status === 'closed' ? ' · closed' : ''}`;
+      const preview = document.createElement('span');
+      preview.className = 'support-thread-preview';
+      preview.textContent = thread.lastMessage ? `${thread.lastMessage.from === 'admin' ? 'You: ' : ''}${thread.lastMessage.body}` : '';
+      item.append(top, email, preview);
+      if (thread.adminUnread) {
+        const badge = document.createElement('i');
+        badge.className = 'support-thread-unread';
+        badge.textContent = String(thread.adminUnread);
+        item.appendChild(badge);
+      }
+      item.addEventListener('click', () => openSupportThread(thread.id));
+      list.appendChild(item);
+    });
+    refreshSupportUnreadBadge();
+    if (quiet && supportSelectedThreadId) openSupportThread(supportSelectedThreadId, true);
+  } catch (err) {
+    if (!quiet) list.textContent = `Could not load messages: ${err.message}`;
+  }
+}
+
+function renderSupportThread(thread) {
+  const view = document.getElementById('supportThreadView');
+  view.replaceChildren();
+  const head = document.createElement('div');
+  head.className = 'support-thread-head';
+  const title = document.createElement('div');
+  const name = document.createElement('strong');
+  name.textContent = thread.name || thread.email;
+  const meta = document.createElement('span');
+  meta.textContent = `${thread.email}${thread.orderNumber ? ` · Order ${thread.orderNumber}` : ''}${thread.accountId ? ` · Account #${thread.accountId}` : ' · Guest'}`;
+  title.append(name, meta);
+  const statusBtn = document.createElement('button');
+  statusBtn.type = 'button';
+  statusBtn.textContent = thread.status === 'closed' ? 'Reopen' : 'Mark resolved';
+  statusBtn.addEventListener('click', async () => {
+    await api(`/api/admin/support/threads/${thread.id}/status`, { method: 'POST', body: { status: thread.status === 'closed' ? 'open' : 'closed' } });
+    loadSupportThreads(true);
+  });
+  head.append(title, statusBtn);
+
+  const messages = document.createElement('div');
+  messages.className = 'support-thread-messages';
+  thread.messages.forEach(message => {
+    const bubble = document.createElement('div');
+    bubble.className = `support-msg ${message.from === 'admin' ? 'from-admin' : 'from-customer'}`;
+    const text = document.createElement('p');
+    text.textContent = message.body;
+    const at = document.createElement('span');
+    at.textContent = `${message.from === 'admin' ? 'You' : (thread.name || 'Customer')} · ${supportFormatTime(message.at)}`;
+    bubble.append(text, at);
+    messages.appendChild(bubble);
+  });
+
+  const form = document.createElement('form');
+  form.className = 'support-reply-form';
+  const box = document.createElement('textarea');
+  box.rows = 3;
+  box.maxLength = 2000;
+  box.placeholder = 'Write a reply. The customer sees it in their chat window.';
+  const send = document.createElement('button');
+  send.type = 'submit';
+  send.textContent = 'Send reply';
+  const note = document.createElement('span');
+  note.className = 'support-reply-note';
+  form.append(box, send, note);
+  form.addEventListener('submit', async event => {
+    event.preventDefault();
+    const message = box.value.trim();
+    if (!message) return;
+    send.disabled = true;
+    try {
+      const data = await api(`/api/admin/support/threads/${thread.id}/reply`, { method: 'POST', body: { message } });
+      renderSupportThread(data.thread);
+      loadSupportThreads(false);
+    } catch (err) {
+      note.textContent = `Not sent: ${err.message}`;
+      send.disabled = false;
+    }
+  });
+  view.append(head, messages, form);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+async function openSupportThread(id, quiet = false) {
+  const view = document.getElementById('supportThreadView');
+  const draft = view.querySelector('textarea');
+  if (quiet && draft && draft.value.trim()) return; // don't wipe a reply being typed
+  supportSelectedThreadId = id;
+  try {
+    const data = await api(`/api/admin/support/threads/${id}`);
+    renderSupportThread(data.thread);
+    document.querySelectorAll('.support-thread-item').forEach(el => el.classList.remove('active'));
+    if (!quiet) loadSupportThreads(true);
+  } catch (err) {
+    if (!quiet) view.textContent = `Could not open conversation: ${err.message}`;
+  }
+}
+
+document.getElementById('refreshSupportThreads')?.addEventListener('click', () => loadSupportThreads(false));

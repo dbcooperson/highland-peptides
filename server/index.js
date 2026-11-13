@@ -22,27 +22,26 @@ const {
   adminRememberCookieOptions,
   restoreAdminFromRememberCookie,
   requireAdmin,
-  requirePromoManager,
 } = require('./auth');
 const { buildPackingSlip, buildContentsLabel } = require('./labels');
-const { capturePayPalOrder } = require('./paypal');
-const { sendOrderBackup, sendPendingTrackingDiscord, checkFulfillmentDiscordConnection, sendCustomerPaymentInstructions, sendPaymentReminder, sendTrackingEmail, sendShippingDelayNotice, isCustomerEmailConfigured } = require('./notifications');
-const { createBitcoinMonitor } = require('./btc-monitor');
+const { createAdminSecurity } = require('./admin-security');
+const { sendOrderBackup, sendCustomerPaymentInstructions, sendPaymentReminder, sendTrackingEmail, isCustomerEmailConfigured } = require('./notifications');
 const { acceptAddressAsEntered, validateShippingAddress } = require('./address-validation');
 const analytics = require('./analytics');
 const coa = require('./coa');
-const { applyBundlePromotion, publicPromotion } = require('./promotions');
+const { applyBundlePromotion, applyCodeGift, codeGift, publicPromotion, bundleTiers } = require('./promotions');
 const { reminderIsDue, startPaymentReminderScheduler } = require('./reminders');
 const { registerAccountRoutes } = require('./accounts');
+const { registerSupportInboxRoutes } = require('./support-inbox');
+const { registerGiveawayRoutes } = require('./giveaway');
+const { allocateBundles, linePricing, publicBundles } = require('./bundles');
+const { registerLifecycleRoutes, startLifecycleScheduler } = require('./lifecycle');
 const { registerCheckoutVerificationRoutes, isCheckoutEmailVerified } = require('./checkout-verification');
 const { pirateShipCsv, pirateShipExportCandidates, parseInboundTrackingEmail, matchPendingTrackingOrder, verifyResendWebhook, fetchResendReceivedEmail, normalizeInboundDomain, validOrderAliasToken } = require('./pirate-ship');
-const { configuredPromoManagers } = require('./promo-managers');
-const { CAMPAIGN_CODE, hasHighlandReferral, referralOfferDiscount } = require('./referral-offer');
+const { CAMPAIGN_CODE, hasCampaignReferral, referralOfferDiscount } = require('./referral-offer');
 const { stripeMode, stripeClient, checkoutSessionParams, verifiedPaidSession } = require('./stripe-checkout');
-const { DELAY_NOTICE_CUTOFF, buildDelayNoticeRecipients } = require('./shipping-delay');
 
 const CONFIRMED_ORDER_STATUSES = new Set(['paid', 'pending_tracking', 'fulfilled']);
-const promoManagers = configuredPromoManagers(config);
 const todayPirateShipStatusMigration = db.applyOrderStatusMigration(
   '2026-09-15-pirate-ship-orders-307-273-pending-tracking',
   [307, 306, 303, 302, 291, 282, 281, 278, 275, 273],
@@ -69,17 +68,37 @@ const app = express();
 app.disable('x-powered-by');
 app.set('trust proxy', 1);
 
+// Content-Security-Policy: pages may only load code from this site (plus Google's
+// address-autocomplete script and fonts), can't be framed, and can't post forms elsewhere.
+const CONTENT_SECURITY_POLICY = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' https://maps.googleapis.com https://maps.gstatic.com",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' https://fonts.gstatic.com data:",
+  "img-src 'self' data: blob: https://maps.gstatic.com https://maps.googleapis.com",
+  "connect-src 'self' https://maps.googleapis.com https://places.googleapis.com",
+  "media-src 'self'",
+  "frame-src 'none'",
+  "frame-ancestors 'none'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+].join('; ');
+
 const releaseId = process.env.RENDER_GIT_COMMIT
   || process.env.SOURCE_VERSION
   || 'local-development';
 const startedAt = new Date().toISOString();
 
 app.use((req, res, next) => {
-  res.setHeader('X-Highland-Release', releaseId);
+  res.setHeader('X-Snowy-Release', releaseId);
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  res.setHeader('Content-Security-Policy', CONTENT_SECURITY_POLICY);
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+  if (/^\/(admin(\.html)?|api)(\/|$)/.test(req.path)) res.setHeader('X-Robots-Tag', 'noindex, nofollow');
   if (req.secure || req.get('x-forwarded-proto') === 'https') {
     res.setHeader('Strict-Transport-Security', 'max-age=15552000; includeSubDomains');
   }
@@ -206,7 +225,7 @@ app.post('/api/webhooks/resend/inbound', async (req, res) => {
     const updated = db.markTrackingSent(match.order.id, parsed.carrier, parsed.trackingNumber, details);
     db.markInboundTrackingEvent(eventId, { emailId, orderId: updated.id, trackingNumber: parsed.trackingNumber, result: 'fulfilled' });
     await backupOrderIfNeeded(updated, 'pirate_ship_tracking');
-    console.log(`Pirate Ship tracking fulfilled order HP-${updated.id}.`);
+    console.log(`Pirate Ship tracking fulfilled order SR-${updated.id}.`);
     return res.json({ ok: true, orderId: updated.id, status: updated.status });
   } catch (err) {
     console.error('Pirate Ship inbound tracking failed:', err.message || err);
@@ -223,16 +242,17 @@ app.get('/api/catalog', (req, res) => {
     packagingFee: config.PACKAGING_FEE,
     shippingFee: config.SHIPPING_FEE,
     internationalShippingFee: config.INTERNATIONAL_SHIPPING_FEE,
+    priorityShippingFee: config.PRIORITY_SHIPPING_FEE,
     shippingOptions: [
       { id: 'domestic', label: 'U.S. shipping', price: config.SHIPPING_FEE },
+      { id: 'priority', label: 'Priority Mail (U.S. only)', price: config.PRIORITY_SHIPPING_FEE },
       { id: 'international', label: 'International shipping', price: config.INTERNATIONAL_SHIPPING_FEE },
     ],
     orderFeeRate: config.ORDER_FEE_RATE,
     altPaymentDiscountRate: config.ALT_PAYMENT_DISCOUNT_RATE,
-    accountCryptoDiscountRate: config.ACCOUNT_CRYPTO_DISCOUNT_RATE,
-    zellePaymentDiscountRate: config.ZELLE_PAYMENT_DISCOUNT_RATE,
-    zelleRecipient: config.ZELLE_RECIPIENT,
+    accountCryptoDiscountRate: 0,
     promotion: publicPromotion(),
+    bundles: publicBundles(),
   });
 });
 
@@ -305,26 +325,18 @@ function resolveDiscountCode(code) {
     const currentRate = limitedPromotion ? db.getLimitedPromotionRate(limitedPromotion, rate) : rate;
     return { code: normalized, rate: currentRate, type: 'promotion', referralAccountId: null, limitedPromotion };
   }
-  const managedPromotion = db.getPromotionCodeByCode(normalized);
-  if (managedPromotion) return { code: normalized, rate: 0.15, type: 'promotion', referralAccountId: null };
-  const referralAccount = db.getAccountByReferralCode(normalized);
-  return referralAccount ? {
-    code: normalized,
-    rate: config.REFERRAL_DISCOUNT_RATE,
-    type: 'referral',
-    referralAccountId: referralAccount.id,
-    referralEmail: referralAccount.email,
-  } : null;
+  // Promo-manager codes and customer referral codes are retired and never resolve.
+  return null;
 }
 
 app.get('/api/discount-code', (req, res) => {
   const match = resolveDiscountCode(req.query.code);
   if (!match) return res.json({ valid: false });
-  res.json({ valid: true, code: match.code, percentOff: Math.round(match.rate * 100), referral: match.type === 'referral' });
+  res.json({ valid: true, code: match.code, percentOff: Math.round(match.rate * 100), referral: match.type === 'referral', gift: codeGift(match.code, bySku) });
 });
 
 app.get('/api/referral-offer', (req, res) => {
-  res.json({ valid: hasHighlandReferral(req.query.ref), code: CAMPAIGN_CODE, percentOff: 10, extraCodePercent: 5 });
+  res.json({ valid: hasCampaignReferral(req.query.ref), code: CAMPAIGN_CODE, percentOff: 10, extraCodePercent: 5 });
 });
 
 function cleanText(value, maxLength) {
@@ -346,6 +358,9 @@ function cleanCountry(value) {
 }
 
 registerAccountRoutes(app, requireAdmin);
+registerSupportInboxRoutes(app, { db, requireAdmin, secureCookies: isProductionRuntime, clientIp: req => clientIp(req) });
+registerGiveawayRoutes(app, { db, config, bySku, requireAdmin, clientIp: req => clientIp(req) });
+registerLifecycleRoutes(app, { db });
 
 const checkoutAttempts = new Map();
 const CHECKOUT_WINDOW_MS = 15 * 60 * 1000;
@@ -392,7 +407,7 @@ function prepareCheckout(body, accountId = null) {
     return { error: 'Name, valid email, destination country, and full shipping address are required.' };
   }
 
-  if (!['zelle', 'crypto', 'stripe'].includes(paymentMethod)) {
+  if (!['crypto', 'stripe'].includes(paymentMethod)) {
     return { error: 'Select an available payment method.' };
   }
   const normalizedPaymentMethod = paymentMethod;
@@ -405,13 +420,24 @@ function prepareCheckout(body, accountId = null) {
   let subtotal = 0;
   let promoEligibleSubtotal = 0;
   const resolved = [];
+  const cartQuantities = {};
   for (const item of items) {
     const product = bySku[item.sku];
     const qty = parseInt(item.quantity, 10);
     if (!product || !qty || qty < 1 || qty > 99) {
       return { error: `Invalid item: ${item.sku}` };
     }
-    const pricing = quantityPricing(product, qty);
+    cartQuantities[product.sku] = (cartQuantities[product.sku] || 0) + qty;
+  }
+  const bundleAllocation = allocateBundles(cartQuantities);
+  const bundledLeft = { ...bundleAllocation.bundledUnits };
+  for (const item of items) {
+    const product = bySku[item.sku];
+    const qty = parseInt(item.quantity, 10);
+    const allocatedUnits = bundleAllocation.bundledUnits[product.sku] || 0;
+    const perUnitSaving = allocatedUnits ? (bundleAllocation.bundleSavings[product.sku] || 0) / allocatedUnits : 0;
+    const pricing = linePricing(product, qty, bundledLeft[product.sku] || 0, perUnitSaving);
+    bundledLeft[product.sku] = Math.max(0, (bundledLeft[product.sku] || 0) - pricing.bundledUnits);
     const lineTotal = pricing.total;
     subtotal += lineTotal;
     if (product.promoEligible !== false) promoEligibleSubtotal += lineTotal;
@@ -422,7 +448,8 @@ function prepareCheckout(body, accountId = null) {
       quantity: qty,
       unit_price: lineTotal / qty,
       list_unit_price: product.price,
-      quantity_discount: pricing.savings,
+      quantity_discount: pricing.quantitySavings,
+      bundle_discount: pricing.bundleSavings,
       promo_eligible: product.promoEligible !== false,
     });
   }
@@ -432,7 +459,7 @@ function prepareCheckout(body, accountId = null) {
   const promotionResult = applyBundlePromotion(resolved, bySku);
 
   const discountMatch = resolveDiscountCode(discountCode);
-  const highlandReferral = hasHighlandReferral(referralCampaign);
+  const campaignReferral = hasCampaignReferral(referralCampaign);
   const customerAccount = accountId ? db.getAccountById(accountId) : null;
   if (discountMatch && discountMatch.type === 'referral') {
     const isSameAccount = customerAccount && customerAccount.id === discountMatch.referralAccountId;
@@ -441,21 +468,21 @@ function prepareCheckout(body, accountId = null) {
       return { error: 'Referral codes are for other customers and cannot be used on your own order.' };
     }
   }
-  if (!highlandReferral && ['crypto', 'zelle'].includes(normalizedPaymentMethod) && discountMatch) {
-    const methodLabel = normalizedPaymentMethod === 'zelle' ? 'Zelle' : 'Crypto';
-    return { error: `${methodLabel} discounts cannot be combined with codes. Remove the code or choose another payment method.` };
+  const cryptoOrder = normalizedPaymentMethod === 'crypto';
+  if (cryptoOrder && discountMatch) {
+    return { error: 'Crypto orders already get 15% off and cannot be combined with promo or referral codes. Remove the code or choose another payment method.' };
   }
-  const codeDiscount = !highlandReferral && discountMatch ? promoEligibleSubtotal * discountMatch.rate : 0;
-  const altPaymentDiscount = !highlandReferral && normalizedPaymentMethod === 'crypto' ? subtotal * config.ALT_PAYMENT_DISCOUNT_RATE : 0;
-  const memberCryptoDiscount = !highlandReferral && normalizedPaymentMethod === 'crypto' && customerAccount && customerAccount.verified_at ? subtotal * config.ACCOUNT_CRYPTO_DISCOUNT_RATE : 0;
-  const zelleDiscount = !highlandReferral && normalizedPaymentMethod === 'zelle' ? subtotal * config.ZELLE_PAYMENT_DISCOUNT_RATE : 0;
-  const referralDiscount = highlandReferral ? referralOfferDiscount(promoEligibleSubtotal, discountMatch) : null;
-  const discountAmount = highlandReferral
+  // Crypto: a flat discount (15%) that replaces every other offer, including referral links.
+  const referralOfferApplies = campaignReferral && !cryptoOrder;
+  const codeDiscount = !referralOfferApplies && discountMatch ? promoEligibleSubtotal * discountMatch.rate : 0;
+  const altPaymentDiscount = cryptoOrder ? subtotal * config.ALT_PAYMENT_DISCOUNT_RATE : 0;
+  const referralDiscount = referralOfferApplies ? referralOfferDiscount(promoEligibleSubtotal, discountMatch) : null;
+  const discountAmount = referralOfferApplies
     ? referralDiscount.amount
-    : Math.round((codeDiscount + altPaymentDiscount + memberCryptoDiscount + zelleDiscount) * 100) / 100;
-  const discountLabel = highlandReferral
+    : Math.round((codeDiscount + altPaymentDiscount) * 100) / 100;
+  const discountLabel = referralOfferApplies
     ? `${CAMPAIGN_CODE}${discountMatch ? `+${discountMatch.code}` : ''}`
-    : (discountMatch ? discountMatch.code : (zelleDiscount ? 'ZELLE10' : (memberCryptoDiscount ? 'CRYPTO5+MEMBER5' : (altPaymentDiscount ? 'CRYPTO5' : null))));
+    : (discountMatch ? discountMatch.code : (altPaymentDiscount ? `CRYPTO${Math.round(config.ALT_PAYMENT_DISCOUNT_RATE * 100)}` : null));
   const availableCredit = customerAccount && customerAccount.verified_at
     ? Math.max(0, Number(customerAccount.credit_balance_cents || 0) / 100)
     : 0;
@@ -465,16 +492,23 @@ function prepareCheckout(body, accountId = null) {
     : 0;
 
   const packagingFee = config.PACKAGING_FEE;
-  const normalizedShippingMethod = shippingMethod === 'international' ? 'international' : 'domestic';
+  const normalizedShippingMethod = ['international', 'priority'].includes(shippingMethod) ? shippingMethod : 'domestic';
+  if (normalizedShippingMethod === 'priority' && cleanBuyer.country !== 'US') {
+    return { error: 'Priority Mail is only available for U.S. addresses. Choose International shipping instead.' };
+  }
   if (normalizedShippingMethod === 'domestic' && cleanBuyer.country !== 'US') {
     return { error: 'Choose International shipping for destinations outside the U.S.' };
   }
   if (normalizedShippingMethod === 'international' && cleanBuyer.country === 'US') {
     return { error: 'International shipping is for destinations outside the U.S. Change the country or select U.S. shipping.' };
   }
-  const shippingFee = normalizedShippingMethod === 'international' ? config.INTERNATIONAL_SHIPPING_FEE : config.SHIPPING_FEE;
+  const shippingFee = normalizedShippingMethod === 'international'
+    ? config.INTERNATIONAL_SHIPPING_FEE
+    : normalizedShippingMethod === 'priority' ? config.PRIORITY_SHIPPING_FEE : config.SHIPPING_FEE;
   const feeBase = Math.max(0, subtotal - discountAmount - storeCreditAmount + packagingFee + shippingFee);
-  const orderFee = Math.round(feeBase * config.ORDER_FEE_RATE * 100) / 100;
+  // Crypto orders skip the processing fee entirely.
+  const orderFeeRate = normalizedPaymentMethod === 'crypto' ? 0 : config.ORDER_FEE_RATE;
+  const orderFee = Math.round(feeBase * orderFeeRate * 100) / 100;
   const total = Math.round((feeBase + orderFee) * 100) / 100;
 
   return {
@@ -486,18 +520,18 @@ function prepareCheckout(body, accountId = null) {
     orderInput: {
       buyer: cleanBuyer,
       certifiedAt: new Date().toISOString(),
-      items: promotionResult.items,
+      items: discountMatch ? applyCodeGift(promotionResult.items, discountMatch.code, bySku) : promotionResult.items,
       subtotal,
       promoEligibleSubtotal,
       packagingFee,
       shippingFee,
       shippingMethod: normalizedShippingMethod,
       orderFee,
-      orderFeeRate: config.ORDER_FEE_RATE,
+      orderFeeRate,
       discountCode: discountLabel,
       discountType: discountMatch ? discountMatch.type : null,
       discountAmount,
-      limitedPromotion: !highlandReferral && discountMatch ? discountMatch.limitedPromotion : null,
+      limitedPromotion: !campaignReferral && discountMatch ? discountMatch.limitedPromotion : null,
       storeCreditAmount,
       customerAccountId: customerAccount && customerAccount.verified_at ? customerAccount.id : null,
       referralAccountId: discountMatch && discountMatch.type === 'referral' ? discountMatch.referralAccountId : null,
@@ -560,19 +594,8 @@ app.get('/api/address/config', (req, res) => {
   });
 });
 
-app.get('/api/paypal/config', (req, res) => {
-  res.json({ enabled: false });
-});
-
-app.post('/api/paypal/create-order', checkCheckoutRateLimit, (req, res) => {
-  res.status(410).json({ error: 'PayPal checkout is no longer available.' });
-});
-
-// Manual crypto/Zelle checkout records a pending order for payment matching.
+// Manual crypto checkout records a pending order for payment matching.
 app.post('/api/checkout', checkCheckoutRateLimit, async (req, res) => {
-  if (['paypal', 'manual_paypal'].includes(req.body?.paymentMethod)) {
-    return res.status(410).json({ error: 'PayPal checkout is no longer available.' });
-  }
   if (req.body?.paymentMethod === 'stripe') {
     return res.status(400).json({ error: 'Stripe orders must use the hosted Checkout flow.' });
   }
@@ -612,15 +635,10 @@ app.post('/api/checkout', checkCheckoutRateLimit, async (req, res) => {
     message: 'Order received. Send the exact total shown for manual payment verification.',
   };
 
-  if (paymentMethod === 'zelle') {
-    response.zelle = { recipient: config.ZELLE_RECIPIENT, reference: `HP-${order.id}` };
-    response.message = 'Order received. Send the exact total shown by Zelle to the phone number provided. We manually verify payment before fulfillment.';
-  }
-
   if (paymentMethod === 'crypto') {
     const address = cryptoAsset === 'USDC' ? config.CRYPTO_WALLETS.USDC_ERC20 : config.CRYPTO_WALLETS.BTC;
     const network = cryptoAsset === 'USDC' ? 'Ethereum mainnet (ERC-20) only' : 'Bitcoin network';
-    response.crypto = { asset: cryptoAsset, address, network, reference: `HP-${order.id}` };
+    response.crypto = { asset: cryptoAsset, address, network, reference: `SR-${order.id}` };
     response.message = `Order received. Send ${cryptoAsset} to the address shown to complete payment.`;
   }
 
@@ -631,6 +649,7 @@ app.post('/api/orders/:id/confirm-crypto', checkCheckoutRateLimit, (req, res) =>
   const order = db.getOrderById(req.params.id);
   if (!order) return res.status(404).json({ error: 'Order not found.' });
   if (order.payment_provider !== 'crypto') return res.status(400).json({ error: 'Order is not a crypto order.' });
+  if (order.status !== 'pending_payment') return res.status(409).json({ error: 'This order is no longer waiting for payment.' });
 
   const email = cleanEmail(req.body && req.body.email);
   if (!email || email !== order.buyer.email) {
@@ -650,64 +669,8 @@ app.post('/api/orders/:id/confirm-crypto', checkCheckoutRateLimit, (req, res) =>
 });
 
 
-function validatePayPalCaptureForOrder(capture, order, paypalOrderId) {
-  if (!order || order.payment_provider !== 'paypal') return 'Order is not a PayPal order.';
-  if (order.status !== 'pending_payment') return 'Order is not pending payment.';
-  if (!order.paypal_order_id || order.paypal_order_id !== paypalOrderId) return 'PayPal order does not match this cart order.';
-
-  const unit = Array.isArray(capture.purchase_units) ? capture.purchase_units[0] : null;
-  const referenceOk = unit && unit.reference_id === `HP-${order.id}`;
-  const capturePayment = unit && unit.payments && Array.isArray(unit.payments.captures) ? unit.payments.captures[0] : null;
-  const amount = capturePayment && capturePayment.amount ? capturePayment.amount : null;
-  const expectedTotal = Number(order.total || 0).toFixed(2);
-
-  if (!referenceOk) return 'PayPal reference does not match this order.';
-  if (!amount || amount.currency_code !== config.PAYPAL_CURRENCY || amount.value !== expectedTotal) {
-    return 'PayPal payment amount does not match this order.';
-  }
-  if (capturePayment && capturePayment.status && capturePayment.status !== 'COMPLETED') {
-    return `PayPal capture was not completed. Status: ${capturePayment.status}`;
-  }
-  return null;
-}
-
-app.post('/api/paypal/capture-order', checkCheckoutRateLimit, async (req, res) => {
-  const { paypalOrderId, orderId, analyticsVisitorId, analyticsSessionId, analyticsCheckoutAttemptId } = req.body || {};
-  const captureAnalytics = {
-    visitorId: cleanText(analyticsVisitorId, 128),
-    sessionId: cleanText(analyticsSessionId, 128),
-    checkoutAttemptId: cleanText(analyticsCheckoutAttemptId, 128),
-  };
-  if (!paypalOrderId || !orderId) {
-    return res.status(400).json({ error: 'Missing PayPal order details.' });
-  }
-
-  const order = db.getOrderById(orderId);
-  if (!order) return res.status(404).json({ error: 'Order not found.' });
-
-  try {
-    const capture = await capturePayPalOrder(paypalOrderId);
-    if (capture.status !== 'COMPLETED') {
-      analytics.recordEvent({ type: 'payment_failed', paymentMethod: 'paypal', reason: 'capture_incomplete', ...captureAnalytics });
-      return res.status(400).json({ error: `PayPal payment was not completed. Status: ${capture.status}` });
-    }
-    const validationError = validatePayPalCaptureForOrder(capture, order, paypalOrderId);
-    if (validationError) {
-      analytics.recordEvent({ type: 'payment_failed', paymentMethod: 'paypal', reason: 'capture_validation_failed', ...captureAnalytics });
-      return res.status(400).json({ error: validationError });
-    }
-    const paidOrder = db.markOrderPaid(orderId, paypalOrderId);
-    analytics.recordEvent({ type: 'payment_confirmed', ...captureAnalytics });
-    await backupOrderIfNeeded(paidOrder, 'paypal_capture');
-    res.json({ ok: true, orderId: Number(orderId), paypalOrderId, total: paidOrder.total, message: 'Payment received. Order is confirmed.' });
-  } catch (err) {
-    analytics.recordEvent({ type: 'payment_failed', paymentMethod: 'paypal', reason: 'capture_request_failed', ...captureAnalytics });
-    res.status(502).json({ error: err.message || 'Could not confirm PayPal payment.' });
-  }
-});
-
 async function sendCustomerInstructionsIfNeeded(order) {
-  if (!order || order.payment_provider === 'paypal') return;
+  if (!order || order.payment_provider !== 'crypto') return;
   try {
     await sendCustomerPaymentInstructions(order);
   } catch (err) {
@@ -725,36 +688,6 @@ async function backupOrderIfNeeded(order, source) {
     if (result.errors.length) console.error('Order backup errors:', result.errors.join('; '));
   } catch (err) {
     console.error('Order backup failed:', err.message || err);
-  }
-}
-
-async function dispatchPendingTrackingAddress(order) {
-  if (!order) return { sent: false, warning: 'Order not found.' };
-  if (order.fulfillment_discord_sent_at) {
-    return { sent: false, alreadySent: true, sentAt: order.fulfillment_discord_sent_at };
-  }
-  if (!config.DISCORD_FULFILLMENT_WEBHOOK_URL) {
-    return { sent: false, warning: 'Pending tracking was saved, but the authorized Discord shipping webhook is not configured.' };
-  }
-  const claim = db.claimFulfillmentDiscordPost(order.id);
-  if (!claim.claimed) {
-    return {
-      sent: false,
-      alreadySent: claim.reason === 'already_sent',
-      inProgress: claim.reason === 'in_progress',
-      warning: claim.reason === 'in_progress' ? 'The shipping address is already being posted to Discord.' : undefined,
-    };
-  }
-  try {
-    const result = await sendPendingTrackingDiscord(claim.order);
-    if (!result) throw new Error('The authorized Discord shipping webhook is not configured.');
-    const updated = db.markFulfillmentDiscordSent(order.id, result.messageId);
-    return { sent: true, sentAt: updated.fulfillment_discord_sent_at };
-  } catch (err) {
-    const message = err.message || 'Could not post the shipping address to Discord.';
-    db.markFulfillmentDiscordFailed(order.id, message);
-    console.error(`Order #${order.id} fulfillment Discord post failed:`, message);
-    return { sent: false, warning: `Pending tracking was saved, but Discord was not updated: ${message}` };
   }
 }
 
@@ -817,10 +750,6 @@ function orderFinancialSummary(order) {
 }
 
 
-const adminLoginAttempts = new Map();
-const ADMIN_LOGIN_WINDOW_MS = 15 * 60 * 1000;
-const ADMIN_LOGIN_MAX_ATTEMPTS = 6;
-
 function clientIp(req) {
   return req.ip || req.get('x-forwarded-for') || req.socket.remoteAddress || 'unknown';
 }
@@ -833,34 +762,6 @@ function safePasswordMatch(input, expected, expectedSha256 = '') {
   const inputHash = Buffer.from(inputHashHex, 'hex');
   const expectedHash = Buffer.from(expectedHashHex, 'hex');
   return crypto.timingSafeEqual(inputHash, expectedHash);
-}
-
-function checkAdminLoginLimit(req, res, next) {
-  const now = Date.now();
-  const key = clientIp(req);
-  const attempt = adminLoginAttempts.get(key);
-  if (attempt && attempt.blockedUntil && attempt.blockedUntil > now) {
-    return res.status(429).json({ error: 'Too many login attempts. Try again later.' });
-  }
-  next();
-}
-
-function recordAdminLoginFailure(req) {
-  const now = Date.now();
-  const key = clientIp(req);
-  const current = adminLoginAttempts.get(key);
-  const attempt = current && current.firstAt + ADMIN_LOGIN_WINDOW_MS > now
-    ? current
-    : { count: 0, firstAt: now, blockedUntil: 0 };
-  attempt.count += 1;
-  if (attempt.count >= ADMIN_LOGIN_MAX_ATTEMPTS) {
-    attempt.blockedUntil = now + ADMIN_LOGIN_WINDOW_MS;
-  }
-  adminLoginAttempts.set(key, attempt);
-}
-
-function resetAdminLoginFailures(req) {
-  adminLoginAttempts.delete(clientIp(req));
 }
 
 function topSoldProducts(orders, limit = 10) {
@@ -950,9 +851,9 @@ app.post('/api/stripe/create-checkout-session', checkCheckoutRateLimit, async (r
   let order;
   try {
     order = db.createOrder({ ...prepared.orderInput, paymentProvider: 'stripe' });
-    const origin = mode === 'live' ? 'https://highlandpeptides.com' : `http://localhost:${process.env.PORT || 3000}`;
+    const origin = mode === 'live' ? config.ACCOUNT_SITE_URL : `http://localhost:${process.env.PORT || 3000}`;
     const stripeSession = await stripeClient().checkout.sessions.create(checkoutSessionParams(order, origin, mode), {
-      idempotencyKey: `highland-${mode}-order-${order.id}`,
+      idempotencyKey: `snowy-${mode}-order-${order.id}`,
     });
     if (!(mode === 'live' ? /^cs_live_/ : /^cs_test_/).test(stripeSession.id || '') || !/^https:\/\//.test(stripeSession.url || '')) {
       throw new Error('Stripe did not return a valid Checkout Session.');
@@ -969,6 +870,39 @@ app.post('/api/stripe/create-checkout-session', checkCheckoutRateLimit, async (r
 
 app.get('/api/admin/top-products', requireAdmin, (req, res) => {
   res.json({ products: topSoldProducts(db.getAllOrders(), 10) });
+});
+
+// Admin-only unit economics: per-product price/cost/margin plus the store settings
+// the break-even calculator needs. Supplier costs never leave admin routes.
+app.get('/api/admin/unit-economics', requireAdmin, (req, res) => {
+  const products = catalog.map(p => {
+    const price = Number(p.price || 0);
+    const cost = Number(costBySku[p.sku] || 0);
+    const profit = Math.round((price - cost) * 100) / 100;
+    return {
+      sku: p.sku,
+      name: p.name,
+      spec: p.spec,
+      price,
+      cost,
+      profit,
+      margin: price > 0 ? Math.round((profit / price) * 1000) / 10 : 0,
+    };
+  });
+  const freebieTiers = bundleTiers().map(tier => ({
+    minimumSubtotal: tier.minimumSubtotal,
+    sku: tier.freeSku,
+    cost: Number(costBySku[tier.freeSku] || 0) * tier.freeQuantity,
+  }));
+  res.json({
+    products,
+    settings: {
+      shippingFee: config.SHIPPING_FEE,
+      orderFeeRate: config.ORDER_FEE_RATE,
+      altPaymentDiscountRate: config.ALT_PAYMENT_DISCOUNT_RATE,
+      freebieTiers,
+    },
+  });
 });
 
 app.get('/api/admin/profit', requireAdmin, (req, res) => {
@@ -1052,13 +986,42 @@ app.get('/api/admin/session', (req, res) => {
   res.json({ authenticated: Boolean(req.session?.isAdmin) });
 });
 
-app.post('/api/admin/login', checkAdminLoginLimit, (req, res) => {
-  const { password, rememberDevice } = req.body || {};
-  if (!safePasswordMatch(password, config.ADMIN_PASSWORD, config.ADMIN_PASSWORD_SHA256)) {
-    recordAdminLoginFailure(req);
-    return res.status(401).json({ error: 'Wrong admin password.' });
+const adminSecurity = createAdminSecurity({
+  filePath: path.join(path.dirname(db.getStorageInfo().dbPath), 'admin-login-log.json'),
+});
+
+function lockMessage(blocked) {
+  const minutes = Math.max(1, Math.ceil(blocked.retryAfterMs / 60000));
+  return blocked.reason === 'site_paused'
+    ? `Sign-in is paused for ${minutes} minute${minutes === 1 ? '' : 's'} after too many failed attempts.`
+    : `Too many failed attempts. Try again in ${minutes} minute${minutes === 1 ? '' : 's'}.`;
+}
+
+app.post('/api/admin/login', async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  const blocked = adminSecurity.check(req);
+  if (blocked) {
+    adminSecurity.recordBlocked(req, blocked);
+    res.setHeader('Retry-After', String(Math.ceil(blocked.retryAfterMs / 1000)));
+    return res.status(429).json({ error: lockMessage(blocked) });
   }
-  resetAdminLoginFailures(req);
+  const { password, rememberDevice } = req.body || {};
+  const candidate = typeof password === 'string' ? password.slice(0, 256) : '';
+  if (!candidate || !safePasswordMatch(candidate, config.ADMIN_PASSWORD, config.ADMIN_PASSWORD_SHA256)) {
+    const result = adminSecurity.recordFailure(req);
+    await adminSecurity.failureDelay();
+    if (result.lockedForMs) {
+      const minutes = Math.round(result.lockedForMs / 60000);
+      res.setHeader('Retry-After', String(Math.ceil(result.lockedForMs / 1000)));
+      return res.status(429).json({ error: `Too many failed attempts. Try again in ${minutes} minutes.` });
+    }
+    return res.status(401).json({
+      error: result.remaining <= 2
+        ? `Wrong admin password. ${result.remaining} attempt${result.remaining === 1 ? '' : 's'} left before a lockout.`
+        : 'Wrong admin password.',
+    });
+  }
+  adminSecurity.recordSuccess(req, 'password');
   req.session.regenerate(err => {
     if (err) return res.status(500).json({ error: 'Could not start admin session.' });
     req.session.isAdmin = true;
@@ -1072,6 +1035,18 @@ app.post('/api/admin/login', checkAdminLoginLimit, (req, res) => {
   });
 });
 
+app.get('/api/admin/security/logins', requireAdmin, (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  res.json(adminSecurity.summary(200));
+});
+
+app.post('/api/admin/security/unblock', requireAdmin, (req, res) => {
+  const ip = String((req.body && req.body.ip) || '').slice(0, 80);
+  if (!ip) return res.status(400).json({ error: 'Choose an IP to unblock.' });
+  adminSecurity.unblock(ip);
+  res.json({ ok: true });
+});
+
 app.post('/api/admin/logout', (req, res) => {
   req.session.destroy(() => {
     res.clearCookie('hp.sid', { httpOnly: true, secure: isProductionRuntime, sameSite: 'lax' });
@@ -1080,114 +1055,28 @@ app.post('/api/admin/logout', (req, res) => {
   });
 });
 
-app.get('/api/promo-manager/session', (req, res) => {
-  res.setHeader('Cache-Control', 'no-store');
-  const username = req.session?.isPromoManager ? String(req.session.promoManagerUsername || '').toLowerCase() : '';
-  res.json({
-    authenticated: Boolean(req.session?.isPromoManager),
-    role: req.session?.isPromoManager ? 'promo_manager' : null,
-    username: username || null,
-    canViewApprovedOgreOrders: username === 'promo02',
-  });
-});
-
-app.post('/api/promo-manager/login', checkAdminLoginLimit, (req, res) => {
-  if (!promoManagers.length) {
-    return res.status(503).json({ error: 'Promo manager access is not configured yet.' });
-  }
-  const username = cleanText(req.body?.username, 80).toLowerCase();
-  const manager = promoManagers.find(item => item.username === username);
-  if (!manager || !safePasswordMatch(req.body?.password, '', manager.passwordSha256)) {
-    db.recordPromoAudit({ username: username || '(blank)', action: 'login', outcome: 'failed', ip: clientIp(req) });
-    recordAdminLoginFailure(req);
-    return res.status(401).json({ error: 'Wrong promo manager credentials.' });
-  }
-  resetAdminLoginFailures(req);
-  req.session.regenerate(err => {
-    if (err) return res.status(500).json({ error: 'Could not start promo manager session.' });
-    req.session.isPromoManager = true;
-    req.session.promoManagerUsername = manager.username;
-    db.recordPromoAudit({ username: manager.username, action: 'login', outcome: 'success', ip: clientIp(req) });
-    res.json({ ok: true, role: 'promo_manager', username: manager.username, canViewApprovedOgreOrders: manager.username === 'promo02' });
-  });
-});
-
-app.post('/api/promo-manager/logout', requirePromoManager, (req, res) => {
-  const username = req.session?.promoManagerUsername || 'unknown';
-  db.recordPromoAudit({ username, action: 'logout', outcome: 'success', ip: clientIp(req) });
-  req.session.destroy(() => {
-    res.clearCookie('hp.sid', { httpOnly: true, secure: isProductionRuntime, sameSite: 'lax' });
-    res.json({ ok: true });
-  });
-});
-
-app.get('/api/promo-manager/codes', requirePromoManager, (_req, res) => {
-  res.json({ codes: db.getPromotionCodes().map(item => ({ code: item.code, percentOff: 15, createdAt: item.created_at })) });
-});
-
-app.get('/api/promo-manager/ogre-orders', requirePromoManager, (req, res) => {
-  const username = String(req.session.promoManagerUsername || '').toLowerCase();
-  if (username !== 'promo02') return res.status(403).json({ error: 'This account cannot view approved OGRE orders.' });
-  const orders = db.getApprovedPromoManagerOrders(username, 'OGRE').map(order => ({
-    orderId: Number(order.id),
-    customerName: String(order.buyer?.name || '').slice(0, 100),
-    customerEmail: String(order.buyer?.email || '').slice(0, 254),
-    status: String(order.status || '').slice(0, 40),
-    total: Math.round(Number(order.total || 0) * 100) / 100,
-    createdAt: order.created_at,
-    items: (order.items || []).map(item => ({
-      name: String(item.name || '').slice(0, 160),
-      spec: String(item.spec || '').slice(0, 160),
-      quantity: Math.max(0, Number(item.quantity || 0)),
-    })),
-  }));
-  res.setHeader('Cache-Control', 'no-store');
-  res.json({ orders });
-});
-
-app.post('/api/promo-manager/codes', requirePromoManager, (req, res) => {
-  const code = cleanText(req.body?.code, 24).toUpperCase();
-  const username = req.session.promoManagerUsername || 'unknown';
-  if (!/^[A-Z0-9]{3,24}$/.test(code)) {
-    db.recordPromoAudit({ username, action: 'code_create', outcome: 'rejected_invalid', code, ip: clientIp(req) });
-    return res.status(400).json({ error: 'Use 3–24 letters or numbers with no spaces.' });
-  }
-  if (config.DISCOUNT_CODES[code] != null || db.getPromotionCodeByCode(code) || db.getAccountByReferralCode(code)) {
-    db.recordPromoAudit({ username, action: 'code_create', outcome: 'rejected_duplicate', code, ip: clientIp(req) });
-    return res.status(409).json({ error: 'That code is already in use.' });
-  }
-  try {
-    const created = db.createPromotionCode(code, username);
-    db.recordPromoAudit({ username, action: 'code_create', outcome: 'success', code: created.code, ip: clientIp(req) });
-    res.status(201).json({ ok: true, code: created.code, percentOff: 15, createdAt: created.created_at });
-  } catch (err) {
-    db.recordPromoAudit({ username, action: 'code_create', outcome: 'failed', code, ip: clientIp(req) });
-    res.status(400).json({ error: err.message || 'Could not create promotion code.' });
-  }
-});
-
-app.get('/api/admin/promo-audit', requireAdmin, (req, res) => {
-  res.setHeader('Cache-Control', 'no-store');
-  res.json({ entries: db.getPromoAuditLog(req.query.limit) });
-});
 
 
 app.get('/api/admin/launch-checks', requireAdmin, async (req, res) => {
   const storage = db.getStorageInfo();
   const paidOrders = db.getAllOrders().filter(order => CONFIRMED_ORDER_STATUSES.has(order.status));
-  let fulfillmentConnection = null;
-  if (String(req.query.checkShipping || '') === '1') {
-    try {
-      fulfillmentConnection = await checkFulfillmentDiscordConnection();
-    } catch (err) {
-      fulfillmentConnection = {
-        configured: Boolean(config.DISCORD_FULFILLMENT_WEBHOOK_URL),
-        authorized: false,
-        error: err.message || 'Could not verify the Discord shipping webhook.',
-      };
-    }
-  }
   const checks = [
+    {
+      key: 'lifecycle_emails',
+      label: 'Cart & reorder reminder emails',
+      ok: Boolean(config.BUSINESS_MAILING_ADDRESS && config.SMTP_HOST),
+      detail: config.BUSINESS_MAILING_ADDRESS && config.SMTP_HOST
+        ? 'On. Abandoned-checkout emails go out after ' + config.ABANDONED_CHECKOUT_DELAY_MINUTES + ' minutes; reorder reminders after ' + config.REORDER_REMINDER_DAYS + ' days.'
+        : 'Off. Set BUSINESS_MAILING_ADDRESS (a P.O. box or mailbox service is fine) and SMTP to turn them on. The law requires a postal address in marketing emails.',
+    },
+    {
+      key: 'giveaway',
+      label: 'Launch giveaway',
+      ok: Boolean(config.LAUNCH_GIVEAWAY && config.LAUNCH_GIVEAWAY.startsAt),
+      detail: config.LAUNCH_GIVEAWAY && config.LAUNCH_GIVEAWAY.startsAt
+        ? `Scheduled from ${config.LAUNCH_GIVEAWAY.startsAt} for ${config.LAUNCH_GIVEAWAY.days} days.`
+        : 'Not scheduled. Set GIVEAWAY_START to the launch date (for example 2026-11-20).',
+    },
     {
       key: 'storage',
       label: 'Persistent order storage',
@@ -1203,28 +1092,6 @@ app.get('/api/admin/launch-checks', requireAdmin, async (req, res) => {
       detail: stripeMode() === 'live'
         ? 'Live Stripe Checkout and webhook credentials are configured.'
         : 'Live Stripe Checkout remains disabled until the live key, webhook secret, and explicit switch are set.',
-    },
-    {
-      key: 'discord',
-      label: 'Discord order backup',
-      ok: Boolean(config.DISCORD_ORDER_WEBHOOK_URL),
-      detail: config.DISCORD_ORDER_WEBHOOK_URL
-        ? 'Discord webhook is configured for paid-order backups.'
-        : 'Add DISCORD_ORDER_WEBHOOK_URL in Render to receive paid orders in Discord.',
-    },
-    {
-      key: 'fulfillment-discord',
-      label: 'Pending-tracking address channel',
-      ok: fulfillmentConnection
-        ? Boolean(fulfillmentConnection.authorized)
-        : Boolean(config.DISCORD_FULFILLMENT_WEBHOOK_URL),
-      detail: fulfillmentConnection
-        ? (fulfillmentConnection.authorized
-          ? `Live connection verified for authorized shipping channel ${fulfillmentConnection.channelId}.`
-          : (fulfillmentConnection.error || 'The Discord shipping webhook is not configured.'))
-        : (config.DISCORD_FULFILLMENT_WEBHOOK_URL
-          ? `A webhook is configured and will be verified against shipping channel ${config.DISCORD_FULFILLMENT_CHANNEL_ID} before customer addresses are posted.`
-          : 'Add DISCORD_FULFILLMENT_WEBHOOK_URL for the authorized shipping channel. No customer address is posted without it.'),
     },
     {
       key: 'address-autocomplete',
@@ -1308,44 +1175,8 @@ app.get('/api/admin/storage', requireAdmin, (req, res) => {
 app.get('/api/admin/orders.csv', requireAdmin, (req, res) => {
   const orders = db.getAllOrders();
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-  res.setHeader('Content-Disposition', 'attachment; filename="highland-orders.csv"');
+  res.setHeader('Content-Disposition', 'attachment; filename="snowy-orders.csv"');
   res.send(ordersCsv(orders));
-});
-
-app.get('/api/admin/shipping-delay-notice/preview', requireAdmin, (req, res) => {
-  const recipients = buildDelayNoticeRecipients(db.getAllOrders());
-  res.json({
-    cutoff: DELAY_NOTICE_CUTOFF,
-    recipientCount: recipients.length,
-    orderCount: recipients.reduce((sum, recipient) => sum + recipient.orderIds.length, 0),
-    recipients,
-  });
-});
-
-app.post('/api/admin/shipping-delay-notice/send', requireAdmin, async (req, res) => {
-  const recipients = buildDelayNoticeRecipients(db.getAllOrders());
-  const expectedCount = Number(req.body && req.body.expectedRecipientCount);
-  if (!recipients.length) return res.json({ ok: true, sent: 0, failed: 0, errors: [] });
-  if (expectedCount !== recipients.length) {
-    return res.status(409).json({ error: `Recipient count changed. Preview again before sending (${recipients.length} currently eligible).` });
-  }
-  if (!isCustomerEmailConfigured()) {
-    return res.status(503).json({ error: 'Customer email is not configured. Add SMTP settings in Render.' });
-  }
-
-  const errors = [];
-  let sent = 0;
-  for (const recipient of recipients) {
-    try {
-      await sendShippingDelayNotice(recipient);
-      db.markShippingDelayNoticeSent(recipient.orderIds, recipient.email);
-      sent += 1;
-    } catch (err) {
-      errors.push({ email: recipient.email, message: String(err && err.message || err).slice(0, 300) });
-      console.error(`Shipping delay notice failed for ${recipient.email}:`, err.message || err);
-    }
-  }
-  res.status(errors.length ? 207 : 200).json({ ok: errors.length === 0, sent, failed: errors.length, errors });
 });
 
 app.get('/api/admin/pirate-ship.csv', requireAdmin, (req, res) => {
@@ -1361,7 +1192,7 @@ app.get('/api/admin/pirate-ship.csv', requireAdmin, (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
   res.setHeader('X-Pirate-Ship-Order-Count', String(waiting.length));
-  res.setHeader('Content-Disposition', `attachment; filename="highland-pirate-ship-${filenameTime}.csv"`);
+  res.setHeader('Content-Disposition', `attachment; filename="snowy-pirate-ship-${filenameTime}.csv"`);
   res.send(csv);
 });
 
@@ -1487,39 +1318,7 @@ app.post('/api/admin/orders/:id/status', requireAdmin, async (req, res) => {
   if (CONFIRMED_ORDER_STATUSES.has(status)) {
     await backupOrderIfNeeded(order, 'admin_status_' + status);
   }
-  const fulfillmentDispatch = status === 'pending_tracking'
-    ? await dispatchPendingTrackingAddress(order)
-    : null;
-  res.json({ ok: true, fulfillmentDispatch });
-});
-
-app.post('/api/admin/orders/:id/promo-visibility', requireAdmin, (req, res) => {
-  if (typeof req.body?.approved !== 'boolean') {
-    return res.status(400).json({ error: 'Choose whether this order is approved for promo02.' });
-  }
-  const order = db.setPromoManagerOrderVisibility(req.params.id, 'promo02', req.body.approved);
-  if (!order) return res.status(400).json({ error: 'Only OGRE orders can be approved for promo02.' });
-  db.recordPromoAudit({
-    username: 'admin',
-    action: req.body.approved ? 'ogre_order_approved' : 'ogre_order_hidden',
-    outcome: 'success',
-    code: 'OGRE',
-    ip: clientIp(req),
-  });
-  res.json({ ok: true, orderId: order.id, approved: req.body.approved });
-});
-
-app.post('/api/admin/orders/:id/fulfillment-discord', requireAdmin, async (req, res) => {
-  const order = db.getOrderById(req.params.id);
-  if (!order) return res.status(404).json({ error: 'Order not found' });
-  if (order.status !== 'pending_tracking') {
-    return res.status(400).json({ error: 'Only orders awaiting tracking can be posted to the shipping channel.' });
-  }
-  const result = await dispatchPendingTrackingAddress(order);
-  if (!result.sent && !result.alreadySent && !result.inProgress) {
-    return res.status(502).json({ error: result.warning || 'Could not post the shipping address to Discord.' });
-  }
-  res.json({ ok: true, fulfillmentDispatch: result });
+  res.json({ ok: true });
 });
 
 app.delete('/api/admin/orders/:id', requireAdmin, (req, res) => {
@@ -1539,47 +1338,11 @@ app.get('/api/admin/orders/:id/contents-label.pdf', requireAdmin, (req, res) => 
   buildContentsLabel(order, order.items, res);
 });
 
-function startFulfillmentDiscordScheduler() {
-  if (!config.DISCORD_FULFILLMENT_WEBHOOK_URL) return null;
-  let running = false;
-  const scan = async () => {
-    if (running) return;
-    running = true;
-    try {
-      const waiting = db.getAllOrders().filter(order => order.status === 'pending_tracking' && !order.fulfillment_discord_sent_at);
-      for (const order of waiting) await dispatchPendingTrackingAddress(order);
-    } finally {
-      running = false;
-    }
-  };
-  const initial = setTimeout(scan, 5000);
-  if (typeof initial.unref === 'function') initial.unref();
-  const timer = setInterval(scan, 5 * 60 * 1000);
-  if (typeof timer.unref === 'function') timer.unref();
-  return timer;
-}
-
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`${config.SITE_NAME} running on http://localhost:${PORT}`);
   startPaymentReminderScheduler({ db, sendPaymentReminder });
-  startFulfillmentDiscordScheduler();
-  if (config.BTC_MONITOR.ENABLED) {
-    try {
-      createBitcoinMonitor({
-        addresses: config.BTC_MONITOR.ADDRESSES,
-        webhookUrl: config.BTC_MONITOR.DISCORD_WEBHOOK_URL,
-        apiUrl: config.BTC_MONITOR.API_URL,
-        explorerUrl: config.BTC_MONITOR.EXPLORER_URL,
-        intervalMs: config.BTC_MONITOR.POLL_INTERVAL_MS,
-        minConfirmations: config.BTC_MONITOR.MIN_CONFIRMATIONS,
-        alertExisting: config.BTC_MONITOR.ALERT_EXISTING,
-      }).start();
-      console.log(`BTC monitor started for ${config.BTC_MONITOR.ADDRESSES.length} address(es).`);
-    } catch (err) {
-      console.error('BTC monitor did not start:', err.message || err);
-    }
-  }
+  startLifecycleScheduler({ db });
 });
 
 

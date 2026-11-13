@@ -20,7 +20,7 @@ function authConfig(overrides = {}) {
 }
 
 test('remembered admin token survives a new session and restores admin access', () => {
-  const now = Date.UTC(2026, 8, 1);
+  const now = Date.now();
   const config = authConfig();
   const token = createAdminRememberToken(config, now);
   assert.equal(verifyAdminRememberToken(token, config, now + 1000), true);
@@ -39,7 +39,11 @@ test('remembered admin token rejects tampering, expiry, and credential rotation'
   const now = Date.UTC(2026, 8, 1);
   const config = authConfig();
   const token = createAdminRememberToken(config, now);
-  const tampered = `${token.slice(0, -1)}${token.endsWith('A') ? 'B' : 'A'}`;
+  // Change a character in the middle of the signature: the final base64url
+  // character carries padding bits, so editing it does not always alter the bytes.
+  const signatureStart = token.indexOf('.') + 1;
+  const flipAt = signatureStart + 10;
+  const tampered = `${token.slice(0, flipAt)}${token[flipAt] === 'A' ? 'B' : 'A'}${token.slice(flipAt + 1)}`;
 
   assert.equal(verifyAdminRememberToken(tampered, config, now + 1000), false);
   assert.equal(verifyAdminRememberToken(token, config, now + (31 * 24 * 60 * 60 * 1000)), false);

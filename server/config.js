@@ -12,70 +12,84 @@ module.exports = {
   PACKAGING_FEE: 0,
 
   // Fixed U.S. shipping charge added to domestic orders.
-  SHIPPING_FEE: 10.27,
+  SHIPPING_FEE: 11.99,
+
+  // Optional faster USPS Priority Mail, U.S. addresses only.
+  PRIORITY_SHIPPING_FEE: 19.99,
 
   // Flat international shipping option shown at checkout.
   INTERNATIONAL_SHIPPING_FEE: 35,
 
-  // One complimentary 10ml bacteriostatic water is added when an order
-  // contains at least five paid research products. Supplies do not count
-  // toward the threshold, and the reward is calculated server-side.
+  // Free Reconstitution Solution tiers, based on the order's product subtotal
+  // (after bulk savings, before codes, shipping and fees). Calculated server-side.
+  // Tiers: only the highest tier reached applies (they do not stack).
   BUNDLE_PROMOTION: {
-    qualifyingQuantity: 5,
-    freeSku: 'WA10',
-    freeQuantity: 1,
+    tiers: [
+      { minimumSubtotal: 50, freeSku: 'WA10', freeQuantity: 1 },
+      { minimumSubtotal: 90, freeSku: 'WA30', freeQuantity: 1 },
+      { minimumSubtotal: 150, freeSku: 'WA100', freeQuantity: 1 },
+    ],
   },
 
   // Percentage-based processing fee added to every order (0.03 = 3%).
   ORDER_FEE_RATE: Number(process.env.ORDER_FEE_RATE || 0.03),
 
+  // Research sets (data/bundles.json): buying every item in a set takes this
+  // fraction off those items. Stacks with codes/crypto, which apply afterwards.
+  BUNDLE_DISCOUNT_RATE: Number(process.env.BUNDLE_DISCOUNT_RATE || 0.10),
+
+  // Abandoned-checkout and reorder reminder emails. These are marketing emails,
+  // so U.S. law (CAN-SPAM) requires a real postal address in every one: they stay
+  // OFF until BUSINESS_MAILING_ADDRESS is set (a P.O. box or mailbox service works).
+  LIFECYCLE_EMAILS_ENABLED: String(process.env.LIFECYCLE_EMAILS_ENABLED || 'true').toLowerCase() === 'true',
+  BUSINESS_MAILING_ADDRESS: String(process.env.BUSINESS_MAILING_ADDRESS || '').trim(),
+  ABANDONED_CHECKOUT_DELAY_MINUTES: Math.max(15, Number(process.env.ABANDONED_CHECKOUT_DELAY_MINUTES || 60)),
+  REORDER_REMINDER_DAYS: Math.max(7, Number(process.env.REORDER_REMINDER_DAYS || 35)),
+  LIFECYCLE_POLL_MINUTES: Math.max(5, Number(process.env.LIFECYCLE_POLL_MINUTES || 15)),
+
+  // Launch giveaway. Set GIVEAWAY_START (e.g. 2026-11-20) on the host the day the
+  // site goes live; it runs GIVEAWAY_DAYS days. Leave it unset to keep it hidden.
+  // Every paid peptide/compound vial in a paid order = 1 entry (Supplies such as
+  // Reconstitution Solution and free gifts do not count). Free entry: 1 per day.
+  LAUNCH_GIVEAWAY: {
+    id: 'launch-2026',
+    startsAt: process.env.GIVEAWAY_START || null,
+    days: Number(process.env.GIVEAWAY_DAYS || 30),
+    excludedCategories: ['Supplies'],
+    prizes: [
+      { place: 1, label: '$100 store credit', creditCents: 10000 },
+      { place: 2, label: '$50 store credit', creditCents: 5000 },
+      { place: 3, label: 'Free Reconstitution Solution kit', creditCents: 0 },
+    ],
+  },
+
   // Promo codes: key is the code (case-insensitive), value is the fraction off
   // the subtotal (0.15 = 15% off). Validated server-side at checkout.
+  // Snowy relaunch (Nov 2026): every earlier code was retired. TIKTOK15 is the only
+  // code that works; customer referral codes are not accepted.
   DISCOUNT_CODES: {
-    NM: 0.15,
-    FISH: 0.15,
-    PARAM: 0.15,
-    KAY: 0.15,
-    HUM: 0.15,
-    JUSTIN: 0.15,
-    BCG: 0.15,
-    JETT: 0.15,
-    BABE: 0.15,
-    VICKY: 0.15,
-    TK: 0.15,
-    ONE: 0.15,
-    OZAN: 0.15,
-    JARED: 0.15,
-    CERT: 0.15,
-    CHUD: 0.15,
-    TORAH: 0.15,
-    OGRE: 0.15,
-    PEAR: 0.15,
-    CAR: 0.15,
-    LANG10: 0.10,
-    CNTRL: 0.10,
-    BIOMAX: 0.10,
-    PHARMACODE: 0.15,
-    NOOR: 0.15,
-    GJ: 0.15,
-    SUPERMAN: 0.15,
-    CHRIS: 0.15,
+    TIKTOK15: 0.15,
   },
+
+  // Free items added to an order when a code is used (on top of any bundle reward).
+  DISCOUNT_CODE_GIFTS: {
+    TIKTOK15: { sku: 'WA10', quantity: 1 },
+  },
+
 
   // Temporary promotion boosts are tracked in the persistent order database.
   // Change the campaign ID for any future offer so this usage counter cannot
   // reset after a deployment or server restart.
-  LIMITED_PROMOTION_CAMPAIGNS: {
-    NM: {
-      id: 'nm-next-two-20-2026-09-22',
-      boostedRate: 0.20,
-      maxUses: 2,
-    },
-  },
+  LIMITED_PROMOTION_CAMPAIGNS: {},
+
 
 
   // Extra global price multiplier applied after formula/overrides (1.15 = raise all public prices by 15%).
   PUBLIC_PRICE_MULTIPLIER: Number(process.env.PUBLIC_PRICE_MULTIPLIER || 1.15),
+
+  // Flat dollar amount added to every public product price before the .99 rounding
+  // (Snowy relaunch, Nov 2026: +$1 on every product).
+  PUBLIC_PRICE_INCREASE: Number(process.env.PUBLIC_PRICE_INCREASE || 1),
 
   // Round all public product prices to this many decimal places.
   PRICE_DECIMALS: 2,
@@ -84,20 +98,6 @@ module.exports = {
   ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || 'change-me-before-launch',
   ADMIN_PASSWORD_SHA256: process.env.ADMIN_PASSWORD_SHA256 || '',
 
-  // Restricted staff login that can only create fixed 15% promotion codes.
-  PROMO_MANAGER_USERNAME: process.env.PROMO_MANAGER_USERNAME || '',
-  PROMO_MANAGER_PASSWORD_SHA256: process.env.PROMO_MANAGER_PASSWORD_SHA256 || '',
-  // Promo-only bootstrap accounts. Only strong one-way hashes are committed;
-  // the plaintext passwords are delivered privately to the site owner.
-  PROMO_MANAGER_BUILTIN_ACCOUNTS: [
-    { username: 'promo02', passwordSha256: '393bdec8afad773da04b9f8295699fb54f240e8ad1c6b63ca683c011476a7d58' },
-    { username: 'promo03', passwordSha256: 'c28293318320acfa1a3a18be453dd89d82f24ebeebf4d5d5287e27b3373c8f88' },
-  ],
-  // Optional JSON array for additional promo-only staff accounts:
-  // [{"username":"promo2","passwordSha256":"<64-char sha256>"}]
-  // The legacy single-account variables above remain supported.
-  PROMO_MANAGER_ACCOUNTS_JSON: process.env.PROMO_MANAGER_ACCOUNTS_JSON || '',
-
   // Session secret (change via env var SESSION_SECRET before deploying).
   SESSION_SECRET: process.env.SESSION_SECRET || 'change-me-session-secret',
 
@@ -105,19 +105,7 @@ module.exports = {
   // Changing the admin password or session secret invalidates every remembered device.
   ADMIN_REMEMBER_DAYS: Math.max(1, Math.min(90, Number(process.env.ADMIN_REMEMBER_DAYS || 30))),
 
-  // PayPal Checkout. Use sandbox while testing, then switch PAYPAL_ENV to live.
-  PAYPAL_CLIENT_ID: process.env.PAYPAL_CLIENT_ID || '',
-  PAYPAL_CLIENT_SECRET: process.env.PAYPAL_CLIENT_SECRET || '',
-  PAYPAL_ENV: process.env.PAYPAL_ENV || 'sandbox',
-  PAYPAL_CURRENCY: process.env.PAYPAL_CURRENCY || 'USD',
-  PAYPAL_MANUAL_EMAIL: process.env.PAYPAL_MANUAL_EMAIL || 'at475756@gmail.com',
 
-  // Customer-facing Zelle recipient. Zelle payments are matched and approved
-  // manually in the admin dashboard after the customer submits an order.
-  ZELLE_RECIPIENT: process.env.ZELLE_RECIPIENT || '+1 (213) 424-4643',
-
-  // Discount applied to Zelle orders. This cannot be combined with any code.
-  ZELLE_PAYMENT_DISCOUNT_RATE: Number(process.env.ZELLE_PAYMENT_DISCOUNT_RATE || 0.10),
 
   // Optional order backups. Configure these in Render so paid orders are copied
   // outside the site database.
@@ -129,36 +117,19 @@ module.exports = {
 
   // Discount applied for paying via crypto instead of card, as an incentive.
   // This cannot be combined with any promo code.
-  ALT_PAYMENT_DISCOUNT_RATE: Number(process.env.ALT_PAYMENT_DISCOUNT_RATE || 0.05),
+  // Crypto orders get a flat 15% off, never combined with codes or referral offers.
+  ALT_PAYMENT_DISCOUNT_RATE: Number(process.env.ALT_PAYMENT_DISCOUNT_RATE || 0.15),
 
-  DISCORD_ORDER_WEBHOOK_URL: process.env.DISCORD_ORDER_WEBHOOK_URL || '',
-  // Fulfillment addresses are more sensitive than ordinary order alerts. The
-  // webhook is verified against this exact Discord channel before any customer
-  // name or mailing address is posted. Keep this separate from payment alerts
-  // so customer addresses can never fall back to a different Discord channel.
-  DISCORD_FULFILLMENT_WEBHOOK_URL: process.env.DISCORD_FULFILLMENT_WEBHOOK_URL || '',
-  DISCORD_FULFILLMENT_CHANNEL_ID: process.env.DISCORD_FULFILLMENT_CHANNEL_ID || '1544575715024965633',
-  BTC_MONITOR: {
-    ENABLED: String(process.env.BTC_MONITOR_ENABLED || '').toLowerCase() === 'true',
-    ADDRESSES: String(process.env.BTC_MONITOR_ADDRESSES || process.env.CRYPTO_BTC_ADDRESS || 'bc1qvz90rnsmdq3fyefxpcxdj4sp03pcwwyysryu82')
-      .split(',').map(address => address.trim()).filter(Boolean),
-    DISCORD_WEBHOOK_URL: process.env.DISCORD_BTC_WEBHOOK_URL || process.env.DISCORD_ORDER_WEBHOOK_URL || '',
-    API_URL: process.env.BTC_MONITOR_API_URL || 'https://mempool.space/api',
-    EXPLORER_URL: process.env.BTC_MONITOR_EXPLORER_URL || 'https://mempool.space',
-    POLL_INTERVAL_MS: Number(process.env.BTC_MONITOR_POLL_INTERVAL_MS || 60000),
-    MIN_CONFIRMATIONS: Math.max(0, Number(process.env.BTC_MONITOR_MIN_CONFIRMATIONS || 0)),
-    ALERT_EXISTING: String(process.env.BTC_MONITOR_ALERT_EXISTING || '').toLowerCase() === 'true',
-  },
   ORDER_BACKUP_EMAIL_TO: process.env.ORDER_BACKUP_EMAIL_TO || '',
-  ORDER_BACKUP_EMAIL_FROM: process.env.ORDER_BACKUP_EMAIL_FROM || process.env.SMTP_USER || 'orders@highlandpeptides.com',
+  ORDER_BACKUP_EMAIL_FROM: process.env.ORDER_BACKUP_EMAIL_FROM || process.env.SMTP_USER || 'orders@snowyresearch.com',
   SMTP_HOST: process.env.SMTP_HOST || '',
   SMTP_PORT: Number(process.env.SMTP_PORT || 587),
   SMTP_SECURE: String(process.env.SMTP_SECURE || '').toLowerCase() === 'true',
   SMTP_USER: process.env.SMTP_USER || '',
   SMTP_PASS: process.env.SMTP_PASS || '',
-  CUSTOMER_EMAIL_FROM: process.env.CUSTOMER_EMAIL_FROM || process.env.ORDER_BACKUP_EMAIL_FROM || process.env.SMTP_USER || 'support@highlandpeptides.com',
+  CUSTOMER_EMAIL_FROM: process.env.CUSTOMER_EMAIL_FROM || process.env.ORDER_BACKUP_EMAIL_FROM || process.env.SMTP_USER || 'support@snowyresearch.com',
   // Pirate Ship tracking automation. The CSV export can route each shipment
-  // email to hp-<order>@this domain so tracking is matched without guessing.
+  // email to sr-<order>@this domain so tracking is matched without guessing.
   RESEND_API_KEY: process.env.RESEND_API_KEY || '',
   RESEND_WEBHOOK_SECRET: process.env.RESEND_WEBHOOK_SECRET || '',
   PIRATE_SHIP_INBOUND_DOMAIN: process.env.PIRATE_SHIP_INBOUND_DOMAIN || '',
@@ -172,14 +143,14 @@ module.exports = {
   PAYMENT_REMINDER_POLL_MINUTES: Math.max(5, Number(process.env.PAYMENT_REMINDER_POLL_MINUTES || 30)),
 
   // Google Maps Platform address tools. The browser key should be restricted
-  // to Highland's HTTPS origins and the server key to Address Validation API.
+  // to the storefront's HTTPS origins and the server key to Address Validation API.
   GOOGLE_PLACES_BROWSER_KEY: process.env.GOOGLE_PLACES_BROWSER_KEY || '',
   GOOGLE_ADDRESS_VALIDATION_KEY: process.env.GOOGLE_ADDRESS_VALIDATION_KEY || '',
 
   // Optional customer accounts and referral rewards. Referral codes give the
   // shopper 10% off and credit the code owner with 10% of net merchandise
   // revenue once the order is paid. Cash-out requests are manually reviewed.
-  ACCOUNT_SITE_URL: String(process.env.ACCOUNT_SITE_URL || 'https://highlandpeptides.com').replace(/\/$/, ''),
+  ACCOUNT_SITE_URL: String(process.env.ACCOUNT_SITE_URL || 'https://snowyresearch.com').replace(/\/$/, ''),
   ACCOUNT_VERIFICATION_TTL_HOURS: Math.max(1, Number(process.env.ACCOUNT_VERIFICATION_TTL_HOURS || 24)),
   PASSWORD_RESET_TTL_MINUTES: Math.max(10, Number(process.env.PASSWORD_RESET_TTL_MINUTES || 60)),
   REFERRAL_DISCOUNT_RATE: 0.10,
@@ -189,10 +160,8 @@ module.exports = {
   ACCOUNT_CRYPTO_DISCOUNT_RATE: 0.05,
   TIKTOK_CREDIT_CENTS: 500,
   TIKTOK_SUBMISSION_COOLDOWN_DAYS: 7,
-  TIKTOK_HANDLE: '@highlandoffical',
-  TIKTOK_PROFILE_URL: 'https://www.tiktok.com/@highlandoffical',
 
-  SITE_NAME: process.env.SITE_NAME || 'Highland Peptides',
+  SITE_NAME: process.env.SITE_NAME || 'Snowy Research',
 };
 
 

@@ -1,4 +1,4 @@
-# Highland Peptides — Site Starter
+# Snowy Research — Site Starter
 
 A working storefront for a B2B research-chemical business: catalog, verified-account
 signup, manual approval (no guest checkout), order placement, and packing-slip / label
@@ -69,7 +69,7 @@ Orders are written to a JSON database file. On Render, the app now defaults to:
 
 To make orders survive deploys/restarts, add a **Render Persistent Disk** to the web service:
 
-1. Open the Highland Peptides service in Render.
+1. Open the Snowy Research service in Render.
 2. Go to **Disks**.
 3. Add a persistent disk.
 4. Set the mount path to:
@@ -93,48 +93,15 @@ or:
 DATA_DIR=/var/data
 ```
 
-The Zelle checkout option defaults to `+1 (213) 424-4643`. To change the
-customer-facing recipient without editing code, set:
-
-```txt
-ZELLE_RECIPIENT=+1 (213) 424-4643
-ZELLE_PAYMENT_DISCOUNT_RATE=0.10
-```
-
-Zelle orders receive a 10% discount by default, which cannot be combined with
-promotion or referral codes. They remain `pending_payment` until the payment is
-verified and the order is manually marked paid in the admin dashboard.
-
 If an old `data/db.json` exists when this new code first runs, the app copies it into the persistent path automatically.
 
-## Order backups: email and Discord
+## Order backups: email
 
-Paid orders can be backed up outside the website database. This is strongly recommended.
-
-### Discord order bot / webhook
-
-Create a Discord webhook in the channel where you want order alerts, then add this Render environment variable:
-
-```txt
-DISCORD_ORDER_WEBHOOK_URL=https://discord.com/api/webhooks/...
-```
-
-When PayPal captures an order, or when you manually mark an order as paid/fulfilled in admin, the site will post the order details to Discord.
-
-### Pending-tracking address channel
-
-Create a separate webhook inside the authorized shipping channel, then add:
-
-```txt
-DISCORD_FULFILLMENT_WEBHOOK_URL=https://discord.com/api/webhooks/...
-DISCORD_FULFILLMENT_CHANNEL_ID=1544575715024965633
-```
-
-When label printing moves an order to `pending_tracking`, the site verifies the webhook's actual Discord channel ID before sending a copy-ready recipient block. It stores the sent timestamp and message ID so the same order is not posted twice. A five-minute catch-up scan posts any waiting order that was missed during a restart or temporary Discord failure. The message body contains only the full recipient name and mailing address, so Discord's mobile **Copy Text** can be pasted directly into Pirate Ship; the order number remains in the embed title.
+Paid orders can be backed up outside the website database by email (see **Email order backup** below). This is strongly recommended.
 
 ### Pirate Ship tracking automation
 
-The admin Label Maker includes **Export Pirate Ship CSV**. It exports only orders in `pending_tracking`, with separate address columns, customer email, item details, and an order note. When the three Render variables below are configured, the CSV's `Email` column uses a signed, order-specific inbound address (`hp-<order>-<token>@...`) so a Pirate Ship tracking email can never be matched to the wrong order. The public Resend webhook verifies the signed event, fetches the received email, extracts USPS/UPS tracking details, emails the customer once through Highland, marks the order `fulfilled`, and records the event for idempotency. The fallback BCC format can also match a single pending order by the customer's email; ambiguous matches are rejected for manual review.
+The admin Label Maker includes **Export Pirate Ship CSV**. It exports only orders in `pending_tracking`, with separate address columns, customer email, item details, and an order note. When the three Render variables below are configured, the CSV's `Email` column uses a signed, order-specific inbound address (`hp-<order>-<token>@...`) so a Pirate Ship tracking email can never be matched to the wrong order. The public Resend webhook verifies the signed event, fetches the received email, extracts USPS/UPS tracking details, emails the customer once from the store, marks the order `fulfilled`, and records the event for idempotency. The fallback BCC format can also match a single pending order by the customer's email; ambiguous matches are rejected for manual review.
 
 Required Render environment variables:
 
@@ -142,14 +109,14 @@ Required Render environment variables:
 * `RESEND_WEBHOOK_SECRET` — signing secret from the Resend `email.received` webhook.
 * `PIRATE_SHIP_INBOUND_DOMAIN` — the Resend receiving domain (for example `your-id.resend.app`), without `@`.
 
-Create a Resend webhook at `https://highlandpeptides.com/api/webhooks/resend/inbound` for the `email.received` event. In Pirate Ship, upload the exported CSV, map the address columns, and enable **Email recipients** when buying labels. Resend stores inbound messages and retries signed webhooks when the app is temporarily unavailable.
+Create a Resend webhook at `https://snowyresearch.com/api/webhooks/resend/inbound` for the `email.received` event. In Pirate Ship, upload the exported CSV, map the address columns, and enable **Email recipients** when buying labels. Resend stores inbound messages and retries signed webhooks when the app is temporarily unavailable.
 
 ## Google-style address autocomplete and validation
 
 Enable **Maps JavaScript API**, **Places API (New)**, and **Address Validation API** in one Google Cloud project. Use separate restricted keys:
 
 ```txt
-GOOGLE_PLACES_BROWSER_KEY=browser-key-restricted-to-highlandpeptides.com
+GOOGLE_PLACES_BROWSER_KEY=browser-key-restricted-to-snowyresearch.com
 GOOGLE_ADDRESS_VALIDATION_KEY=server-key-restricted-to-address-validation-api
 ```
 
@@ -165,8 +132,8 @@ suggestions and stronger USPS apartment/unit deliverability checks when configur
 To email yourself a copy of every paid order, configure SMTP in Render:
 
 ```txt
-ORDER_BACKUP_EMAIL_TO=support@highlandpeptides.com
-ORDER_BACKUP_EMAIL_FROM=support@highlandpeptides.com
+ORDER_BACKUP_EMAIL_TO=support@snowyresearch.com
+ORDER_BACKUP_EMAIL_FROM=support@snowyresearch.com
 SMTP_HOST=your-smtp-host
 SMTP_PORT=587
 SMTP_SECURE=false
@@ -185,10 +152,10 @@ Backups are sent after payment capture. They are also sent if an admin manually 
 
 ### Customer payment reminders and tracking email
 
-The same SMTP connection powers customer-facing email. Set a verified Highland sender address in Render:
+The same SMTP connection powers customer-facing email. Set a verified Snowy Research sender address in Render:
 
 ```txt
-CUSTOMER_EMAIL_FROM=Highland Peptides <support@highlandpeptides.com>
+CUSTOMER_EMAIL_FROM=Snowy Research <support@snowyresearch.com>
 PAYMENT_REMINDERS_ENABLED=true
 PAYMENT_REMINDER_FIRST_HOURS=168
 PAYMENT_REMINDER_REPEAT_HOURS=336
@@ -196,9 +163,9 @@ PAYMENT_REMINDER_MAX=0
 PAYMENT_REMINDER_POLL_MINUTES=30
 ```
 
-New PayPal/crypto orders created after this feature is deployed receive their first reminder after one week and no more than one reminder every two weeks after that while they remain pending. `PAYMENT_REMINDER_MAX=0` means the biweekly schedule has no fixed count limit; set a positive number to cap it. Historical pending orders are deliberately excluded to prevent a surprise backlog email blast. Send claims and timestamps are saved with the order so overlapping scans or a restart do not reset the reminder count.
+New crypto orders created after this feature is deployed receive their first reminder after one week and no more than one reminder every two weeks after that while they remain pending. `PAYMENT_REMINDER_MAX=0` means the biweekly schedule has no fixed count limit; set a positive number to cap it. Historical pending orders are deliberately excluded to prevent a surprise backlog email blast. Send claims and timestamps are saved with the order so overlapping scans or a restart do not reset the reminder count.
 
-For paid orders, the admin dashboard includes a carrier dropdown and tracking-number field. Clicking **Send tracking email** claims the shipment, emails the buyer once from the configured Highland sender, and marks the order fulfilled. Tracking emails identify the carrier and link to its live delivery estimate. Your SMTP provider must authorize `support@highlandpeptides.com` as a sender; Cloudflare Email Routing by itself only handles incoming mail.
+For paid orders, the admin dashboard includes a carrier dropdown and tracking-number field. Clicking **Send tracking email** claims the shipment, emails the buyer once from the configured store sender, and marks the order fulfilled. Tracking emails identify the carrier and link to its live delivery estimate. Your SMTP provider must authorize `support@snowyresearch.com` as a sender; Cloudflare Email Routing by itself only handles incoming mail.
 
 ## Optional customer accounts and referral rewards
 
@@ -207,7 +174,7 @@ Customer accounts are optional; guest checkout remains available. Verified custo
 Store credit can be applied at checkout before cash-payout eligibility. Cash-payout requests unlock after five unique paid referred customers and $500 in aggregate paid referral merchandise spend, then appear in the admin dashboard for manual review. Configure the public URL used in verification and password-reset emails:
 
 ```txt
-ACCOUNT_SITE_URL=https://highlandpeptides.com
+ACCOUNT_SITE_URL=https://snowyresearch.com
 ACCOUNT_VERIFICATION_TTL_HOURS=24
 PASSWORD_RESET_TTL_MINUTES=60
 ```
@@ -235,21 +202,3 @@ COA screenshots or PDFs belong in `public/coa/`. Add one record per vial to `dat
 ```
 
 When a purity result exists, its product page shows a **View Certificate of Analysis** button. Quantity- or identity-only reports are labeled **View Laboratory Report** instead. Without a record, the same location becomes a prefilled COA request link so the site never points to a missing document.
-
-## Bitcoin deposit alerts in Discord
-
-The server can poll the public mempool.space API and post a Discord message whenever a watched Bitcoin address receives a new transaction. It stores notified transaction IDs on the persistent data disk, so restarts do not create duplicate alerts.
-
-Configure these environment variables:
-
-```txt
-BTC_MONITOR_ENABLED=true
-BTC_MONITOR_ADDRESSES=bc1q...your-address
-DISCORD_BTC_WEBHOOK_URL=https://discord.com/api/webhooks/...
-BTC_MONITOR_MIN_CONFIRMATIONS=0
-BTC_MONITOR_POLL_INTERVAL_MS=60000
-```
-
-`BTC_MONITOR_ADDRESSES` accepts a comma-separated list. If it is omitted, `CRYPTO_BTC_ADDRESS` is watched. If `DISCORD_BTC_WEBHOOK_URL` is omitted, the existing `DISCORD_ORDER_WEBHOOK_URL` is used. A minimum confirmation count of `0` alerts when a transaction first enters the mempool; use `1` or more to wait for mining confirmations. The minimum polling interval is 15 seconds.
-
-On its first run, the monitor records the address's current transactions without alerting, preventing a flood of old deposits. Set `BTC_MONITOR_ALERT_EXISTING=true` only if you intentionally want the latest existing deposits announced. The state file is `data/btc-monitor-state.json` locally or `${DATA_DIR}/btc-monitor-state.json` on a persistent deployment disk.

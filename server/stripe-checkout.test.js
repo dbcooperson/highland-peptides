@@ -84,6 +84,9 @@ test('all catalog quantity tiers preserve the server-calculated cent total', () 
 test('Paid-session verification rejects live, unpaid and mismatched references', () => {
   const event = { livemode: false, type: 'checkout.session.completed', data: { object: { id: 'cs_test_123', mode: 'payment', payment_status: 'paid', amount_total: 3499, currency: 'usd', metadata: { order_id: '123' }, client_reference_id: 'HP-123' } } };
   assert.deepEqual(verifiedPaidSession(event), { id: 123, sessionId: 'cs_test_123', amountCents: 3499, currency: 'usd' });
+  // New orders use SR-; sessions created before the rebrand (HP-) still confirm.
+  assert.deepEqual(verifiedPaidSession({ ...event, data: { object: { ...event.data.object, client_reference_id: 'SR-123' } } }), { id: 123, sessionId: 'cs_test_123', amountCents: 3499, currency: 'usd' });
+  assert.equal(verifiedPaidSession({ ...event, data: { object: { ...event.data.object, client_reference_id: 'SR-456' } } }), null);
   assert.equal(verifiedPaidSession({ ...event, livemode: true }), null);
   assert.equal(verifiedPaidSession({ ...event, data: { object: { ...event.data.object, payment_status: 'unpaid' } } }), null);
   assert.equal(verifiedPaidSession({ ...event, data: { object: { ...event.data.object, client_reference_id: 'HP-456' } } }), null);

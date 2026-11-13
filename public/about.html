@@ -3,113 +3,135 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Learn about Highland Peptides, a research-use-only supplier with premium Highland-inspired branding, clear catalog standards, and California fulfillment.">
-<title>About Us: Highland Peptides</title>
-<link rel="icon" type="image/png" href="/images/branding/highland-social-avatar-v1.png">
-<link rel="apple-touch-icon" href="/images/branding/highland-social-avatar-v1.png">
+<meta name="description" content="Learn about Snowy Research, a research-use-only supplier with clear catalog standards, published batch reports, and same-day California fulfillment.">
+<title>About - Snowy Research</title>
+<link rel="icon" type="image/png" href="/images/branding/snowy-icon-512.png">
+<link rel="apple-touch-icon" href="/images/branding/snowy-icon-512.png">
 <link rel="manifest" href="/site.webmanifest">
-<link rel="stylesheet" href="/css/style.css?v=shipping-delay-v2-20261012">
+<meta property="og:site_name" content="Snowy Research">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css?v=swipe-20261112">
+<link rel="stylesheet" href="/css/snowy.css?v=inbox-20261112b">
+<link rel="stylesheet" href="/css/snowy-pages.css?v=frost-20261112">
 </head>
-<body>
+<body class="snowy sn-info-page">
 
-<div class="mountain-bg" aria-hidden="true">
-  <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#161a1f"/>
-        <stop offset="42%" stop-color="#333d47"/>
-        <stop offset="72%" stop-color="#5b5850"/>
-        <stop offset="100%" stop-color="#7a6650"/>
-      </linearGradient>
-      <radialGradient id="glow" cx="50%" cy="50%" r="50%">
-        <stop offset="0%" stop-color="#f0c589" stop-opacity="0.45"/>
-        <stop offset="100%" stop-color="#f0c589" stop-opacity="0"/>
-      </radialGradient>
-      <filter id="softBlur" x="-30%" y="-30%" width="160%" height="160%">
-        <feGaussianBlur stdDeviation="10"/>
-      </filter>
-    </defs>
-    <rect x="0" y="0" width="1600" height="900" fill="url(#sky)"/>
-    <g filter="url(#softBlur)">
-      <ellipse cx="1180" cy="430" rx="280" ry="200" fill="url(#glow)"/>
-      <path d="M0,420 L100,380 L220,410 L340,360 L460,400 L580,350 L700,390 L820,340 L940,385 L1060,345 L1180,395 L1300,355 L1420,400 L1600,370 L1600,900 L0,900 Z" fill="#5c6670" opacity="0.5"/>
-      <path d="M0,520 L120,470 L250,500 L380,450 L500,495 L640,440 L760,485 L880,430 L1000,480 L1140,435 L1260,490 L1400,445 L1600,480 L1600,900 L0,900 Z" fill="#414b52" opacity="0.68"/>
-      <path d="M0,620 L150,580 L300,610 L450,560 L600,605 L760,555 L900,600 L1050,550 L1200,595 L1350,560 L1600,600 L1600,900 L0,900 Z" fill="#262e33" opacity="0.85"/>
-      <path d="M0,760 L130,700 L260,740 L400,680 L540,730 L700,670 L860,725 L1020,665 L1180,720 L1340,680 L1600,715 L1600,900 L0,900 Z" fill="#12161a"/>
-    </g>
-  </svg>
-</div>
-<div class="mountain-scrim" aria-hidden="true"></div>
+<div class="leopard-layer" aria-hidden="true"></div>
 
-<div class="nav-wrap">
-  <header class="topbar">
-    <div class="brand"><a href="/index.html" style="color:inherit;text-decoration:none;display:flex;align-items:center;gap:10px;">
-      <div class="brand-seal-wrap"><img src="/images/branding/highland-hp-ridge-mark-v1.png" alt=""></div>
-      Highland Peptides
-    </a></div>
-    <nav class="site-nav">
-      <a href="/index.html#catalogSection">Shop</a>
-      <a href="/about.html" class="active">About Us</a>
-      <a href="/support.html">Support</a>
-    </nav>
-    <div class="header-actions">
-      <button id="openProductSearch" class="nav-search-button" type="button" aria-label="Search products">
-        <span class="nav-search-icon" aria-hidden="true"></span>
-      </button>
-      <nav class="cart-nav">
-        <a href="/cart.html" class="cart-link" aria-label="View cart">
-          <span class="cart-icon" aria-hidden="true"></span>
-          <span class="cart-label">Cart</span>
-          <span id="cartCount" class="cart-count" aria-label="0 items">0</span>
-        </a>
-      </nav>
+<div id="entryGate" class="entry-gate">
+  <div class="entry-gate-box">
+    <div class="brand">Snowy Research</div>
+    <h2>Research Use Only</h2>
+    <p>This site sells laboratory research compounds. They are not drugs, foods, cosmetics, or dietary supplements, and are not for human or veterinary use. By entering, you certify that:</p>
+    <ul>
+      <li>You are 21 years of age or older.</li>
+      <li>You are an independent research company or an independent researcher, purchasing solely for laboratory / research purposes.</li>
+      <li>You are NOT using these products for human consumption, injection, or administration of any kind.</li>
+    </ul>
+    <div class="entry-gate-actions">
+      <button id="entryAgreeBtn">I certify &amp; enter</button>
+      <button id="entryExitBtn" class="secondary">Exit</button>
     </div>
-  </header>
-</div><section class="hero" style="padding-bottom: 20px;">
-  <div class="eyebrow">About Highland Peptides</div>
-  <h1 class="hero-title">Premium research supply,<br><em>without the clinical coldness.</em></h1>
-  <p class="hero-sub">Highland Peptides is a research-use-only supplier built around clear catalog standards, careful fulfillment, and a warmer premium identity inspired by the Scottish Highlands.</p>
-</section>
+  </div>
+</div>
 
-<main style="display:block; max-width: 900px; padding-top: 0;">
-  <section class="panel" style="margin-bottom: 24px;">
-    <h2>What we do</h2>
-    <p class="hint" style="font-size:14px; line-height:1.7; color:var(--muted-on-light);">
-      We supply laboratory research compounds to independent researchers and research companies. Products are listed for research use only and are not sold as drugs, foods, cosmetics, supplements, or items for human or veterinary administration.
-    </p>
-  </section>
+<div class="site-wrap">
 
-  <section class="panel" style="margin-bottom: 24px;">
-    <h2>Catalog standards</h2>
-    <p class="hint" style="font-size:14px; line-height:1.7; color:var(--muted-on-light);">
-      Our catalog is intentionally positioned around research documentation and clear product identity. COA documentation is available on request for current lots, and the site repeats research-use language at entry, product detail, and checkout so the intended use stays unambiguous.
-    </p>
-  </section>
+  <div class="ruo-strip">For laboratory and research use only · Not for human or veterinary use · Not a drug, food, or cosmetic</div>
 
-  <section class="panel" style="margin-bottom: 24px;">
-    <h2>Fulfillment</h2>
-    <p class="hint" style="font-size:14px; line-height:1.7; color:var(--muted-on-light);">
-      Orders ship from California, with the storefront designed for quick catalog browsing, clear vial specifications, and straightforward cart review. The purchase flow can continue to mature later without changing the brand or catalog foundation.
-    </p>
-  </section>
+  <div class="nav-wrap">
+    <header class="topbar">
+      <a class="brand" href="/">Snowy</a>
+      <nav class="site-nav">
+        <a href="/index.html#catalogSection">Shop</a>
+        <a href="/about.html" class="active">About</a>
+        <a href="/support.html">Support</a>
+      </nav>
+      <div class="header-actions">
+        <button id="openProductSearch" class="nav-search-button" type="button" aria-label="Search products">
+          <span class="nav-search-icon" aria-hidden="true"></span>
+        </button>
+        <nav class="cart-nav">
+          <a href="/cart.html" class="cart-link" aria-label="View cart">
+            <span class="cart-icon" aria-hidden="true"></span>
+            <span class="cart-label">Cart</span>
+            <span id="cartCount" class="cart-count" aria-label="0 items">0</span>
+          </a>
+        </nav>
+      </div>
+    </header>
+  </div>
 
-  <section class="panel">
-    <h2>Brand direction</h2>
-    <p class="hint" style="font-size:14px; line-height:1.7; color:var(--muted-on-light);">
-      Highland Peptides is moving toward one clear goal: offering some of the most affordable high-quality research products in the United States. We are focused on keeping prices competitive without compromising clear labeling, dependable documentation, or fast professional fulfillment.
-    </p>
-  </section>
-</main>
+<main class="sn-page sn-info">
+    <header class="sn-info-hero">
+      <span class="sn-kicker">About Snowy Research</span>
+      <h1>Clean research supply, shipped the same day.</h1>
+      <p>Snowy Research is a research-use-only supplier built around clear catalog standards, published batch reports, and fast, careful fulfillment.</p>
+    </header>
+    <div class="sn-info-grid">
+      <article class="sn-info-card">
+        <span>01</span>
+        <h2>What we do</h2>
+        <p>We supply laboratory research compounds to independent researchers and research companies. Products are listed for research use only and are not sold as drugs, foods, cosmetics, supplements, or items for human or veterinary administration.</p>
+      </article>
+      <article class="sn-info-card">
+        <span>02</span>
+        <h2>Catalog standards</h2>
+        <p>Every listing is built around clear product identity and research documentation. COA documentation is available on request for current lots, and research-use language appears at entry, on every product, and at checkout so the intended use stays unambiguous.</p>
+      </article>
+      <article class="sn-info-card">
+        <span>03</span>
+        <h2>Fulfillment</h2>
+        <p>Orders ship from California. Orders confirmed before 5 PM PT on a business day ship the same day, and tracking is emailed as soon as your package is on its way.</p>
+      </article>
+      <article class="sn-info-card">
+        <span>04</span>
+        <h2>Our goal</h2>
+        <p>Snowy Research is built around one clear goal: offering some of the most affordable high-quality research products in the United States, without compromising clear labeling, dependable documentation, or fast professional fulfillment.</p>
+      </article>
+    </div>
+    <section class="sn-info-cta">
+      <div>
+        <h2>Our 30-day guarantee</h2>
+        <p>If you do not receive your order within 30 days, we will give you your entire order for free, on us.</p>
+      </div>
+      <a href="/index.html#catalogSection" class="sn-btn-primary">Browse the catalog</a>
+    </section>
+  </main>
 
-<footer class="site-footer">
-  Highland Peptides: for laboratory / research use only. Not for human or veterinary use, consumption, or administration of any kind.
-  Not evaluated by the FDA. See our Research Use Only Terms at signup for full terms.
-</footer>
+  <footer class="sn-footer">
+    <div class="sn-footer-top">
+      <div class="sn-footer-brand">
+        <div class="sn-footer-wordmark">Snowy</div>
+        <p>Research-grade peptides, tested and shipped fast. All products sold as laboratory research materials only. Not evaluated by the FDA.</p>
+      </div>
+      <div class="sn-footer-col">
+        <h4>Shop</h4>
+        <a href="/index.html#catalogSection">All compounds</a>
+        <a href="/index.html#bestSellers">Most popular</a>
+        <a href="/cart.html">Cart</a>
+      </div>
+      <div class="sn-footer-col">
+        <h4>Account</h4>
+        <a href="/account.html">Sign in</a>
+        <a href="/account.html">Orders</a>
+      </div>
+      <div class="sn-footer-col">
+        <h4>Help</h4>
+        <a href="/support.html">Support</a>
+        <a href="/about.html">About</a>
+        <a href="/terms-of-sale.html">Terms of sale</a>
+      </div>
+    </div>
+    <div class="sn-footer-bottom">
+      <span>© 2026 Snowy Research. All products for laboratory research only.</span>
+      <div class="sn-pay">Card · Crypto</div>
+    </div>
+  </footer>
+</div>
 
-<script src="/js/shared.js?v=shipping-delay-v1-20261011"></script>
-<script src="/js/site-notice.js?v=20260916"></script>
+<script src="/js/shared.js?v=sets-20261112"></script>
+<script src="/js/site-notice.js?v=snowy-20261110e"></script>
 </body>
 </html>
-
-
-

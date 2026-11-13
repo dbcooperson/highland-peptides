@@ -13,9 +13,9 @@ test('fulfillment workflow recognizes pending tracking as a confirmed order stat
   assert.match(indexSource, /new Set\(\['paid', 'pending_tracking', 'fulfilled'\]\)/);
   assert.match(indexSource, /\['pending_payment', 'paid', 'pending_tracking', 'fulfilled', 'cancelled'\]/);
   assert.match(adminSource, /\['pending_payment','paid','pending_tracking','fulfilled','cancelled'\]/);
-  assert.match(indexSource, /dispatchPendingTrackingAddress/);
-  assert.match(indexSource, /claimFulfillmentDiscordPost/);
-  assert.match(adminSource, /copy-ready address is in Discord/);
+  assert.doesNotMatch(indexSource, /discord/i);
+  assert.doesNotMatch(adminSource, /discord/i);
+  assert.doesNotMatch(adminHtml, /discord/i);
   assert.match(adminHtml, /<option value="pending_tracking">Pending tracking<\/option>/);
 });
 

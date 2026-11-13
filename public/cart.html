@@ -3,48 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Review research-use-only catalog items in your Highland Peptides cart before continuing.">
-<title>Cart - Highland Peptides</title>
-<link rel="icon" type="image/png" href="/images/branding/highland-social-avatar-v1.png">
-<link rel="apple-touch-icon" href="/images/branding/highland-social-avatar-v1.png">
+<meta name="description" content="Review your Snowy Research order and check out securely.">
+<title>Your order - Snowy Research</title>
+<link rel="icon" type="image/png" href="/images/branding/snowy-icon-512.png">
+<link rel="apple-touch-icon" href="/images/branding/snowy-icon-512.png">
 <link rel="manifest" href="/site.webmanifest">
-<link rel="stylesheet" href="/css/style.css?v=shipping-delay-v2-20261012">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css?v=swipe-20261112">
+<link rel="stylesheet" href="/css/snowy.css?v=inbox-20261112b">
+<link rel="stylesheet" href="/css/snowy-bag.css?v=frost-20261112">
 <script>if(new URLSearchParams(location.search).get("clearCart")==="1"){try{localStorage.removeItem("hp_cart");}catch(e){}}</script>
 </head>
-<body>
+<body class="snowy snowy-bag">
 
-<div class="mountain-bg" aria-hidden="true">
-  <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#161a1f"/>
-        <stop offset="42%" stop-color="#333d47"/>
-        <stop offset="72%" stop-color="#5b5850"/>
-        <stop offset="100%" stop-color="#7a6650"/>
-      </linearGradient>
-      <radialGradient id="glow" cx="50%" cy="50%" r="50%">
-        <stop offset="0%" stop-color="#f0c589" stop-opacity="0.45"/>
-        <stop offset="100%" stop-color="#f0c589" stop-opacity="0"/>
-      </radialGradient>
-      <filter id="softBlur" x="-30%" y="-30%" width="160%" height="160%">
-        <feGaussianBlur stdDeviation="10"/>
-      </filter>
-    </defs>
-    <rect x="0" y="0" width="1600" height="900" fill="url(#sky)"/>
-    <g filter="url(#softBlur)">
-      <ellipse cx="1180" cy="430" rx="280" ry="200" fill="url(#glow)"/>
-      <path d="M0,420 L100,380 L220,410 L340,360 L460,400 L580,350 L700,390 L820,340 L940,385 L1060,345 L1180,395 L1300,355 L1420,400 L1600,370 L1600,900 L0,900 Z" fill="#5c6670" opacity="0.5"/>
-      <path d="M0,520 L120,470 L250,500 L380,450 L500,495 L640,440 L760,485 L880,430 L1000,480 L1140,435 L1260,490 L1400,445 L1600,480 L1600,900 L0,900 Z" fill="#414b52" opacity="0.68"/>
-      <path d="M0,620 L150,580 L300,610 L450,560 L600,605 L760,555 L900,600 L1050,550 L1200,595 L1350,560 L1600,600 L1600,900 L0,900 Z" fill="#262e33" opacity="0.85"/>
-      <path d="M0,760 L130,700 L260,740 L400,680 L540,730 L700,670 L860,725 L1020,665 L1180,720 L1340,680 L1600,715 L1600,900 L0,900 Z" fill="#12161a"/>
-    </g>
-  </svg>
-</div>
-<div class="mountain-scrim" aria-hidden="true"></div>
+<div class="leopard-layer" aria-hidden="true"></div>
 
 <div id="entryGate" class="entry-gate">
   <div class="entry-gate-box">
-    <div class="brand">Highland Peptides</div>
+    <div class="brand">Snowy Research</div>
     <h2>Research Use Only</h2>
     <p>This site sells laboratory research compounds. They are not drugs, foods, cosmetics, or dietary supplements, and are not for human or veterinary use. By entering, you certify that:</p>
     <ul>
@@ -53,120 +30,119 @@
       <li>You are NOT using these products for human consumption, injection, or administration of any kind.</li>
     </ul>
     <div class="entry-gate-actions">
-      <button id="entryAgreeBtn">I Certify the Above, Enter Site</button>
+      <button id="entryAgreeBtn">I certify &amp; enter</button>
       <button id="entryExitBtn" class="secondary">Exit</button>
     </div>
   </div>
 </div>
 
-<div class="nav-wrap">
-  <header class="topbar">
-    <div class="brand"><a href="/index.html" style="color:inherit;text-decoration:none;display:flex;align-items:center;gap:10px;">
-      <div class="brand-seal-wrap"><img src="/images/branding/highland-hp-ridge-mark-v1.png" alt=""></div>
-      Highland Peptides
-    </a></div>
-    <nav class="site-nav">
-      <a href="/index.html#catalogSection">Shop</a>
-      <a href="/about.html">About Us</a>
-      <a href="/support.html">Support</a>
-    </nav>
-    <div class="header-actions">
-      <button id="openProductSearch" class="nav-search-button" type="button" aria-label="Search products">
-        <span class="nav-search-icon" aria-hidden="true"></span>
-      </button>
-      <nav class="cart-nav">
-        <a href="/cart.html" class="cart-link active" aria-label="View cart">
-          <span class="cart-icon" aria-hidden="true"></span>
-          <span class="cart-label">Cart</span>
-          <span id="cartCount" class="cart-count" aria-label="0 items">0</span>
-        </a>
+<div class="site-wrap">
+
+  <div class="ruo-strip">For laboratory and research use only · Not for human or veterinary use · Not a drug, food, or cosmetic</div>
+
+  <div class="nav-wrap">
+    <header class="topbar">
+      <a class="brand" href="/">Snowy</a>
+      <nav class="site-nav">
+        <a href="/index.html#catalogSection">Shop</a>
+        <a href="/about.html">About</a>
+        <a href="/support.html">Support</a>
       </nav>
-    </div>
-  </header>
-</div><div class="ruo-banner">
-  FOR LABORATORY / RESEARCH USE ONLY. NOT FOR HUMAN OR VETERINARY USE. NOT A DRUG, FOOD, OR COSMETIC.
-</div>
-
-<main class="cart-main">
-  <section id="cartSection" class="panel cart-page">
-    <div class="cart-page-header">
-      <div>
-        <div class="cart-eyebrow">Secure research supply</div>
-        <h1>Your Cart</h1>
-        <p>Review your research-use-only order before continuing to secure checkout.</p>
+      <div class="header-actions">
+        <button id="openProductSearch" class="nav-search-button" type="button" aria-label="Search products">
+          <span class="nav-search-icon" aria-hidden="true"></span>
+        </button>
+        <nav class="cart-nav">
+          <a href="/cart.html" class="cart-link active" aria-label="View cart">
+            <span class="cart-icon" aria-hidden="true"></span>
+            <span class="cart-label">Cart</span>
+            <span id="cartCount" class="cart-count" aria-label="0 items">0</span>
+          </a>
+        </nav>
       </div>
-      <div class="cart-header-actions">
-        <a href="/cart.html?clearCart=1" id="clearCartBtn" class="cart-header-link cart-clear-link">Clear Cart</a>
-        <a href="/index.html#catalogSection" class="cart-header-link">Continue Shopping</a>
-      </div>
-    </div>
+    </header>
+  </div>
 
-    <div class="cart-layout">
-      <div class="cart-items-card">
-        <div class="cart-card-title">
-          <span>Selected items</span>
-          <em id="cartItemSummary">0 items</em>
-        </div>
-        <div id="cartItemsPage"></div>
-      </div>
+  <main class="bag-page">
 
-      <aside class="cart-summary-card">
-        <div class="cart-card-title">
-          <span>Order summary</span>
-          <em>Secure checkout</em>
-        </div>
-        <div id="cartTotalPage"></div>
-        <button id="checkoutBtn" class="checkout-primary-btn">Checkout Securely</button>
-        <a href="/index.html#catalogSection" class="checkout-secondary-link">Keep shopping</a>
-        <a href="/cart.html?clearCart=1" id="clearCartSummaryBtn" class="checkout-secondary-link cart-clear-link">Clear cart</a>
-        <p class="cart-summary-note">For laboratory / research use only. Not for human or veterinary use.</p>
-        <p class="form-msg" id="cartMsg"></p>
-      </aside>
-    </div>
-  </section>
-</main>
-
-<div id="checkoutModal" class="modal-overlay" style="display:none;">
-  <div class="modal-box">
-    <div class="modal-header">
-      <h3>Checkout</h3>
-      <button type="button" id="checkoutCloseBtn" class="modal-close" aria-label="Close">&times;</button>
-    </div>
-    <div id="modalOrderSummary" class="order-summary"></div>
-    <div id="checkoutAccountStatus" class="checkout-account-status" aria-live="polite"></div>
-    <div class="promo-row">
-      <input type="text" id="promoInput" placeholder="Promo code">
-      <button type="button" id="promoApplyBtn">Apply</button>
-    </div>
-    <p class="form-msg" id="promoMsg"></p>
-
-    <form id="checkoutForm" autocomplete="on">
-      <label>Full Name <input type="text" id="buyerName" name="name" autocomplete="name" required></label>
-      <label>Email <input type="email" id="buyerEmail" name="email" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" required placeholder="you@example.com"></label>
-      <section class="checkout-email-verify" aria-labelledby="checkoutVerifyTitle">
-        <h4 id="checkoutVerifyTitle">Verify your research email</h4>
-        <p>We will send a six-digit code to the email above. Use the same email for this order.</p>
-        <button type="button" id="checkoutSendCodeBtn">Send code</button>
-        <label for="checkoutEmailCode">Verification code</label>
-        <input id="checkoutEmailCode" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" placeholder="6-digit code">
-        <button type="button" id="checkoutVerifyCodeBtn">Verify code</button>
-        <label class="checkout-remember-device"><input id="checkoutRememberDevice" type="checkbox"> Remember this device for future checkouts</label>
-        <p id="checkoutEmailStatus" class="form-msg" role="status" aria-live="polite"></p>
-      </section>
-      <div id="addressAutocompleteField" class="address-autocomplete-field" hidden>
-        <label for="addressAutocompleteMount">Find your shipping address <span>Recommended</span></label>
-        <div id="addressAutocompleteMount"></div>
-        <small>Choose a suggestion to fill the delivery fields, then add your apartment, suite, or unit when applicable.</small>
+    <header class="bag-head">
+      <div class="bag-title">
+        <h1><span class="bag-title-text">Your order</span> <em id="cartItemSummary" class="bag-count">0 items</em></h1>
+        <p class="bag-sub" data-bag-only>Everything ships the same day when your order is confirmed before 5 PM PT.</p>
+        <p class="bag-sub" data-checkout-only>A few quick steps and your order is on its way.</p>
       </div>
-      <label>Address Line 1 <input type="text" id="buyerAddress1" name="address-line1" autocomplete="address-line1" required></label>
-      <label>Apartment, suite, or unit <span class="checkout-when-applicable">Required when applicable</span> <input type="text" id="buyerAddress2" name="address-line2" autocomplete="address-line2" placeholder="Apt 4B, Suite 210, Unit 7"></label>
-      <p id="addressValidationStatus" class="address-validation-status" aria-live="polite"></p>
-      <div class="modal-row">
-        <label>City <input type="text" id="buyerCity" name="address-level2" autocomplete="address-level2" required></label>
-        <label>State / Province <input type="text" id="buyerState" name="address-level1" autocomplete="address-level1" required></label>
-        <label>ZIP / Postal <input type="text" id="buyerZip" name="postal-code" autocomplete="postal-code" required></label>
-      </div>
-      <label>Select country
+      <ol class="bag-stepper" aria-label="Checkout progress">
+        <li class="is-active"><span>1</span>Review</li>
+        <li><span>2</span>Details</li>
+        <li><span>3</span>Shipping</li>
+        <li><span>4</span>Payment</li>
+      </ol>
+    </header>
+
+    <div class="bag-layout">
+      <div class="bag-main">
+
+        <!-- Step 1: Review -->
+        <section id="cartSection" class="bag-items" data-bag-only>
+          <div id="cartItemsPage"></div>
+          <div class="bag-items-foot">
+            <a href="/index.html#catalogSection" class="bag-link">← Keep shopping</a>
+            <a href="/cart.html?clearCart=1" id="clearCartBtn" class="bag-link bag-link-muted cart-clear-link">Remove all items</a>
+          </div>
+        </section>
+
+        <!-- Steps 2-4: Checkout (opened by "Checkout") -->
+        <div id="checkoutModal" class="bag-checkout" style="display:none;">
+          <div class="modal-box bag-co-card">
+            <div class="bag-co-top">
+              <button type="button" id="checkoutCloseBtn" class="bag-back" aria-label="Back to your order">← Back to your order</button>
+              <span class="bag-co-count" data-co-counter>Step 2 of 4</span>
+            </div>
+            <div id="checkoutAccountStatus" class="checkout-account-status" aria-live="polite"></div>
+
+            <form id="checkoutForm" autocomplete="on" novalidate>
+
+              <section class="bag-co-step" data-co-step="details">
+                <h2>Your details</h2>
+                <p class="bag-co-lede">We'll send your order confirmation and tracking here.</p>
+                <div class="bag-field-grid">
+                  <label>Full name <input type="text" id="buyerName" name="name" autocomplete="name" required></label>
+                  <label>Email <input type="email" id="buyerEmail" name="email" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" required placeholder="you@example.com"></label>
+                </div>
+                <section class="checkout-email-verify" aria-labelledby="checkoutVerifyTitle">
+                  <h3 id="checkoutVerifyTitle">Confirm it's you</h3>
+                  <p>We'll email a six-digit code. Enter it below to unlock payment.</p>
+                  <div class="bag-verify-row">
+                    <button type="button" id="checkoutSendCodeBtn">Email me a code</button>
+                    <label for="checkoutEmailCode" class="sr-only">Verification code</label>
+                    <input id="checkoutEmailCode" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" placeholder="••••••">
+                    <button type="button" id="checkoutVerifyCodeBtn">Verify</button>
+                  </div>
+                  <label class="checkout-remember-device"><input id="checkoutRememberDevice" type="checkbox"> Remember this device</label>
+                  <p id="checkoutEmailStatus" class="form-msg" role="status" aria-live="polite"></p>
+                </section>
+                <div class="bag-co-actions">
+                  <button type="button" class="bag-next" data-co-next>Continue to shipping →</button>
+                </div>
+              </section>
+
+              <section class="bag-co-step" data-co-step="shipping" hidden>
+                <h2>Where should we ship it?</h2>
+                <p class="bag-co-lede">Orders confirmed before 5 PM PT on a business day leave the same day.</p>
+                <div id="addressAutocompleteField" class="address-autocomplete-field" hidden>
+                  <label for="addressAutocompleteMount">Find your address <span>Recommended</span></label>
+                  <div id="addressAutocompleteMount"></div>
+                  <small>Pick a suggestion to fill the fields, then add an apartment, suite, or unit if you have one.</small>
+                </div>
+                <label>Street address <input type="text" id="buyerAddress1" name="address-line1" autocomplete="address-line1" required></label>
+                <label>Apartment, suite, or unit <span class="checkout-when-applicable">Required when applicable</span> <input type="text" id="buyerAddress2" name="address-line2" autocomplete="address-line2" placeholder="Apt 4B, Suite 210, Unit 7"></label>
+                <p id="addressValidationStatus" class="address-validation-status" aria-live="polite"></p>
+                <div class="modal-row">
+                  <label>City <input type="text" id="buyerCity" name="address-level2" autocomplete="address-level2" required></label>
+                  <label>State / Province <input type="text" id="buyerState" name="address-level1" autocomplete="address-level1" required></label>
+                  <label>ZIP / Postal <input type="text" id="buyerZip" name="postal-code" autocomplete="postal-code" required></label>
+                </div>
+                <label>Country
         <select id="buyerCountry" name="country" autocomplete="country" required>
           <option value="US" selected>United States</option>
           <option value="CA">Canada</option>
@@ -418,91 +394,128 @@
           <option value="ZM">Zambia</option>
           <option value="ZW">Zimbabwe</option>
         </select>
-      </label>
-      <p class="checkout-country-note" id="shippingCountryNote">Choose International shipping for any destination outside the U.S.</p>
+                </label>
+                <p class="checkout-country-note" id="shippingCountryNote">Choose International shipping for any destination outside the U.S.</p>
+                <fieldset class="shipping-method-fieldset">
+                  <legend>Delivery</legend>
+                  <label class="shipping-method-option">
+                    <input type="radio" name="shippingMethod" value="domestic" checked>
+                    <span><strong>U.S. shipping</strong><em>Same-day dispatch before 5 PM PT</em></span><b>$11.99</b>
+                  </label>
+                  <label class="shipping-method-option">
+                    <input type="radio" name="shippingMethod" value="priority">
+                    <span><strong>Priority Mail</strong><em>Faster delivery · U.S. addresses only</em></span><b>$19.99</b>
+                  </label>
+                  <label class="shipping-method-option">
+                    <input type="radio" name="shippingMethod" value="international">
+                    <span><strong>International shipping</strong><em>Anywhere in the world</em></span><b>$35.00</b>
+                  </label>
+                </fieldset>
+                <div class="bag-co-actions">
+                  <button type="button" class="bag-prev" data-co-back>← Details</button>
+                  <button type="button" class="bag-next" data-co-next>Continue to payment →</button>
+                </div>
+              </section>
 
-      <fieldset class="shipping-method-fieldset">
-        <legend>Shipping option</legend>
-        <label class="shipping-method-option">
-          <input type="radio" name="shippingMethod" value="domestic" checked>
-          <span><strong>U.S. shipping</strong><em>$10.27</em></span>
-        </label>
-        <label class="shipping-method-option">
-          <input type="radio" name="shippingMethod" value="international">
-          <span><strong>International shipping</strong><em>$35.00 anywhere in the world</em></span>
-        </label>
-      </fieldset>
-
-      <details class="checkout-research-terms"><summary>Read the Terms of Sale</summary><p>By purchasing, you confirm that you are a qualified researcher or authorized entity buying solely for lawful laboratory research, and you assume responsibility for proper handling, storage, and lawful use. Products are not for human or veterinary use, consumption, injection, administration, diagnosis, or treatment. Email verification confirms access to an email address; it does not establish research credentials. Except for our 30-day non-delivery refund guarantee and rights required by law, completed sales are final. <a href="/terms-of-sale.html">Read the full Terms of Sale</a>.</p></details>
-      <label class="checkbox-label">
+              <section class="bag-co-step" data-co-step="payment" hidden>
+                <h2>Payment</h2>
+                <p class="bag-co-lede">Confirm the two statements below, then choose how you'd like to pay.</p>
+                <label class="checkbox-label">
         <input type="checkbox" id="checkoutCertify" required>
         I confirm I am 21 or older, am a qualified researcher or authorized entity, and am purchasing solely for lawful laboratory research, not for human or animal consumption, injection, or administration.
       </label>
-
-      <label class="checkbox-label payment-policy-confirm">
+                <label class="checkbox-label payment-policy-confirm">
         <input type="checkbox" id="paymentPolicyConfirm" required>
-        I understand payment must be sent for the exact total shown. If the amount is incorrect, Highland Peptides will contact me and pause fulfillment until the payment is resolved. My refund rights remain in effect.
+        I understand payment must be sent for the exact total shown. If the amount is incorrect, Snowy Research will contact me and pause fulfillment until the payment is resolved. My refund rights remain in effect.
       </label>
-      <p class="checkout-refund-promise">If your paid order has not been received within 30 calendar days of placing it, we guarantee a full refund of the amount paid, including shipping. Contact <a href="mailto:support@highlandpeptides.com">support@highlandpeptides.com</a> with your order number.</p>
+                <details class="checkout-research-terms"><summary>Read the Terms of Sale</summary><p>By purchasing, you confirm that you are a qualified researcher or authorized entity buying solely for lawful laboratory research, and you assume responsibility for proper handling, storage, and lawful use. Products are not for human or veterinary use, consumption, injection, administration, diagnosis, or treatment. Email verification confirms access to an email address; it does not establish research credentials. Except for our 30-day delivery guarantee (if your order has not arrived within 30 days, we give you your entire order for free) and rights required by law, completed sales are final. <a href="/terms-of-sale.html">Read the full Terms of Sale</a>.</p></details>
 
-      <div class="payment-divider"><span>Choose payment method</span></div>
-      <div class="manual-payment-grid">
-        <button type="button" id="stripeSandboxCheckoutBtn" class="payment-choice-card" style="display:none" hidden>
-          <strong id="stripeCheckoutTitle">Card</strong>
-          <span id="stripeCheckoutDescription">Pay securely by card using Stripe Checkout.</span>
-        </button>
-        <button type="button" id="cryptoCheckoutBtn" class="payment-choice-card">
-          <strong>Crypto <em>5% off</em></strong>
-          <span>Submit order and pay by BTC or USDC. Cannot be combined with promo codes.</span>
-        </button>
-        <button type="button" id="zelleCheckoutBtn" class="payment-choice-card">
-          <strong>Zelle <em>10% off</em></strong>
-          <span>Submit your order, then send the discounted exact total to <span id="zelleRecipientPreview" class="zelle-recipient-inline">+1 (213) 424-4643</span>. Cannot be combined with codes. The Zelle note must contain only your order number and nothing else.</span>
-        </button>
-      </div>
-      <p class="manual-payment-note">Each order receives a unique exact total. Manual payments are reviewed before fulfillment, and confirmed orders ship the next business day. Wrong payment amounts require email confirmation within 72 hours before fulfillment can proceed.</p>
-      <p class="form-msg" id="checkoutMsg"></p>
+                <div class="bag-crypto-perk">
+                  <strong>Pay with crypto and save</strong>
+                  <span>Crypto orders skip the processing fee and get 15% off automatically.</span>
+                </div>
+                <div class="manual-payment-grid">
+                  <button type="button" id="cryptoCheckoutBtn" class="payment-choice-card">
+                    <strong>Crypto <em>15% off</em></strong>
+                    <span>Bitcoin or USDC. <b>No processing fee.</b> Can't be combined with promo or referral codes.</span>
+                  </button>
+                  <button type="button" id="stripeSandboxCheckoutBtn" class="payment-choice-card" style="display:none" hidden>
+                    <strong id="stripeCheckoutTitle">Card</strong>
+                    <span id="stripeCheckoutDescription">Pay securely by card using Stripe Checkout.</span>
+                  </button>
+                </div>
+                <p class="form-msg" id="checkoutMsg"></p>
 
-      <div id="manualPaymentDetails" class="manual-payment-details" style="display:none;">
-        <h4 id="manualPaymentTitle">Payment instructions</h4>
-        <p id="manualPaymentSummary"></p>
-        <div id="zellePaymentDetails" style="display:none;">
-          <p class="crypto-address-label">Send the exact total by Zelle to:</p>
-          <p class="crypto-address" id="zellePaymentRecipient"></p>
-          <p class="crypto-network-note">Use the exact total shown. In the Zelle note, enter only the order number shown above (for example, HP-123) and nothing else. We manually verify payment before fulfillment; confirmed orders ship the next business day.</p>
-        </div>
-        <div id="cryptoChoiceDetails" style="display:none;">
-          <label>Pay with
-            <select id="cryptoAssetSelect">
-              <option value="BTC">Bitcoin (BTC)</option>
-              <option value="USDC">USDC (Ethereum / ERC-20)</option>
-            </select>
-          </label>
-          <p class="crypto-price-preview" id="cryptoPricePreview"></p>
-        </div>
-        <div id="cryptoPaymentDetails" class="crypto-payment-details" style="display:none;">
-          <p class="crypto-address-label">Send payment to this address:</p>
-          <p class="crypto-address" id="cryptoAddressText"></p>
-          <p class="crypto-network-note" id="cryptoNetworkNote"></p>
-          <label>Transaction ID (paste here after sending) <input type="text" id="cryptoTxidInput" placeholder="Transaction ID / hash"></label>
-          <button type="button" id="cryptoConfirmBtn" class="manual-checkout-btn">I've Sent Payment</button>
-          <p class="form-msg" id="cryptoConfirmMsg"></p>
+                <div id="manualPaymentDetails" class="manual-payment-details" style="display:none;">
+                  <h3 id="manualPaymentTitle">Payment instructions</h3>
+                  <p id="manualPaymentSummary"></p>
+                  <div id="cryptoChoiceDetails" style="display:none;">
+                    <label>Pay with
+                      <select id="cryptoAssetSelect">
+                        <option value="BTC">Bitcoin (BTC)</option>
+                        <option value="USDC">USDC (Ethereum / ERC-20)</option>
+                      </select>
+                    </label>
+                    <p class="crypto-price-preview" id="cryptoPricePreview"></p>
+                  </div>
+                  <div id="cryptoPaymentDetails" class="crypto-payment-details" style="display:none;">
+                    <p class="crypto-address-label">Send payment to this address:</p>
+                    <p class="crypto-address" id="cryptoAddressText"></p>
+                    <p class="crypto-network-note" id="cryptoNetworkNote"></p>
+                    <label>Transaction ID (paste here after sending) <input type="text" id="cryptoTxidInput" placeholder="Transaction ID / hash"></label>
+                    <button type="button" id="cryptoConfirmBtn" class="manual-checkout-btn">I've sent payment</button>
+                    <p class="form-msg" id="cryptoConfirmMsg"></p>
+                  </div>
+                </div>
+
+                <p class="manual-payment-note">Each order gets a unique exact total. Crypto payments are reviewed before fulfillment. Wrong payment amounts need email confirmation within 72 hours before fulfillment can continue.</p>
+                <p class="checkout-refund-promise"><strong>Our guarantee:</strong> If you do not receive your order within 30 days, we will give you your entire order for free, on us. Just email <a href="mailto:support@snowyresearch.com">support@snowyresearch.com</a> with your order number.</p>
+                <div class="bag-co-actions">
+                  <button type="button" class="bag-prev" data-co-back>← Shipping</button>
+                </div>
+              </section>
+            </form>
+          </div>
         </div>
       </div>
-    </form>
-  </div>
+
+      <!-- Summary (dark) -->
+      <aside class="bag-summary">
+        <h2>Summary</h2>
+        <div data-bag-only>
+          <div id="cartTotalPage"></div>
+          <button id="checkoutBtn" class="bag-checkout-btn" type="button">Checkout</button>
+          <a href="/cart.html?clearCart=1" id="clearCartSummaryBtn" class="bag-summary-clear cart-clear-link">Remove all items</a>
+        </div>
+        <div data-checkout-only>
+          <div id="modalOrderSummary" class="order-summary"></div>
+          <div class="promo-row">
+            <input type="text" id="promoInput" placeholder="Promo code" aria-label="Promo code" autocomplete="off">
+            <button type="button" id="promoApplyBtn">Apply</button>
+          </div>
+          <p class="form-msg" id="promoMsg"></p>
+        </div>
+        <ul class="bag-summary-perks">
+          <li><b>Crypto</b> No processing fee + 15% off</li>
+          <li><b>Same day</b> Dispatch before 5 PM PT</li>
+          <li><b>Guarantee</b> Free if not received in 30 days</li>
+        </ul>
+        <p class="form-msg" id="cartMsg"></p>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="sn-footer sn-footer-compact">
+    <div class="sn-footer-bottom">
+      <span>© 2026 Snowy Research. For laboratory research use only. Not for human or veterinary use. Not evaluated by the FDA.</span>
+      <div class="sn-pay">Card · Crypto</div>
+    </div>
+  </footer>
 </div>
 
-<footer class="site-footer">
-  Highland Peptides: for laboratory / research use only. Not for human or veterinary use, consumption, or administration of any kind.
-  Not evaluated by the FDA.
-</footer>
-
-<script src="/js/shared.js?v=shipping-delay-v1-20261011"></script>
-<script src="/js/cart.js?v=sterile-water-v3-20260920"></script>
+<script src="/js/shared.js?v=sets-20261112"></script>
+<script src="/js/cart.js?v=sets-20261112"></script>
+<script src="/js/snowy-checkout.js?v=snowy-20261110c"></script>
 <script src="/js/site-notice.js?v=20260916"></script>
 </body>
 </html>
-
-
-

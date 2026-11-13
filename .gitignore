@@ -4,3 +4,22 @@ data/btc-monitor-state.json
 data/analytics.json
 data/pirateship-tracking-sync.json
 .env
+backups/
+
+# Local working files (not part of the website)
+product-photos-snow/
+output/
+outputs/
+tmp/
+sites/
+assets/
+data/admin-login-log.json
+public/images/product-mockups/*-source/
+public/images/product-mockups/floating-v1/
+public/images/product-mockups/full-photo-v2/
+public/images/product-mockups/full-photo-v3/
+public/images/product-mockups/generated-v2/
+public/images/product-mockups/*.jpg
+public/images/product-mockups/*.png
+public/images/product-mockups/*.json
+public/images/product-mockups/*.md

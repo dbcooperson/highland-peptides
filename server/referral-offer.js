@@ -1,9 +1,12 @@
-const CAMPAIGN_CODE = 'HIGHLAND10';
+const CAMPAIGN_CODE = 'SNOWY10';
+// Links shared before the Snowy rebrand keep working.
+const LEGACY_CAMPAIGN_CODES = ['HIGHLAND10'];
 const BASE_RATE = 0.10;
 const EXTRA_CODE_RATE = 0.05;
 
-function hasHighlandReferral(value) {
-  return String(value || '').trim().toUpperCase() === CAMPAIGN_CODE;
+// The referral-link discount is retired (Nov 2026): links no longer reduce the price.
+function hasCampaignReferral(_value) {
+  return false;
 }
 
 function referralOfferDiscount(eligibleSubtotal, codeMatch) {
@@ -16,4 +19,4 @@ function referralOfferDiscount(eligibleSubtotal, codeMatch) {
   };
 }
 
-module.exports = { CAMPAIGN_CODE, BASE_RATE, EXTRA_CODE_RATE, hasHighlandReferral, referralOfferDiscount };
+module.exports = { CAMPAIGN_CODE, BASE_RATE, EXTRA_CODE_RATE, hasCampaignReferral, referralOfferDiscount };

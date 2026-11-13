@@ -22,7 +22,7 @@ function createTestOrder() {
     orderFeeRate: 0,
     discountAmount: 0,
     total: 10,
-    paymentProvider: 'manual_paypal',
+    paymentProvider: 'crypto',
   });
 }
 

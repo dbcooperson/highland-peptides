@@ -17,8 +17,8 @@ test('admin includes the protected label maker controls', () => {
   assert.match(html, /id="labelProductResults"[^>]*role="listbox"/);
   assert.match(html, /id="labelProductName"/);
   assert.match(html, /id="labelDosage"/);
-  assert.match(html, /id="labelLotNumber"[^>]*value="314"/);
-  assert.match(html, /id="labelExpiryDate"[^>]*value="9\/1\/2027"/);
+  assert.match(html, /id="labelLotNumber"[^>]*value="SR-1042"/);
+  assert.match(html, /id="labelExpiryDate"[^>]*value="06\/28"/);
   assert.match(html, /id="labelStorage"[^>]*value="36–46°F"/);
   assert.match(html, /id="labelOffsetX"[^>]*value="-3"/);
   assert.match(html, /id="labelOffsetY"[^>]*value="-3"/);
@@ -30,7 +30,7 @@ test('admin includes the protected label maker controls', () => {
   assert.match(html, /id="labelSheetColumn"/);
   assert.doesNotMatch(html, /id="labelStartPosition"/);
   assert.match(html, /id="labelPrintPortal"/);
-  assert.match(html, /name="labelDesign" value="vial-current"/);
+  assert.match(html, /name="labelDesign" value="label-k"/);
   assert.match(html, /OL1735WS White Gloss sheets/);
 });
 
@@ -46,9 +46,9 @@ test('label sheet matches the OL1735WS 48-up geometry', () => {
   assert.match(js, /labelPositionFromRowAndColumn/);
   assert.match(js, /\(\(row - 1\) \* 4\) \+ column/);
   assert.match(js, /highland-label-next-position-v1/);
-  assert.match(js, /highland-label-position-used/);
+  assert.match(js, /snowy-label-position-used/);
   assert.match(js, /openLabelPrintWindow/);
-  assert.match(js, /Highland Label Print Sheet/);
+  assert.match(js, /Snowy Label Print Sheet/);
   assert.match(js, /left:\s*\$\{values\.offsetX\}mm/);
   assert.match(js, /top:\s*\$\{values\.offsetY\}mm/);
   assert.match(js, /highland-label-calibration-v5/);
@@ -56,7 +56,6 @@ test('label sheet matches the OL1735WS 48-up geometry', () => {
   assert.match(js, /window\.print\(\)/);
   assert.match(js, /display: block !important/);
   assert.match(js, /\.label-print-cell \{ position: absolute/);
-  assert.match(css, /\.highland-label-dose[\s\S]*?-webkit-text-fill-color:\s*#07563f/);
 });
 
 test('paid orders can print all vial labels into consecutive unused positions', () => {
@@ -72,13 +71,13 @@ test('paid orders can print all vial labels into consecutive unused positions', 
   assert.match(js, /\.filter\(order => order\.status === 'paid'[\s\S]*?isPaidLabelQueueOrder\(order\)[\s\S]*?!hiddenPaidLabelOrderIds\.has\(String\(order\.id\)\)\)/);
   assert.match(js, /paid_at \|\| b\.created_at/);
   assert.match(js, /paid-label-customer-button/);
-  assert.match(js, /highland-order-labels-printed/);
+  assert.match(js, /snowy-order-labels-printed/);
   assert.match(js, /printedPaidOrderIds\.add/);
   assert.match(js, /paid-label-pending-button/);
   assert.match(js, /paid-label-inline-confirm/);
   assert.match(html, /id="restoreRemovedLabelOrders"/);
   assert.match(html, /id="exportPirateShipCsv"[^>]*href="\/api\/admin\/pirate-ship\.csv"/);
-  assert.match(html, /Each tracking notice returns through Highland’s secure cloud inbox/);
+  assert.match(html, /Each tracking notice returns through the store’s secure cloud inbox/);
   assert.match(js, /paid-label-remove-button/);
   assert.match(js, /paid-label-inline-confirm is-remove/);
   assert.match(js, /confirmRemoveLabelOrder/);
@@ -123,32 +122,45 @@ test('label maker receives every current storefront SKU and strength', () => {
 
 test('storefront specs are converted into production label text', () => {
   assert.equal(labelNameForProduct('MOTS-c'), 'MOTS-C');
-  assert.equal(labelNameForProduct('Bacteriostatic Water'), 'STERILE WATER');
+  assert.equal(labelNameForProduct('Bacteriostatic Water'), 'RECONSTITUTION SOLUTION');
   assert.equal(labelNameForProduct('BPC-157 + GHK-Cu + TB-500 Blend (Glow)'), 'GLOW BLEND');
   assert.equal(labelDoseFromSpec('40mg x1 vial'), '40 MG');
   assert.equal(labelDoseFromSpec('5mg+5mg x1 vial'), '5 MG + 5 MG');
-  assert.equal(labelDoseFromSpec('600mg/ml 50ml'), '600 MG/ML · 50 ML');
+  assert.equal(labelDoseFromSpec('600mg/ml 50ml'), '600 MG/ML');
+  assert.equal(labelDoseFromSpec('300mg/ml 30ml (9,000mg)'), '300 MG/ML');
+  assert.equal(labelDoseFromSpec('5% solution, 30ml (1,500mg)'), '5% · 30 ML');
 });
 
 test('free-form label text is inserted as text, not executable markup', () => {
-  assert.match(js, /compound\.textContent\s*=/);
+  assert.match(js, /lineEl\.textContent\s*=/);
   assert.match(js, /dose\.textContent\s*=/);
 });
 
-test('print labels match the current photographed vial hierarchy', () => {
-  assert.match(js, /highland-hp-ridge-mark-v1\.png/);
-  assert.match(js, /purity\.textContent\s*=\s*'99% PURITY'/);
+test('print labels use the Label K design from the vial photos', () => {
+  assert.match(js, /label-design-\$\{design\}/);
+  assert.match(js, /design = 'label-k'/);
+  assert.match(js, /purity\.textContent\s*=\s*'PURITY 99%'/);
   assert.match(js, /ruo\.textContent\s*=\s*'RESEARCH USE ONLY'/);
   assert.match(js, /storageTitle\.textContent\s*=\s*'STORE AT'/);
-  assert.match(js, /`LOT \$\{String\(lot/);
-  assert.match(js, /`EXP \$\{String\(expiry/);
-  assert.match(css, /\.label-design-vial-current/);
-  assert.match(css, /\.highland-label-divider/);
-  assert.match(css, /\.highland-label-accent/);
-  assert.match(css, /\.highland-label-footer-dot/);
-  assert.match(css, /\.highland-label-side-storage/);
-  assert.match(css, /\.highland-label-side-batch/);
-  assert.match(css, /\.highland-label-side-storage[\s\S]*?color:\s*#111/);
-  assert.match(css, /\.highland-label-side-batch[\s\S]*?color:\s*#111/);
-  assert.doesNotMatch(js, /ridge-current-label-base-v2\.png/);
+  assert.match(js, /brand\.textContent\s*=\s*'SNOWY'/);
+  assert.match(js, /lotValue\.textContent\s*=\s*String\(lot/);
+  assert.match(js, /expValue\.textContent\s*=\s*String\(expiry/);
+  assert.match(js, /labelKNameLines/);
+  assert.match(css, /\.label-design-label-k \.label-k-art \{[^}]*width: 672px; height: 288px; zoom: 0\.25/);
+  assert.match(css, /url\('\/images\/branding\/label-leopard\.webp'\)/);
+  assert.match(css, /url\('\/fonts\/barlow-condensed-800\.woff2'\)/);
+  const fs = require('node:fs');
+  const path = require('node:path');
+  for (const file of ['images/branding/label-leopard.webp', 'fonts/barlow-condensed-800.woff2', 'fonts/space-grotesk-700.woff2', 'fonts/dm-sans-500.woff2', 'fonts/dm-sans-700.woff2']) {
+    assert.ok(fs.existsSync(path.join(__dirname, '..', 'public', file)), file);
+  }
+});
+
+test('order labels use the order number as the lot and default to a 06/28 expiry', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const adminJs = fs.readFileSync(path.join(__dirname, '..', 'public', 'js', 'admin.js'), 'utf8');
+  const adminHtml = fs.readFileSync(path.join(__dirname, '..', 'public', 'admin.html'), 'utf8');
+  assert.match(adminJs, /lot: `SR-\$\{order\.id\}`/);
+  assert.match(adminHtml, /id="labelExpiryDate" type="text" value="06\/28"/);
 });

@@ -4,6 +4,7 @@ const { hashPassword, verifyPassword, createToken, hashToken } = require('./acco
 const { sendAccountVerificationEmail, sendPasswordResetEmail, isCustomerEmailConfigured, trackingUrl } = require('./notifications');
 
 const attempts = new Map();
+const DUMMY_PASSWORD_RECORD = { salt: '0'.repeat(32), hash: 'a'.repeat(128) };
 const WINDOW_MS = 15 * 60 * 1000;
 
 function cleanText(value, maxLength) {
@@ -133,7 +134,10 @@ function registerAccountRoutes(app, requireAdmin) {
     const email = cleanEmail(req.body && req.body.email);
     const password = String(req.body && req.body.password || '');
     const account = email ? db.getAccountByEmail(email) : null;
-    const passwordOk = account ? await verifyPassword(password, account.password_salt, account.password_hash) : false;
+    // Always run one password hash so a missing account answers as slowly as a wrong password.
+    const passwordOk = account
+      ? await verifyPassword(password.slice(0, 256), account.password_salt, account.password_hash)
+      : (await verifyPassword(password.slice(0, 256), DUMMY_PASSWORD_RECORD.salt, DUMMY_PASSWORD_RECORD.hash), false);
     if (!account || !passwordOk) return res.status(401).json({ error: 'Email or password is incorrect.' });
     if (!account.verified_at) return res.status(403).json({ error: 'Verify your email before signing in.', needsVerification: true });
     req.session.regenerate(err => {
@@ -224,16 +228,7 @@ function registerAccountRoutes(app, requireAdmin) {
   });
 
   app.post('/api/account/referral-code', requireAccount, (req, res) => {
-    const code = cleanText(req.body && req.body.code, 18).toUpperCase();
-    if (!/^[A-Z0-9]{3,18}$/.test(code) || !/[A-Z]/.test(code)) return res.status(400).json({ error: 'Use 3–18 letters or numbers, including at least one letter.' });
-    const reserved = new Set([...Object.keys(config.DISCOUNT_CODES), 'CRYPTO5', 'ADMIN', 'SUPPORT', 'HIGHLAND']);
-    if (reserved.has(code)) return res.status(409).json({ error: 'That code is reserved. Choose another.' });
-    try {
-      const account = db.setAccountReferralCode(req.account.id, code);
-      res.status(201).json({ ok: true, referralCode: account.referral_code });
-    } catch (err) {
-      res.status(409).json({ error: err.message || 'Could not create that code.' });
-    }
+    return res.status(410).json({ error: 'Referral codes are no longer available.' });
   });
 
   app.post('/api/account/payout-request', requireAccount, (req, res) => {

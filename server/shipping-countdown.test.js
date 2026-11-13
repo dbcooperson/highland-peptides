@@ -2,24 +2,23 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const shippingCountdown = require('../public/js/shipping-countdown');
 
-test('shipping countdown uses the current Pacific cutoff before 2 PM', () => {
-  const status = shippingCountdown.getStatus('2026-09-01T19:00:00Z');
+test('shipping countdown uses the 5 PM Pacific cutoff and ships the same day', () => {
+  const status = shippingCountdown.getStatus('2026-09-01T22:00:00Z'); // 3 PM PDT Tuesday
   assert.equal(status.beforeTodayCutoff, true);
   assert.equal(status.remainingMs, 2 * 60 * 60 * 1000);
-  assert.equal(status.cutoff.toISOString(), '2026-09-01T21:00:00.000Z');
-  assert.equal(status.shipDate.toISOString(), '2026-09-02T19:00:00.000Z');
+  assert.equal(status.cutoff.toISOString(), '2026-09-02T00:00:00.000Z');
+  assert.equal(status.shipDate.toISOString(), '2026-09-02T01:00:00.000Z');
 });
 
-test('shipping countdown advances to the next cutoff after 2 PM Pacific', () => {
-  const status = shippingCountdown.getStatus('2026-09-01T22:00:00Z');
+test('shipping countdown advances to the next business day after 5 PM Pacific', () => {
+  const status = shippingCountdown.getStatus('2026-09-02T01:00:00Z'); // 6 PM PDT Tuesday
   assert.equal(status.beforeTodayCutoff, false);
   assert.equal(status.remainingMs, 23 * 60 * 60 * 1000);
-  assert.equal(status.cutoff.toISOString(), '2026-09-02T21:00:00.000Z');
-  assert.equal(status.shipDate.toISOString(), '2026-09-03T19:00:00.000Z');
+  assert.equal(status.cutoff.toISOString(), '2026-09-03T00:00:00.000Z');
 });
 
-test('shipping copy displays the temporary fulfillment-delay warning', () => {
-  const copy = shippingCountdown.getCopy('card', '2026-09-01T19:00:00Z', 'America/New_York');
-  assert.match(copy, /timing is undetermined/i);
-  assert.match(copy, /up to 3 weeks/i);
+test('shipping copy promises same-day dispatch before the cutoff, with no delay warning', () => {
+  const copy = shippingCountdown.getCopy('card', '2026-09-01T22:00:00Z', 'America/Los_Angeles');
+  assert.match(copy, /to ship today/i);
+  assert.doesNotMatch(copy, /3 weeks|delay/i);
 });

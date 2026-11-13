@@ -12,7 +12,7 @@ function reminderIsDue(order, nowMs = Date.now()) {
   // pending records do not contain this flag and must never receive a surprise
   // automated email blast.
   if (order.payment_reminders_enabled !== true) return false;
-  if (!['manual_paypal', 'crypto'].includes(order.payment_provider)) return false;
+  if (order.payment_provider !== 'crypto') return false;
   const count = Number(order.payment_reminder_count || 0);
   if (config.PAYMENT_REMINDER_MAX > 0 && count >= config.PAYMENT_REMINDER_MAX) return false;
   if (!count) return hoursBetween(order.created_at, nowMs) >= config.PAYMENT_REMINDER_FIRST_HOURS;

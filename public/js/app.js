@@ -46,7 +46,8 @@ let activeFilter = 'All';
 let activeSort = 'featured';
 let catalogViewMode = 'families';
 
-const BEST_SELLER_SKUS = ['MS40', 'RT20', 'CU100', 'CP10'];
+// Homepage "Most popular" row, in display order: SR-3RT 20mg, SR-2TZ 30mg, Wolverine Stack 10mg+10mg, MOTS-c 40mg.
+const BEST_SELLER_SKUS = ['RT20', 'TR30', 'BB20', 'MS40'];
 
 function renderBestSellers() {
   const grid = document.getElementById('bestSellersGrid');
@@ -113,14 +114,16 @@ function renderCatalog() {
 
 async function init() {
   const catalogData = await api('/api/catalog');
-  document.title = catalogData.siteName;
+  if (!document.title) document.title = catalogData.siteName;
   catalog = catalogData.products.map((product, index) => ({ ...product, _catalogIndex: index }));
   window.siteCatalog = catalog;
-  window.siteFees = { packagingFee: catalogData.packagingFee, shippingFee: catalogData.shippingFee, internationalShippingFee: catalogData.internationalShippingFee || 35, shippingOptions: catalogData.shippingOptions || [], orderFeeRate: catalogData.orderFeeRate || 0 };
+  window.siteFees = { packagingFee: catalogData.packagingFee, shippingFee: catalogData.shippingFee, internationalShippingFee: catalogData.internationalShippingFee || 35, priorityShippingFee: catalogData.priorityShippingFee || 19.99, shippingOptions: catalogData.shippingOptions || [], orderFeeRate: catalogData.orderFeeRate || 0 };
   window.sitePromotion = catalogData.promotion || null;
+  window.siteBundles = catalogData.bundles || [];
   const statEl = document.getElementById('statCompoundCount');
   if (statEl) statEl.textContent = String(catalog.length);
   renderBestSellers();
+  renderBundleCards(document.getElementById('bundleGrid'));
   renderFilterChips();
   renderCatalog();
   updateCartBadge();

@@ -19,8 +19,8 @@ test('analytics aggregates anonymous traffic and funnel events', () => {
     store.recordEvent({ type: 'checkout_start', visitorId: 'visitor-a', sessionId: 'session-a', checkoutAttemptId: 'attempt-a' });
     store.recordEvent({ type: 'checkout_error', visitorId: 'visitor-a', sessionId: 'session-a', checkoutAttemptId: 'attempt-a', stage: 'validation', reason: 'missing_fields' });
     store.recordEvent({ type: 'shipping_info_added', visitorId: 'visitor-a', sessionId: 'session-a', checkoutAttemptId: 'attempt-a' });
-    store.recordEvent({ type: 'payment_method_selected', visitorId: 'visitor-a', sessionId: 'session-a', checkoutAttemptId: 'attempt-a', paymentMethod: 'manual_paypal' });
-    store.recordEvent({ type: 'payment_failed', visitorId: 'visitor-a', sessionId: 'session-a', checkoutAttemptId: 'attempt-a', paymentMethod: 'manual_paypal', reason: 'network_error' });
+    store.recordEvent({ type: 'payment_method_selected', visitorId: 'visitor-a', sessionId: 'session-a', checkoutAttemptId: 'attempt-a', paymentMethod: 'crypto' });
+    store.recordEvent({ type: 'payment_failed', visitorId: 'visitor-a', sessionId: 'session-a', checkoutAttemptId: 'attempt-a', paymentMethod: 'crypto', reason: 'network_error' });
     store.recordEvent({ type: 'order_created', visitorId: 'visitor-a', sessionId: 'session-a' });
     store.recordEvent({ type: 'payment_confirmed', visitorId: 'visitor-a', sessionId: 'session-a' });
 
@@ -38,8 +38,8 @@ test('analytics aggregates anonymous traffic and funnel events', () => {
     assert.equal(summary.totals.paymentsConfirmed, 1);
     assert.equal(summary.totals.ordersCreated, 1);
     assert.deepEqual(summary.checkout.errors[0], { name: 'validation|missing_fields', count: 1 });
-    assert.deepEqual(summary.checkout.paymentMethods[0], { name: 'manual_paypal', count: 1 });
-    assert.deepEqual(summary.checkout.paymentFailures[0], { name: 'manual_paypal|network_error', count: 1 });
+    assert.deepEqual(summary.checkout.paymentMethods[0], { name: 'crypto', count: 1 });
+    assert.deepEqual(summary.checkout.paymentFailures[0], { name: 'crypto|network_error', count: 1 });
     assert.deepEqual(summary.topProducts[0], {
       sku: 'BC20',
       name: 'BPC-157',
@@ -60,15 +60,15 @@ test('analytics deduplicates repeated checkout events within one anonymous attem
     const common = { visitorId: 'visitor-a', sessionId: 'session-a', checkoutAttemptId: 'attempt-a' };
     store.recordEvent({ type: 'checkout_start', ...common });
     store.recordEvent({ type: 'checkout_start', ...common });
-    store.recordEvent({ type: 'payment_method_selected', paymentMethod: 'manual_paypal', ...common });
-    store.recordEvent({ type: 'payment_method_selected', paymentMethod: 'manual_paypal', ...common });
+    store.recordEvent({ type: 'payment_method_selected', paymentMethod: 'zelle', ...common });
+    store.recordEvent({ type: 'payment_method_selected', paymentMethod: 'zelle', ...common });
     store.recordEvent({ type: 'payment_method_selected', paymentMethod: 'crypto', ...common });
 
     const summary = store.getSummary(7);
     assert.equal(summary.totals.checkoutStarts, 1);
     assert.equal(summary.totals.paymentMethodsSelected, 2);
     assert.deepEqual(summary.checkout.paymentMethods, [
-      { name: 'manual_paypal', count: 1 },
+      { name: 'zelle', count: 1 },
       { name: 'crypto', count: 1 },
     ]);
   } finally {

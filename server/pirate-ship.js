@@ -20,7 +20,7 @@ function orderAliasToken(orderId, secret) {
 function orderAliasEmail(orderId, domain, secret) {
   const normalizedDomain = normalizeInboundDomain(domain);
   if (!normalizedDomain) return '';
-  return `hp-${Number(orderId)}-${orderAliasToken(orderId, secret)}@${normalizedDomain}`;
+  return `sr-${Number(orderId)}-${orderAliasToken(orderId, secret)}@${normalizedDomain}`;
 }
 
 function orderItemsText(order) {
@@ -60,7 +60,7 @@ function pirateShipCsv(orders, options = {}) {
       ? orderAliasEmail(order.id, inboundDomain, options.tokenSecret)
       : normalizeEmail(buyer.email);
     return [
-      `HP-${order.id}`,
+      `SR-${order.id}`,
       buyer.name,
       buyer.address1,
       buyer.address2,
@@ -71,7 +71,7 @@ function pirateShipCsv(orders, options = {}) {
       automationEmail,
       normalizeEmail(buyer.email),
       orderItemsText(order),
-      `Highland order HP-${order.id}`,
+      order.shipping_method === 'priority' ? `PRIORITY MAIL · Snowy order SR-${order.id}` : `Snowy order SR-${order.id}`,
     ].map(csvEscape).join(',');
   });
   return `\ufeff${[headers.map(csvEscape).join(','), ...rows].join('\r\n')}`;
@@ -145,10 +145,10 @@ function parseInboundTrackingEmail(email, options = {}) {
   ].filter(Boolean).join(', ');
   const allText = `${recipientText}\n${text}`;
   const orderIdText = firstMatch(allText, [
-    /\bHP[-_ #:]*(\d{1,12})\b/i,
-    /\bhp-(\d{1,12})@/i,
+    /\b(?:SR|HP)[-_ #:]*(\d{1,12})\b/i,
+    /\b(?:sr|hp)-(\d{1,12})@/i,
   ]);
-  const aliasMatch = recipientText.match(/\bhp-(\d{1,12})-([a-f0-9]{16})@/i);
+  const aliasMatch = recipientText.match(/\b(?:sr|hp)-(\d{1,12})-([a-f0-9]{16})@/i);
   const trackingNumber = trackingNumberFromText(allText);
   const upper = allText.toUpperCase();
   let carrier = '';

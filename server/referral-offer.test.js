@@ -1,11 +1,12 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { hasHighlandReferral, referralOfferDiscount } = require('./referral-offer');
+const { hasCampaignReferral, referralOfferDiscount } = require('./referral-offer');
 
-test('only the Highland referral link token activates the offer', () => {
-  assert.equal(hasHighlandReferral(' highland10 '), true);
-  assert.equal(hasHighlandReferral('OTHER10'), false);
-  assert.equal(hasHighlandReferral(null), false);
+test('referral links no longer activate any discount', () => {
+  assert.equal(hasCampaignReferral(' snowy10 '), false);
+  assert.equal(hasCampaignReferral(' highland10 '), false);
+  assert.equal(hasCampaignReferral('OTHER10'), false);
+  assert.equal(hasCampaignReferral(null), false);
 });
 
 test('referral link saves 10% without a promo code', () => {

@@ -79,7 +79,7 @@ function checkoutSessionParams(order, origin, mode = 'test') {
   ];
   for (const [name, value] of extras) {
     const amount = cents(value, name.toLowerCase());
-    if (amount) lines.push({ name, description: `Highland order HP-${order.id}`, amount });
+    if (amount) lines.push({ name, description: `Snowy order SR-${order.id}`, amount });
   }
   if (lines.reduce((sum, line) => sum + line.amount, 0) !== cents(order.total, 'total')) {
     throw new Error('Saved order line items do not match the total.');
@@ -96,9 +96,9 @@ function checkoutSessionParams(order, origin, mode = 'test') {
       quantity: 1,
     })),
     customer_email: order.buyer.email,
-    client_reference_id: `HP-${order.id}`,
+    client_reference_id: `SR-${order.id}`,
     metadata: { order_id: String(order.id) },
-    integration_identifier: `highland_research_${suffix}`,
+    integration_identifier: `snowy_research_${suffix}`,
     success_url: `${origin}/success.html?order=${order.id}&stripe_mode=${mode}&stripe_session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${origin}/cart.html?stripe_cancelled=1`,
   };
@@ -110,7 +110,7 @@ function verifiedPaidSession(event, mode = 'test') {
   const id = Number(session && session.metadata && session.metadata.order_id);
   if (event.livemode !== (mode === 'live') || !session || session.payment_status !== 'paid' ||
     session.mode !== 'payment' || !Number.isSafeInteger(id) || id <= 0 ||
-    session.client_reference_id !== `HP-${id}` || !(mode === 'live' ? /^cs_live_/ : /^cs_test_/).test(session.id || '') ||
+    ![`SR-${id}`, `HP-${id}`].includes(session.client_reference_id) || !(mode === 'live' ? /^cs_live_/ : /^cs_test_/).test(session.id || '') ||
     !Number.isSafeInteger(session.amount_total) || session.amount_total < 1) return null;
   return { id, sessionId: session.id, amountCents: session.amount_total, currency: session.currency };
 }

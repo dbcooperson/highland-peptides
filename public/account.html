@@ -1,42 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Optional Highland Peptides customer account, referral rewards, store credit, and order history.">
-  <title>Account & Referral Rewards - Highland Peptides</title>
-  <link rel="icon" type="image/png" href="/images/branding/highland-social-avatar-v1.png">
-  <link rel="apple-touch-icon" href="/images/branding/highland-social-avatar-v1.png">
-  <link rel="manifest" href="/site.webmanifest">
-  <link rel="stylesheet" href="/css/style.css?v=shipping-delay-v2-20261012">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Optional Snowy Research customer account with order tracking, order history, and member crypto savings.">
+<title>Account - Snowy Research</title>
+<link rel="icon" type="image/png" href="/images/branding/snowy-icon-512.png">
+<link rel="apple-touch-icon" href="/images/branding/snowy-icon-512.png">
+<link rel="manifest" href="/site.webmanifest">
+<meta property="og:site_name" content="Snowy Research">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css?v=swipe-20261112">
+<link rel="stylesheet" href="/css/snowy.css?v=inbox-20261112b">
+<link rel="stylesheet" href="/css/snowy-pages.css?v=frost-20261112">
 </head>
-<body class="account-page">
-  <div class="mountain-bg account-mountain-bg" aria-hidden="true"></div>
-  <div class="mountain-scrim" aria-hidden="true"></div>
+<body class="snowy sn-account-page">
+
+<div class="leopard-layer" aria-hidden="true"></div>
+
+<div id="entryGate" class="entry-gate">
+  <div class="entry-gate-box">
+    <div class="brand">Snowy Research</div>
+    <h2>Research Use Only</h2>
+    <p>This site sells laboratory research compounds. They are not drugs, foods, cosmetics, or dietary supplements, and are not for human or veterinary use. By entering, you certify that:</p>
+    <ul>
+      <li>You are 21 years of age or older.</li>
+      <li>You are an independent research company or an independent researcher, purchasing solely for laboratory / research purposes.</li>
+      <li>You are NOT using these products for human consumption, injection, or administration of any kind.</li>
+    </ul>
+    <div class="entry-gate-actions">
+      <button id="entryAgreeBtn">I certify &amp; enter</button>
+      <button id="entryExitBtn" class="secondary">Exit</button>
+    </div>
+  </div>
+</div>
+
+<div class="site-wrap">
+
+  <div class="ruo-strip">For laboratory and research use only · Not for human or veterinary use · Not a drug, food, or cosmetic</div>
 
   <div class="nav-wrap">
     <header class="topbar">
-      <div class="brand"><a href="/index.html" style="color:inherit;text-decoration:none;display:flex;align-items:center;gap:10px;">
-        <div class="brand-seal-wrap"><img src="/images/branding/highland-hp-ridge-mark-v1.png" alt=""></div>
-        Highland Peptides
-      </a></div>
+      <a class="brand" href="/">Snowy</a>
       <nav class="site-nav">
         <a href="/index.html#catalogSection">Shop</a>
-        <a href="/about.html">About Us</a>
+        <a href="/about.html">About</a>
         <a href="/support.html">Support</a>
       </nav>
       <div class="header-actions">
-        <button id="openProductSearch" class="nav-search-button" type="button" aria-label="Search products"><span class="nav-search-icon" aria-hidden="true"></span></button>
-        <nav class="cart-nav"><a href="/cart.html" class="cart-link" aria-label="View cart"><span class="cart-icon" aria-hidden="true"></span><span class="cart-label">Cart</span><span id="cartCount" class="cart-count">0</span></a></nav>
+        <button id="openProductSearch" class="nav-search-button" type="button" aria-label="Search products">
+          <span class="nav-search-icon" aria-hidden="true"></span>
+        </button>
+        <nav class="cart-nav">
+          <a href="/cart.html" class="cart-link" aria-label="View cart">
+            <span class="cart-icon" aria-hidden="true"></span>
+            <span class="cart-label">Cart</span>
+            <span id="cartCount" class="cart-count" aria-label="0 items">0</span>
+          </a>
+        </nav>
       </div>
     </header>
   </div>
 
-  <main class="account-main">
+<main class="sn-page account-main">
     <section id="accountAuth" class="account-program-landing">
       <header class="account-program-hero">
-        <h1>Share Highland.<br><span>Earn credit when your code helps.</span></h1>
-        <p>Create one personal referral code. Friends save 10% on qualifying merchandise, and you earn that same 10% as store credit after Highland reviews the paid order.</p>
+        <h1>Your Snowy account.<br><span>Track every order in one place.</span></h1>
+        <p>Create a free account to follow your order progress, keep your purchase history together, and keep any referral store credit in one place.</p>
         <div class="account-trust-row" aria-label="Member account benefits">
           <span>Free to join</span>
           <span>Order tracking</span>
@@ -44,27 +75,25 @@
         </div>
       </header>
 
-      <div class="account-metric-grid" aria-label="Referral program highlights">
+      <div class="account-metric-grid" hidden aria-label="Referral program highlights">
         <article><strong>10%</strong><span>Friends save on qualifying merchandise</span></article>
         <article><strong>10%</strong><span>You earn as reviewed store credit</span></article>
         <article><strong>$500</strong><span>in approved referrals, plus five unique customers, unlocks cash-out eligibility</span></article>
       </div>
 
-      <section class="account-program-section" aria-labelledby="accountHowTitle">
+      <section class="account-program-section" hidden aria-labelledby="accountHowTitle">
         <span class="account-section-label">How it works</span>
         <h2 id="accountHowTitle">Three steps to your first referral credit</h2>
         <ol class="account-step-list">
           <li><span>1</span><div><strong>Create your account</strong><p>Verify your email, then choose one personal referral code that is yours to keep.</p></div></li>
           <li><span>2</span><div><strong>Share your code</strong><p>Friends enter it at checkout to receive 10% off qualifying merchandise.</p></div></li>
-          <li><span>3</span><div><strong>Earn reviewed credit</strong><p>After the order is paid, Highland reviews it before adding the 10% reward to your store-credit balance.</p></div></li>
+          <li><span>3</span><div><strong>Earn reviewed credit</strong><p>After the order is paid, we review it before adding the 10% reward to your store-credit balance.</p></div></li>
         </ol>
       </section>
 
       <section class="account-feature-grid" aria-label="Member account features">
-        <article><span class="account-feature-icon" aria-hidden="true">↗</span><h3>One personal code</h3><p>Create a memorable code your community can use at checkout. One code is available per verified account.</p></article>
-        <article><span class="account-feature-icon" aria-hidden="true">%</span><h3>10% both ways</h3><p>Your referred customer saves 10%, and you receive the same 10% as store credit after review.</p></article>
-        <article><span class="account-feature-icon" aria-hidden="true">◇</span><h3>Member extras</h3><p>Get an extra 5% off crypto orders as a verified Highland member.</p></article>
-        <article><span class="account-feature-icon" aria-hidden="true">◎</span><h3>Track all packages</h3><p>Follow order progress and see your Highland purchase history from one verified account.</p></article>
+        <article><span class="account-feature-icon" aria-hidden="true">◇</span><h3>Member extras</h3><p>Referral store credit is saved to your account and can be applied at checkout.</p></article>
+        <article><span class="account-feature-icon" aria-hidden="true">◎</span><h3>Track all packages</h3><p>Follow order progress and see your Snowy purchase history from one verified account.</p></article>
       </section>
 
       <section class="account-join-section" aria-labelledby="accountJoinTitle">
@@ -72,7 +101,7 @@
           <span class="account-section-label">Create your account</span>
           <h2 id="accountJoinTitle">Ready to get started?</h2>
           <p>Join in under a minute. Accounts are optional, and guest checkout will always remain available.</p>
-          <div class="account-rule-note"><strong>Transparent review process</strong><span>Referral rewards are added only after Highland approval. Cash-out requests unlock after 5 unique referred customers and $500 total paid referral spend. Self-referrals do not qualify.</span></div>
+          <div class="account-rule-note" hidden><strong>Transparent review process</strong><span>Referral rewards are added only after our approval. Cash-out requests unlock after 5 unique referred customers and $500 total paid referral spend. Self-referrals do not qualify.</span></div>
         </div>
 
         <div class="account-auth-card">
@@ -113,18 +142,18 @@
 
     <section id="accountDashboard" class="account-dashboard" hidden>
       <div class="account-dashboard-heading">
-        <div><span class="account-kicker">Verified customer account</span><h2 id="accountWelcome">Your Highland account</h2><p id="accountEmail"></p></div>
+        <div><span class="account-kicker">Verified customer account</span><h2 id="accountWelcome">Your Snowy account</h2><p id="accountEmail"></p></div>
         <button id="accountLogoutButton" type="button" class="account-outline-button">Sign out</button>
       </div>
 
       <div class="account-summary-grid">
         <article><span>Available store credit</span><strong id="creditBalance">$0.00</strong><small>Can be applied at checkout</small></article>
-        <article><span>Referred customers</span><strong id="referralCustomers">0 / 5</strong><small>Paid customers with your code</small></article>
-        <article><span>Paid referral spend</span><strong id="referralSpend">$0 / $500</strong><small>Net qualifying merchandise</small></article>
+        <article hidden><span>Referred customers</span><strong id="referralCustomers">0 / 5</strong><small>Paid customers with your code</small></article>
+        <article hidden><span>Paid referral spend</span><strong id="referralSpend">$0 / $500</strong><small>Net qualifying merchandise</small></article>
       </div>
 
       <div class="account-dashboard-grid">
-        <article class="account-panel referral-code-panel">
+        <article class="account-panel referral-code-panel" hidden>
           <span class="account-kicker">Your one personal code</span>
           <div id="referralCodeEmpty">
             <h3>Choose it carefully—it cannot be replaced.</h3>
@@ -133,12 +162,12 @@
           </div>
           <div id="referralCodeReady" hidden>
             <div class="referral-code-display"><strong id="referralCodeText"></strong><button id="copyReferralCode" type="button">Copy</button></div>
-            <p>Friends save 10%. Paid referral rewards are sent to Highland for manual store-credit approval.</p>
+            <p>Friends save 10%. Paid referral rewards are sent to us for manual store-credit approval.</p>
           </div>
           <p id="referralCodeMessage" class="form-msg" aria-live="polite"></p>
         </article>
 
-        <article class="account-panel payout-panel">
+        <article class="account-panel payout-panel" hidden>
           <span class="account-kicker">Cash-out progress</span>
           <h3 id="payoutTitle">Build toward payout eligibility</h3>
           <div class="progress-block"><div><span>Unique customers</span><strong id="customerProgressLabel">0 of 5</strong></div><div class="account-progress"><i id="customerProgressBar"></i></div></div>
@@ -149,14 +178,45 @@
       </div>
 
       <div class="account-dashboard-grid lower">
-        <article class="account-panel"><div class="account-panel-heading"><h3>Referral activity</h3><span>Paid orders · manual review</span></div><div id="referralActivity" class="account-activity-list"></div></article>
+        <article class="account-panel" hidden><div class="account-panel-heading"><h3>Referral activity</h3><span>Paid orders · manual review</span></div><div id="referralActivity" class="account-activity-list"></div></article>
         <article class="account-panel"><div class="account-panel-heading"><h3>Your orders</h3><span>Verified email history</span></div><div id="accountOrders" class="account-activity-list"></div></article>
       </div>
     </section>
   </main>
 
-<script src="/js/shared.js?v=shipping-delay-v1-20261011"></script>
-  <script src="/js/account.js?v=referral-only-v1-20260920"></script>
-<script src="/js/site-notice.js?v=20260916"></script>
+  <footer class="sn-footer">
+    <div class="sn-footer-top">
+      <div class="sn-footer-brand">
+        <div class="sn-footer-wordmark">Snowy</div>
+        <p>Research-grade peptides, tested and shipped fast. All products sold as laboratory research materials only. Not evaluated by the FDA.</p>
+      </div>
+      <div class="sn-footer-col">
+        <h4>Shop</h4>
+        <a href="/index.html#catalogSection">All compounds</a>
+        <a href="/index.html#bestSellers">Most popular</a>
+        <a href="/cart.html">Cart</a>
+      </div>
+      <div class="sn-footer-col">
+        <h4>Account</h4>
+        <a href="/account.html">Sign in</a>
+        <a href="/account.html">Orders</a>
+      </div>
+      <div class="sn-footer-col">
+        <h4>Help</h4>
+        <a href="/support.html">Support</a>
+        <a href="/about.html">About</a>
+        <a href="/terms-of-sale.html">Terms of sale</a>
+      </div>
+    </div>
+    <div class="sn-footer-bottom">
+      <span>© 2026 Snowy Research. All products for laboratory research only.</span>
+      <div class="sn-pay">Card · Crypto</div>
+    </div>
+  </footer>
+</div>
+
+<script src="/js/shared.js?v=sets-20261112"></script>
+<script src="/js/account.js?v=snowy-20261110d"></script>
+<script src="/js/site-notice.js?v=snowy-20261110d"></script>
 </body>
 </html>
