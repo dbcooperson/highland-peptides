@@ -4,7 +4,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
-const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'highland-stripe-order-'));
+const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'snowy-stripe-order-'));
 process.env.ORDER_DB_PATH = path.join(tempDir, 'db.json');
 delete require.cache[require.resolve('./db')];
 const db = require('./db');

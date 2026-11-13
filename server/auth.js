@@ -22,7 +22,7 @@ function adminCredentialFingerprint(config) {
 
 function rememberSigningKey(config) {
   return crypto.createHmac('sha256', String(config.SESSION_SECRET || ''))
-    .update(`highland-admin-remember-v1:${adminCredentialFingerprint(config)}`)
+    .update(`snowy-admin-remember-v1:${adminCredentialFingerprint(config)}`)
     .digest();
 }
 

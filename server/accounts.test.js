@@ -4,7 +4,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
-const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'highland-accounts-'));
+const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'snowy-accounts-'));
 process.env.ORDER_DB_PATH = path.join(tempDir, 'db.json');
 delete require.cache[require.resolve('./db')];
 const db = require('./db');
@@ -45,9 +45,9 @@ function referredOrder(referrer, email, subtotal = 100, discount = 10) {
 }
 
 test('passwords use salted scrypt hashes', async () => {
-  const record = await hashPassword('Highland123');
-  assert.notEqual(record.hash, 'Highland123');
-  assert.equal(await verifyPassword('Highland123', record.salt, record.hash), true);
+  const record = await hashPassword('Snowyleopard123');
+  assert.notEqual(record.hash, 'Snowyleopard123');
+  assert.equal(await verifyPassword('Snowyleopard123', record.salt, record.hash), true);
   assert.equal(await verifyPassword('wrong-password', record.salt, record.hash), false);
 });
 
@@ -154,7 +154,7 @@ test('TikTok creator credit is manually approved, unique, and limited to one sub
   const owner = db.getAccountByEmail('owner@example.com');
   const submission = db.createSocialCreditSubmission(
     owner.id,
-    'https://www.tiktok.com/@highlandoffical/video/1234567890',
+    'https://www.tiktok.com/@snowyresearch/video/1234567890',
     { creditCents: 500, cooldownDays: 7 }
   );
 
@@ -163,7 +163,7 @@ test('TikTok creator credit is manually approved, unique, and limited to one sub
   assert.equal(dashboard.stats.creditBalance, 50.4);
   assert.equal(dashboard.socialSubmissions[0].creditAmount, 5);
   assert.throws(
-    () => db.createSocialCreditSubmission(owner.id, 'https://www.tiktok.com/@highlandoffical/video/999', { creditCents: 500, cooldownDays: 7 }),
+    () => db.createSocialCreditSubmission(owner.id, 'https://www.tiktok.com/@snowyresearch/video/999', { creditCents: 500, cooldownDays: 7 }),
     /every 7 days/i
   );
   const secondOwner = await verifiedAccount('Second Creator', 'second-creator@example.com');
@@ -185,7 +185,7 @@ test('printed orders update a customer account through pending tracking and fulf
     buyer: {
       name: 'Shipping Customer',
       email: customer.email,
-      address1: '123 Highland Way',
+      address1: '123 Snow Ridge Way',
       address2: '',
       city: 'Riverside',
       state: 'CA',

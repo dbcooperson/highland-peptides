@@ -4,7 +4,6 @@ const { hasCampaignReferral, referralOfferDiscount } = require('./referral-offer
 
 test('referral links no longer activate any discount', () => {
   assert.equal(hasCampaignReferral(' snowy10 '), false);
-  assert.equal(hasCampaignReferral(' highland10 '), false);
   assert.equal(hasCampaignReferral('OTHER10'), false);
   assert.equal(hasCampaignReferral(null), false);
 });

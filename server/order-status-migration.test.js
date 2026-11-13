@@ -4,7 +4,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
-const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'highland-order-status-migration-'));
+const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'snowy-order-status-migration-'));
 process.env.ORDER_DB_PATH = path.join(tempDir, 'db.json');
 fs.writeFileSync(process.env.ORDER_DB_PATH, JSON.stringify({
   orders: [

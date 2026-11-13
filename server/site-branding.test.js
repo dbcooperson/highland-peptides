@@ -12,7 +12,7 @@ test('every page exposes a brand favicon and web manifest', () => {
 
   for (const page of pages) {
     const html = fs.readFileSync(path.join(publicDir, page), 'utf8');
-    // Pages move from the Highland icon to the Snowy icon as they are redesigned.
+    // Every page uses the Snowy icon.
     const icon = html.includes(snowyIcon) ? snowyIcon : logoPath;
     assert.match(html, new RegExp(`<link rel="icon"[^>]+${icon.replaceAll('/', '\\/')}`), `${page} favicon`);
     assert.match(html, /<link rel="apple-touch-icon"/, `${page} Apple icon`);
@@ -43,6 +43,6 @@ test('no customer-facing page, script or email still says Highland', () => {
   const pages = fs.readdirSync(publicDir).filter(n => n.endsWith('.html')).map(n => `public/${n}`);
   for (const rel of [...pages, 'public/js/shared.js', 'public/js/cart.js', 'public/js/support.js', 'public/js/product.js',
     'public/js/site-notice.js', 'public/js/account.js', 'server/notifications.js', 'public/site.webmanifest']) {
-    assert.doesNotMatch(read(rel).replace(/highland-label-[a-z-]+-v\d|HIGHLAND10/g, ''), /highland/i, rel);
+    assert.doesNotMatch(read(rel), /highland/i, rel);
   }
 });

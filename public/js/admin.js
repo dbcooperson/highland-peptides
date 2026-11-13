@@ -445,8 +445,8 @@ function buildVialLabel({ name, dosage, lot, expiry, storage, design = 'label-k'
   return label;
 }
 
-const LABEL_NEXT_POSITION_KEY = 'highland-label-next-position-v1';
-const LABEL_CALIBRATION_KEY = 'highland-label-calibration-v5';
+const LABEL_NEXT_POSITION_KEY = 'snowy-label-next-position-v1';
+const LABEL_CALIBRATION_KEY = 'snowy-label-calibration-v1';
 const LABEL_SHEET_GEOMETRY_MM = Object.freeze({
   marginX: 6.35,
   marginY: 6.35,
@@ -1362,7 +1362,7 @@ document.addEventListener('click', (event) => {
 });
 let adminOrdersCache = [];
 const PAID_LABEL_QUEUE_CUTOFF_MS = Date.parse('2026-08-29T00:00:00-07:00');
-const LABEL_HIDDEN_ORDERS_KEY = 'highland-label-hidden-orders-v2';
+const LABEL_HIDDEN_ORDERS_KEY = 'snowy-label-hidden-orders-v1';
 const printedPaidOrderIds = new Set();
 const hiddenPaidLabelOrderIds = new Set();
 let confirmingPendingTrackingOrderId = '';

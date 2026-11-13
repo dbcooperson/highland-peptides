@@ -1,6 +1,4 @@
 const CAMPAIGN_CODE = 'SNOWY10';
-// Links shared before the Snowy rebrand keep working.
-const LEGACY_CAMPAIGN_CODES = ['HIGHLAND10'];
 const BASE_RATE = 0.10;
 const EXTRA_CODE_RATE = 0.05;
 

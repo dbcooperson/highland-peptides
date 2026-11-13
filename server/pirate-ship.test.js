@@ -74,10 +74,10 @@ test('inbound tracking parser matches order alias and USPS tracking', () => {
 test('inbound tracking parser supports BCC copies matched by the original customer email', () => {
   const parsed = parseInboundTrackingEmail({
     to: ['tracking@track.example.resend.app'],
-    from: 'Highland Shipping <ship@highlandpeptides.com>',
+    from: 'Snowy Shipping <ship@snowyresearch.com>',
     subject: 'Shipment tracking',
     html: '<p>Carrier: UPS</p><p>Tracking number: 1Z999AA10123456784</p>',
-    headers: { to: 'July Researcher <july@example.com>', from: 'Highland Shipping <ship@highlandpeptides.com>' },
+    headers: { to: 'July Researcher <july@example.com>', from: 'Snowy Shipping <ship@snowyresearch.com>' },
   }, { inboundDomain: 'track.example.resend.app' });
   assert.equal(parsed.orderId, null);
   assert.equal(parsed.orderAliasToken, '');
@@ -102,7 +102,7 @@ test('pending order matching refuses to guess when one email has multiple waitin
 
 test('Resend webhook signatures are verified with replay protection', () => {
   const payload = JSON.stringify({ type: 'email.received', data: { email_id: 'email_1' } });
-  const secretBytes = Buffer.from('highland-test-webhook-key');
+  const secretBytes = Buffer.from('snowy-test-webhook-key');
   const secret = `whsec_${secretBytes.toString('base64')}`;
   const id = 'msg_test_1';
   const now = 1_800_000_000_000;

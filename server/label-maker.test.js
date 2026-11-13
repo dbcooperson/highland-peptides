@@ -45,13 +45,13 @@ test('label sheet matches the OL1735WS 48-up geometry', () => {
   assert.match(js, /position\s*<=\s*48/);
   assert.match(js, /labelPositionFromRowAndColumn/);
   assert.match(js, /\(\(row - 1\) \* 4\) \+ column/);
-  assert.match(js, /highland-label-next-position-v1/);
+  assert.match(js, /snowy-label-next-position-v1/);
   assert.match(js, /snowy-label-position-used/);
   assert.match(js, /openLabelPrintWindow/);
   assert.match(js, /Snowy Label Print Sheet/);
   assert.match(js, /left:\s*\$\{values\.offsetX\}mm/);
   assert.match(js, /top:\s*\$\{values\.offsetY\}mm/);
-  assert.match(js, /highland-label-calibration-v5/);
+  assert.match(js, /snowy-label-calibration-v1/);
   assert.match(js, /id="printSheetButton"/);
   assert.match(js, /window\.print\(\)/);
   assert.match(js, /display: block !important/);
@@ -82,7 +82,7 @@ test('paid orders can print all vial labels into consecutive unused positions', 
   assert.match(js, /paid-label-inline-confirm is-remove/);
   assert.match(js, /confirmRemoveLabelOrder/);
   assert.match(js, /paid-label-confirm-remove/);
-  assert.match(js, /highland-label-hidden-orders-v2/);
+  assert.match(js, /snowy-label-hidden-orders-v1/);
   assert.match(js, /The paid transaction stays in Orders and profit totals\. You can restore this card later\./);
   assert.doesNotMatch(js, /confirmRemoveLabelOrder[\s\S]*?method: 'DELETE'/);
   assert.match(js, /confirmOrderPendingTracking/);
