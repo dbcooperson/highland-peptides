@@ -24,3 +24,7 @@ public/images/product-mockups/*.png
 public/images/product-mockups/*.json
 public/images/product-mockups/*.md
 push-to-github.bat
+
+# Tool leftovers
+.codex-*
+*.log
